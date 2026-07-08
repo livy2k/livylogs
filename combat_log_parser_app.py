@@ -1116,11 +1116,13 @@ class CombatLogApp:
         self.dm_labels_created = False
         self.time_window_details = 30
         self.time_window_leaderboard = 30
-        self.time_window_skimmers = 30
+        self.time_window_skimmers = 60
         self.time_window_dm = 30 # Fixed Seconds for DM timeout
         self.always_on_top = False # Always off on startup
         self.inventory_full = False
         self.inventory_full_time = None
+        self.skimmer_search_query = tk.StringVar()
+        self.skimmer_search_mode = False
 
         # Incremental app version
         self.version = "1.0"
@@ -1128,7 +1130,7 @@ class CombatLogApp:
         if "General" in self.config:
             self.time_window_details = self.config["General"].getint("time_window_details", fallback=self.config["General"].getint("time_window", fallback=30))
             self.time_window_leaderboard = self.config["General"].getint("time_window_leaderboard", fallback=self.config["General"].getint("time_window", fallback=30))
-            self.time_window_skimmers = self.config["General"].getint("time_window_skimmers", fallback=self.config["General"].getint("time_window", fallback=30))
+            self.time_window_skimmers = 60
             # self.always_on_top = self.config["General"].getboolean("always_on_top", fallback=self.config["General"].getboolean("afk_loot", fallback=False))
             self.time_window_dm = 30 # Fixed
 
@@ -2479,32 +2481,58 @@ class CombatLogApp:
 
         title_bar = tk.Frame(inner, bg=PANEL_DARK, height=30)
         title_bar.pack(fill=tk.X)
+        title_bar.bind("<Button-1>", self.click_window_skimmers)
+        title_bar.bind("<B1-Motion>", self.drag_window_skimmers)
         
         tk.Label(title_bar, text="SKIMMERS", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=self.font_small_obj).pack(side=tk.LEFT, padx=10)
 
-        # Time toggles
-        toggle_frame = tk.Frame(title_bar, bg=PANEL_DARK)
-        toggle_frame.pack(side="left", padx=5)
-        for mins in [10, 30, 60]:
-            color = TEXT_PRIMARY if self.time_window_skimmers == mins else TEXT_SECONDARY
-            lbl = tk.Label(toggle_frame, text=f"{mins}M", bg=PANEL_DARK, fg=color, font=("Segoe UI", 8, "bold"), cursor="hand2", padx=2)
-            lbl.pack(side="left")
-            lbl.bind("<Button-1>", lambda e, m=mins: self.set_time_window_skimmers(m))
+        # Search field and toggle icon
+        search_frame = tk.Frame(title_bar, bg=PANEL_DARK)
+        search_frame.pack(side="left", padx=5)
+        
+        self.skimmer_search_entry = tk.Entry(
+            search_frame, 
+            textvariable=self.skimmer_search_query,
+            bg=WINDOW_BG, 
+            fg=TEXT_PRIMARY, 
+            insertbackground=TEXT_PRIMARY,
+            font=("Segoe UI", 8),
+            relief=tk.FLAT,
+            width=15
+        )
+        self.skimmer_search_entry.pack(side="left", padx=2)
+        self.skimmer_search_entry.bind("<Return>", lambda e: self.toggle_skimmer_search(force_on=True))
+        
+        self.skimmer_search_btn = tk.Label(
+            search_frame, 
+            text="🔍", 
+            bg=PANEL_DARK, 
+            fg=TEXT_SECONDARY, 
+            font=("Segoe UI", 10), 
+            cursor="hand2"
+        )
+        self.skimmer_search_btn.pack(side="left", padx=2)
+        self.skimmer_search_btn.bind("<Button-1>", lambda e: self.toggle_skimmer_search() or "break")
+        
+        if self.skimmer_search_mode:
+            self.skimmer_search_btn.config(fg=ACCENT_BLUE)
         
         close_btn = tk.Label(title_bar, text="✕", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2", padx=10)
         close_btn.pack(side=tk.RIGHT)
-        close_btn.bind("<Button-1>", lambda e: self.on_close_skimmers())
+        close_btn.bind("<Button-1>", lambda e: self.on_close_skimmers() or "break")
         close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#ff4444"))
         close_btn.bind("<Leave>", lambda e: close_btn.config(fg=TEXT_SECONDARY))
 
         reset_btn = tk.Label(title_bar, text="RESET", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2", padx=10)
         reset_btn.pack(side=tk.RIGHT)
-        reset_btn.bind("<Button-1>", lambda e: self.reset_skimmers_manual())
+        reset_btn.bind("<Button-1>", lambda e: self.reset_skimmers_manual() or "break")
         reset_btn.bind("<Enter>", lambda e: reset_btn.config(fg=TEXT_PRIMARY))
         reset_btn.bind("<Leave>", lambda e: reset_btn.config(fg=TEXT_SECONDARY))
 
         self.skimmers_container = tk.Frame(inner, bg=WINDOW_BG, padx=5, pady=5)
         self.skimmers_container.pack(fill=tk.BOTH, expand=True)
+        self.skimmers_container.bind("<Button-1>", self.click_window_skimmers)
+        self.skimmers_container.bind("<B1-Motion>", self.drag_window_skimmers)
 
         # Resize handle
         self.skimmers_resize_handle = tk.Label(
@@ -2520,6 +2548,17 @@ class CombatLogApp:
         self.skimmers_resize_handle.bind("<B1-Motion>", lambda e: self.do_resize_popout(e, self.skimmers_window, SKIMMERS_DEFAULT_WIDTH, SKIMMERS_DEFAULT_HEIGHT))
 
         self.refresh_skimmers_window()
+
+    def toggle_skimmer_search(self, force_on=False):
+        if force_on:
+            self.skimmer_search_mode = True
+        else:
+            self.skimmer_search_mode = not self.skimmer_search_mode
+            
+        if hasattr(self, 'skimmer_search_btn') and self.skimmer_search_btn.winfo_exists():
+            self.skimmer_search_btn.config(fg=ACCENT_BLUE if self.skimmer_search_mode else TEXT_SECONDARY)
+            
+        self.refresh_skimmers_window(manual=True)
 
     def on_close_skimmers(self):
         if self.skimmers_window:
@@ -2600,7 +2639,25 @@ class CombatLogApp:
 
     def show_skimmer_list(self):
         if not self.loot_data:
-            tk.Label(self.skimmers_container, text="No loot items recorded\nin the last 30 minutes.", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=self.font_small_obj).pack(pady=20)
+            tk.Label(self.skimmers_container, text=f"No loot items recorded\nin the last {self.time_window_skimmers} minutes.", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=self.font_small_obj).pack(pady=20)
+            return
+
+        query = self.skimmer_search_query.get().lower().strip() if self.skimmer_search_mode else ""
+        
+        display_players = []
+        if self.skimmer_search_mode and query:
+            # Filter players who looted the item
+            for player, items in self.loot_data.items():
+                if any(query in item_entry.get("item", "").lower() for item_entry in items):
+                    display_players.append(player)
+        else:
+            display_players = list(self.loot_data.keys())
+
+        if self.skimmer_search_mode and not display_players:
+            tk.Label(self.skimmers_container, text=f"No players found looting\n'{query}'", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=self.font_small_obj).pack(pady=20)
+            return
+        elif not display_players:
+            tk.Label(self.skimmers_container, text="No loot items recorded.", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=self.font_small_obj).pack(pady=20)
             return
 
         canvas = tk.Canvas(self.skimmers_container, bg=WINDOW_BG, highlightthickness=0)
@@ -2614,7 +2671,7 @@ class CombatLogApp:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        sorted_players = sorted(self.loot_data.keys(), key=lambda p: (p.lower() != "you", p))
+        sorted_players = sorted(display_players, key=lambda p: (p.lower() != "you", p))
 
         for p in sorted_players:
             p_btn = tk.Label(
@@ -2629,7 +2686,7 @@ class CombatLogApp:
                 cursor="hand2"
             )
             p_btn.pack(fill=tk.X, pady=(0, 2))
-            p_btn.bind("<Button-1>", lambda e, name=p: self.drilldown_to_skimmer(name))
+            p_btn.bind("<Button-1>", lambda e, name=p: self.drilldown_to_skimmer(name) or "break")
             
     def drilldown_to_skimmer(self, name):
         self.current_skimmer_player = name
@@ -2643,7 +2700,7 @@ class CombatLogApp:
         
         back_btn = tk.Label(header, text="← BACK", bg=PANEL_DARK, fg=ACCENT_BLUE, font=self.font_small_obj, cursor="hand2", padx=10)
         back_btn.pack(side=tk.LEFT)
-        back_btn.bind("<Button-1>", lambda e: self.go_back_to_skimmers())
+        back_btn.bind("<Button-1>", lambda e: self.go_back_to_skimmers() or "break")
         
         tk.Label(header, text=name, bg=PANEL_DARK, fg=TEXT_PRIMARY, font=self.font_title_obj).pack(side=tk.LEFT, padx=10)
 
@@ -2662,12 +2719,18 @@ class CombatLogApp:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
+        query = self.skimmer_search_query.get().lower().strip() if self.skimmer_search_mode else ""
+        
         for entry in reversed(self.loot_data[name]):
+            # If search mode is on, filter entries in drilldown too
+            if self.skimmer_search_mode and query and query not in entry.get("item", "").lower():
+                continue
+                
             ts = entry["timestamp"].strftime("%H:%M:%S") if entry["timestamp"] else "??:??:??"
             item_frame = tk.Frame(scrollable_frame, bg=PANEL_BG, pady=5)
             item_frame.pack(fill=tk.X, pady=(0, 2))
             
-            tk.Label(
+            item_label = tk.Label(
                 item_frame, 
                 text=f"[{ts}] {entry['item']}", 
                 bg=PANEL_BG, 
@@ -2675,8 +2738,14 @@ class CombatLogApp:
                 font=self.font_small_obj, 
                 anchor="w",
                 wraplength=280,
-                justify=tk.LEFT
-            ).pack(fill=tk.X, padx=5)
+                justify=tk.LEFT,
+                cursor="hand2"
+            )
+            item_label.pack(fill=tk.X, padx=5)
+            # Click item to search for it
+            item_label.bind("<Button-1>", lambda e, item=entry['item']: self.search_for_specific_item(item) or "break")
+            item_label.bind("<Enter>", lambda e, lbl=item_label: lbl.config(fg=ACCENT_BLUE))
+            item_label.bind("<Leave>", lambda e, lbl=item_label: lbl.config(fg=TEXT_PRIMARY))
             
             tk.Label(
                 item_frame,
@@ -2687,14 +2756,28 @@ class CombatLogApp:
                 anchor="w"
             ).pack(fill=tk.X, padx=5)
 
+    def search_for_specific_item(self, item_name):
+        # Set search query to the item name and enable search mode
+        self.skimmer_search_query.set(item_name)
+        self.skimmer_search_mode = True
+        if hasattr(self, "skimmer_search_btn") and self.skimmer_search_btn.winfo_exists():
+            self.skimmer_search_btn.config(fg=ACCENT_BLUE)
+        # Go back to top level to show list of players
+        self.current_skimmer_player = None
+        self.refresh_skimmers_window(manual=True)
+
     def go_back_to_skimmers(self):
         self.current_skimmer_player = None
+        self.skimmer_search_mode = False
+        self.skimmer_search_query.set("")
+        if hasattr(self, "skimmer_search_btn") and self.skimmer_search_btn.winfo_exists():
+            self.skimmer_search_btn.config(fg=TEXT_SECONDARY)
         # Force an immediate refresh to show the list again
         self.refresh_skimmers_window(manual=True)
 
     def click_window_skimmers(self, event):
-        self._sk_offsetx = event.x
-        self._sk_offsety = event.y
+        self._sk_offsetx = event.x_root - self.skimmers_window.winfo_x()
+        self._sk_offsety = event.y_root - self.skimmers_window.winfo_y()
 
     def drag_window_skimmers(self, event):
         if not self.skimmers_window or not self.skimmers_window.winfo_exists():
@@ -2977,8 +3060,8 @@ class CombatLogApp:
                 self.damage_meter_window.geometry("300x220")
 
     def click_window_damage_meter(self, event):
-        self._dm_offsetx = event.x
-        self._dm_offsety = event.y
+        self._dm_offsetx = event.x_root - self.damage_meter_window.winfo_x()
+        self._dm_offsety = event.y_root - self.damage_meter_window.winfo_y()
 
     def drag_window_damage_meter(self, event):
         if not self.damage_meter_window or not self.damage_meter_window.winfo_exists():
@@ -3280,8 +3363,8 @@ class CombatLogApp:
             self.show_skimmers_window()
 
     def click_window_details(self, event):
-        self._dw_offsetx = event.x
-        self._dw_offsety = event.y
+        self._dw_offsetx = event.x_root - self.details_window.winfo_x()
+        self._dw_offsety = event.y_root - self.details_window.winfo_y()
 
     def drag_window_details(self, event):
         if not self.details_window or not self.details_window.winfo_exists():
@@ -3292,8 +3375,8 @@ class CombatLogApp:
         self.details_window.geometry(f"+{x}+{y}")
 
     def click_window_leaderboard(self, event):
-        self._lb_offsetx = event.x
-        self._lb_offsety = event.y
+        self._lb_offsetx = event.x_root - self.leaderboard_window.winfo_x()
+        self._lb_offsety = event.y_root - self.leaderboard_window.winfo_y()
 
     def drag_window_leaderboard(self, event):
         if not self.leaderboard_window or not self.leaderboard_window.winfo_exists():
@@ -3484,8 +3567,8 @@ class CombatLogApp:
         self.root.geometry(f"+{x}+{y}")
 
     def click_window(self, event):
-        self._offsetx = event.x
-        self._offsety = event.y
+        self._offsetx = event.x_root - self.root.winfo_x()
+        self._offsety = event.y_root - self.root.winfo_y()
 
     def init_resize_popout(self, event, window, def_w, def_h):
         self._start_x = window.winfo_pointerx()
@@ -3906,8 +3989,8 @@ class CombatLogApp:
             self.options_window = None
 
     def click_window_options(self, event):
-        self._opt_offsetx = event.x
-        self._opt_offsety = event.y
+        self._opt_offsetx = event.x_root - self.options_window.winfo_x()
+        self._opt_offsety = event.y_root - self.options_window.winfo_y()
 
     def drag_window_options(self, event):
         if not self.options_window or not self.options_window.winfo_exists():

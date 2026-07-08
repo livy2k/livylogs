@@ -621,9 +621,18 @@ class CombatLogApp:
     def play_sound(self):
         """Play notice.mp3 using MCI."""
         try:
-            if os.path.exists("notice.mp3"):
+            import sys
+            if getattr(sys, 'frozen', False):
+                # If running as a bundled executable, look in the temp folder
+                base_path = sys._MEIPASS
+            else:
+                base_path = os.path.dirname(__file__)
+            
+            sound_path = os.path.join(base_path, "notice.mp3")
+            
+            if os.path.exists(sound_path):
                 # Use MCI to play MP3 on Windows
-                winmm.mciSendStringW('open "notice.mp3" type mpegvideo alias notice_sound', None, 0, None)
+                winmm.mciSendStringW(f'open ""{sound_path}"" type mpegvideo alias notice_sound', None, 0, None)
                 winmm.mciSendStringW('play notice_sound', None, 0, None)
         except Exception as e:
             print(f"Error playing sound: {e}")

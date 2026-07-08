@@ -4,14 +4,11 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f69ee170-7f50-4ea1-92cb-01086bbd7908" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/PythonProject3.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/combat_log_parser_app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/livylogs.py" afterDir="false" />
+    <list default="true" id="f69ee170-7f50-4ea1-92cb-01086bbd7908" name="Changes" comment="version 1.0">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/combat_log_parser_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/combat_log_parser_app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/livylogs.py" beforeDir="false" afterPath="$PROJECT_DIR$/livylogs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.ini" beforeDir="false" afterPath="$PROJECT_DIR$/settings.ini" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,7 +16,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="11" />
+    <option name="cachedIndexableFilesCount" value="22" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -38,23 +35,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.385193548938487" />
-      <entry key="MS500" value="3.888801915466508" />
-      <entry key="S2" value="9.976407603758513" />
-      <entry key="S5" value="13.52500319603755" />
-      <entry key="S10" value="15.14372903681389" />
-      <entry key="S30" value="17.93426078882569" />
-      <entry key="S60" value="25.266853365980833" />
-      <entry key="M2" value="43.44042485271752" />
-      <entry key="M5" value="76.32683660127299" />
-      <entry key="M10" value="96.52544927565054" />
-      <entry key="M15" value="104.93661650379549" />
-      <entry key="M30" value="114.38066218553067" />
-      <entry key="H1" value="119.53372273343356" />
-      <entry key="H2" value="122.22642176914049" />
-      <entry key="H4" value="123.60293507073804" />
-      <entry key="D1" value="124.76571432851517" />
-      <entry key="W1" value="124.96649512755234" />
+      <entry key="MS100" value="1.2349782968536565" />
+      <entry key="MS500" value="2.225174389799529" />
+      <entry key="S2" value="8.09901483436535" />
+      <entry key="S5" value="13.849487269913586" />
+      <entry key="S10" value="16.975757937988526" />
+      <entry key="S30" value="21.054368474726616" />
+      <entry key="S60" value="28.656313205283443" />
+      <entry key="M2" value="46.92697472918098" />
+      <entry key="M5" value="79.97080470311866" />
+      <entry key="M10" value="100.30112816865113" />
+      <entry key="M15" value="108.77420867082238" />
+      <entry key="M30" value="118.2922367288468" />
+      <entry key="H1" value="123.48753946248071" />
+      <entry key="H2" value="126.20281523840768" />
+      <entry key="H4" value="127.59100019139836" />
+      <entry key="D1" value="128.76370665175278" />
+      <entry key="W1" value="128.96620785948352" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -76,23 +73,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.362421676925015" />
-      <entry key="MS500" value="3.8697493946854733" />
-      <entry key="S2" value="9.961631474619049" />
-      <entry key="S5" value="13.516697269966857" />
-      <entry key="S10" value="15.139026099035453" />
-      <entry key="S30" value="17.932385099419747" />
-      <entry key="S60" value="25.265500584797223" />
-      <entry key="M2" value="43.439223626655355" />
-      <entry key="M5" value="76.32597418917744" />
-      <entry key="M10" value="96.52490071918888" />
-      <entry key="M15" value="104.936218225545" />
-      <entry key="M30" value="114.38044476177608" />
-      <entry key="H1" value="119.53360903371363" />
-      <entry key="H2" value="122.22636361618306" />
-      <entry key="H4" value="123.60290566119774" />
-      <entry key="D1" value="124.76570938003505" />
-      <entry key="W1" value="124.96649441946994" />
+      <entry key="MS100" value="1.2027914013171985" />
+      <entry key="MS500" value="2.207716736905077" />
+      <entry key="S2" value="8.07708925530672" />
+      <entry key="S5" value="13.835122077864517" />
+      <entry key="S10" value="16.96714799670331" />
+      <entry key="S30" value="21.050953724435164" />
+      <entry key="S60" value="28.65416377924216" />
+      <entry key="M2" value="46.925369537269006" />
+      <entry key="M5" value="79.96977820803494" />
+      <entry key="M10" value="100.30049669413539" />
+      <entry key="M15" value="108.77375484928008" />
+      <entry key="M30" value="118.29199137777093" />
+      <entry key="H1" value="123.48741175509613" />
+      <entry key="H2" value="126.20275006991226" />
+      <entry key="H4" value="127.59096727106984" />
+      <entry key="D1" value="128.76370111771385" />
+      <entry key="W1" value="128.9662070677393" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -107,29 +104,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.combat_log_parser_app.executor": "Run",
-    "Python.livylogs.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "master",
-    "junie.onboarding.icon.badge.shown": "true",
-    "junie.plugin.stays.banner.dismissed": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.combat_log_parser_app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.livylogs.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;junie.plugin.stays.banner.dismissed&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Python.combat_log_parser_app">
     <configuration name="combat_log_parser_app" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PythonProject3" />
@@ -204,15 +202,37 @@
       <updated>1783437808295</updated>
       <workItem from="1783437809310" duration="7957000" />
       <workItem from="1783445893304" duration="20849000" />
-      <workItem from="1783466865515" duration="3167000" />
+      <workItem from="1783466865515" duration="3744000" />
+      <workItem from="1783471258576" duration="315000" />
     </task>
+    <task id="LOCAL-00001" summary="version 1.0">
+      <option name="closed" value="true" />
+      <created>1783470157864</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1783470157864</updated>
+    </task>
+    <task id="LOCAL-00002" summary="version 1.0">
+      <option name="closed" value="true" />
+      <created>1783470184964</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1783470184964</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="version 1.0" />
+    <option name="LAST_COMMIT_MESSAGE" value="version 1.0" />
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/PythonProject3$livylogs.coverage" NAME="livylogs Coverage Results" MODIFIED="1783440199832" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/PythonProject3$combat_log_parser_app.coverage" NAME="combat_log_parser_app Coverage Results" MODIFIED="1783470041210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/PythonProject3$combat_log_parser_app.coverage" NAME="combat_log_parser_app Coverage Results" MODIFIED="1783470196395" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

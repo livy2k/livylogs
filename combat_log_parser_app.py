@@ -1076,15 +1076,16 @@ class CombatLogApp:
         # Restore previously open windows
         if "General" in self.config:
             if self.config["General"].getboolean("details_open", fallback=False):
-                self.root.after(1600, self.show_details_window)
+                self.root.after(1100, lambda: self.show_details_window(force_open=True))
             if self.config["General"].getboolean("leaderboard_open", fallback=False):
-                self.root.after(1700, self.show_leaderboard_window)
+                self.root.after(1100, lambda: self.show_leaderboard_window(force_open=True))
             if self.config["General"].getboolean("skimmers_open", fallback=False):
-                self.root.after(1800, self.show_skimmers_window)
+                self.root.after(1100, lambda: self.show_skimmers_window(force_open=True))
             if self.config["General"].getboolean("damage_meter_open", fallback=False):
-                self.root.after(1900, self.show_damage_meter_window)
-            if self.config["General"].getboolean("options_open", fallback=False):
-                self.root.after(2000, self.show_options_window)
+                self.root.after(1100, lambda: self.show_damage_meter_window(force_open=True))
+            # Settings window should NOT be open when app launches per user request
+            # if self.config["General"].getboolean("options_open", fallback=False):
+            #     self.root.after(2000, self.show_options_window)
         
         # Establishing a clean real-time baseline on startup
         self.root.after(100, lambda: self.analyze_log(manual=True))
@@ -1220,11 +1221,12 @@ class CombatLogApp:
         self.config["General"]["always_on_top"] = "False" # Don't persist ONTOP between sessions
 
         # Remember which windows were open
-        self.config["General"]["details_open"] = str(self.details_window is not None and self.details_window.winfo_exists())
-        self.config["General"]["leaderboard_open"] = str(self.leaderboard_window is not None and self.leaderboard_window.winfo_exists())
-        self.config["General"]["skimmers_open"] = str(self.skimmers_window is not None and self.skimmers_window.winfo_exists())
-        self.config["General"]["damage_meter_open"] = str(self.damage_meter_window is not None and self.damage_meter_window.winfo_exists())
-        self.config["General"]["options_open"] = str(self.options_window is not None and self.options_window.winfo_exists())
+        self.config["General"]["details_open"] = str(self.details_window is not None and self.details_window.winfo_exists() and self.details_window.state() != "withdrawn")
+        self.config["General"]["leaderboard_open"] = str(self.leaderboard_window is not None and self.leaderboard_window.winfo_exists() and self.leaderboard_window.state() != "withdrawn")
+        self.config["General"]["skimmers_open"] = str(self.skimmers_window is not None and self.skimmers_window.winfo_exists() and self.skimmers_window.state() != "withdrawn")
+        self.config["General"]["damage_meter_open"] = str(self.damage_meter_window is not None and self.damage_meter_window.winfo_exists() and self.damage_meter_window.state() != "withdrawn")
+        # Settings window should NOT be open when app launches per user request
+        self.config["General"]["options_open"] = "False"
 
         # Details Window
         if self.details_window and self.details_window.winfo_exists():

@@ -22,3 +22,7 @@ settings.ini
 # OS generated files
 Thumbs.db
 desktop.ini
+
+# Ollama related
+*ollma*
+.ollamassist/

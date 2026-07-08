@@ -1,4 +1,4 @@
-# VERSION: 15.5 - OPTIMIZED STARTUP AND ANALYSIS LOOP
+# VERSION: 1.0 - FINALIZED FOR RELEASE
 import re
 import tkinter as tk
 import os
@@ -454,7 +454,7 @@ def parse_combat_log(file_path, start_offset=0):
             lower_line = original_line.lower()
             
             # Immediate discard for known non-combat system messages
-            if any(msg in lower_line for msg in ["there is no person by the name", "you enhance your", "is not online", "is already on your ignore list", "has been added to your", "you are too full to", "your focus your thoughts on", "armor prevented", "%tu", "target was invalid", "already focusing on defense", "out of range", "no damage to heal", "terminal"]):
+            if any(msg in lower_line for msg in ["there is no person by the name", "you enhance your", "is not online", "is already on your ignore list", "has been added to your", "you are too full to", "your focus your thoughts on", "%tu", "target was invalid", "already focusing on defense", "out of range", "no damage to heal", "terminal", "lost sight", "you must be within range", "out of range for this action", "generating vehicle", "cannot gain any more of", "faction standing", "awarded", "too tired to", "points of standing", "two-hand area attack 3", "[galaxychat]", "[groupchat]", "[guildchat]", "[citychat]", "[publicchat]", "[instant messages]", "harvested", "looted", "completely looted", "no longer stunned", "stand", "kneel", "fall down", "music", "dancing", "playing", "burst run", "run as hard as you can", "invites you to join", "joined the group", "squad leader"]):
                 current_offset = log_file.tell()
                 continue
 
@@ -540,43 +540,46 @@ def parse_combat_log(file_path, start_offset=0):
                     content = re.sub(r"^(\[\w+\]\s+)?(\d{2}:\d{2}:\d{2}\s+)?", "", original_line)
                 else:
                     content = original_line
+
+                # Look for "Source Action Target but Mitigated" or "Source's Action misses Target"
+                # Pattern: "X's Y misses Z" or "X misses Z"
+                miss_match = re.search(r"(?P<source>.+?)(?:'s\s+(?P<ability>.+?))?\s+(?P<action>misses|evades|evaded|dodges|parries|counterattacks|blocks it)\b(?:\s+(?P<target>.+))?", content, re.IGNORECASE)
                 
-                if content.lower().startswith("you "):
-                    source_name = "you"
-                    event_type = "dealt"
-                elif " you." in content.lower() or " you!" in content.lower() or content.lower().endswith(" you"):
-                    target_name = "you"
-                    event_type = "taken"
-                elif content.lower().startswith("your "):
-                    source_name = "you"
-                    event_type = "dealt"
+                if miss_match:
+                    source_candidate = miss_match.group("source").strip()
+                    target_candidate = miss_match.group("target").strip() if miss_match.group("target") else "Unknown"
                 else:
-                    event_type = "other_dealt"
+                    # Fallback SWG style: "You use Ability on Target for X points of damage, but he evades it."
+                    swg_miss_match = re.search(r"(?P<source>you|.+?)\s+(?P<action>uses|use|attacks|attack|deals|deal|heals|heal|hits|hit)\b\s+(?:(?P<ability>.+?)\s+(?:on|to|for)\s+)?(?P<target>.+?)\s+for\s+(?P<amount>\d+(?:\.\d+)?)\s*.+?,\s*but\s+(?:he|she|it|you)\s+(?P<mitigation>evades|evaded|dodges|parries|blocks it|counterattacks)", content, re.IGNORECASE)
+                    if swg_miss_match:
+                        source_candidate = swg_miss_match.group("source").strip()
+                        target_candidate = swg_miss_match.group("target").strip()
                 
-                # Try to extract target if it's "You use X on Y, but he evades it"
-                if event_type == "dealt":
-                    on_match = re.search(r"\bon\s+(?P<target>.+?)\s+for", content, re.IGNORECASE)
-                    if on_match:
-                        target_name = on_match.group("target").strip()
-                    else:
-                        # "Your Scalp Slam misses a Gundark."
-                        miss_match = re.search(r"misses\s+(?P<target>.+?)\.", content, re.IGNORECASE)
-                        if miss_match:
-                            target_name = miss_match.group("target").strip()
+                # Clean up candidates
+                if source_candidate.lower().startswith("corpse of "): source_candidate = source_candidate[10:]
+                if target_candidate.lower().startswith("corpse of "): target_candidate = target_candidate[10:]
                 
-                if event_type:
-                    events.append({
+                if source_candidate:
+                    source_name = "You" if source_candidate.lower() == "you" else source_candidate
+                    target_name = "You" if target_candidate.lower() == "you" else target_candidate
+                    
+                    etype = "dealt"
+                    if source_name == "You": etype = "dealt"
+                    elif target_name == "You": etype = "taken"
+                    
+                    event = {
                         "line_number": line_number,
                         "damage": 0,
                         "healing": 0,
-                        "type": event_type,
-                        "source": source_name if 'source_name' in locals() else "Unknown",
-                        "target": target_name if 'target_name' in locals() else "Unknown",
+                        "type": etype,
+                        "source": source_name,
+                        "target": target_name,
                         "timestamp": timestamp,
                         "raw": original_line,
-                    })
-                    if event_type == "taken":
-                        last_taken_event = events[-1]
+                        "is_mitigated": True
+                    }
+                    events.append(event)
+                    if etype == "taken": last_taken_event = event
                     current_offset = log_file.tell()
                     continue
 
@@ -1008,7 +1011,7 @@ class CombatLogApp:
         self.time_window_dm = 15 # Seconds for DM timeout
 
         # Incremental app version
-        self.version = "V15.7"
+        self.version = "1.0"
 
         if "General" in self.config:
             self.time_window_details = self.config["General"].getint("time_window_details", fallback=self.config["General"].getint("time_window", fallback=30))
@@ -1527,7 +1530,7 @@ class CombatLogApp:
         self.lbl_spy.pack(side=tk.LEFT)
         self.lbl_spy.bind("<Button-1>", lambda e: self.show_details_window(force_open=True))
 
-        self.lbl_version = tk.Label(nav_frame, text="V15.3", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8))
+        self.lbl_version = tk.Label(nav_frame, text="1.0", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8))
         self.lbl_version.pack(side=tk.RIGHT, padx=5)
 
     def create_stat_box(self, parent, title, value, secondary_title=None, secondary_value=None):
@@ -1787,9 +1790,24 @@ class CombatLogApp:
             if new_events or manual or is_any_open or not hasattr(self, 'last_full_ui_update') or (time.time() - self.last_full_ui_update > 2.0):
                 self.process_events_for_ui(events_for_ui, manual=manual, all_events=self.all_events)
                 self.last_full_ui_update = time.time()
-            else:
-                # Still refresh damage meter for duration ticks even if no new events
-                self.refresh_damage_meter_window(events_for_ui)
+
+            # Still refresh damage meter for duration ticks even if no new events
+            self.refresh_damage_meter_window(events_for_ui)
+            
+            # Also update main UI stats if they exist
+            damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count = calculate_dps(events_for_ui)
+            
+            # Main UI Duration (Cyan when paused/stopped)
+            is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > 3.0
+            display_duration = f"{duration:.0f}s"
+            duration_color = "cyan" if is_paused else TEXT_PRIMARY
+            
+            if hasattr(self, 'lbl_damage_val'):
+                self.lbl_damage_val.config(text=f"{damage_dealt:.0f}")
+            if hasattr(self, 'lbl_dps_val'):
+                self.lbl_dps_val.config(text=f"{dps:.2f}")
+            if hasattr(self, 'lbl_time_val'):
+                self.lbl_time_val.config(text=display_duration, fg=duration_color)
             
             total_time = time.time() - start_time
             if total_time > 0.5:
@@ -1882,6 +1900,8 @@ class CombatLogApp:
 
             # Handle PvP Kill events
             if str(event["type"]) == "pvp_kill":
+                now = datetime.now()
+                lb_window_ago = now - timedelta(minutes=self.time_window_leaderboard)
                 if event["timestamp"] and event["timestamp"] < lb_window_ago: # Use LB window for PVP kills too or share?
                     continue
                 
@@ -2544,18 +2564,46 @@ class CombatLogApp:
 
         # Update values
         if self.dm_labels_created:
+            # Detect pause (> 3s since last hit)
+            is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > 3.0
+            stat_color = "cyan" if is_paused else TEXT_PRIMARY
+            
+            # If paused, we freeze the numbers (don't update from dps/damage_dealt)
+            # This makes the DM a "recap" until combat resumes
+            
             if hasattr(self, 'dm_val_damage') and self.dm_val_damage.winfo_exists():
-                self.dm_val_damage.config(text=f"{damage_dealt:.0f}")
+                if not is_paused:
+                    self.dm_val_damage.config(text=f"{damage_dealt:.0f}", fg=stat_color)
+                else:
+                    self.dm_val_damage.config(fg=stat_color)
+
             if hasattr(self, 'dm_val_duration') and self.dm_val_duration.winfo_exists():
-                self.dm_val_duration.config(text=f"{duration:.0f}s")
+                # Duration always updates or shows recap value
+                self.dm_val_duration.config(text=f"{duration:.0f}s", fg=stat_color)
+
             if hasattr(self, 'dm_val_dps') and self.dm_val_dps.winfo_exists():
-                self.dm_val_dps.config(text=f"{dps:.2f}")
+                if not is_paused:
+                    self.dm_val_dps.config(text=f"{dps:.2f}", fg=stat_color)
+                else:
+                    self.dm_val_dps.config(fg=stat_color)
+
             if hasattr(self, 'dm_val_miss') and self.dm_val_miss.winfo_exists():
-                self.dm_val_miss.config(text=f"{miss_percent:.1f}%")
+                if not is_paused:
+                    self.dm_val_miss.config(text=f"{miss_percent:.1f}%", fg=stat_color)
+                else:
+                    self.dm_val_miss.config(fg=stat_color)
+
             if hasattr(self, 'dm_val_taken') and self.dm_val_taken.winfo_exists():
-                self.dm_val_taken.config(text=f"{damage_taken:.0f}")
+                if not is_paused:
+                    self.dm_val_taken.config(text=f"{damage_taken:.0f}", fg=stat_color)
+                else:
+                    self.dm_val_taken.config(fg=stat_color)
+
             if hasattr(self, 'dm_val_avoid') and self.dm_val_avoid.winfo_exists():
-                self.dm_val_avoid.config(text=f"{avoidance_percent:.1f}%")
+                if not is_paused:
+                    self.dm_val_avoid.config(text=f"{avoidance_percent:.1f}%", fg=stat_color)
+                else:
+                    self.dm_val_avoid.config(fg=stat_color)
             
             # Explicitly update the window to prevent display lag
             self.damage_meter_window.update_idletasks()
@@ -3174,8 +3222,8 @@ class CombatLogApp:
 
     def update_font_scaling(self, width, height, refresh_menu=True):
         """Dynamically updates font sizes based on window dimensions."""
-        # Update version label to V15.3
-        self.lbl_version.config(text="V15.3")
+        # Update version label to 1.0
+        self.lbl_version.config(text="1.0")
         
         # Base scale on a combination of width and height
         scale = min(width / 350, height / 300)

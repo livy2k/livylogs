@@ -2644,6 +2644,15 @@ class CombatLogApp:
 
         query = self.skimmer_search_query.get().lower().strip() if self.skimmer_search_mode else ""
         
+        # Header for search mode
+        if self.skimmer_search_mode:
+            header = tk.Frame(self.skimmers_container, bg=PANEL_DARK, pady=5)
+            header.pack(fill=tk.X)
+            
+            back_btn = tk.Label(header, text="← BACK", bg=PANEL_DARK, fg=ACCENT_BLUE, font=self.font_small_obj, cursor="hand2", padx=10)
+            back_btn.pack(side=tk.LEFT)
+            back_btn.bind("<Button-1>", lambda e: self.go_back_to_skimmers() or "break")
+
         display_players = []
         if self.skimmer_search_mode and query:
             # Filter players who looted the item
@@ -2758,15 +2767,72 @@ class CombatLogApp:
 
     def search_for_specific_item(self, item_name):
         # Set search query to the item name and enable search mode
+        query = item_name.lower().strip()
+        
+        # Scenario 1: We are in a player's drilldown, and it's NOT yet filtered by this item
+        if self.current_skimmer_player and (not self.skimmer_search_mode or self.skimmer_search_query.get().lower().strip() != query):
+            # Check how many times THIS player looted this item
+            player_items = self.loot_data.get(self.current_skimmer_player, [])
+            count = sum(1 for entry in player_items if query in entry.get("item", "").lower())
+            
+            if count > 1:
+                # Filter this player's list first
+                self.skimmer_search_query.set(item_name)
+                self.skimmer_search_mode = True
+                if hasattr(self, "skimmer_search_btn") and self.skimmer_search_btn.winfo_exists():
+                    self.skimmer_search_btn.config(fg=ACCENT_BLUE)
+                self.refresh_skimmers_window(manual=True)
+                return
+
+        # Scenario 2: We are already in a player-filtered list OR the player only looted it once
+        # Now we want to see ALL players who looted this item
+        
+        # Check how many players looted this item
+        looters = []
+        for player, items in self.loot_data.items():
+            if any(query in item_entry.get("item", "").lower() for item_entry in items):
+                looters.append(player)
+        
+        # "if there are no other players it should go up a level"
+        # "Other players" means players besides the one we might be currently viewing
+        other_players = [p for p in looters if p != self.current_skimmer_player]
+
+        if not other_players:
+            # No other players found, go up a level
+            if self.skimmer_search_mode:
+                # If we were in a filtered list, go back to full player list (drilldown)
+                self.skimmer_search_mode = False
+                self.skimmer_search_query.set("")
+                if hasattr(self, "skimmer_search_btn") and self.skimmer_search_btn.winfo_exists():
+                    self.skimmer_search_btn.config(fg=TEXT_SECONDARY)
+            else:
+                # If we weren't even filtered (meaning count was 1), go back to toplevel
+                self.current_skimmer_player = None
+                
+            self.refresh_skimmers_window(manual=True)
+            return
+
+        # Show list of all players (Global search)
         self.skimmer_search_query.set(item_name)
         self.skimmer_search_mode = True
         if hasattr(self, "skimmer_search_btn") and self.skimmer_search_btn.winfo_exists():
             self.skimmer_search_btn.config(fg=ACCENT_BLUE)
-        # Go back to top level to show list of players
+        
+        # Go to top level to show list of all matching players
         self.current_skimmer_player = None
         self.refresh_skimmers_window(manual=True)
 
     def go_back_to_skimmers(self):
+        # If we were in a filtered drilldown, go back to full drilldown for that player
+        if self.current_skimmer_player and self.skimmer_search_mode:
+            self.skimmer_search_mode = False
+            self.skimmer_search_query.set("")
+            if hasattr(self, "skimmer_search_btn") and self.skimmer_search_btn.winfo_exists():
+                self.skimmer_search_btn.config(fg=TEXT_SECONDARY)
+            self.refresh_skimmers_window(manual=True)
+            return
+            
+        # Otherwise go back to main list
         self.current_skimmer_player = None
         self.skimmer_search_mode = False
         self.skimmer_search_query.set("")

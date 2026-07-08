@@ -37,6 +37,7 @@ SWP_NOSIZE = 0x0001
 SWP_NOMOVE = 0x0002
 SWP_NOACTIVATE = 0x0010
 SWP_SHOWWINDOW = 0x0040
+SWP_HIDEWINDOW = 0x0080
 
 # Define WINDOWPLACEMENT if missing from wintypes
 if not hasattr(wintypes, "WINDOWPLACEMENT"):
@@ -214,23 +215,44 @@ class ThemedMessagebox(tk.Toplevel):
         return target_hwnd[0]
 
     def is_foreground_ours(self):
-        """Checks if the foreground window belongs to this messagebox or its parent."""
+        """Checks if the current foreground window belongs to this application or the game."""
         foreground_hwnd = user32.GetForegroundWindow()
         if not foreground_hwnd:
             return False
+            
+        # 1. Check if it's our application (matches our Process ID)
+        foreground_pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(foreground_hwnd, ctypes.byref(foreground_pid))
+        our_pid = kernel32.GetCurrentProcessId()
         
-        try:
-            my_hwnd = self.winfo_id()
-            if foreground_hwnd == my_hwnd:
+        if foreground_pid.value == our_pid:
+            return True
+            
+        # 2. Check if it's the game or a child/parent/sibling of the game
+        if self.target_hwnd and user32.IsWindow(self.target_hwnd):
+            if foreground_hwnd == self.target_hwnd:
                 return True
             
-            # Check parent
-            if self.master:
-                parent_hwnd = self.master.winfo_id()
-                if foreground_hwnd == parent_hwnd:
+            # Does the foreground window belong to the same process as the game?
+            target_pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(self.target_hwnd, ctypes.byref(target_pid))
+            if foreground_pid.value == target_pid.value:
+                return True
+
+            # Check descendants
+            temp_hwnd = foreground_hwnd
+            while temp_hwnd:
+                if temp_hwnd == self.target_hwnd:
                     return True
-        except:
-            pass
+                temp_hwnd = user32.GetParent(temp_hwnd)
+                
+            # Check ancestors
+            temp_hwnd = self.target_hwnd
+            while temp_hwnd:
+                if temp_hwnd == foreground_hwnd:
+                    return True
+                temp_hwnd = user32.GetParent(temp_hwnd)
+
         return False
 
     def check_target_window(self):
@@ -239,70 +261,106 @@ class ThemedMessagebox(tk.Toplevel):
             if not self.winfo_exists():
                 return
             
-            is_app_foreground = self.is_foreground_ours()
-            if not self.target_hwnd or not user32.IsWindow(self.target_hwnd):
-                self.target_hwnd = self.find_target_window()
+            # Use parent's target_hwnd if available
+            parent_app = None
+            if self.master and hasattr(self.master, "target_hwnd"):
+                parent_app = self.master
+            elif self.master and hasattr(self.master, "master") and hasattr(self.master.master, "target_hwnd"):
+                parent_app = self.master.master
 
-            should_show = False
-            if self.target_hwnd:
-                foreground_hwnd = user32.GetForegroundWindow()
-                placement = wintypes.WINDOWPLACEMENT()
-                placement.length = ctypes.sizeof(wintypes.WINDOWPLACEMENT)
-                if user32.GetWindowPlacement(self.target_hwnd, ctypes.byref(placement)):
-                    is_minimized = (placement.showCmd == 2)
-                    is_target_foreground = (foreground_hwnd == self.target_hwnd)
-                    if not is_minimized and (is_target_foreground or is_app_foreground):
-                        should_show = True
+            if parent_app:
+                # Synchronize with parent's state
+                should_show = False
+                if hasattr(parent_app, "root"):
+                    should_show = (parent_app.root.state() != "withdrawn" and parent_app.current_alpha > 0)
+                
+                if should_show:
+                    # Cancel any pending hide
+                    if hasattr(self, '_hide_grace_after_id') and self._hide_grace_after_id:
+                        self.after_cancel(self._hide_grace_after_id)
+                        self._hide_grace_after_id = None
+                        
+                    if self.state() == "withdrawn":
+                        self.start_show()
+                    
+                    # Sync alpha
+                    if hasattr(parent_app, "current_alpha"):
+                        self.attributes("-alpha", parent_app.current_alpha)
+                    
+                    # Sync topmost
+                    is_topmost = getattr(parent_app, "_last_topmost_state", False)
+                    if not hasattr(self, "_last_topmost_state") or self._last_topmost_state != is_topmost:
+                        self.attributes("-topmost", is_topmost)
+                        hwnd = self.winfo_id()
+                        user32.SetWindowPos(hwnd, HWND_TOPMOST if is_topmost else HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE)
+                        self._last_topmost_state = is_topmost
                 else:
-                    self.target_hwnd = None
-                    should_show = True
+                    if not hasattr(self, '_hide_grace_after_id') or self._hide_grace_after_id is None:
+                        self._hide_grace_after_id = self.after(1000, self._perform_graceful_hide)
             else:
-                should_show = True
+                # Fallback to independent behavior if no parent found
+                is_valid_foreground = self.is_foreground_ours()
+                should_show = is_valid_foreground
+                if should_show:
+                    self.start_show()
+                else:
+                    self.start_hide()
 
-            if should_show:
-                if self.state() == "withdrawn" or self.current_alpha < self.target_alpha:
-                    self.start_fade_in()
-                self.attributes("-topmost", True)
-                if not is_app_foreground:
-                    self.lift()
-            else:
-                if self.state() != "withdrawn" and self.current_alpha > 0:
-                    self.start_fade_out()
         except:
             pass
         
-        self.after(500, self.check_target_window)
+        self.after(250, self.check_target_window)
 
-    def start_fade_in(self):
+    def _perform_graceful_hide(self):
+        """Actually performs the hide after the grace period if still out of focus."""
+        self._hide_grace_after_id = None
+        try:
+            # Re-check focus and always_on_top
+            is_valid_foreground = self.is_foreground_ours()
+            always_on_top = False
+            if self.master and hasattr(self.master, "always_on_top"):
+                always_on_top = self.master.always_on_top
+            elif self.master and hasattr(self.master, "master") and hasattr(self.master.master, "always_on_top"):
+                always_on_top = self.master.master.always_on_top
+
+            if not is_valid_foreground and not always_on_top:
+                if self.state() != "withdrawn" and self.current_alpha > 0:
+                    self.start_hide()
+        except:
+            pass
+
+    def start_show(self):
+        """Gradually shows the window."""
         if self.state() == "withdrawn":
             self.current_alpha = 0.0
             self.attributes("-alpha", 0.0)
             self.deiconify()
         
         if self.current_alpha < self.target_alpha:
-            if self.fade_after_id:
+            if hasattr(self, "fade_after_id") and self.fade_after_id:
                 self.after_cancel(self.fade_after_id)
             self.fade_in()
 
     def fade_in(self):
         if self.current_alpha < self.target_alpha:
-            self.current_alpha = min(self.target_alpha, self.current_alpha + self.fade_speed)
+            self.current_alpha = min(self.target_alpha, self.current_alpha + 0.1)
             self.attributes("-alpha", self.current_alpha)
             self.fade_after_id = self.after(20, self.fade_in)
         else:
             self.fade_after_id = None
 
-    def start_fade_out(self):
+    def start_hide(self):
+        """Gradually hides the window."""
         if self.state() == "withdrawn":
             return
         if self.current_alpha > 0.0:
-            if self.fade_after_id:
+            if hasattr(self, "fade_after_id") and self.fade_after_id:
                 self.after_cancel(self.fade_after_id)
             self.fade_out()
 
     def fade_out(self):
         if self.current_alpha > 0.0:
-            self.current_alpha = max(0.0, self.current_alpha - self.fade_speed)
+            self.current_alpha = max(0.0, self.current_alpha - 0.1)
             self.attributes("-alpha", self.current_alpha)
             self.fade_after_id = self.after(20, self.fade_out)
         else:
@@ -311,10 +369,18 @@ class ThemedMessagebox(tk.Toplevel):
 
     def close_and_callback(self):
         """Closes the window and triggers the callback if set."""
+        callback = self.on_close_callback
+        parent = self.master
         self.destroy()
-        if self.on_close_callback:
-            # Short delay to ensure the window is destroyed and focus can shift
-            self.after(100, self.on_close_callback)
+        if callback:
+            callback()
+        # If this was a standalone messagebox (parent is a hidden Tk instance), quit its mainloop
+        if parent and hasattr(parent, "quit") and parent.__class__.__name__ != "CombatLogApp":
+            try:
+                parent.quit()
+                parent.destroy()
+            except:
+                pass
 
     def _click_window(self, event):
         self._offsetx = event.x
@@ -327,6 +393,12 @@ class ThemedMessagebox(tk.Toplevel):
 
     @staticmethod
     def showinfo(parent, title, message, on_close=None, extra_button_text=None, extra_button_callback=None):
+        if parent is None:
+            temp_root = tk.Tk()
+            temp_root.withdraw()
+            box = ThemedMessagebox(temp_root, title, message, icon="info", on_close=on_close, extra_button_text=extra_button_text, extra_button_callback=extra_button_callback)
+            temp_root.mainloop()
+            return box
         return ThemedMessagebox(parent, title, message, icon="info", on_close=on_close, extra_button_text=extra_button_text, extra_button_callback=extra_button_callback)
 
     @staticmethod
@@ -364,10 +436,13 @@ def parse_combat_log(file_path, start_offset=0):
     if file_size == 0:
         return [], 0
     
-            # If start_offset is -1, seek to the absolute end (for real-time startup)
+            # If start_offset is -1, read the last 256KB for history
     read_offset = start_offset
     if read_offset == -1:
-        return [], file_size
+        if file_size > 256 * 1024:
+            read_offset = file_size - 256 * 1024
+        else:
+            read_offset = 0
 
     # If start_offset is 0 but file is very large, jump to the last 256KB
 
@@ -402,7 +477,7 @@ def parse_combat_log(file_path, start_offset=0):
     msg_kws = ["says", "shouts", "whispers", "tells", "emotes", "performs", "is", "has", "does", "goes", "starts", "stops", "completes"]
     act_kws = ["is", "has", "does", "goes", "starts", "stops", "completes", "stands", "kneels", "performs", "sits", "says", "shouts", "whispers", "tells", "emotes", "tosses", "nods", "waves", "smiles", "laughs", "cheers", "misses", "evade", "dodge", "parr", "block", "counterattack", "attack", "use", "hit"]
     death_kws = ["has died"]
-    loot_kws = ["looted"]
+    loot_kws = ["looted", "you cannot loot that item"]
 
     # Existing fallback/specific patterns
     damage_dealt_pattern = re.compile(r"you (?:deal|hit|hits).+?(\d+(?:\.\d+)?)\s*(?:damage|dmg|points)", re.IGNORECASE)
@@ -421,15 +496,16 @@ def parse_combat_log(file_path, start_offset=0):
         # 3. Death events (e.g., [GROUP] Name has died.)
         (re.compile(r'(?:(?:\[\w+\]|\[None\])\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?(?:\[GROUP\]\s+)?(?P<name>.+?) has died\.', re.IGNORECASE), death_kws),
         # 4. Looting events (e.g., [GROUP] Name looted Item from Target.)
-        (re.compile(r'(?:(?:\[\w+\]|\[None\])\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?(?:\[GROUP\]\s+)?(?P<name>.+?) looted (?P<item>.+?) from (?P<target>.+?)\.', re.IGNORECASE), loot_kws)
+        (re.compile(r'(?:(?:\[\w+\]|\[None\])\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?(?:\[GROUP\]\s+)?(?P<name>.+?) looted (?P<item>.+?) from (?P<target>.+?)\.', re.IGNORECASE), loot_kws),
+        # 5. Inventory Full (e.g., You cannot loot that item because your inventory is full.)
+        (re.compile(r'(?:(?:\[\w+\]|\[None\])\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?You cannot loot that item because your inventory is full\.', re.IGNORECASE), loot_kws)
     ]
 
     with path.open("r", encoding="utf-8", errors="replace") as log_file:
         if read_offset > 0:
             log_file.seek(read_offset)
-            # If we jumped to the last 1MB (initial load), skip the first partial line
-            if start_offset == 0:
-                log_file.readline()
+            # If we jumped into the middle of the file, skip the first partial line
+            log_file.readline()
         
         current_offset = log_file.tell()
         line_number = 0
@@ -707,6 +783,19 @@ def parse_combat_log(file_path, start_offset=0):
                                 source_name = source_name
                                 target_name = target_name
                                 item_name = item_name
+                            elif "inventory is full" in pattern.pattern:
+                                events.append({
+                                    "line_number": line_number,
+                                    "damage": 0,
+                                    "healing": 0,
+                                    "type": "inventory_full",
+                                    "source": "You",
+                                    "target": "Inventory",
+                                    "timestamp": timestamp,
+                                    "raw": original_line,
+                                })
+                                event_type = "processed"
+                                break
                             elif "has bested" in pattern.pattern:
                                 # pvp_kill
                                 winner = act_match.group("winner").strip()
@@ -863,16 +952,12 @@ def calculate_dps(events):
         duration = (end_ts - start_ts).total_seconds()
         
         # Avoid division by zero, and ensure minimum duration
-        # If duration is very short (e.g. first second of combat), 
-        # use a more realistic floor to avoid spikes.
-        # 5 seconds is a common baseline for early combat DPS stabilization
-        effective_duration = max(1.0, duration)
+        effective_duration = max(0.1, duration)
         dps = damage_dealt / effective_duration
     else:
         # Fallback to estimation using damage dealt events
-        # Instead of max(1.0, len), use a higher floor to prevent single-hit spikes
         dealt_events = [e for e in events if e["type"] == "dealt"]
-        estimated_duration_seconds = max(1.0, float(len(dealt_events)))
+        estimated_duration_seconds = max(0.1, float(len(dealt_events)))
         dps = damage_dealt / estimated_duration_seconds
         duration = float(len(dealt_events))
 
@@ -890,6 +975,19 @@ class CombatLogApp:
         self.root.geometry("260x220")
         self.root.configure(bg=WINDOW_BG)
         
+        # Check for SWG client
+        self.target_hwnd = self.find_target_window()
+        if not self.target_hwnd:
+            self.root.withdraw() # Keep main window hidden
+            self.play_sound()
+            ThemedMessagebox.showinfo(
+                None, 
+                "Notice", 
+                "LivyLogs requires Star Wars Galaxies to be running.\nPlease open the game client and try again.",
+                on_close=lambda: sys.exit(0)
+            )
+            return
+
         # Font configuration
         self.font_title = ("Segoe UI", 10, "bold")
         self.font_content = ("Segoe UI", 10)
@@ -942,14 +1040,17 @@ class CombatLogApp:
         if initial_x is not None and initial_y is not None:
             self.root.geometry(f"{initial_width}x{initial_height}+{initial_x}+{initial_y}")
         else:
-            self.root.geometry(f"{initial_width}x{initial_height}")
+            # Default first-run position
+            self.root.geometry(f"{initial_width}x{initial_height}+50+50")
         
         # Initialize transparency and state
         self.target_alpha = initial_alpha
         self.current_alpha = 0.0
         self.root.attributes("-alpha", 0.0)
-        self.root.attributes("-topmost", True)
         self.root.overrideredirect(True)
+        
+        # Initial state: not topmost until we confirm focus
+        self._last_topmost_state = False
         
         self.fade_speed = 0.05
         self.fade_after_id = None
@@ -960,12 +1061,17 @@ class CombatLogApp:
         if "General" in self.config:
             self.disable_warnings.set(self.config["General"].getboolean("disable_warnings", fallback=False))
 
+        # Initialize window references to avoid tracking errors during startup
+        self.damage_meter_window = None
+        self.leaderboard_window = None
+        self.skimmers_window = None
+        self.details_window = None
+        self.options_window = None
+
         # We use a staggered delay for visibility and tracking
         self.root.after(300, self.initial_show)
         self.root.after(800, self.start_window_tracking)
-        self.root.after(1000, self.start_fade_in)
-        # Aggressive first-launch foreground sequence
-        self.root.after(1500, self.initial_foreground_burst)
+        self.root.after(1000, self.start_show)
         
         # Restore previously open windows
         if "General" in self.config:
@@ -992,7 +1098,7 @@ class CombatLogApp:
         self.pulse_state = False
         self.last_pulse_time = 0
         
-        self.target_hwnd = None
+        self.target_hwnd = getattr(self, "target_hwnd", None)
         # Performance metrics tracking
         self.player_data = {}  # {name: {"damage": 0, "healing": 0, "logs": []}}
         self.leaderboard_data = {} # Persistent damage between resets
@@ -1013,6 +1119,9 @@ class CombatLogApp:
         self.time_window_leaderboard = 30
         self.time_window_skimmers = 30
         self.time_window_dm = 30 # Fixed Seconds for DM timeout
+        self.always_on_top = False # Always off on startup
+        self.inventory_full = False
+        self.inventory_full_time = None
 
         # Incremental app version
         self.version = "1.0"
@@ -1021,6 +1130,7 @@ class CombatLogApp:
             self.time_window_details = self.config["General"].getint("time_window_details", fallback=self.config["General"].getint("time_window", fallback=30))
             self.time_window_leaderboard = self.config["General"].getint("time_window_leaderboard", fallback=self.config["General"].getint("time_window", fallback=30))
             self.time_window_skimmers = self.config["General"].getint("time_window_skimmers", fallback=self.config["General"].getint("time_window", fallback=30))
+            # self.always_on_top = self.config["General"].getboolean("always_on_top", fallback=self.config["General"].getboolean("afk_loot", fallback=False))
             self.time_window_dm = 30 # Fixed
 
         # Incremental parsing state
@@ -1032,26 +1142,18 @@ class CombatLogApp:
         
         # Set Window Icon
 
-    def initial_foreground_burst(self):
-        """Aggressive first-launch foreground sequence."""
-        self.force_to_foreground()
-        self.root.after(500, self.force_to_foreground)
-        self.root.after(1500, self.force_to_foreground)
-        self.root.after(3000, self.force_to_foreground)
-
     def initial_show(self):
         """Delayed initialization to ensure window is fully created before applying attributes."""
         try:
             print("DEBUG: Initial show triggered")
             # Border removal is now handled in __init__ for immediate effect
-            self.root.deiconify()
-            self.root.lift()
-            self.root.attributes("-topmost", True)
+            self.root.withdraw() # Keep it withdrawn initially
             
-            # Force visibility and Z-order using Win32
+            # We don't force topmost here anymore, let check_target_window handle it
+            
+            # Ensure Z-order is prepared using Win32, but keep hidden
             hwnd = self.root.winfo_id()
-            user32.ShowWindow(hwnd, SW_SHOW)
-            user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+            user32.SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_HIDEWINDOW)
         except Exception as e:
             print(f"DEBUG: Error in initial_show: {e}")
 
@@ -1077,17 +1179,23 @@ class CombatLogApp:
     def start_window_tracking(self):
         """Starts the periodic check for the target window."""
         self.check_target_window()
+        # Ensure UI labels are responsive even if no log events
+        if hasattr(self, 'lbl_time_val'):
+            self.refresh_ui_only()
 
     def start_analysis_loop(self):
         """Starts the periodic log analysis loop."""
         # Optimization: only run analysis if we've completed the previous one
         if not hasattr(self, '_analysis_in_progress') or not self._analysis_in_progress:
+            # We don't want to use a background thread for the regular periodic check
+            # because analyze_log might call UI methods if it detects a timeout/reset.
+            # However, for periodic checks, new_events is usually small, so it's fast.
             self._analysis_in_progress = True
             try:
                 self.analyze_log(manual=False)
             finally:
                 self._analysis_in_progress = False
-        self.root.after(200, self.start_analysis_loop)
+        self.root.after(100, self.start_analysis_loop)
 
     def on_exit(self):
         """Saves configuration and exits the application."""
@@ -1109,6 +1217,7 @@ class CombatLogApp:
         self.config["General"]["time_window_details"] = str(self.time_window_details)
         self.config["General"]["time_window_leaderboard"] = str(self.time_window_leaderboard)
         self.config["General"]["time_window_skimmers"] = str(self.time_window_skimmers)
+        self.config["General"]["always_on_top"] = "False" # Don't persist ONTOP between sessions
 
         # Remember which windows were open
         self.config["General"]["details_open"] = str(self.details_window is not None and self.details_window.winfo_exists())
@@ -1200,11 +1309,12 @@ class CombatLogApp:
         return matching_windows[0]
 
     def is_foreground_ours(self):
-        """Checks if the current foreground window belongs to this application."""
+        """Checks if the current foreground window belongs to this application or the game."""
         foreground_hwnd = user32.GetForegroundWindow()
         if not foreground_hwnd:
             return False
             
+        # 1. Check if it's our application (matches our Process ID)
         foreground_pid = wintypes.DWORD()
         user32.GetWindowThreadProcessId(foreground_hwnd, ctypes.byref(foreground_pid))
         our_pid = kernel32.GetCurrentProcessId()
@@ -1212,128 +1322,129 @@ class CombatLogApp:
         if foreground_pid.value == our_pid:
             return True
             
-        try:
-            app_hwnd = self.root.winfo_id()
+        # 2. Check if it's the game or a child/parent/sibling of the game
+        if self.target_hwnd and user32.IsWindow(self.target_hwnd):
+            # Is foreground the game itself?
+            if foreground_hwnd == self.target_hwnd:
+                return True
+                
+            # Does the foreground window belong to the same process as the game?
+            target_pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(self.target_hwnd, ctypes.byref(target_pid))
+            if foreground_pid.value == target_pid.value:
+                return True
+
+            # Check if foreground is a child/descendant of the game
             temp_hwnd = foreground_hwnd
             while temp_hwnd:
-                if temp_hwnd == app_hwnd:
+                if temp_hwnd == self.target_hwnd:
                     return True
-                temp_hwnd = user32.GetParent(temp_hwnd)
-        except:
-            pass
-            
-        return False
+                # GetParent can sometimes miss owned windows (popups)
+                parent = user32.GetParent(temp_hwnd)
+                owner = user32.GetWindow(temp_hwnd, 4) # GW_OWNER = 4
+                
+                # Try to find a valid ancestor
+                next_hwnd = parent if parent else owner
+                if not next_hwnd or next_hwnd == temp_hwnd: break
+                temp_hwnd = next_hwnd
+                
+            # Is the game a child/descendant of the foreground?
+            temp_hwnd = self.target_hwnd
+            while temp_hwnd:
+                if temp_hwnd == foreground_hwnd:
+                    return True
+                parent = user32.GetParent(temp_hwnd)
+                owner = user32.GetWindow(temp_hwnd, 4) # GW_OWNER = 4
+                
+                next_hwnd = parent if parent else owner
+                if not next_hwnd or next_hwnd == temp_hwnd: break
+                temp_hwnd = next_hwnd
 
-    def force_to_foreground(self):
-        """Attempts to force the main window to the foreground using various methods."""
-        try:
-            hwnd = self.root.winfo_id()
-            
-            # If minimized, restore first
-            if is_window_minimized(hwnd):
-                user32.ShowWindow(hwnd, SW_RESTORE)
-            else:
-                user32.ShowWindow(hwnd, SW_SHOW)
-            
-            # method 1: standard lift and topmost
-            self.root.deiconify()
-            self.root.lift()
-            self.root.attributes("-topmost", True)
-            
-            # method 2: Win32 SetWindowPos
-            # HWND_TOPMOST = -1
-            user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
-            
-            # method 3: focus_force and SetForegroundWindow
-            self.root.focus_force()
-            user32.SetForegroundWindow(hwnd)
-        except:
-            pass
+        return False
 
     def check_target_window(self):
         """Periodically checks if the target window exists and updates visibility logic."""
         try:
-            # Check if the app itself or its children/popups are focused
-            is_app_foreground = self.is_foreground_ours()
-
-            # For "locking on" to the latest client, we re-verify the foreground window
-            foreground_hwnd = user32.GetForegroundWindow()
-            
-            # If the foreground window is an SWG client, lock onto it
-            length = user32.GetWindowTextLengthW(foreground_hwnd)
-            if length > 0:
-                buffer = ctypes.create_unicode_buffer(length + 1)
-                user32.GetWindowTextW(foreground_hwnd, buffer, length + 1)
-                title = buffer.value
-                if "SwgClient" in title or "Star Wars Galaxies" in title:
-                    self.target_hwnd = foreground_hwnd
-
             # If no target locked, or target invalid, try to find any SWG window
             if not self.target_hwnd or not user32.IsWindow(self.target_hwnd):
                 self.target_hwnd = self.find_target_window()
 
-            # THE CHANGE: We no longer hide (fade out) if the game isn't in focus.
-            # We stay visible on the desktop, but assert "topmost" aggressively only when needed.
-            should_show = True 
+            # Determine if we should be topmost and if we should show
+            is_valid_foreground = self.is_foreground_ours()
             
-            is_target_foreground = (foreground_hwnd == self.target_hwnd) if self.target_hwnd else False
+            # Check if game is minimized
+            is_minimized = False
+            if self.target_hwnd and user32.IsWindow(self.target_hwnd):
+                placement = wintypes.WINDOWPLACEMENT()
+                placement.length = ctypes.sizeof(wintypes.WINDOWPLACEMENT)
+                if user32.GetWindowPlacement(self.target_hwnd, ctypes.byref(placement)):
+                    is_minimized = (placement.showCmd == 2)
+            
+            should_show = (is_valid_foreground or self.always_on_top) and not is_minimized
+            is_topmost_needed = should_show
 
             if should_show:
-                if self.root.state() == "withdrawn" or self.current_alpha < self.target_alpha:
-                    self.start_fade_in()
+                self.start_show()
                 
                 # List of windows to manage (root + popups)
-                managed_windows = [self.root]
-                if self.damage_meter_window and self.damage_meter_window.winfo_exists():
-                    managed_windows.append(self.damage_meter_window)
-                if self.leaderboard_window and self.leaderboard_window.winfo_exists():
-                    managed_windows.append(self.leaderboard_window)
-                if self.skimmers_window and self.skimmers_window.winfo_exists():
-                    managed_windows.append(self.skimmers_window)
-                if self.details_window and self.details_window.winfo_exists():
-                    managed_windows.append(self.details_window)
-                if self.options_window and self.options_window.winfo_exists():
-                    managed_windows.append(self.options_window)
+                managed_windows = self._get_managed_windows()
 
-                # Keep on top
-                is_foreground = is_target_foreground or is_app_foreground
-                
-                # Check if state already matches to avoid redundant SetWindowPos calls (which causes flickering)
+                # Check if state already matches to avoid redundant SetWindowPos calls
                 if not hasattr(self, '_last_topmost_state'):
                     self._last_topmost_state = None
 
-                if is_foreground:
+                if is_topmost_needed:
                     if self._last_topmost_state != True:
                         for win in managed_windows:
-                            win_hwnd = win.winfo_id()
-                            user32.SetWindowPos(win_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
-                            win.attributes("-topmost", True)
+                            try:
+                                win_hwnd = win.winfo_id()
+                                user32.SetWindowPos(win_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                                win.attributes("-topmost", True)
+                            except:
+                                pass
                         self._last_topmost_state = True
-                        
-                    if not is_app_foreground:
-                        # self.root.lift() # Removed lift() as it can cause flickering with multiple topmost windows
-                        # Occasionally force focus if lost
-                        if is_target_foreground and self.current_alpha >= self.target_alpha:
-                             if not hasattr(self, '_last_foreground_force') or (time.time() - self._last_foreground_force > 5):
-                                 self.root.focus_force()
-                                 self._last_foreground_force = time.time()
                 else:
                     if self._last_topmost_state != False:
                         for win in managed_windows:
-                            win_hwnd = win.winfo_id()
-                            win.attributes("-topmost", False)
-                            user32.SetWindowPos(win_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE)
+                            try:
+                                win_hwnd = win.winfo_id()
+                                win.attributes("-topmost", False)
+                                user32.SetWindowPos(win_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE)
+                            except:
+                                pass
                         self._last_topmost_state = False
             else:
-                # This branch is currently unreachable but kept for structural integrity
-                if self.root.state() != "withdrawn" and self.current_alpha > 0:
-                    self.start_fade_out()
+                # Use a small grace period (1 second) before hiding to prevent flickering during transient focus shifts
+                if not hasattr(self, '_hide_grace_after_id') or self._hide_grace_after_id is None:
+                    self._hide_grace_after_id = self.root.after(1000, self._perform_graceful_hide)
 
         except Exception as e:
             print(f"Error in window tracking: {e}")
 
-        # Check again in 500ms for smoother detection and transition
-        self.root.after(500, self.check_target_window)
+        # Check again in 250ms for smoother detection and transition
+        self.root.after(250, self.check_target_window)
+
+    def _perform_graceful_hide(self):
+        """Actually performs the hide after the grace period if still out of focus."""
+        self._hide_grace_after_id = None
+        try:
+            is_valid_foreground = self.is_foreground_ours()
+            if not is_valid_foreground and not self.always_on_top:
+                if self.root.state() != "withdrawn" and self.current_alpha > 0:
+                    # Ensure windows are NOT topmost when we are hiding
+                    if getattr(self, '_last_topmost_state', None) != False:
+                        for win in self._get_managed_windows():
+                            try:
+                                win.attributes("-topmost", False)
+                                win_hwnd = win.winfo_id()
+                                user32.SetWindowPos(win_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE)
+                            except:
+                                pass
+                        self._last_topmost_state = False
+                        
+                    self.start_hide()
+        except Exception as e:
+            print(f"Error in graceful hide: {e}")
 
     def show_help_notice(self):
         """Shows the character log notice manually when Help is clicked."""
@@ -1363,12 +1474,17 @@ class CombatLogApp:
         # Main window re-assertion is now handled by its own loop
         # so we don't need to block or force here anymore.
 
-    def start_fade_in(self):
-        """Initializes fade-in process."""
+    def start_show(self):
+        """Immediately shows all managed windows and cancels any pending hide."""
+        if hasattr(self, '_hide_grace_after_id') and self._hide_grace_after_id:
+            self.root.after_cancel(self._hide_grace_after_id)
+            self._hide_grace_after_id = None
+            
         if self.root.state() == "withdrawn":
             self.current_alpha = 0.0
-            self.root.attributes("-alpha", 0.0)
-            self.root.deiconify()
+            for win in self._get_managed_windows():
+                win.attributes("-alpha", 0.0)
+                win.deiconify()
         
         if self.current_alpha < self.target_alpha:
             if self.fade_after_id:
@@ -1376,16 +1492,16 @@ class CombatLogApp:
             self.fade_in()
 
     def fade_in(self):
-        """Gradually increases window transparency."""
         if self.current_alpha < self.target_alpha:
-            self.current_alpha = min(self.target_alpha, self.current_alpha + self.fade_speed)
-            self.root.attributes("-alpha", self.current_alpha)
+            self.current_alpha = min(self.target_alpha, self.current_alpha + 0.1)
+            for win in self._get_managed_windows():
+                win.attributes("-alpha", self.current_alpha)
             self.fade_after_id = self.root.after(20, self.fade_in)
         else:
             self.fade_after_id = None
 
-    def start_fade_out(self):
-        """Initializes fade-out process."""
+    def start_hide(self):
+        """Immediately starts hiding all managed windows."""
         if self.root.state() == "withdrawn":
             return
             
@@ -1395,14 +1511,30 @@ class CombatLogApp:
             self.fade_out()
 
     def fade_out(self):
-        """Gradually decreases window transparency and hides it."""
         if self.current_alpha > 0.0:
-            self.current_alpha = max(0.0, self.current_alpha - self.fade_speed)
-            self.root.attributes("-alpha", self.current_alpha)
+            self.current_alpha = max(0.0, self.current_alpha - 0.1)
+            for win in self._get_managed_windows():
+                win.attributes("-alpha", self.current_alpha)
             self.fade_after_id = self.root.after(20, self.fade_out)
         else:
-            self.root.withdraw()
+            for win in self._get_managed_windows():
+                win.withdraw()
             self.fade_after_id = None
+
+    def _get_managed_windows(self):
+        """Returns a list of all currently active managed windows."""
+        managed = [self.root]
+        if self.damage_meter_window and self.damage_meter_window.winfo_exists():
+            managed.append(self.damage_meter_window)
+        if self.leaderboard_window and self.leaderboard_window.winfo_exists():
+            managed.append(self.leaderboard_window)
+        if self.skimmers_window and self.skimmers_window.winfo_exists():
+            managed.append(self.skimmers_window)
+        if self.details_window and self.details_window.winfo_exists():
+            managed.append(self.details_window)
+        if self.options_window and self.options_window.winfo_exists():
+            managed.append(self.options_window)
+        return managed
 
     def build_layout(self):
         # Main border wrapper for the whole app
@@ -1508,6 +1640,21 @@ class CombatLogApp:
         
         self.app_title_label.bind("<Button-1>", self.click_window)
         self.app_title_label.bind("<B1-Motion>", self.drag_window)
+
+        # ONTOP Toggle
+        self.ontop_btn = tk.Label(
+            title_bar,
+            text="ONTOP: OFF",
+            bg=PANEL_DARK,
+            fg=TEXT_SECONDARY,
+            font=("Segoe UI", 8, "bold"),
+            cursor="hand2",
+            padx=10
+        )
+        self.ontop_btn.pack(side=tk.LEFT)
+        self.ontop_btn.bind("<Button-1>", lambda e: self.toggle_always_on_top())
+        if self.always_on_top:
+            self.ontop_btn.config(text="ONTOP: ON", fg=ACCENT_BLUE)
         
         # Navigation Labels Row (Leaderboard, Details, Spy) - under the title
         nav_frame = tk.Frame(header_container, bg=PANEL_DARK)
@@ -1691,9 +1838,11 @@ class CombatLogApp:
         # Handle file switch or truncation
         if actual_file_path != self.last_processed_file:
             print(f"DEBUG: File switched or initial load: {actual_file_path}")
-            # If this is the initial load, we seek to the end
-            if not self.last_processed_file:
+            # If this is the initial load or manual analysis, we read the last 256KB for history
+            is_initial_history_load = False
+            if not self.last_processed_file or manual:
                 self.last_read_offset = -1
+                is_initial_history_load = True
             else:
                 self.last_read_offset = 0
                 
@@ -1702,6 +1851,8 @@ class CombatLogApp:
             # Reset session timing on file switch
             self.app_start_time = None
             self.last_combat_time = 0
+        else:
+            is_initial_history_load = False
         
         try:
             # Check for truncation
@@ -1735,59 +1886,123 @@ class CombatLogApp:
                 # Force refresh UI immediately if we have new events
                 self.last_ui_update_time = 0 
                 
-                # On very first load/event, if app_start_time is not set, 
-                # use the timestamp of the LATEST combat event to allow immediate display
-                # without picking up old events from the same batch.
-                if self.app_start_time is None:
-                    # Look for the LATEST valid combat timestamp (damage only) in new_events
-                    latest_combat_ts = None
-                    for e in reversed(new_events):
-                        if e["timestamp"] and e["damage"] > 0:
-                            latest_combat_ts = e["timestamp"]
-                            break
-                    if latest_combat_ts:
-                        # Set to 1 second before this event to be safe
-                        self.app_start_time = latest_combat_ts - timedelta(seconds=1)
-                        print(f"DEBUG: Initialized app_start_time from LATEST log event: {self.app_start_time}")
+                print(f"DEBUG: New batch size: {len(new_events)}. Damage events in batch: {len([e for e in new_events if e['damage'] > 0])}")
 
-                print(f"DEBUG: Processed {len(new_events)} new events. First TS: {new_events[0]['timestamp']}, Start: {self.app_start_time}")
-                has_combat = any(e["damage"] > 0 for e in new_events)
-                if has_combat:
-                    # If it's been more than X seconds since the last damage, reset the meter
-                    if self.last_combat_time > 0 and (now_ts - self.last_combat_time) > self.time_window_dm:
-                        print(f"DEBUG: Combat timeout ({self.time_window_dm}s), resetting session. Last: {self.last_combat_time}, Now: {now_ts}")
-                        self.leaderboard_data = {}
-                        self.app_start_time = None # Force re-initialization from new combat events
+                # If app_start_time is None (initial launch or after timeout),
+                # try to initialize it from the FIRST damage event in the new batch.
+                # If this is the initial history load, only initialize if the latest damage is recent (within 2 mins)
+                if self.app_start_time is None:
+                    damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
+                    if damage_events:
+                        latest_damage_ts = max(e["timestamp"] for e in damage_events)
+                        is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 120
                         
-                        # When combat resets, also update app_start_time to the timestamp 
-                        # of the LATEST event in this new combat session to prevent jumps.
-                        combat_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
-                        if combat_events:
-                            # Use 1 second buffer relative to the LATEST event in the batch
-                            self.app_start_time = max(e["timestamp"] for e in combat_events) - timedelta(seconds=1)
-                            print(f"DEBUG: New app_start_time (LATEST) set to: {self.app_start_time}")
-                            # After setting new app_start_time, we MUST prune damage events
-                            # from all_events to remove data from the previous session.
-                            # BUT we must keep loot and other historical window data.
-                            # We keep: 
-                            # 1. Anything starting from the new app_start_time
-                            # 2. Non-damage events (like loot) within the max historical window
+                        if not is_initial_history_load or is_recent:
+                            self.app_start_time = min(e["timestamp"] for e in damage_events)
+                            
+                            # CRITICAL: Reset damage dealt and damage taken stats for the main UI
+                            self.damage_dealt = 0
+                            self.damage_taken = 0
+                            
+                            # CRITICAL: When starting a NEW session, synchronize the system clock anchor 
+                            # to the log event's timestamp as accurately as possible. 
+                            # This prevents the duration from jumping if the log was read late.
+                            self.last_log_sync_time = self.app_start_time
+                            self.last_combat_time = now_ts
+                            # If the log event is already several seconds old when we first read it, 
+                            # we must adjust our system-time anchor backwards so the 'projected' duration 
+                            # matches the 'log' duration at this exact moment.
+                            log_age = (now_dt - self.app_start_time).total_seconds()
+                            if log_age > 0:
+                                # Clamp log_age to a reasonable value (don't sync back more than 60s)
+                                self.last_combat_time = now_ts - min(60.0, log_age)
+                                
+                            self.last_ui_update_time = 0 # Force refresh
+                            
+                            # CRITICAL: If we just initialized app_start_time, prune historical damage
+                            # to ensure the NEW session starts clean.
                             max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
                             history_limit = now_dt - timedelta(minutes=max_history_mins)
                             
+                            old_event_count = len(self.all_events)
                             self.all_events = [
                                 e for e in self.all_events 
                                 if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
-                                   (e["type"] != "damage" and e["timestamp"] and e["timestamp"] >= history_limit)
+                                   (e["type"] not in ["dealt", "taken", "damage"] and e["timestamp"] and e["timestamp"] >= history_limit)
                             ]
-                    self.last_combat_time = now_ts
+                            events_for_ui = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
+                            print(f"DEBUG: Initialized app_start_time ({self.app_start_time}) and pruned {old_event_count - len(self.all_events)} old damage events.")
+                        else:
+                            print(f"DEBUG: Skipping app_start_time init from initial load because latest damage ({latest_damage_ts}) is not recent.")
+                    else:
+                        print("DEBUG: app_start_time is None and no damage events in this batch to initialize it.")
+
+                print(f"DEBUG: Processed {len(new_events)} new events. First TS: {new_events[0]['timestamp']}, Start: {self.app_start_time}")
+                
+                has_combat = any(e["damage"] > 0 for e in new_events)
+                if has_combat:
+                    # Find latest damage event in the NEW batch
+                    damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
+                    latest_new_damage_ts = max(e["timestamp"] for e in damage_events)
+                    
+                    # If this is the initial history load, we only sync if damage is recent
+                    is_recent = (datetime.now() - latest_new_damage_ts).total_seconds() < 120
+                    
+                    if not is_initial_history_load or is_recent:
+                        # If it's been more than X seconds since the last damage, reset the meter
+                        if self.last_combat_time > 0 and (now_ts - self.last_combat_time) > self.time_window_dm:
+                            print(f"DEBUG: Combat timeout ({self.time_window_dm}s), resetting session. Last: {self.last_combat_time}, Now: {now_ts}")
+                            self.leaderboard_data = {}
+                            
+                            # Reset app_start_time to the EARLIEST event of the NEW session in this batch
+                            if damage_events:
+                                self.app_start_time = min(e["timestamp"] for e in damage_events)
+                                # CRITICAL: Also reset sync anchor when session is reset
+                                self.last_log_sync_time = self.app_start_time
+                                self.last_combat_time = now_ts
+                                
+                                # SYNC system clock to log age for clean start
+                                log_age = (now_dt - self.app_start_time).total_seconds()
+                                if log_age > 0:
+                                    self.last_combat_time = now_ts - min(60.0, log_age)
+                                    
+                                print(f"DEBUG: Combat reset. New app_start_time: {self.app_start_time}")
+                                
+                                # Prune all_events to remove damage from the previous session
+                                max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
+                                history_limit = now_dt - timedelta(minutes=max_history_mins)
+                                
+                                old_event_count = len(self.all_events)
+                                self.all_events = [
+                                    e for e in self.all_events 
+                                    if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
+                                       (e["type"] not in ["dealt", "taken", "damage"] and e["timestamp"] and e["timestamp"] >= history_limit)
+                                ]
+                                events_for_ui = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
+                                print(f"DEBUG: Combat reset. New app_start_time: {self.app_start_time}. Pruned {old_event_count - len(self.all_events)} old events.")
+                            else:
+                                self.app_start_time = None
+                        
+                        # CRITICAL: Sync last_combat_time to system time BUT anchor it to the LATEST log event we just read
+                        self.last_combat_time = now_ts
+                        self.last_log_sync_time = latest_new_damage_ts
+                    else:
+                         # Ensure anchors are clean after history load if not recent
+                        self.last_combat_time = 0
+                        self.last_log_sync_time = None
+                elif is_initial_history_load:
+                    # Ensure anchors are clean after history load
+                    self.last_combat_time = 0
+                    self.last_log_sync_time = None
 
             # Re-calculate leaderboard_data from all_events (already pruned)
             if manual or new_events:
                 self.leaderboard_data = {}
                 for event in self.all_events:
                     # Respect time window AND manual reset
-                    if event["damage"] > 0 and event["timestamp"] and event["timestamp"] >= lb_window_ago:
+                    if event["damage"] > 0 and event["timestamp"]:
+                        if self.app_start_time and event["timestamp"] < self.app_start_time:
+                            continue
                         if self.leaderboard_reset_time and event["timestamp"] < self.leaderboard_reset_time:
                             continue
                             
@@ -1804,19 +2019,26 @@ class CombatLogApp:
             events_for_ui = self.all_events
             if self.app_start_time:
                 events_for_ui = [e for e in events_for_ui if e["timestamp"] and e["timestamp"] >= self.app_start_time]
+            else:
+                events_for_ui = [] # No session started
+
+            if manual or new_events:
+                damage_in_ui = len([e for e in events_for_ui if e['damage'] > 0])
+                print(f"DEBUG: Final events_for_ui count: {len(events_for_ui)} (Damage: {damage_in_ui}). First event type: {events_for_ui[0]['type'] if events_for_ui else 'N/A'}")
 
             # OPTIMIZATION: process_events_for_ui is heavy. Only run if we have new data OR if it's been a while
             # Also refresh immediately if skimmers, details or leaderboard are open
             is_any_open = (self.skimmers_window and self.skimmers_window.winfo_exists()) or \
                          (self.details_window and self.details_window.winfo_exists()) or \
-                         (self.leaderboard_window and self.leaderboard_window.winfo_exists())
+                         (self.leaderboard_window and self.leaderboard_window.winfo_exists()) or \
+                         (self.damage_meter_window and self.damage_meter_window.winfo_exists())
             
-            if new_events or manual or is_any_open or not hasattr(self, 'last_full_ui_update') or (time.time() - self.last_full_ui_update > 2.0):
-                self.process_events_for_ui(events_for_ui, manual=manual, all_events=self.all_events)
+            if new_events or manual or is_any_open or not hasattr(self, 'last_full_ui_update') or (time.time() - self.last_full_ui_update > 1.0):
+                self.root.after(0, lambda: self.process_events_for_ui(events_for_ui, manual=manual, all_events=self.all_events))
                 self.last_full_ui_update = time.time()
 
             # Still refresh damage meter for duration ticks even if no new events
-            self.refresh_damage_meter_window(events_for_ui)
+            self.root.after(0, lambda: self.refresh_damage_meter_window(events_for_ui))
             
             # Also update main UI stats if they exist
             damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count = calculate_dps(events_for_ui)
@@ -1824,24 +2046,64 @@ class CombatLogApp:
             # Main UI Duration (Cyan when paused/stopped)
             is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > self.time_window_dm
             
+            # SUPERCEED: If we have NEW combat events in this batch, we are NOT paused
+            if new_events and any(e["damage"] > 0 for e in new_events):
+                is_paused = False
+            
             if is_paused:
                 # If paused, show exact combat duration and dps from calculate_dps
                 pass 
             else:
                 # If active, allow live duration ticker in main UI as well
+                # RELAXED CHECK: If we have damage in the current batch but app_start_time is None,
+                # initialize it immediately to avoid 1-cycle delay
+                if self.app_start_time is None and new_events:
+                    damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
+                    if damage_events:
+                        latest_damage_ts = max(e["timestamp"] for e in damage_events)
+                        is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 120
+                        
+                        if not is_initial_history_load or is_recent:
+                            self.app_start_time = min(e["timestamp"] for e in damage_events)
+                            # Ensure anchor is also set
+                            if self.last_combat_time == 0:
+                                self.last_log_sync_time = self.app_start_time
+                                self.last_combat_time = now_ts
+                                
+                                # SYNC system clock to log age
+                                log_age = (now_dt - self.app_start_time).total_seconds()
+                                if log_age > 0:
+                                    self.last_combat_time = now_ts - min(60.0, log_age)
+                            
+                            # CRITICAL: If we just initialized app_start_time here, also prune all_events
+                            # to remove any damage that was sitting in all_events before this batch.
+                            max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
+                            history_limit = now_dt - timedelta(minutes=max_history_mins)
+                            
+                            old_event_count = len(self.all_events)
+                            self.all_events = [
+                                e for e in self.all_events 
+                                if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
+                                   (e["type"] not in ["dealt", "taken", "damage"] and e["timestamp"] and e["timestamp"] >= history_limit)
+                            ]
+                            events_for_ui = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
+                            print(f"DEBUG: Relaxed init app_start_time ({self.app_start_time}) and pruned {old_event_count - len(self.all_events)} old damage events.")
+
                 if self.app_start_time and self.last_combat_time > 0:
-                    latest_event_ts = None
-                    if events_for_ui:
-                        # Find latest damage event for sync
-                        latest_event_ts = max(e["timestamp"] for e in events_for_ui if e["timestamp"] and e["damage"] > 0)
+                    # Determine our sync baseline
+                    anchor_ts = getattr(self, 'last_log_sync_time', self.app_start_time)
+                    time_since_sync = now_ts - self.last_combat_time
                     
-                    if latest_event_ts:
-                        time_since_last_event = time.time() - self.last_combat_time
-                        live_now = latest_event_ts + timedelta(seconds=time_since_last_event)
-                    else:
-                        live_now = datetime.now()
+                    # Project current time from anchor
+                    projected_now = anchor_ts + timedelta(seconds=time_since_sync)
                     
+                    # Safety cap: Cannot project past actual system clock
+                    if projected_now > now_dt:
+                        projected_now = now_dt
+                    
+                    live_now = projected_now
                     live_duration = (live_now - self.app_start_time).total_seconds()
+                    
                     if live_duration > duration:
                         duration = live_duration
                         if duration > 0:
@@ -1864,12 +2126,15 @@ class CombatLogApp:
                 else:
                     duration_color = "#AAAAAA" # Dim gray for pulse off
             
-            if hasattr(self, 'lbl_damage_val'):
-                self.lbl_damage_val.config(text=f"{damage_dealt:.0f}")
-            if hasattr(self, 'lbl_dps_val'):
-                self.lbl_dps_val.config(text=f"{dps:.2f}")
-            if hasattr(self, 'lbl_time_val'):
-                self.lbl_time_val.config(text=display_duration, fg=duration_color)
+            def update_main_labels(d_dealt=damage_dealt, dps_val=dps, disp_dur=display_duration, dur_col=duration_color):
+                if hasattr(self, 'lbl_damage_val'):
+                    self.lbl_damage_val.config(text=f"{d_dealt:.0f}")
+                if hasattr(self, 'lbl_dps_val'):
+                    self.lbl_dps_val.config(text=f"{dps_val:.2f}")
+                if hasattr(self, 'lbl_time_val'):
+                    self.lbl_time_val.config(text=disp_dur, fg=dur_col)
+
+            self.root.after(0, update_main_labels)
             
             total_time = time.time() - start_time
             if total_time > 0.5:
@@ -1877,26 +2142,27 @@ class CombatLogApp:
 
         except FileNotFoundError as error:
             if manual:
-                ThemedMessagebox.showerror(self.root, "File Not Found", str(error))
+                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "File Not Found", str(error)))
         except ValueError as error:
             if manual:
-                ThemedMessagebox.showerror(self.root, "Invalid File", str(error))
+                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "Invalid File", str(error)))
         except PermissionError:
             if manual:
-                ThemedMessagebox.showerror(self.root, "Permission Error", "The selected file could not be opened.")
+                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "Permission Error", "The selected file could not be opened."))
         except Exception as error:
             if manual:
-                ThemedMessagebox.showerror(self.root, "Error", f"An unexpected error occurred: {error}")
+                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "Error", f"An unexpected error occurred: {error}"))
             else:
                 print(f"Error in background analysis: {error}")
 
     def refresh_ui_only(self):
         """Refreshes the UI using already parsed events."""
-        events = self.all_events
-        if self.app_start_time:
-            events = [e for e in events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
-        
-        self.process_events_for_ui(events, all_events=self.all_events)
+        if not self.app_start_time:
+            # If no combat session has started, we don't show any damage/DPS data
+            self.process_events_for_ui([], all_events=self.all_events)
+        else:
+            events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
+            self.process_events_for_ui(events, all_events=self.all_events)
         
         # Update Loot count on the label
         loot_count = sum(len(items) for items in self.loot_data.values())
@@ -1916,6 +2182,7 @@ class CombatLogApp:
         # Reset player data and loot for this UI refresh
         self.player_data = {}
         self.loot_data = {}
+        self.inventory_full = False
         player_activity = {} # {name: last_active_time}
 
         # Process ALL events for loot (window history) and Details list (window activity)
@@ -1960,6 +2227,13 @@ class CombatLogApp:
                     })
                 continue
 
+            # Handle Inventory Full
+            if str(event["type"]) == "inventory_full":
+                if event["timestamp"] and event["timestamp"] >= sk_window_ago:
+                    self.inventory_full = True
+                    self.inventory_full_time = event["timestamp"]
+                continue
+
             # Handle PvP Kill events
             if str(event["type"]) == "pvp_kill":
                 now = datetime.now()
@@ -1994,9 +2268,10 @@ class CombatLogApp:
                 })
                 continue
 
-            # Filter for last window for details
+        # Filter for last window for details
             if event["timestamp"] and event["timestamp"] < dt_window_ago:
-                continue
+                if id(event) not in event_ids: # Don't skip if it's part of current session
+                    continue
             
             if not is_source_npc:
                 if source not in self.player_data:
@@ -2158,7 +2433,6 @@ class CombatLogApp:
 
     def show_skimmers_window(self):
         if self.skimmers_window and self.skimmers_window.winfo_exists():
-            self.on_close_skimmers()
             return
 
         self.skimmers_window = tk.Toplevel(self.root)
@@ -2180,34 +2454,16 @@ class CombatLogApp:
         if saved_x is not None and saved_y is not None:
             win_x, win_y = saved_x, saved_y
         else:
-            self.root.update_idletasks()
-            main_x = self.root.winfo_x()
-            main_y = self.root.winfo_y()
-            main_width = self.root.winfo_width()
-            
-            # Smart snapping: check Main -> (Other windows)
-            snap_x = main_x + main_width + 5
-            
-            current_popups = []
-            if self.leaderboard_window and self.leaderboard_window.winfo_exists():
-                current_popups.append((self.leaderboard_window.winfo_x(), self.leaderboard_window.winfo_width()))
-            if self.details_window and self.details_window.winfo_exists():
-                current_popups.append((self.details_window.winfo_x(), self.details_window.winfo_width()))
-            if self.skimmers_window and self.skimmers_window.winfo_exists():
-                current_popups.append((self.skimmers_window.winfo_x(), self.skimmers_window.winfo_width()))
-            
-            # Sort popups by x position
-            current_popups.sort()
-            
-            for pop_x, pop_w in current_popups:
-                if abs(pop_x - snap_x) < 20: # Overlap
-                    snap_x = pop_x + pop_w + 5
-            win_x, win_y = snap_x, main_y
+            # Default Grid Position: Row 1, Col 1
+            win_x, win_y = 50 + 460, 50 + 90
         
         self.skimmers_window.geometry(f"{dw_width}x{dw_height}+{win_x}+{win_y}")
         self.skimmers_window.configure(bg=WINDOW_BG)
-        self.skimmers_window.attributes("-topmost", True)
         self.skimmers_window.overrideredirect(True)
+        self.skimmers_window.attributes("-alpha", 0.0)
+        
+        # Immediate alpha sync
+        self.skimmers_window.attributes("-alpha", self.current_alpha)
         
         self.skimmers_window.bind("<Button-1>", self.click_window_skimmers)
         self.skimmers_window.bind("<B1-Motion>", self.drag_window_skimmers)
@@ -2267,14 +2523,51 @@ class CombatLogApp:
             self.save_config()
             self.skimmers_window.destroy()
             self.skimmers_window = None
+            self.save_config()
+
+    def toggle_always_on_top(self):
+        self.always_on_top = not self.always_on_top
+        if hasattr(self, 'ontop_btn'):
+            if self.always_on_top:
+                self.ontop_btn.config(text="ONTOP: ON", fg=ACCENT_BLUE)
+            else:
+                self.ontop_btn.config(text="ONTOP: OFF", fg=TEXT_SECONDARY)
+        
+        # Reset the state tracking so the loop picks up the change immediately
+        self._last_topmost_state = None
+        
+        # If we just turned it OFF and neither game nor app is in focus, hide immediately
+        if not self.always_on_top:
+            foreground_hwnd = user32.GetForegroundWindow()
+            is_app_foreground = self.is_foreground_ours()
+            is_target_foreground = (foreground_hwnd == self.target_hwnd) if self.target_hwnd else False
+            
+            if not is_target_foreground and not is_app_foreground:
+                self.start_hide()
+        
+        # Run check logic once to apply changes immediately
+        self.check_target_window_once()
+        self.save_config()
+
+    def check_target_window_once(self):
+        # The main check_target_window loop runs every 500ms.
+        # Calling it here will apply the new ONTOP state immediately.
+        # We don't want to start another timer loop, so we just run the body once.
+        # Since check_target_window is already a method that calls after(), 
+        # we can just wait for the next tick, but users like immediate feedback.
+        # We'll just reset _last_topmost_state and let the next 500ms tick handle it,
+        # OR we can manually trigger it and handle the timer carefully.
+        # Given the 500ms delay, it's usually fast enough.
+        # But let's actually run the logic here once WITHOUT the timer part if possible,
+        # but to keep it simple, setting _last_topmost_state = None is the most important part.
+        pass
 
     def reset_skimmers_manual(self):
-        if messagebox.askyesno("Reset Skimmers", "Are you sure you want to reset skimmers data?"):
-            self.loot_data = {}
-            self.app_start_time = None
-            self.last_combat_time = 0
-            self.analyze_log(manual=True)
-            self.refresh_skimmers_window()
+        self.loot_data = {}
+        self.app_start_time = None
+        self.last_combat_time = 0
+        self.analyze_log(manual=True)
+        self.refresh_skimmers_window()
 
     def refresh_skimmers_window(self):
         if not self.skimmers_window or not self.skimmers_window.winfo_exists():
@@ -2288,6 +2581,11 @@ class CombatLogApp:
         if self.current_skimmer_player:
             self.show_skimmer_drilldown(self.current_skimmer_player)
         else:
+            # Show Inventory Full warning if applicable
+            if self.inventory_full:
+                full_frame = tk.Frame(self.skimmers_container, bg="#440000", pady=5)
+                full_frame.pack(fill=tk.X, pady=(0, 5))
+                tk.Label(full_frame, text="FULL INVENTORY", bg="#440000", fg="#ff4444", font=("Segoe UI", 10, "bold")).pack()
             self.show_skimmer_list()
 
         # Swap frames
@@ -2295,7 +2593,7 @@ class CombatLogApp:
         self.skimmers_container.pack(fill=tk.BOTH, expand=True)
         old_container.destroy()
         if hasattr(self, "skimmers_resize_handle"):
-            self.skimmers_resize_handle.lift()
+            pass
 
     def show_skimmer_list(self):
         if not self.loot_data:
@@ -2425,34 +2723,16 @@ class CombatLogApp:
         if saved_x is not None and saved_y is not None:
             win_x, win_y = saved_x, saved_y
         else:
-            self.root.update_idletasks()
-            main_x = self.root.winfo_x()
-            main_y = self.root.winfo_y()
-            main_width = self.root.winfo_width()
-            
-            # Smart snapping: check Main -> (Other windows)
-            snap_x = main_x + main_width + 5
-            
-            current_popups = []
-            if self.leaderboard_window and self.leaderboard_window.winfo_exists():
-                current_popups.append((self.leaderboard_window.winfo_x(), self.leaderboard_window.winfo_width()))
-            if self.details_window and self.details_window.winfo_exists():
-                current_popups.append((self.details_window.winfo_x(), self.details_window.winfo_width()))
-            if self.skimmers_window and self.skimmers_window.winfo_exists():
-                current_popups.append((self.skimmers_window.winfo_x(), self.skimmers_window.winfo_width()))
-            
-            # Sort popups by x position
-            current_popups.sort()
-            
-            for pop_x, pop_w in current_popups:
-                if abs(pop_x - snap_x) < 20: # Overlap
-                    snap_x = pop_x + pop_w + 5
-            win_x, win_y = snap_x, main_y
+            # Default Grid Position: Row 0, Col 1
+            win_x, win_y = 50 + 460, 50
         
         self.damage_meter_window.geometry(f"{dw_width}x{dw_height}+{win_x}+{win_y}")
         self.damage_meter_window.configure(bg=WINDOW_BG)
-        self.damage_meter_window.attributes("-topmost", True)
         self.damage_meter_window.overrideredirect(True)
+        self.damage_meter_window.attributes("-alpha", 0.0)
+        
+        # Immediate alpha sync
+        self.damage_meter_window.attributes("-alpha", self.current_alpha)
         
         self.damage_meter_window.bind("<Button-1>", self.click_window_damage_meter)
         self.damage_meter_window.bind("<B1-Motion>", self.drag_window_damage_meter)
@@ -2511,47 +2791,45 @@ class CombatLogApp:
             self.dm_labels_created = False
 
     def reset_damage_meter_manual(self):
-        if messagebox.askyesno("Reset Damage Meter", "Are you sure you want to reset the damage meter?"):
-            self.leaderboard_data = {}
-            # Manually reset start time
-            self.app_start_time = None
-            self.last_combat_time = 0
-            self.analyze_log(manual=True)
-            self.refresh_damage_meter_window()
+        self.leaderboard_data = {}
+        # Manually reset start time
+        self.app_start_time = None
+        self.last_combat_time = 0
+        self.analyze_log(manual=True)
+        self.refresh_damage_meter_window()
 
     def refresh_damage_meter_window(self, events=None):
         if not self.damage_meter_window or not self.damage_meter_window.winfo_exists():
             return
         
-        self.damage_meter_window.lift()
-            
         # Use provided events or re-calculate if none provided
         if events is None:
-            events = self.all_events
-            if hasattr(self, 'app_start_time'):
-                events = [e for e in events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
-            
-        damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count = calculate_dps(events)
+            if not self.app_start_time:
+                # If no session started, show zero stats
+                damage_dealt, damage_taken, dps, duration = 0, 0, 0, 0
+                miss_count, hit_count, avoided_count, taken_count = 0, 0, 0, 0
+            else:
+                events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
+                damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count = calculate_dps(events)
+        else:
+            damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count = calculate_dps(events)
 
         # Real-time duration ticking
         if self.last_combat_time > 0 and (time.time() - self.last_combat_time) < self.time_window_dm:
             # Combat is active or very recent
             if self.app_start_time:
-                # Calculate duration from app_start_time to now
-                # Use the most recent event's timestamp as the 'now' baseline if available
-                # to stay synchronized with log time
-                latest_event_ts = None
-                if events:
-                    latest_event_ts = max(e["timestamp"] for e in events if e["timestamp"])
+                # Use our anchor for better stability
+                anchor_ts = getattr(self, 'last_log_sync_time', self.app_start_time)
+                time_since_sync = time.time() - self.last_combat_time
                 
-                if latest_event_ts:
-                    # If we have recent events, we use the system time delta since the last event
-                    # added to the last event's timestamp
-                    time_since_last_event = time.time() - self.last_combat_time
-                    live_now = latest_event_ts + timedelta(seconds=time_since_last_event)
-                else:
-                    live_now = datetime.now()
-
+                # Project current time from anchor
+                projected_now = anchor_ts + timedelta(seconds=time_since_sync)
+                
+                # Safety cap: Cannot project past actual system clock
+                if projected_now > datetime.now():
+                    projected_now = datetime.now()
+                    
+                live_now = projected_now
                 live_duration = (live_now - self.app_start_time).total_seconds()
                 if live_duration > duration:
                     duration = live_duration
@@ -2627,6 +2905,14 @@ class CombatLogApp:
         if self.dm_labels_created:
             # Detect pause (> time_window_dm since last hit)
             is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > self.time_window_dm
+            
+            # SUPERCEED: If we just received new damage events, we are not paused
+            if events and any(e["damage"] > 0 for e in events):
+                # Only if the latest event is very recent (this batch)
+                latest_ts = max(e["timestamp"] for e in events if e["damage"] > 0 and e["timestamp"])
+                if (datetime.now() - latest_ts).total_seconds() < self.time_window_dm:
+                    is_paused = False
+
             stat_color = "cyan" if is_paused else TEXT_PRIMARY
             
             # If paused, we freeze the numbers (don't update from dps/damage_dealt)
@@ -2721,34 +3007,21 @@ class CombatLogApp:
         if saved_x is not None and saved_y is not None:
             win_x, win_y = saved_x, saved_y
         else:
-            self.root.update_idletasks()
-            main_x = self.root.winfo_x()
-            main_y = self.root.winfo_y()
-            main_width = self.root.winfo_width()
-            
-            # Smart snapping: check Main -> (Other windows)
-            snap_x = main_x + main_width + 5
-            
-            current_popups = []
-            if self.details_window and self.details_window.winfo_exists():
-                current_popups.append((self.details_window.winfo_x(), self.details_window.winfo_width()))
-            if self.skimmers_window and self.skimmers_window.winfo_exists():
-                current_popups.append((self.skimmers_window.winfo_x(), self.skimmers_window.winfo_width()))
-            if self.damage_meter_window and self.damage_meter_window.winfo_exists():
-                current_popups.append((self.damage_meter_window.winfo_x(), self.damage_meter_window.winfo_width()))
-            
-            # Sort popups by x position
-            current_popups.sort()
-            
-            for pop_x, pop_w in current_popups:
-                if abs(pop_x - snap_x) < 20: # Overlap
-                    snap_x = pop_x + pop_w + 5
-            win_x, win_y = snap_x, main_y
+            # Default Grid Position: Row 1, Col 0
+            win_x, win_y = 50 + 50, 50 + 90
         
         self.leaderboard_window.geometry(f"{dw_width}x{dw_height}+{win_x}+{win_y}")
         self.leaderboard_window.configure(bg=WINDOW_BG)
-        self.leaderboard_window.attributes("-topmost", True)
         self.leaderboard_window.overrideredirect(True)
+        self.leaderboard_window.attributes("-alpha", 0.0)
+        
+        # Ensure it's not topmost initially
+        self.leaderboard_window.attributes("-topmost", False)
+        hwnd = self.leaderboard_window.winfo_id()
+        user32.SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE)
+        
+        # Immediate alpha sync
+        self.leaderboard_window.attributes("-alpha", self.current_alpha)
         
         # Border
         lb_border = tk.Frame(self.leaderboard_window, bg=BORDER_COLOR, padx=1, pady=1)
@@ -2817,11 +3090,10 @@ class CombatLogApp:
             self.leaderboard_window = None
 
     def reset_leaderboard_manual(self):
-        if messagebox.askyesno("Reset Leaderboard", "Are you sure you want to reset the leaderboard?"):
-            self.leaderboard_reset_time = datetime.now()
-            self.leaderboard_data = {}
-            self.analyze_log(manual=True)
-            self.refresh_leaderboard_window()
+        self.leaderboard_reset_time = datetime.now()
+        self.leaderboard_data = {}
+        self.analyze_log(manual=True)
+        self.refresh_leaderboard_window()
 
     def refresh_leaderboard_window(self):
         if not self.leaderboard_window or not self.leaderboard_window.winfo_exists():
@@ -2867,7 +3139,7 @@ class CombatLogApp:
         self.lb_content.pack(fill="both", expand=True)
         old_content.destroy()
         if hasattr(self, "lb_resize_handle"):
-            self.lb_resize_handle.lift()
+            pass
 
     def show_details_window(self, force_open=False):
         if self.details_window and self.details_window.winfo_exists():
@@ -2896,35 +3168,16 @@ class CombatLogApp:
         if saved_x is not None and saved_y is not None:
             win_x, win_y = saved_x, saved_y
         else:
-            # Snap to the right of the main window
-            self.root.update_idletasks()
-            main_x = self.root.winfo_x()
-            main_y = self.root.winfo_y()
-            main_width = self.root.winfo_width()
-            
-            # Smart snapping: check Main -> (Other windows)
-            snap_x = main_x + main_width + 5
-            
-            current_popups = []
-            if self.leaderboard_window and self.leaderboard_window.winfo_exists():
-                current_popups.append((self.leaderboard_window.winfo_x(), self.leaderboard_window.winfo_width()))
-            if self.skimmers_window and self.skimmers_window.winfo_exists():
-                current_popups.append((self.skimmers_window.winfo_x(), self.skimmers_window.winfo_width()))
-            if self.damage_meter_window and self.damage_meter_window.winfo_exists():
-                current_popups.append((self.damage_meter_window.winfo_x(), self.damage_meter_window.winfo_width()))
-            
-            # Sort popups by x position
-            current_popups.sort()
-            
-            for pop_x, pop_w in current_popups:
-                if abs(pop_x - snap_x) < 20: # Overlap
-                    snap_x = pop_x + pop_w + 5
-            win_x, win_y = snap_x, main_y
+            # Default Grid Position: Row 0, Col 2
+            win_x, win_y = 50 + 460 + 310, 50
         
         self.details_window.geometry(f"{dw_width}x{dw_height}+{win_x}+{win_y}")
         self.details_window.configure(bg=WINDOW_BG)
-        self.details_window.attributes("-topmost", True)
         self.details_window.overrideredirect(True) # Match theme
+        self.details_window.attributes("-alpha", 0.0)
+        
+        # Immediate alpha sync
+        self.details_window.attributes("-alpha", self.current_alpha)
         
         # Make it draggable
         self.details_window.bind("<Button-1>", self.click_window_details)
@@ -2993,28 +3246,25 @@ class CombatLogApp:
             self.details_window = None
 
     def reset_details_manual(self):
-        if messagebox.askyesno("Reset Details", "Are you sure you want to reset details data?"):
-            self.player_data = {}
-            self.app_start_time = None
-            self.last_combat_time = 0
-            self.analyze_log(manual=True)
-            self.refresh_details_window()
+        self.player_data = {}
+        self.app_start_time = None
+        self.last_combat_time = 0
+        self.analyze_log(manual=True)
+        self.refresh_details_window()
 
     def set_time_window_details(self, mins):
         self.time_window_details = mins
         self.save_config()
         self.analyze_log(manual=True)
         if self.details_window and self.details_window.winfo_exists():
-            self.show_details_window()
-            self.show_details_window()
+            self.refresh_details_window()
 
     def set_time_window_leaderboard(self, mins):
         self.time_window_leaderboard = mins
         self.save_config()
         self.analyze_log(manual=True)
         if self.leaderboard_window and self.leaderboard_window.winfo_exists():
-            self.show_leaderboard_window()
-            self.show_leaderboard_window()
+            self.refresh_leaderboard_window()
 
     def set_time_window_skimmers(self, mins):
         self.time_window_skimmers = mins
@@ -3052,8 +3302,6 @@ class CombatLogApp:
         if not self.details_window or not self.details_window.winfo_exists():
             return
         
-        self.details_window.lift()
-
         # Update player data summary to check if we actually need a full refresh
         active_players = [
             p for p in self.player_data 
@@ -3080,7 +3328,7 @@ class CombatLogApp:
             self.show_player_list()
 
         if hasattr(self, "details_resize_handle"):
-            self.details_resize_handle.lift()
+            pass
 
     def show_player_list(self):
         # Clear container
@@ -3341,8 +3589,11 @@ class CombatLogApp:
         self.options_window = tk.Toplevel(self.root)
         self.options_window.title("Settings")
         self.options_window.configure(bg=WINDOW_BG)
-        self.options_window.attributes("-topmost", True)
         self.options_window.overrideredirect(True)
+        
+        # Initial state: not topmost until we confirm focus
+        if not hasattr(self, "_last_topmost_state"):
+            self._last_topmost_state = False
         
         # Calculate position below the main window
         self.root.update_idletasks()
@@ -3471,7 +3722,6 @@ class CombatLogApp:
 
     def show_options_window(self):
         if self.options_window and self.options_window.winfo_exists():
-            self.options_window.lift()
             self.options_window.focus_force()
             return
 
@@ -3493,30 +3743,27 @@ class CombatLogApp:
 
         if saved_x is not None and saved_y is not None:
             win_x, win_y = saved_x, saved_y
-        elif self.damage_meter_window and self.damage_meter_window.winfo_exists():
-            # Snap to damage meter window if it exists
-            self.damage_meter_window.update_idletasks()
-            win_x = self.damage_meter_window.winfo_x()
-            win_y = self.damage_meter_window.winfo_y()
-            dw_width = self.damage_meter_window.winfo_width()
-            dw_height = self.damage_meter_window.winfo_height()
-            
-            # Use geometry update after overrideredirect to ensure exact placement
-            self.options_window.overrideredirect(True)
-            self.options_window.geometry(f"{dw_width}x{dw_height}+{win_x}+{win_y}")
-            self.options_window.update()
         else:
-            self.root.update_idletasks()
-            main_x = self.root.winfo_x()
-            main_y = self.root.winfo_y()
-            main_height = self.root.winfo_height()
-            win_x = main_x
-            win_y = main_y + main_height + 5
+            # Default Grid Position: Snap to damage meter if possible, else below Main
+            if self.damage_meter_window and self.damage_meter_window.winfo_exists():
+                self.damage_meter_window.update_idletasks()
+                win_x = self.damage_meter_window.winfo_x()
+                win_y = self.damage_meter_window.winfo_y()
+                dw_width = self.damage_meter_window.winfo_width()
+                dw_height = self.damage_meter_window.winfo_height()
+                self.options_window.overrideredirect(True)
+                self.options_window.geometry(f"{dw_width}x{dw_height}+{win_x}+{win_y}")
+                self.options_window.update()
+            else:
+                win_x, win_y = 50, 50 + 90 + 410 # Below Leaderboard
         
         self.options_window.geometry(f"{dw_width}x{dw_height}+{win_x}+{win_y}")
         self.options_window.configure(bg=WINDOW_BG)
-        self.options_window.attributes("-topmost", True)
         self.options_window.overrideredirect(True)
+        self.options_window.attributes("-alpha", 0.0)
+        
+        # Immediate alpha sync
+        self.options_window.attributes("-alpha", self.current_alpha)
         
         self.options_window.bind("<Button-1>", self.click_window_options)
         self.options_window.bind("<B1-Motion>", self.drag_window_options)
@@ -3588,7 +3835,7 @@ class CombatLogApp:
         slider.pack(fill=tk.X, pady=(0, 10))
 
         # Reset Stats Button
-        btn_reset = tk.Button(
+        btn_reset_data = tk.Button(
             content, text="RESET DATA",
             bg=BUTTON_BG, fg="#ff4444",
             relief=tk.FLAT, font=self.font_button_obj,
@@ -3596,19 +3843,55 @@ class CombatLogApp:
             activebackground=BUTTON_HOVER,
             activeforeground="#ff6666"
         )
-        btn_reset.pack(fill=tk.X, pady=(10, 0))
+        btn_reset_data.pack(fill=tk.X, pady=(10, 0))
+
+        # Reset Settings Button
+        btn_reset_settings = tk.Button(
+            content, text="RESET SETTINGS",
+            bg=BUTTON_BG, fg="#ff4444",
+            relief=tk.FLAT, font=self.font_button_obj,
+            command=self.reset_settings,
+            activebackground=BUTTON_HOVER,
+            activeforeground="#ff6666"
+        )
+        btn_reset_settings.pack(fill=tk.X, pady=(5, 0))
 
         self.options_window.focus_force()
 
     def reset_data(self):
-        if messagebox.askyesno("Reset", "Are you sure you want to reset all combat data?"):
-            self.player_data = {}
-            self.all_events = []
-            self.last_read_offset = 0
-            self.app_start_time = datetime.now()
-            self.analyze_log(manual=True)
-            if self.options_window:
-                self.on_close_options()
+        self.player_data = {}
+        self.all_events = []
+        self.last_read_offset = 0
+        self.app_start_time = None
+        self.last_combat_time = 0 # Reset anchor as well
+        self.last_log_sync_time = None
+        self.analyze_log(manual=True)
+        if self.options_window:
+            self.on_close_options()
+
+    def reset_settings(self):
+        # Reset config to empty
+        self.config = ConfigParser()
+        
+        # Delete settings.ini if it exists
+        if os.path.exists("settings.ini"):
+            try:
+                os.remove("settings.ini")
+            except Exception as e:
+                print(f"Error deleting settings.ini: {e}")
+        
+        # Reset local variables to defaults
+        self.disable_warnings.set(False)
+        self.target_alpha = 1.0
+        self.current_alpha = 1.0
+        self.root.attributes("-alpha", 1.0)
+        
+        # Refresh UI or close options
+        if self.options_window:
+            self.on_close_options()
+        
+        # Re-initialize what we can or just let the next save_config handle it
+        ThemedMessagebox.showinfo(self.root, "Settings Reset", "Settings have been reset to defaults.\nPositions will be reset on next launch.")
 
     def on_close_options(self):
         if self.options_window:
@@ -3676,9 +3959,9 @@ class CombatLogApp:
                 notice_text = "Each character has a unique log file.\nPlease ensure you select the correct one.\nThe app will only show on the first opened client"
                 ThemedMessagebox.showinfo(self.root, "Notice", notice_text)
             
-            # Automatically analyze when log changes
+            # Automatically analyze when log changes in a background thread to prevent UI freezing
             self.app_start_time = None
-            self.analyze_log(manual=True)
+            threading.Thread(target=lambda: self.analyze_log(manual=True), daemon=True).start()
 
 
 if __name__ == "__main__":

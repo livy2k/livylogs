@@ -1811,8 +1811,45 @@ class CombatLogApp:
 
             new_events, new_offset = parse_combat_log(actual_file_path, self.last_read_offset)
             
-            # Immediately add new events to all_events
-            self.all_events.extend(new_events)
+            # Prevent duplicate entries when switching logs or re-reading
+            if new_events:
+                # Create fingerprints for existing events to quickly check for duplicates
+                # Use a smaller window of existing events for efficiency (e.g. last 1000)
+                existing_fingerprints = set()
+                lookback = min(1000, len(self.all_events))
+                for i in range(len(self.all_events) - lookback, len(self.all_events)):
+                    e = self.all_events[i]
+                    # Fingerprint: (timestamp, type, source, target, damage, healing, item)
+                    fingerprint = (
+                        e.get("timestamp"),
+                        e.get("type"),
+                        e.get("source"),
+                        e.get("target"),
+                        e.get("damage"),
+                        e.get("healing"),
+                        e.get("item")
+                    )
+                    existing_fingerprints.add(fingerprint)
+                
+                filtered_new_events = []
+                for e in new_events:
+                    fingerprint = (
+                        e.get("timestamp"),
+                        e.get("type"),
+                        e.get("source"),
+                        e.get("target"),
+                        e.get("damage"),
+                        e.get("healing"),
+                        e.get("item")
+                    )
+                    if fingerprint not in existing_fingerprints:
+                        filtered_new_events.append(e)
+                        # Add to fingerprints to catch duplicates within the new batch too
+                        existing_fingerprints.add(fingerprint)
+                
+                if filtered_new_events:
+                    self.all_events.extend(filtered_new_events)
+            
             self.last_read_offset = new_offset
 
             # Prune all_events early to keep memory footprint small

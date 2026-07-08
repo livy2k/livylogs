@@ -2,6 +2,7 @@
 import re
 import tkinter as tk
 import os
+import sys
 from tkinter import font as tkfont
 from tkinter import ttk  # Added for Scrollbar styling if needed
 from tkinter import messagebox, filedialog
@@ -614,6 +615,19 @@ class CombatLogApp:
         self.last_processed_file = ""
 
         self.build_layout()
+        
+        # Set Window Icon
+        try:
+            if getattr(sys, 'frozen', False):
+                base_path = sys._MEIPASS
+            else:
+                base_path = os.path.dirname(os.path.abspath(__file__))
+            icon_path = os.path.join(base_path, "livylogs.ico")
+            if os.path.exists(icon_path):
+                self.root.iconbitmap(icon_path)
+        except Exception as e:
+            print(f"Error setting icon: {e}")
+
         self.update_font_scaling(initial_width, initial_height)
         self.start_window_tracking()
         self.start_analysis_loop()
@@ -2650,6 +2664,29 @@ class CombatLogApp:
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = CombatLogApp(root)
-    root.mainloop()
+    # Ensure only one instance is running
+    # Create a named mutex
+    kernel32 = ctypes.windll.kernel32
+    mutex_name = "LivyLogs_SingleInstance_Mutex"
+    
+    # CreateMutexW returns a handle to the mutex
+    mutex = kernel32.CreateMutexW(None, False, mutex_name)
+    last_error = kernel32.GetLastError()
+    
+    # ERROR_ALREADY_EXISTS = 183
+    if last_error == 183:
+        # Already running
+        temp_root = tk.Tk()
+        temp_root.withdraw()
+        messagebox.showwarning("LivyLogs", "Another instance of LivyLogs is already running.")
+        temp_root.destroy()
+        sys.exit(0)
+
+    try:
+        root = tk.Tk()
+        app = CombatLogApp(root)
+        root.mainloop()
+    finally:
+        # Release the mutex handle when the app closes
+        if mutex:
+            kernel32.CloseHandle(mutex)

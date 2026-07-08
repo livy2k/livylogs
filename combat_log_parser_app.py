@@ -126,10 +126,6 @@ class ThemedMessagebox(tk.Toplevel):
         
         title_lbl = tk.Label(title_bar, text=title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold"))
         title_lbl.pack(side=tk.LEFT, padx=10)
-        title_lbl.bind("<Button-1>", lambda e: self.close_and_callback())
-        
-        self.bind("<Button-1>", lambda e: self.close_and_callback())
-        self.bind("<B1-Motion>", self._drag_window)
         
         close_btn = tk.Label(title_bar, text="✕", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2", padx=10)
         close_btn.pack(side=tk.RIGHT)
@@ -140,23 +136,19 @@ class ThemedMessagebox(tk.Toplevel):
         # Content
         content = tk.Frame(inner, bg=WINDOW_BG, padx=20, pady=20)
         content.pack(fill=tk.BOTH, expand=True)
-        content.bind("<Button-1>", lambda e: self.close_and_callback())
 
         icon_color = ACCENT_BLUE if icon == "info" else "#ff4444"
         icon_text = "ℹ" if icon == "info" else "⚠"
         
         icon_lbl = tk.Label(content, text=icon_text, bg=WINDOW_BG, fg=icon_color, font=("Segoe UI", 24))
         icon_lbl.pack(side=tk.LEFT, padx=(0, 20))
-        icon_lbl.bind("<Button-1>", lambda e: self.close_and_callback())
         
         msg_label = tk.Label(content, text=message, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 10), justify=tk.LEFT, wraplength=400)
         msg_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        msg_label.bind("<Button-1>", lambda e: self.close_and_callback())
 
         # Button Area
         btn_area = tk.Frame(inner, bg=PANEL_DARK, height=40)
         btn_area.pack(fill=tk.X)
-        btn_area.bind("<Button-1>", lambda e: self.close_and_callback())
         
         ok_btn = tk.Frame(btn_area, bg=BUTTON_BG, padx=15, pady=5, cursor="hand2")
         ok_btn.pack(side=tk.RIGHT, padx=10, pady=5)
@@ -374,13 +366,32 @@ class ThemedMessagebox(tk.Toplevel):
         self.destroy()
         if callback:
             callback()
-        # If this was a standalone messagebox (parent is a hidden Tk instance), quit its mainloop
-        if parent and hasattr(parent, "quit") and parent.__class__.__name__ != "CombatLogApp":
+        
+        # We only want to destroy the parent if it's NOT the main application root
+        # and it is a standalone Tk instance used for simple notices.
+        # CombatLogApp uses a 'root' which is a tk.Tk instance.
+        # Check if the parent is a tk.Tk instance but NOT the one hosting our main app.
+        if parent and hasattr(parent, "destroy") and parent.__class__.__name__ == "Tk":
+            # If the parent has a CombatLogApp instance associated with it, don't destroy it!
+            # We can check for known attributes of CombatLogApp on the root.
+            is_main_root = False
             try:
-                parent.quit()
-                parent.destroy()
+                # CombatLogApp uses a 'root' which is a tk.Tk instance.
+                # If we are inside the main app, parent.winfo_children() will contain
+                # the CombatLogApp instance (which is a tk.Frame or similar).
+                children = parent.winfo_children()
+                for child in children:
+                    if child.__class__.__name__ == "CombatLogApp":
+                        is_main_root = True
+                        break
             except:
                 pass
+            
+            if not is_main_root:
+                try:
+                    parent.destroy()
+                except:
+                    pass
 
     def _click_window(self, event):
         self._offsetx = event.x
@@ -530,7 +541,7 @@ def parse_combat_log(file_path, start_offset=0):
             lower_line = original_line.lower()
             
             # Immediate discard for known non-combat system messages
-            if any(msg in lower_line for msg in ["there is no person by the name", "you enhance your", "is not online", "is already on your ignore list", "has been added to your", "you are too full to", "your focus your thoughts on", "%tu", "target was invalid", "already focusing on defense", "out of range", "no damage to heal", "terminal", "lost sight", "you lost sight of your target", "you must be within range", "out of range for this action", "that target is out of range", "generating vehicle", "cannot gain any more of", "faction standing", "awarded", "too tired to", "points of standing", "two-hand area attack 3", "target for two-hand area attack 3", "[galaxychat]", "[groupchat]", "[guildchat]", "[citychat]", "[publicchat]", "[instant messages]", "harvested", "looted", "completely looted", "no longer stunned", "stand", "kneel", "fall down", "music", "dancing", "playing", "burst run", "run as hard as you can", "invites you to join", "joined the group", "squad leader"]):
+            if any(msg in lower_line for msg in ["there is no person by the name", "you enhance your", "is not online", "is already on your ignore list", "has been added to your", "you are too full to", "your focus your thoughts on", "%tu", "target was invalid", "already focusing on defense", "out of range", "no damage to heal", "terminal", "lost sight", "you lost sight of your target", "you must be within range", "out of range for this action", "that target is out of range", "generating vehicle", "cannot gain any more of", "faction standing", "awarded", "too tired to", "points of standing", "two-hand area attack 3", "target for two-hand area attack 3", "[galaxychat]", "[groupchat]", "[guildchat]", "[citychat]", "[publicchat]", "[instant messages]", "harvested", "completely looted", "no longer stunned", "stand", "kneel", "fall down", "music", "dancing", "playing", "burst run", "run as hard as you can", "invites you to join", "joined the group", "squad leader"]):
                 current_offset = log_file.tell()
                 continue
 
@@ -979,13 +990,14 @@ class CombatLogApp:
         self.target_hwnd = self.find_target_window()
         if not self.target_hwnd:
             self.root.withdraw() # Keep main window hidden
-            self.play_sound()
-            ThemedMessagebox.showinfo(
-                None, 
-                "Notice", 
-                "LivyLogs requires Star Wars Galaxies to be running.\nPlease open the game client and try again.",
-                on_close=lambda: sys.exit(0)
-            )
+            # self.play_sound()
+            # ThemedMessagebox.showinfo(
+            #     None, 
+            #     "Notice", 
+            #     "LivyLogs requires Star Wars Galaxies to be running.\nPlease open the game client and try again.",
+            #     on_close=lambda: sys.exit(0)
+            # )
+            sys.exit(0)
             return
 
         # Font configuration
@@ -1068,24 +1080,10 @@ class CombatLogApp:
         self.details_window = None
         self.options_window = None
 
-        # We use a staggered delay for visibility and tracking
+        # Staggered initialization
         self.root.after(300, self.initial_show)
         self.root.after(800, self.start_window_tracking)
         self.root.after(1000, self.start_show)
-        
-        # Restore previously open windows
-        if "General" in self.config:
-            if self.config["General"].getboolean("details_open", fallback=False):
-                self.root.after(1100, lambda: self.show_details_window(force_open=True))
-            if self.config["General"].getboolean("leaderboard_open", fallback=False):
-                self.root.after(1100, lambda: self.show_leaderboard_window(force_open=True))
-            if self.config["General"].getboolean("skimmers_open", fallback=False):
-                self.root.after(1100, lambda: self.show_skimmers_window(force_open=True))
-            if self.config["General"].getboolean("damage_meter_open", fallback=False):
-                self.root.after(1100, lambda: self.show_damage_meter_window(force_open=True))
-            # Settings window should NOT be open when app launches per user request
-            # if self.config["General"].getboolean("options_open", fallback=False):
-            #     self.root.after(2000, self.show_options_window)
         
         # Establishing a clean real-time baseline on startup
         self.root.after(100, lambda: self.analyze_log(manual=True))
@@ -1220,12 +1218,11 @@ class CombatLogApp:
         self.config["General"]["time_window_skimmers"] = str(self.time_window_skimmers)
         self.config["General"]["always_on_top"] = "False" # Don't persist ONTOP between sessions
 
-        # Remember which windows were open
-        self.config["General"]["details_open"] = str(self.details_window is not None and self.details_window.winfo_exists() and self.details_window.state() != "withdrawn")
-        self.config["General"]["leaderboard_open"] = str(self.leaderboard_window is not None and self.leaderboard_window.winfo_exists() and self.leaderboard_window.state() != "withdrawn")
-        self.config["General"]["skimmers_open"] = str(self.skimmers_window is not None and self.skimmers_window.winfo_exists() and self.skimmers_window.state() != "withdrawn")
-        self.config["General"]["damage_meter_open"] = str(self.damage_meter_window is not None and self.damage_meter_window.winfo_exists() and self.damage_meter_window.state() != "withdrawn")
-        # Settings window should NOT be open when app launches per user request
+        # Reset window visibility for next session per user request
+        self.config["General"]["details_open"] = "False"
+        self.config["General"]["leaderboard_open"] = "False"
+        self.config["General"]["skimmers_open"] = "False"
+        self.config["General"]["damage_meter_open"] = "False"
         self.config["General"]["options_open"] = "False"
 
         # Details Window
@@ -1386,7 +1383,8 @@ class CombatLogApp:
             is_topmost_needed = should_show
 
             if should_show:
-                self.start_show()
+                if self.root.state() == "withdrawn" or (not self.fade_after_id and self.current_alpha < self.target_alpha):
+                    self.start_show()
                 
                 # List of windows to manage (root + popups)
                 managed_windows = self._get_managed_windows()
@@ -1417,7 +1415,7 @@ class CombatLogApp:
                         self._last_topmost_state = False
             else:
                 # Use a small grace period (1 second) before hiding to prevent flickering during transient focus shifts
-                if not hasattr(self, '_hide_grace_after_id') or self._hide_grace_after_id is None:
+                if (not hasattr(self, '_hide_grace_after_id') or self._hide_grace_after_id is None) and self.root.state() != "withdrawn":
                     self._hide_grace_after_id = self.root.after(1000, self._perform_graceful_hide)
 
         except Exception as e:
@@ -1450,31 +1448,13 @@ class CombatLogApp:
 
     def show_help_notice(self):
         """Shows the character log notice manually when Help is clicked."""
-        readme_text = (
-            "LivyLogs: Real-time combat log parser for SWG.\n\n"
-            "• Only opens in the first SWG Client\n"
-            "• OVERLAY: Adjust opacity to sit over your game.\n"
-            "• LOG FILE: Use SETTINGS to select your character log.\n"
-            "• RESET: Clear stats with the RESET button."
-        )
-        
-        def show_log_notice():
-            notice_text = "Each character has a unique log file.\nPlease ensure you select the correct one.\nThe app will only show on the first opened client"
-            ThemedMessagebox.showinfo(
-                self.root, 
-                "Help", 
-                notice_text, 
-                extra_button_text="Select Log", 
-                extra_button_callback=lambda: self.change_log_path(suppress_notice=True)
-            )
-
-        ThemedMessagebox.showinfo(self.root, "App Summary", readme_text, on_close=show_log_notice)
+        # The user requested to disable the warning menu.
+        pass
 
     def _show_initial_notice(self, notice_text):
         """Shows the initial notice and ensures it and the main window stay on top."""
-        ThemedMessagebox.showinfo(self.root, "Notice", notice_text)
-        # Main window re-assertion is now handled by its own loop
-        # so we don't need to block or force here anymore.
+        # The user requested to disable the warning menu.
+        pass
 
     def start_show(self):
         """Immediately shows all managed windows and cancels any pending hide."""
@@ -1482,7 +1462,8 @@ class CombatLogApp:
             self.root.after_cancel(self._hide_grace_after_id)
             self._hide_grace_after_id = None
             
-        if self.root.state() == "withdrawn":
+        is_hidden = self.root.state() == "withdrawn"
+        if is_hidden:
             self.current_alpha = 0.0
             for win in self._get_managed_windows():
                 win.attributes("-alpha", 0.0)
@@ -1490,7 +1471,12 @@ class CombatLogApp:
         
         if self.current_alpha < self.target_alpha:
             if self.fade_after_id:
+                # If we are already fading in, don't restart it
+                if getattr(self, '_fading_direction', None) == 'in':
+                    return
                 self.root.after_cancel(self.fade_after_id)
+            
+            self._fading_direction = 'in'
             self.fade_in()
 
     def fade_in(self):
@@ -1501,6 +1487,7 @@ class CombatLogApp:
             self.fade_after_id = self.root.after(20, self.fade_in)
         else:
             self.fade_after_id = None
+            self._fading_direction = None
 
     def start_hide(self):
         """Immediately starts hiding all managed windows."""
@@ -1509,7 +1496,12 @@ class CombatLogApp:
             
         if self.current_alpha > 0.0:
             if self.fade_after_id:
+                # If we are already fading out, don't restart it
+                if getattr(self, '_fading_direction', None) == 'out':
+                    return
                 self.root.after_cancel(self.fade_after_id)
+            
+            self._fading_direction = 'out'
             self.fade_out()
 
     def fade_out(self):
@@ -1522,6 +1514,7 @@ class CombatLogApp:
             for win in self._get_managed_windows():
                 win.withdraw()
             self.fade_after_id = None
+            self._fading_direction = None
 
     def _get_managed_windows(self):
         """Returns a list of all currently active managed windows."""
@@ -2038,6 +2031,13 @@ class CombatLogApp:
             if new_events or manual or is_any_open or not hasattr(self, 'last_full_ui_update') or (time.time() - self.last_full_ui_update > 1.0):
                 self.root.after(0, lambda: self.process_events_for_ui(events_for_ui, manual=manual, all_events=self.all_events))
                 self.last_full_ui_update = time.time()
+            
+            # Update Loot count on main UI label periodically
+            now_time = time.time()
+            if not hasattr(self, 'last_loot_label_update') or (now_time - self.last_loot_label_update > 10.0):
+                loot_count = sum(len(items) for items in self.loot_data.values())
+                self.lbl_loot.config(text=f"LOOT ({loot_count})")
+                self.last_loot_label_update = now_time
 
             # Still refresh damage meter for duration ticks even if no new events
             self.root.after(0, lambda: self.refresh_damage_meter_window(events_for_ui))
@@ -2144,16 +2144,16 @@ class CombatLogApp:
 
         except FileNotFoundError as error:
             if manual:
-                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "File Not Found", str(error)))
+                print(f"File Not Found: {error}")
         except ValueError as error:
             if manual:
-                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "Invalid File", str(error)))
+                print(f"Invalid File: {error}")
         except PermissionError:
             if manual:
-                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "Permission Error", "The selected file could not be opened."))
+                print("Permission Error: The selected file could not be opened.")
         except Exception as error:
             if manual:
-                self.root.after(0, lambda: ThemedMessagebox.showerror(self.root, "Error", f"An unexpected error occurred: {error}"))
+                print(f"An unexpected error occurred: {error}")
             else:
                 print(f"Error in background analysis: {error}")
 
@@ -2213,7 +2213,6 @@ class CombatLogApp:
 
             # Handle Loot events (window history regardless of app start)
             if str(event["type"]) == "loot":
-                if is_source_npc: continue
                 # Skip historical loot older than window
                 if event["timestamp"] and event["timestamp"] < sk_window_ago:
                     continue
@@ -2364,14 +2363,16 @@ class CombatLogApp:
         if self.leaderboard_window and self.leaderboard_window.winfo_exists():
             self.refresh_leaderboard_window()
         if self.skimmers_window and self.skimmers_window.winfo_exists():
-            self.refresh_skimmers_window()
+            now_time = time.time()
+            if manual or not hasattr(self, 'last_skimmers_refresh') or (now_time - self.last_skimmers_refresh > 10.0):
+                self.refresh_skimmers_window(manual=manual)
+                self.last_skimmers_refresh = now_time
         if self.damage_meter_window and self.damage_meter_window.winfo_exists():
             # Pass pre-filtered events to avoid re-calculating
             self.refresh_damage_meter_window(events=events)
 
-        # Update Loot count on the label
-        loot_count = sum(len(items) for items in self.loot_data.values())
-        self.lbl_loot.config(text=f"LOOT ({loot_count})")
+        # Update Loot count on the label - Moved to main loop for periodic update
+        pass
 
     def apply_snapping(self, window, x, y):
         """Adjust x, y coordinates to snap to edges of other windows."""
@@ -2571,7 +2572,7 @@ class CombatLogApp:
         self.analyze_log(manual=True)
         self.refresh_skimmers_window()
 
-    def refresh_skimmers_window(self):
+    def refresh_skimmers_window(self, manual=False):
         if not self.skimmers_window or not self.skimmers_window.winfo_exists():
             return
             
@@ -2632,7 +2633,8 @@ class CombatLogApp:
             
     def drilldown_to_skimmer(self, name):
         self.current_skimmer_player = name
-        self.show_skimmer_drilldown(name)
+        # Force an immediate refresh of the container when drilling down
+        self.refresh_skimmers_window(manual=True)
 
     def show_skimmer_drilldown(self, name):
         # Header with back button
@@ -2687,7 +2689,8 @@ class CombatLogApp:
 
     def go_back_to_skimmers(self):
         self.current_skimmer_player = None
-        self.show_skimmer_list()
+        # Force an immediate refresh to show the list again
+        self.refresh_skimmers_window(manual=True)
 
     def click_window_skimmers(self, event):
         self._sk_offsetx = event.x
@@ -3893,7 +3896,8 @@ class CombatLogApp:
             self.on_close_options()
         
         # Re-initialize what we can or just let the next save_config handle it
-        ThemedMessagebox.showinfo(self.root, "Settings Reset", "Settings have been reset to defaults.\nPositions will be reset on next launch.")
+        # ThemedMessagebox.showinfo(self.root, "Settings Reset", "Settings have been reset to defaults.\nPositions will be reset on next launch.")
+        print("Settings have been reset to defaults.")
 
     def on_close_options(self):
         if self.options_window:
@@ -3937,7 +3941,7 @@ class CombatLogApp:
         if file_path:
             # Check if file exists before proceeding
             if not Path(file_path).exists():
-                ThemedMessagebox.showerror(self.root, "Error", f"The selected file does not exist: {file_path}")
+                print(f"The selected file does not exist: {file_path}")
                 return
 
             file_path = str(Path(file_path).absolute())
@@ -3956,10 +3960,10 @@ class CombatLogApp:
                 print(f"Error saving settings: {e}")
             
             # Show character log warning
-            if not self.disable_warnings.get() and not suppress_notice:
-                self.play_sound()
-                notice_text = "Each character has a unique log file.\nPlease ensure you select the correct one.\nThe app will only show on the first opened client"
-                ThemedMessagebox.showinfo(self.root, "Notice", notice_text)
+            # if not self.disable_warnings.get() and not suppress_notice:
+            #     self.play_sound()
+            #     notice_text = "Each character has a unique log file.\nPlease ensure you select the correct one.\nThe app will only show on the first opened client"
+            #     ThemedMessagebox.showinfo(self.root, "Notice", notice_text)
             
             # Automatically analyze when log changes in a background thread to prevent UI freezing
             self.app_start_time = None

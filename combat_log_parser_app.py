@@ -14,6 +14,7 @@ import time
 from ctypes import wintypes
 import json
 import threading
+import subprocess
 
 # Win32 Constants
 SW_HIDE = 0
@@ -513,6 +514,10 @@ def parse_combat_log(file_path, start_offset=0):
     ]
 
     with path.open("r", encoding="utf-8", errors="replace") as log_file:
+        # On Windows, we need to ensure we can read even if another process has the file open for writing.
+        # Python's open() with "r" should generally work, but if we encounter issues, 
+        # using low-level os.open with share flags could be an alternative.
+        
         if read_offset > 0:
             log_file.seek(read_offset)
             # If we jumped into the middle of the file, skip the first partial line
@@ -954,23 +959,21 @@ def calculate_dps(events):
     # print(f"DEBUG: Dealt: {damage_dealt}, Taken: {damage_taken}, Hits: {hit_count}, Misses: {miss_count}, Avoided: {avoided_count}")
 
     # Try to use timestamps for duration (use all damage events for duration)
-    valid_timestamps = [e["timestamp"] for e in events if e["timestamp"] and e["damage"] > 0]
+    valid_timestamps = [e["timestamp"] for e in events if e["timestamp"]]
     
     duration = 0.0
-    if len(valid_timestamps) >= 2:
+    if len(valid_timestamps) >= 1:
         start_ts = min(valid_timestamps)
         end_ts = max(valid_timestamps)
         duration = (end_ts - start_ts).total_seconds()
         
         # Avoid division by zero, and ensure minimum duration
-        effective_duration = max(0.1, duration)
+        # If only one event, duration is effectively 1s for DPS calculation
+        effective_duration = max(1.0, duration)
         dps = damage_dealt / effective_duration
     else:
-        # Fallback to estimation using damage dealt events
-        dealt_events = [e for e in events if e["type"] == "dealt"]
-        estimated_duration_seconds = max(0.1, float(len(dealt_events)))
-        dps = damage_dealt / estimated_duration_seconds
-        duration = float(len(dealt_events))
+        dps = 0.0
+        duration = 0.0
 
     return damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count
 
@@ -989,16 +992,10 @@ class CombatLogApp:
         # Check for SWG client
         self.target_hwnd = self.find_target_window()
         if not self.target_hwnd:
-            self.root.withdraw() # Keep main window hidden
-            # self.play_sound()
-            # ThemedMessagebox.showinfo(
-            #     None, 
-            #     "Notice", 
-            #     "LivyLogs requires Star Wars Galaxies to be running.\nPlease open the game client and try again.",
-            #     on_close=lambda: sys.exit(0)
-            # )
-            sys.exit(0)
-            return
+            print("DEBUG: SWG client not found. Running in standalone/testing mode.")
+            # We don't exit here anymore so user can test the app/engine without game
+            # sys.exit(0)
+            # return
 
         # Font configuration
         self.font_title = ("Segoe UI", 10, "bold")
@@ -1079,6 +1076,10 @@ class CombatLogApp:
         self.skimmers_window = None
         self.details_window = None
         self.options_window = None
+        
+        # Capture the actual application start time for filtering historical combat
+        self.actual_app_start_time = datetime.now()
+        self.last_reset_time = self.actual_app_start_time
 
         # Staggered initialization
         self.root.after(300, self.initial_show)
@@ -1086,8 +1087,15 @@ class CombatLogApp:
         self.root.after(1000, self.start_show)
         
         # Establishing a clean real-time baseline on startup
-        self.root.after(100, lambda: self.analyze_log(manual=True))
-        self.root.after(500, self.start_analysis_loop)
+        # We start the pipe listener instead of the analysis loop
+        self.engine_process = None
+        self.running = True
+        threading.Thread(target=self.start_pipe_listener, daemon=True).start()
+        
+        # If we have a log path, start the engine
+        initial_log_path = self.file_path_var.get()
+        if initial_log_path:
+            self.root.after(1200, lambda: self.start_c_engine(initial_log_path))
 
         self.options_window = None
         self.last_ui_update_time = 0
@@ -1096,6 +1104,7 @@ class CombatLogApp:
         # Pulsing effect for duration
         self.pulse_state = False
         self.last_pulse_time = 0
+        self.last_ticker_update = 0
         
         self.target_hwnd = getattr(self, "target_hwnd", None)
         # Performance metrics tracking
@@ -1198,8 +1207,65 @@ class CombatLogApp:
                 self._analysis_in_progress = False
         self.root.after(100, self.start_analysis_loop)
 
+    def start_ticker_loop(self):
+        """Starts the fast duration ticker loop (100ms)."""
+        if self.running:
+            try:
+                # Determine current events for the ticker
+                if self.app_start_time:
+                    events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
+                    is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > self.time_window_dm
+                    self.update_live_stats(events, is_paused=is_paused)
+                else:
+                    self.update_live_stats([], is_paused=True)
+            except Exception as e:
+                print(f"Ticker error: {e}")
+            
+            self.root.after(100, self.start_ticker_loop)
+
+    def start_c_engine(self, log_path):
+        """Launches the C engine with the specified log path."""
+        try:
+            # Stop any orphaned log_engine processes to avoid Pipe Busy error
+            try:
+                subprocess.run(["taskkill", "/F", "/IM", "log_engine.exe", "/T"], 
+                              capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            except:
+                pass
+
+            # Stop existing engine reference
+            if self.engine_process:
+                try:
+                    self.engine_process.terminate()
+                    self.engine_process.wait(timeout=1)
+                except:
+                    self.engine_process.kill()
+            
+            # Determine path to log_engine.exe
+            if getattr(sys, 'frozen', False):
+                base_path = sys._MEIPASS
+            else:
+                base_path = os.path.dirname(os.path.abspath(__file__))
+            
+            engine_exe = os.path.join(base_path, "log_engine.exe")
+            
+            if not os.path.exists(engine_exe):
+                print(f"Error: {engine_exe} not found. Ensure it is bundled or in the same directory.")
+                return
+
+            print(f"Launching C Engine: {engine_exe} \"{log_path}\"")
+            self.engine_process = subprocess.Popen(
+                [engine_exe, log_path],
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+        except Exception as e:
+            print(f"Failed to start C engine: {e}")
+
     def on_exit(self):
-        """Saves configuration and exits the application."""
+        """Cleanup before exiting."""
+        self.running = False
+        if self.engine_process:
+            self.engine_process.terminate()
         self.save_config()
         self.root.destroy()
 
@@ -1816,6 +1882,175 @@ class CombatLogApp:
         outer_border.value_label = value_label
         return outer_border
 
+    def start_pipe_listener(self):
+        # This runs in its own thread
+        pipe_path = r'\\.\pipe\LivyLogsPipe'
+        self.running = True
+        
+        # Windows API Constants
+        GENERIC_READ = 0x80000000
+        OPEN_EXISTING = 3
+        FILE_ATTRIBUTE_NORMAL = 0x80
+        INVALID_HANDLE_VALUE = -1
+        
+        kernel32 = ctypes.windll.kernel32
+        
+        while self.running:
+            handle = INVALID_HANDLE_VALUE
+            try:
+                # Wait for pipe to be available
+                if not kernel32.WaitNamedPipeW(pipe_path, 1000):
+                    time.sleep(1)
+                    continue
+
+                handle = kernel32.CreateFileW(
+                    pipe_path,
+                    GENERIC_READ,
+                    0,
+                    None,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    None
+                )
+                
+                if handle == INVALID_HANDLE_VALUE:
+                    time.sleep(1)
+                    continue
+
+                # Read from pipe
+                buffer = ctypes.create_string_buffer(65536)
+                bytes_read = wintypes.DWORD()
+                
+                leftover = ""
+                while self.running:
+                    if kernel32.ReadFile(handle, buffer, 65536, ctypes.byref(bytes_read), None):
+                        if bytes_read.value > 0:
+                            data = buffer.raw[:bytes_read.value].decode('utf-8', 'ignore')
+                            lines = (leftover + data).split('\n')
+                            leftover = lines.pop() # Last element is either empty or incomplete line
+                            
+                            for i, line in enumerate(lines):
+                                line = line.strip()
+                                if line:
+                                    try:
+                                        event_data = json.loads(line)
+                                        # Use system time for pipe events as they are real-time
+                                        event_data["timestamp"] = datetime.now()
+                                        # Force UI refresh on the last line of the buffer
+                                        is_last = (i == len(lines) - 1)
+                                        self.process_external_event(event_data, is_last=is_last)
+                                    except json.JSONDecodeError:
+                                        continue
+                        else:
+                            # End of pipe or no data
+                            break
+                    else:
+                        # Error reading or pipe closed
+                        break
+            except Exception as e:
+                print(f"Pipe listener error: {e}")
+                time.sleep(1)
+            finally:
+                if handle != INVALID_HANDLE_VALUE:
+                    kernel32.CloseHandle(handle)
+
+    def process_external_event(self, event, is_last=False):
+        """Processes a single event received from the C engine."""
+        # Convert type to internal representation if needed
+        event_type = event.get("type")
+        source = event.get("source", "Unknown")
+        damage = event.get("damage", 0)
+        item = event.get("item", "")
+        timestamp = event.get("timestamp")
+        target = event.get("target", "Target")
+
+        # Determine if this is dealt or taken if not already specified or if vague
+        if source.lower() == "you":
+            event_type = "dealt"
+            if target == "Target": target = "Target"
+        elif target.lower() == "you":
+            event_type = "taken"
+        elif event_type == "damage": # Fallback for generic damage from engine
+            event_type = "dealt"
+        
+        # If it's a damage-like event, treat as damage for stats
+        is_damage = damage > 0 or event_type in ["dealt", "taken", "damage"]
+
+        # Construct an internal event object
+        internal_event = {
+            "timestamp": timestamp,
+            "type": event_type,
+            "source": source,
+            "target": target,
+            "damage": damage,
+            "healing": 0,
+            "item": item
+        }
+
+        # Initialize session if this is the first damage event
+        if self.app_start_time is None and is_damage:
+            self.app_start_time = timestamp
+            self.last_log_sync_time = timestamp
+            self.last_combat_time = time.time()
+            
+            # Reset session stats
+            if hasattr(self, 'damage_dealt'): self.damage_dealt = 0
+            if hasattr(self, 'damage_taken'): self.damage_taken = 0
+            
+            # Prune historical damage when starting a new session via pipe
+            max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
+            history_limit = datetime.now() - timedelta(minutes=max_history_mins)
+            self.all_events = [
+                e for e in self.all_events 
+                if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
+                   (e["type"] == "loot" and e["timestamp"] and e["timestamp"] >= history_limit) or
+                   (e["type"] not in ["dealt", "taken", "damage", "loot"] and e["timestamp"] and e["timestamp"] >= history_limit)
+            ]
+            print(f"DEBUG: Session started via pipe at {self.app_start_time}")
+
+        # Add to all_events for historical windows (Loot, Details)
+        self.all_events.append(internal_event)
+        
+        # Prune all_events to keep it manageable (e.g. last 5000 events)
+        if len(self.all_events) > 5000:
+            self.all_events = self.all_events[-5000:]
+
+        # Check for combat timeout (30s)
+        now = time.time()
+        is_combat_timeout = self.app_start_time and (now - self.last_combat_time > self.time_window_dm)
+        
+        if is_combat_timeout:
+            # Session timeout, we reset for next combat
+            print("DEBUG: Combat session timed out (Pipe)")
+            self.app_start_time = None
+            self.last_log_sync_time = None # Reset sync anchor
+            self.damage_dealt = 0
+            self.damage_taken = 0
+            # Explicitly clear leaderboard/player data for the UI
+            self.leaderboard_data = {}
+            self.player_data = {}
+
+        if is_damage:
+            self.last_combat_time = now
+            self.last_log_sync_time = timestamp # Keep sync anchor updated
+            
+            # If we just timed out or haven't started, initialize NOW
+            if self.app_start_time is None:
+                self.app_start_time = timestamp
+                print(f"DEBUG: Session started via pipe at {timestamp}")
+
+        # Trigger UI refresh
+        # To avoid overwhelming the UI with high-speed C data, we throttle refreshes
+        # BUT we force it if is_last is True (end of a pipe read buffer)
+        current_time = time.time()
+        if is_last or (current_time - self.last_ui_update_time > self.ui_update_delay):
+            self.last_full_ui_update = 0 # Force immediate update for pipe too
+            
+            # Use direct calls for real-time responsiveness from the pipe
+            # But ensure it's on the main thread
+            self.root.after(0, self.refresh_ui_only)
+            self.last_ui_update_time = current_time
+
     def analyze_log(self, manual=False):
         start_time = time.time()
         if manual:
@@ -1841,11 +2076,28 @@ class CombatLogApp:
 
         # Optimization: only re-parse if file has changed
         try:
-            mtime = os.path.getmtime(actual_file_path)
-            if not manual and hasattr(self, 'last_log_mtime') and mtime <= self.last_log_mtime:
-                self.refresh_ui_only()
-                return
+            st = os.stat(actual_file_path)
+            mtime = st.st_mtime
+            size = st.st_size
+            
+            # Check both modification time and size to catch all appends reliably on Windows
+            if not manual and hasattr(self, 'last_log_mtime') and hasattr(self, 'last_log_size'):
+                # Bypass optimization periodically to force a metadata refresh and check for new data
+                # This helps if the game client uses buffering that doesn't update mtime/size immediately
+                now = time.time()
+                if not hasattr(self, 'last_forced_read_time'):
+                    self.last_forced_read_time = 0
+                    
+                if now - self.last_forced_read_time < 0.2: # Reduced from 0.5 to 0.2
+                    if mtime <= self.last_log_mtime and size <= self.last_log_size:
+                        self.refresh_ui_only()
+                        return
+                else:
+                    self.last_forced_read_time = now
+                    # We continue to parse_combat_log even if mtime/size look same
+                    
             self.last_log_mtime = mtime
+            self.last_log_size = size
         except:
             pass
 
@@ -1947,25 +2199,78 @@ class CombatLogApp:
             if new_events:
                 # Force refresh UI immediately if we have new events
                 self.last_ui_update_time = 0 
+                self.last_full_ui_update = 0 # Force a full UI update immediately
                 
                 print(f"DEBUG: New batch size: {len(new_events)}. Damage events in batch: {len([e for e in new_events if e['damage'] > 0])}")
+
+                # --- NEW TIMEOUT CHECK ---
+                # Check for session timeout BEFORE initializing or processing this batch.
+                # If we have an existing session and new combat is detected, check if it's a new session.
+                has_combat = any(e["damage"] > 0 for e in new_events)
+                if has_combat and self.app_start_time is not None:
+                    damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
+                    latest_new_damage_ts = max(e["timestamp"] for e in damage_events)
+                    is_recent = (datetime.now() - latest_new_damage_ts).total_seconds() < 10
+
+                    if not is_initial_history_load or is_recent:
+                        if self.last_combat_time > 0 and (now_ts - self.last_combat_time) > self.time_window_dm:
+                            print(f"DEBUG: Combat timeout ({self.time_window_dm}s), resetting session. Last: {self.last_combat_time}, Now: {now_ts}")
+                            self.leaderboard_data = {}
+                            self.player_data = {} # Clear player data too
+                            if damage_events:
+                                self.app_start_time = min(e["timestamp"] for e in damage_events)
+                                self.damage_dealt = 0
+                                self.damage_taken = 0
+                                self.last_log_sync_time = self.app_start_time
+                                self.last_combat_time = now_ts
+                                log_age = (now_dt - self.app_start_time).total_seconds()
+                                if log_age > 0:
+                                    self.last_combat_time = now_ts - min(60.0, log_age)
+                                
+                                # Prune all_events to remove damage from the previous session BEFORE processing this batch
+                                max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
+                                history_limit = now_dt - timedelta(minutes=max_history_mins)
+                                old_event_count = len(self.all_events)
+                                self.all_events = [
+                                    e for e in self.all_events 
+                                    if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
+                                       (e["type"] == "loot" and e["timestamp"] and e["timestamp"] >= history_limit) or
+                                       (e["type"] not in ["dealt", "taken", "damage", "loot"] and e["timestamp"] and e["timestamp"] >= history_limit)
+                                ]
+                                print(f"DEBUG: Combat reset. New app_start_time: {self.app_start_time}. Pruned {old_event_count - len(self.all_events)} old events.")
 
                 # If app_start_time is None (initial launch or after timeout),
                 # try to initialize it from the FIRST damage event in the new batch.
                 # If this is the initial history load, only initialize if the latest damage is VERY recent (within 10s)
+                # AND it occurred after the app was actually started.
                 if self.app_start_time is None:
-                    damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
-                    if damage_events:
-                        latest_damage_ts = max(e["timestamp"] for e in damage_events)
+                    # Use both actual app start and the last manual reset time as floor
+                    # Add a buffer (300s) to the floor to account for significant system clock skew vs log timestamps
+                    # BUT only if NOT a manual reset, to ensure a clean start.
+                    floor_buffer = 0 if manual else 300
+                    start_floor = max(self.actual_app_start_time, self.last_reset_time) - timedelta(seconds=floor_buffer)
+                    damage_events = [
+                        e for e in new_events 
+                        if e["damage"] > 0 and e["timestamp"] and e["timestamp"] >= start_floor
+                    ]
+                    if damage_events or manual:
+                        latest_damage_ts = max(e["timestamp"] for e in damage_events) if damage_events else datetime.now()
                         # Reduced threshold from 120s to 10s for initial load to prevent "time jumps"
+                        # CRITICAL: only enforce recency during initial history load. 
+                        # During active polling (not initial), trust any new damage events found.
                         is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 10
                         
-                        if not is_initial_history_load or is_recent:
-                            self.app_start_time = min(e["timestamp"] for e in damage_events)
+                        # IF this is NOT the initial history load, we don't care about recency - we trust new_events.
+                        # IF it IS the initial history load, we only trust it if it's very recent or it's a manual action.
+                        if not is_initial_history_load or is_recent or manual:
+                            # Use the earliest event in the batch if it's after the floor, else now
+                            self.app_start_time = min(e["timestamp"] for e in damage_events) if damage_events else datetime.now()
                             
                             # CRITICAL: Reset damage dealt and damage taken stats for the main UI
                             self.damage_dealt = 0
                             self.damage_taken = 0
+                            self.leaderboard_data = {}
+                            self.player_data = {}
                             
                             # CRITICAL: When starting a NEW session, synchronize the system clock anchor 
                             # to the log event's timestamp as accurately as possible. 
@@ -1981,9 +2286,11 @@ class CombatLogApp:
                                 self.last_combat_time = now_ts - min(60.0, log_age)
                                 
                             self.last_ui_update_time = 0 # Force refresh
+                            self.last_full_ui_update = 0 # Force full UI refresh
                             
                             # CRITICAL: If we just initialized app_start_time, prune historical damage
                             # to ensure the NEW session starts clean.
+                            # IMPORTANT: The user wants to ignore ALL events before the app started, except for Loot (Skimmers).
                             max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
                             history_limit = now_dt - timedelta(minutes=max_history_mins)
                             
@@ -1991,14 +2298,15 @@ class CombatLogApp:
                             self.all_events = [
                                 e for e in self.all_events 
                                 if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
-                                   (e["type"] not in ["dealt", "taken", "damage"] and e["timestamp"] and e["timestamp"] >= history_limit)
+                                   (e["type"] == "loot" and e["timestamp"] and e["timestamp"] >= history_limit) or
+                                   (e["type"] not in ["dealt", "taken", "damage", "loot"] and e["timestamp"] and e["timestamp"] >= history_limit)
                             ]
                             events_for_ui = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
                             print(f"DEBUG: Initialized app_start_time ({self.app_start_time}) and pruned {old_event_count - len(self.all_events)} old damage events.")
-                        else:
-                            print(f"DEBUG: Skipping app_start_time init from initial load because latest damage ({latest_damage_ts}) is not recent.")
+                        elif is_initial_history_load:
+                            print(f"DEBUG: Skipping app_start_time init from initial load because latest damage ({latest_damage_ts}) is not recent. It will initialize on the next hit.")
                     else:
-                        print("DEBUG: app_start_time is None and no damage events in this batch to initialize it.")
+                        pass
 
                 print(f"DEBUG: Processed {len(new_events)} new events. First TS: {new_events[0]['timestamp']}, Start: {self.app_start_time}")
                 
@@ -2012,40 +2320,6 @@ class CombatLogApp:
                     is_recent = (datetime.now() - latest_new_damage_ts).total_seconds() < 10
                     
                     if not is_initial_history_load or is_recent:
-                        # If it's been more than X seconds since the last damage, reset the meter
-                        if self.last_combat_time > 0 and (now_ts - self.last_combat_time) > self.time_window_dm:
-                            print(f"DEBUG: Combat timeout ({self.time_window_dm}s), resetting session. Last: {self.last_combat_time}, Now: {now_ts}")
-                            self.leaderboard_data = {}
-                            
-                            # Reset app_start_time to the EARLIEST event of the NEW session in this batch
-                            if damage_events:
-                                self.app_start_time = min(e["timestamp"] for e in damage_events)
-                                # CRITICAL: Also reset sync anchor when session is reset
-                                self.last_log_sync_time = self.app_start_time
-                                self.last_combat_time = now_ts
-                                
-                                # SYNC system clock to log age for clean start
-                                log_age = (now_dt - self.app_start_time).total_seconds()
-                                if log_age > 0:
-                                    self.last_combat_time = now_ts - min(60.0, log_age)
-                                    
-                                print(f"DEBUG: Combat reset. New app_start_time: {self.app_start_time}")
-                                
-                                # Prune all_events to remove damage from the previous session
-                                max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
-                                history_limit = now_dt - timedelta(minutes=max_history_mins)
-                                
-                                old_event_count = len(self.all_events)
-                                self.all_events = [
-                                    e for e in self.all_events 
-                                    if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
-                                       (e["type"] not in ["dealt", "taken", "damage"] and e["timestamp"] and e["timestamp"] >= history_limit)
-                                ]
-                                events_for_ui = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
-                                print(f"DEBUG: Combat reset. New app_start_time: {self.app_start_time}. Pruned {old_event_count - len(self.all_events)} old events.")
-                            else:
-                                self.app_start_time = None
-                        
                         # CRITICAL: Sync last_combat_time to system time BUT anchor it to the LATEST log event we just read
                         self.last_combat_time = now_ts
                         self.last_log_sync_time = latest_new_damage_ts
@@ -2085,10 +2359,6 @@ class CombatLogApp:
             else:
                 events_for_ui = [] # No session started
 
-            if manual or new_events:
-                damage_in_ui = len([e for e in events_for_ui if e['damage'] > 0])
-                print(f"DEBUG: Final events_for_ui count: {len(events_for_ui)} (Damage: {damage_in_ui}). First event type: {events_for_ui[0]['type'] if events_for_ui else 'N/A'}")
-
             # OPTIMIZATION: process_events_for_ui is heavy. Only run if we have new data OR if it's been a while
             # Also refresh immediately if skimmers, details or leaderboard are open
             is_any_open = (self.skimmers_window and self.skimmers_window.winfo_exists()) or \
@@ -2096,115 +2366,31 @@ class CombatLogApp:
                          (self.leaderboard_window and self.leaderboard_window.winfo_exists()) or \
                          (self.damage_meter_window and self.damage_meter_window.winfo_exists())
             
-            if new_events or manual or is_any_open or not hasattr(self, 'last_full_ui_update') or (time.time() - self.last_full_ui_update > 1.0):
-                self.root.after(0, lambda: self.process_events_for_ui(events_for_ui, manual=manual, all_events=self.all_events))
-                self.last_full_ui_update = time.time()
-            
-            # Update Loot count on main UI label periodically
+            # Heavy data processing only on new events, manual reset, or every 1.0s if windows are open
             now_time = time.time()
+            needs_heavy = new_events or manual or (is_any_open and now_time - getattr(self, 'last_full_ui_update', 0) > 1.0)
+            
+            if needs_heavy:
+                # Force immediate process_events_for_ui to ensure data consistency
+                self.process_events_for_ui(events_for_ui, manual=manual, all_events=self.all_events)
+                self.last_full_ui_update = now_time
+
+            # Update Loot count on main UI label periodically
             if not hasattr(self, 'last_loot_label_update') or (now_time - self.last_loot_label_update > 10.0):
                 loot_count = sum(len(items) for items in self.loot_data.values())
                 self.lbl_loot.config(text=f"LOOT ({loot_count})")
                 self.last_loot_label_update = now_time
 
-            # Still refresh damage meter for duration ticks even if no new events
-            self.root.after(0, lambda: self.refresh_damage_meter_window(events_for_ui))
-            
-            # Also update main UI stats if they exist
-            damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count = calculate_dps(events_for_ui)
+            # Still refresh damage meter for duration ticks even if no new events, but throttle it
+            if needs_heavy or (now_time - getattr(self, 'last_ticker_update', 0) > 0.1):
+                # We can keep damage meter on after(0) or call directly if fast
+                self.refresh_damage_meter_window(events_for_ui)
+                self.last_ticker_update = now_time
             
             # Main UI Duration (Cyan when paused/stopped)
             is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > self.time_window_dm
             
-            # SUPERCEED: If we have NEW combat events in this batch, we are NOT paused
-            if new_events and any(e["damage"] > 0 for e in new_events):
-                is_paused = False
-            
-            if is_paused:
-                # If paused, show exact combat duration and dps from calculate_dps
-                pass 
-            else:
-                # If active, allow live duration ticker in main UI as well
-                # RELAXED CHECK: If we have damage in the current batch but app_start_time is None,
-                # initialize it immediately to avoid 1-cycle delay
-                if self.app_start_time is None and new_events:
-                    damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
-                    if damage_events:
-                        latest_damage_ts = max(e["timestamp"] for e in damage_events)
-                        is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 10
-                        
-                        if not is_initial_history_load or is_recent:
-                            self.app_start_time = min(e["timestamp"] for e in damage_events)
-                            # Ensure anchor is also set
-                            if self.last_combat_time == 0:
-                                self.last_log_sync_time = self.app_start_time
-                                self.last_combat_time = now_ts
-                                
-                                # SYNC system clock to log age
-                                log_age = (now_dt - self.app_start_time).total_seconds()
-                                if log_age > 0:
-                                    self.last_combat_time = now_ts - min(60.0, log_age)
-                            
-                            # CRITICAL: If we just initialized app_start_time here, also prune all_events
-                            # to remove any damage that was sitting in all_events before this batch.
-                            max_history_mins = max(self.time_window_details, self.time_window_leaderboard, self.time_window_skimmers, 65)
-                            history_limit = now_dt - timedelta(minutes=max_history_mins)
-                            
-                            old_event_count = len(self.all_events)
-                            self.all_events = [
-                                e for e in self.all_events 
-                                if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or 
-                                   (e["type"] not in ["dealt", "taken", "damage"] and e["timestamp"] and e["timestamp"] >= history_limit)
-                            ]
-                            events_for_ui = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
-                            print(f"DEBUG: Relaxed init app_start_time ({self.app_start_time}) and pruned {old_event_count - len(self.all_events)} old damage events.")
-
-                if self.app_start_time and self.last_combat_time > 0:
-                    # Determine our sync baseline
-                    anchor_ts = getattr(self, 'last_log_sync_time', self.app_start_time)
-                    time_since_sync = now_ts - self.last_combat_time
-                    
-                    # Project current time from anchor
-                    projected_now = anchor_ts + timedelta(seconds=time_since_sync)
-                    
-                    # Safety cap: Cannot project past actual system clock
-                    if projected_now > now_dt:
-                        projected_now = now_dt
-                    
-                    live_now = projected_now
-                    live_duration = (live_now - self.app_start_time).total_seconds()
-                    
-                    if live_duration > duration:
-                        duration = live_duration
-                        if duration > 0:
-                            dps = damage_dealt / duration
-
-            # Update pulsing state (300ms)
-            current_time = time.time()
-            if current_time - self.last_pulse_time > 0.3:
-                self.pulse_state = not self.pulse_state
-                self.last_pulse_time = current_time
-
-            display_duration = f"{duration:.0f}s"
-            duration_color = "cyan" if is_paused else TEXT_PRIMARY
-            
-            # Pulse duration if > 0 and NOT in active combat/paused
-            # "No combat started" means self.last_combat_time is 0
-            if duration > 0 and self.last_combat_time == 0:
-                if self.pulse_state:
-                    duration_color = "cyan"
-                else:
-                    duration_color = "#AAAAAA" # Dim gray for pulse off
-            
-            def update_main_labels(d_dealt=damage_dealt, dps_val=dps, disp_dur=display_duration, dur_col=duration_color):
-                if hasattr(self, 'lbl_damage_val'):
-                    self.lbl_damage_val.config(text=f"{d_dealt:.0f}")
-                if hasattr(self, 'lbl_dps_val'):
-                    self.lbl_dps_val.config(text=f"{dps_val:.2f}")
-                if hasattr(self, 'lbl_time_val'):
-                    self.lbl_time_val.config(text=disp_dur, fg=dur_col)
-
-            self.root.after(0, update_main_labels)
+            self.update_live_stats(events_for_ui, is_paused, manual)
             
             total_time = time.time() - start_time
             if total_time > 0.5:
@@ -2229,14 +2415,68 @@ class CombatLogApp:
         """Refreshes the UI using already parsed events."""
         if not self.app_start_time:
             # If no combat session has started, we don't show any damage/DPS data
+            # Also clear the main labels
+            self.damage_dealt = 0
+            self.damage_taken = 0
             self.process_events_for_ui([], all_events=self.all_events)
+            self.update_live_stats([], is_paused=True)
         else:
             events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
             self.process_events_for_ui(events, all_events=self.all_events)
+            is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > self.time_window_dm
+            self.update_live_stats(events, is_paused=is_paused)
         
         # Update Loot count on the label
         loot_count = sum(len(items) for items in self.loot_data.values())
-        self.lbl_loot.config(text=f"LOOT ({loot_count})")
+        if hasattr(self, 'lbl_loot'):
+            self.lbl_loot.config(text=f"LOOT ({loot_count})")
+
+    def update_live_stats(self, events_for_ui, is_paused=False, manual=False):
+        """Updates the live duration, DPS, and damage labels with projection."""
+        damage_dealt, damage_taken, dps, duration, miss_count, hit_count, avoided_count, taken_count = calculate_dps(events_for_ui)
+        now_ts = time.time()
+        now_dt = datetime.now()
+
+        if not is_paused and self.app_start_time and self.last_combat_time > 0:
+            # Determine our sync baseline
+            anchor_ts = getattr(self, 'last_log_sync_time', self.app_start_time)
+            time_since_sync = now_ts - self.last_combat_time
+            
+            # Project current time from anchor
+            projected_now = anchor_ts + timedelta(seconds=time_since_sync)
+            
+            # Safety cap: Cannot project past actual system clock
+            if projected_now > now_dt:
+                projected_now = now_dt
+            
+            live_duration = (projected_now - self.app_start_time).total_seconds()
+            
+            if live_duration > duration:
+                duration = live_duration
+                if duration > 0:
+                    dps = damage_dealt / duration
+
+        # Update pulsing state (300ms)
+        if now_ts - self.last_pulse_time > 0.3:
+            self.pulse_state = not self.pulse_state
+            self.last_pulse_time = now_ts
+
+        display_duration = f"{duration:.0f}s"
+        duration_color = "cyan" if is_paused else TEXT_PRIMARY
+        
+        # Pulse duration if > 0 and NOT in active combat/paused
+        if duration > 0 and self.last_combat_time == 0:
+            if self.pulse_state:
+                duration_color = "cyan"
+            else:
+                duration_color = "#AAAAAA" # Dim gray for pulse off
+
+        if hasattr(self, 'lbl_damage_val'):
+            self.lbl_damage_val.config(text=f"{damage_dealt:.0f}")
+        if hasattr(self, 'lbl_dps_val'):
+            self.lbl_dps_val.config(text=f"{dps:.2f}")
+        if hasattr(self, 'lbl_time_val'):
+            self.lbl_time_val.config(text=display_duration, fg=duration_color)
 
     def process_events_for_ui(self, events, manual=False, all_events=None):
         """Processes events and updates all UI components."""
@@ -3025,12 +3265,18 @@ class CombatLogApp:
             # self.damage_meter_window = None  # Keep reference for withdraw/deiconify
 
     def reset_damage_meter_manual(self):
+        print("DEBUG: Manual Damage Meter Reset")
+        self.last_reset_time = datetime.now()
         self.leaderboard_data = {}
         # Manually reset start time
         self.app_start_time = None
         self.last_combat_time = 0
+        self.damage_dealt = 0
+        self.damage_taken = 0
         self.analyze_log(manual=True)
-        self.refresh_damage_meter_window()
+        # Force UI update to zero immediately
+        self.refresh_ui_only()
+        self.refresh_damage_meter_window([])
 
     def refresh_damage_meter_window(self, events=None):
         if not self.damage_meter_window or not self.damage_meter_window.winfo_exists():
@@ -4118,6 +4364,7 @@ class CombatLogApp:
         self.app_start_time = None
         self.last_combat_time = 0 # Reset anchor as well
         self.last_log_sync_time = None
+        self.last_reset_time = datetime.now()
         self.analyze_log(manual=True)
         if self.options_window:
             self.on_close_options()
@@ -4199,6 +4446,14 @@ class CombatLogApp:
 
             self.config["General"]["log_path"] = file_path
             self.config["General"]["disable_warnings"] = str(self.disable_warnings.get())
+            
+            # Reset start time floor for the new log
+            self.last_reset_time = datetime.now()
+            self.app_start_time = None
+            self.all_events = []
+            
+            # Restart C engine with new path
+            self.start_c_engine(file_path)
 
             try:
                 with open("settings.ini", "w", encoding="utf-8") as configfile:
@@ -4213,8 +4468,8 @@ class CombatLogApp:
             #     ThemedMessagebox.showinfo(self.root, "Notice", notice_text)
             
             # Automatically analyze when log changes in a background thread to prevent UI freezing
-            self.app_start_time = None
-            threading.Thread(target=lambda: self.analyze_log(manual=True), daemon=True).start()
+            # self.app_start_time = None
+            # threading.Thread(target=lambda: self.analyze_log(manual=True), daemon=True).start()
 
 
 if __name__ == "__main__":
@@ -4239,6 +4494,7 @@ if __name__ == "__main__":
     try:
         root = tk.Tk()
         app = CombatLogApp(root)
+        app.start_ticker_loop()
         print("DEBUG: Entering mainloop")
         root.mainloop()
     except Exception as e:

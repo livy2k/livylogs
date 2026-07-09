@@ -26,3 +26,7 @@ desktop.ini
 # Ollama related
 *ollma*
 .ollamassist/
+
+# Personal Reference Docs
+ENGINE_DOCS.md
+CLION_BUILD.md

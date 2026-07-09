@@ -27,6 +27,7 @@ desktop.ini
 *ollma*
 .ollamassist/
 
-# Personal Reference Docs
-ENGINE_DOCS.md
-CLION_BUILD.md
+# Documentation and sync server
+*.md
+!README.md
+sync_server.py

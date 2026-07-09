@@ -614,9 +614,9 @@ class CombatLogApp:
             else:
                 image = Image.new('RGB', (64, 64), color=(0, 120, 215)) # Fallback blue square
             
+            import webbrowser
             menu = (
-                item('Show/Hide', self.toggle_visibility),
-                item('Options', lambda: self.root.after(0, self.options_win.show)),
+                item('About', lambda: webbrowser.open("https://github.com/livy2k/livylogs#readme")),
                 item('Exit', self.on_exit)
             )
             self.tray_icon = pystray.Icon("LivyLogs", image, "LivyLogs", menu)
@@ -624,12 +624,6 @@ class CombatLogApp:
         except Exception as e:
             print(f"DEBUG: Failed to setup tray icon: {e}")
 
-    def toggle_visibility(self):
-        # Determine if we should show or hide based on current state
-        if self.current_alpha > 0.1:
-            self.start_hide()
-        else:
-            self.start_show()
 
     def on_exit(self, icon=None, item=None):
         self.running = False

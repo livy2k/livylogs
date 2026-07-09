@@ -134,3 +134,147 @@ class ThemedMessagebox(tk.Toplevel):
     @staticmethod
     def showerror(parent, title, message, on_close=None):
         return ThemedMessagebox(parent, title, message, "error", on_close)
+
+class ThemedInputDialog(tk.Toplevel):
+    def __init__(self, parent, title, prompt, initial_value="", on_submit=None):
+        super().__init__(parent)
+        self.title(title)
+        self.configure(bg=WINDOW_BG)
+        self.attributes("-alpha", 0.0)
+        self.overrideredirect(True)
+        self.resizable(False, False)
+        self.on_submit_callback = on_submit
+
+        self.current_alpha = 0.0
+        self.target_alpha = 1.0
+        self.fade_speed = 0.1
+        self.fade_after_id = None
+        self.target_hwnd = None
+
+        width, height = 400, 180
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = max(0, (screen_width // 2) - (width // 2))
+        y = max(0, (screen_height // 2) - (height // 2))
+        self.geometry(f"{width}x{height}+{x}+{y}")
+
+        border = tk.Frame(self, bg=BORDER_COLOR, padx=1, pady=1)
+        border.pack(fill=tk.BOTH, expand=True)
+        inner = tk.Frame(border, bg=WINDOW_BG)
+        inner.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+        title_bar = tk.Frame(inner, bg=PANEL_DARK, height=30)
+        title_bar.pack(fill=tk.X)
+        tk.Label(title_bar, text=title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=10)
+        
+        close_btn = tk.Label(title_bar, text="✕", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2", padx=10)
+        close_btn.pack(side=tk.RIGHT)
+        close_btn.bind("<Button-1>", lambda e: self.destroy())
+
+        content = tk.Frame(inner, bg=WINDOW_BG, padx=20, pady=20)
+        content.pack(fill=tk.BOTH, expand=True)
+        
+        tk.Label(content, text=prompt, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 10), justify=tk.LEFT, wraplength=360).pack(fill=tk.X, pady=(0, 10))
+        
+        self.entry_var = tk.StringVar(value=initial_value)
+        entry_frame = tk.Frame(content, bg=BORDER_COLOR, padx=1, pady=1)
+        entry_frame.pack(fill=tk.X)
+        self.entry = tk.Entry(entry_frame, textvariable=self.entry_var, bg=PANEL_DARK, fg=TEXT_PRIMARY, 
+                              insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 10))
+        self.entry.pack(fill=tk.X, padx=5, pady=5)
+        self.entry.focus_set()
+        self.entry.bind("<Return>", lambda e: self.submit())
+        self.entry.bind("<Escape>", lambda e: self.destroy())
+
+        btn_area = tk.Frame(inner, bg=PANEL_DARK, height=40)
+        btn_area.pack(fill=tk.X)
+        
+        submit_btn = tk.Frame(btn_area, bg=BUTTON_BG, padx=15, pady=5, cursor="hand2")
+        submit_btn.pack(side=tk.RIGHT, padx=10, pady=5)
+        tk.Label(submit_btn, text="SUBMIT", bg=BUTTON_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold")).pack()
+        submit_btn.bind("<Button-1>", lambda e: self.submit())
+
+        cancel_btn = tk.Frame(btn_area, bg=WINDOW_BG, padx=15, pady=5, cursor="hand2")
+        cancel_btn.pack(side=tk.RIGHT, padx=5, pady=5)
+        tk.Label(cancel_btn, text="CANCEL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack()
+        cancel_btn.bind("<Button-1>", lambda e: self.destroy())
+
+        title_bar.bind("<Button-1>", self._click_window)
+        title_bar.bind("<B1-Motion>", self._drag_window)
+        
+        # Ensure dialog is topmost when shown
+        self.attributes("-topmost", True)
+        
+        self.check_target_window()
+
+    def find_target_window(self):
+        target_hwnd = [None]
+        def enum_windows_callback(hwnd, lparam):
+            buf = ctypes.create_unicode_buffer(255)
+            user32.GetWindowTextW(hwnd, buf, 255)
+            if "Star Wars Galaxies" in buf.value:
+                target_hwnd[0] = hwnd
+                return False
+            return True
+        user32.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)(enum_windows_callback), 0)
+        return target_hwnd[0]
+
+    def check_target_window(self):
+        if not self.winfo_exists(): return
+        self.target_hwnd = self.find_target_window()
+        if self.target_hwnd:
+            if user32.GetForegroundWindow() == self.target_hwnd or user32.GetForegroundWindow() == user32.GetAncestor(self.winfo_id(), 3):
+                self.start_show()
+            else: self.start_hide()
+        else: self.start_show()
+        self.after(1000, self.check_target_window)
+
+    def start_show(self):
+        if self.fade_after_id: self.after_cancel(self.fade_after_id)
+        self.target_alpha = 1.0
+        self.fade_in()
+
+    def fade_in(self):
+        if self.current_alpha < self.target_alpha:
+            self.current_alpha = min(self.target_alpha, self.current_alpha + self.fade_speed)
+            self.attributes("-alpha", self.current_alpha)
+            self.fade_after_id = self.after(20, self.fade_in)
+
+    def start_hide(self):
+        if self.fade_after_id: self.after_cancel(self.fade_after_id)
+        self.target_alpha = 0.0
+        self.fade_out()
+
+    def fade_out(self):
+        if self.current_alpha > self.target_alpha:
+            self.current_alpha = max(self.target_alpha, self.current_alpha - self.fade_speed)
+            self.attributes("-alpha", self.current_alpha)
+            self.fade_after_id = self.after(20, self.fade_out)
+
+    def submit(self):
+        val = self.entry_var.get()
+        # Reset parent dialog state
+        if hasattr(self.master, "app"):
+            self.master.app.is_dialog_open = False
+        elif hasattr(self.master, "is_dialog_open"):
+            self.master.is_dialog_open = False
+            
+        self.destroy()
+        if self.on_submit_callback:
+            self.on_submit_callback(val)
+
+    def destroy(self):
+        # Reset parent dialog state on direct close
+        if hasattr(self.master, "app"):
+            self.master.app.is_dialog_open = False
+        elif hasattr(self.master, "is_dialog_open"):
+            self.master.is_dialog_open = False
+        super().destroy()
+
+    def _click_window(self, event):
+        self._offsetx = event.x; self._offsety = event.y
+
+    def _drag_window(self, event):
+        x = self.winfo_pointerx() - self._offsetx; y = self.winfo_pointery() - self._offsety
+        x, y = apply_snapping(self, x, y)
+        self.geometry(f"+{x}+{y}")

@@ -13,17 +13,18 @@ class OptionsWindow(BasePopoutWindow):
 
     def refresh(self, force=False):
         if not self.window or self.window.state() == "withdrawn": return
-        # No heavy refresh needed for options unless we want to reflect changes from elsewhere
-        # Using winfo_children check to avoid constant rebuilds
-        if not force and len(self.content_container.winfo_children()) > 0: return 
         
-        # Clear existing content
+        # Only rebuild the entire UI if it doesn't exist yet
+        if len(self.content_container.winfo_children()) == 0:
+            self.build_ui()
+        
+        # Update dynamic elements
+        self.update_status_indicator()
+
+    def build_ui(self):
+        # Clear existing content just in case
         for child in self.content_container.winfo_children():
             child.destroy()
-
-        # Helper to trigger refresh on change
-        def on_change(*args):
-            self.refresh(force=True)
 
         # Transparency Slider
         tk.Label(self.content_container, text="TRANSPARENCY", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(5, 2))
@@ -33,7 +34,6 @@ class OptionsWindow(BasePopoutWindow):
         alpha_scale.set(self.app.target_alpha)
         alpha_scale.pack(fill=tk.X, pady=(0, 10))
         
-        # Prevent slider interaction from being treated as window movement
         alpha_scale.bind("<Button-1>", lambda e: "break")
         alpha_scale.bind("<B1-Motion>", lambda e: "break")
 
@@ -41,7 +41,7 @@ class OptionsWindow(BasePopoutWindow):
         def add_check(text, var, cmd=None):
             def combined_cmd():
                 if cmd: cmd()
-                on_change()
+                self.refresh() # Update status if needed
             cb = tk.Checkbutton(self.content_container, text=text, variable=var, bg=WINDOW_BG, fg=TEXT_PRIMARY,
                                selectcolor=PANEL_DARK, activebackground=WINDOW_BG, activeforeground=TEXT_PRIMARY,
                                font=("Segoe UI", 9), command=combined_cmd)
@@ -58,37 +58,39 @@ class OptionsWindow(BasePopoutWindow):
         tk.Label(self.content_container, text="CHARACTER NAME", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7, "bold")).pack(anchor="w")
         char_entry = tk.Entry(self.content_container, textvariable=self.app.char_name, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9))
         char_entry.pack(fill=tk.X, pady=(2, 8))
-        char_entry.bind("<FocusOut>", lambda e: [self.app.save_config(), on_change()])
+        char_entry.bind("<FocusOut>", lambda e: [self.app.save_config(), self.refresh()])
         
         tk.Label(self.content_container, text="API URL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7, "bold")).pack(anchor="w")
         api_entry = tk.Entry(self.content_container, textvariable=self.app.api_url, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9))
         api_entry.pack(fill=tk.X, pady=(2, 8))
-        api_entry.bind("<FocusOut>", lambda e: [self.app.save_config(), on_change()])
+        api_entry.bind("<FocusOut>", lambda e: [self.app.save_config(), self.refresh()])
 
-        # Combat Log Path - simplified
+        # Combat Log Path - simplified status
         tk.Label(self.content_container, text="LOG FILE STATUS", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(10, 2))
-        path_exists = bool(self.app.file_path_var.get() and os.path.exists(self.app.file_path_var.get()))
-        status_text = "SELECTED" if path_exists else "NOT SELECTED"
-        status_color = ACCENT_BLUE if path_exists else "#FF5555"
-        path_lbl = tk.Label(self.content_container, text=status_text, bg=PANEL_DARK, fg=status_color, font=("Segoe UI", 9, "bold"), pady=5)
-        path_lbl.pack(fill=tk.X, pady=(0, 5))
+        self.status_lbl = tk.Label(self.content_container, text="CHECKING...", bg=PANEL_DARK, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold"), pady=5)
+        self.status_lbl.pack(fill=tk.X, pady=(0, 5))
+        self.update_status_indicator()
 
         # Buttons
-        tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
-
         def add_btn(text, cmd):
-            def wrapped_cmd():
-                cmd()
-                on_change()
             b = tk.Label(self.content_container, text=text, bg=BUTTON_BG, fg=TEXT_PRIMARY, 
                         font=("Segoe UI", 9, "bold"), pady=8, cursor="hand2")
             b.pack(fill=tk.X, pady=4)
             b.bind("<Enter>", lambda e: b.config(bg=BUTTON_HOVER))
             b.bind("<Leave>", lambda e: b.config(bg=BUTTON_BG))
-            b.bind("<Button-1>", lambda e: wrapped_cmd())
+            b.bind("<Button-1>", lambda e: [cmd(), self.refresh()])
 
+        add_btn("SELECT NEW LOG", self.app.change_log_path)
+        tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
         add_btn("CHANGE LOG PATH", self.app.change_log_path)
         add_btn("RESET ALL DATA", lambda: self.app.analyze_log(manual=True))
+
+    def update_status_indicator(self):
+        if not hasattr(self, 'status_lbl'): return
+        path_exists = bool(self.app.file_path_var.get() and os.path.exists(self.app.file_path_var.get()))
+        status_text = "SELECTED" if path_exists else "NOT SELECTED"
+        status_color = ACCENT_BLUE if path_exists else "#FF5555"
+        self.status_lbl.config(text=status_text, fg=status_color)
         
     def on_alpha_change(self, val):
         self.app.target_alpha = float(val)

@@ -198,12 +198,17 @@ class CombatLogApp:
         try:
             if not self.target_hwnd or not user32.IsWindow(self.target_hwnd): self.target_hwnd = self.find_target_window()
             should_show = (self.is_foreground_ours() or self.always_on_top) and not is_window_minimized(self.target_hwnd)
+            
+            # If we are showing a modal dialog, temporarily disable topmost to allow interaction
+            is_dialog_open = getattr(self, "is_dialog_open", False)
+
             if should_show:
                 self.start_show()
                 for win in self._get_managed_windows():
-                    win.attributes("-topmost", True)
-                    user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
-                self._last_topmost_state = True
+                    win.attributes("-topmost", not is_dialog_open)
+                    if not is_dialog_open:
+                        user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                self._last_topmost_state = not is_dialog_open
             else:
                 if not hasattr(self, '_hide_grace_after_id') or self._hide_grace_after_id is None:
                     self._hide_grace_after_id = self.root.after(1000, self._perform_graceful_hide)
@@ -643,23 +648,32 @@ class CombatLogApp:
         self.options_win.show()
 
     def change_log_path(self):
+        from tkinter import filedialog
+        self.is_dialog_open = True
         p = filedialog.askopenfilename()
+        self.is_dialog_open = False
         if p: 
             self.file_path_var.set(p)
             
-            # Prompt for character name
-            from tkinter import simpledialog
+            # Prompt for character name using themed dialog
+            from ui_base import ThemedInputDialog
             detected_name = extract_character_id(p)
-            new_name = simpledialog.askstring("Character Name", "Enter your Character Name for synchronization:", initialvalue=detected_name)
-            if new_name:
-                self.char_name.set(new_name)
-            elif not self.char_name.get():
-                self.char_name.set(detected_name)
+            
+            def on_name_submit(new_name):
+                # State is reset inside ThemedInputDialog.destroy() or submit()
+                if new_name:
+                    self.char_name.set(new_name)
+                elif not self.char_name.get():
+                    self.char_name.set(detected_name)
                 
-            self.save_config()
-            self.start_c_engine(p)
-            self.analyze_log(manual=True)
-            self.options_win.refresh(force=True)
+                self.save_config()
+                self.start_c_engine(p)
+                self.analyze_log(manual=True)
+                self.options_win.refresh(force=True)
+
+            self.is_dialog_open = True
+            ThemedInputDialog(self.root, "Character Name", "Enter your Character Name for synchronization:", 
+                              initial_value=detected_name, on_submit=on_name_submit)
 
     def reset_damage_meter_manual(self):
         self.last_dm_reset = datetime.now()

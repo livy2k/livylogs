@@ -21,6 +21,10 @@ class OptionsWindow(BasePopoutWindow):
         for child in self.content_container.winfo_children():
             child.destroy()
 
+        # Helper to trigger refresh on change
+        def on_change(*args):
+            self.refresh(force=True)
+
         # Transparency Slider
         tk.Label(self.content_container, text="TRANSPARENCY", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(5, 2))
         alpha_scale = tk.Scale(self.content_container, from_=0.1, to=1.0, resolution=0.1, orient=tk.HORIZONTAL,
@@ -35,9 +39,12 @@ class OptionsWindow(BasePopoutWindow):
 
         # Checkboxes
         def add_check(text, var, cmd=None):
+            def combined_cmd():
+                if cmd: cmd()
+                on_change()
             cb = tk.Checkbutton(self.content_container, text=text, variable=var, bg=WINDOW_BG, fg=TEXT_PRIMARY,
                                selectcolor=PANEL_DARK, activebackground=WINDOW_BG, activeforeground=TEXT_PRIMARY,
-                               font=("Segoe UI", 9), command=cmd)
+                               font=("Segoe UI", 9), command=combined_cmd)
             cb.pack(anchor="w", pady=2)
 
         add_check("DISABLE WARNINGS", self.app.disable_warnings, self.app.save_config)
@@ -51,12 +58,12 @@ class OptionsWindow(BasePopoutWindow):
         tk.Label(self.content_container, text="CHARACTER NAME", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7, "bold")).pack(anchor="w")
         char_entry = tk.Entry(self.content_container, textvariable=self.app.char_name, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9))
         char_entry.pack(fill=tk.X, pady=(2, 8))
-        char_entry.bind("<FocusOut>", lambda e: self.app.save_config())
+        char_entry.bind("<FocusOut>", lambda e: [self.app.save_config(), on_change()])
         
         tk.Label(self.content_container, text="API URL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7, "bold")).pack(anchor="w")
         api_entry = tk.Entry(self.content_container, textvariable=self.app.api_url, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9))
         api_entry.pack(fill=tk.X, pady=(2, 8))
-        api_entry.bind("<FocusOut>", lambda e: self.app.save_config())
+        api_entry.bind("<FocusOut>", lambda e: [self.app.save_config(), on_change()])
 
         # Combat Log Path - simplified
         tk.Label(self.content_container, text="LOG FILE STATUS", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(10, 2))
@@ -70,12 +77,15 @@ class OptionsWindow(BasePopoutWindow):
         tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
 
         def add_btn(text, cmd):
+            def wrapped_cmd():
+                cmd()
+                on_change()
             b = tk.Label(self.content_container, text=text, bg=BUTTON_BG, fg=TEXT_PRIMARY, 
                         font=("Segoe UI", 9, "bold"), pady=8, cursor="hand2")
             b.pack(fill=tk.X, pady=4)
             b.bind("<Enter>", lambda e: b.config(bg=BUTTON_HOVER))
             b.bind("<Leave>", lambda e: b.config(bg=BUTTON_BG))
-            b.bind("<Button-1>", lambda e: cmd())
+            b.bind("<Button-1>", lambda e: wrapped_cmd())
 
         add_btn("CHANGE LOG PATH", self.app.change_log_path)
         add_btn("RESET ALL DATA", lambda: self.app.analyze_log(manual=True))

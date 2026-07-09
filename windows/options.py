@@ -13,12 +13,12 @@ class OptionsWindow(BasePopoutWindow):
     def refresh(self, force=False):
         if not self.window or self.window.state() == "withdrawn": return
         # No heavy refresh needed for options unless we want to reflect changes from elsewhere
+        # Using winfo_children check to avoid constant rebuilds
         if not force and len(self.content_container.winfo_children()) > 0: return 
         
-        # Clear existing content if forcing
-        if force:
-            for child in self.content_container.winfo_children():
-                child.destroy()
+        # Clear existing content
+        for child in self.content_container.winfo_children():
+            child.destroy()
 
         # Transparency Slider
         tk.Label(self.content_container, text="TRANSPARENCY", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(5, 2))

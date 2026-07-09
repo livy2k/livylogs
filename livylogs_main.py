@@ -254,7 +254,7 @@ class CombatLogApp:
         self.root.bind("<Configure>", self.on_configure)
 
         header = tk.Frame(outer, bg=PANEL_DARK, highlightthickness=1, highlightbackground=BORDER_COLOR)
-        header.pack(fill=tk.BOTH, expand=True)
+        header.pack(fill=tk.X)
         title_bar = tk.Frame(header, bg=PANEL_DARK, height=25); title_bar.pack(fill=tk.X)
         
         exit_btn = tk.Label(title_bar, text=" ✕ ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
@@ -425,7 +425,9 @@ class CombatLogApp:
         self.leaderboard_win.refresh(force=force)
         self.skimmers_win.refresh(force=force)
         self.details_win.refresh(force=force)
-        self.options_win.refresh(force=force)
+        # Options window doesn't need to refresh every tick, only when forced
+        if force:
+            self.options_win.refresh(force=True)
 
     def process_events_for_ui(self, all_events, manual=False):
         now_dt = datetime.now()

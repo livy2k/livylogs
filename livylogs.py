@@ -18,7 +18,6 @@ def main():
     try:
         root = tk.Tk()
         app = CombatLogApp(root)
-        app.start_ticker_loop()
         root.mainloop()
     except Exception as e:
         print(f"CRITICAL ERROR: {e}")

@@ -78,7 +78,7 @@ class CombatLogApp:
         self.char_name = tk.StringVar(value=self.config.get("General", "character_name", fallback=""))
         if not self.char_name.get() and initial_log_path:
             self.char_name.set(extract_character_id(initial_log_path))
-        self.api_url = tk.StringVar(value=self.config.get("General", "api_url", fallback=""))
+        self.api_url = tk.StringVar(value=self.config.get("General", "api_url", fallback="https://livy.logs/sync"))
         self.enable_sync = tk.BooleanVar(value=self.config.getboolean("General", "enable_sync", fallback=False))
 
         self.skimmers_win = SkimmersWindow(self)

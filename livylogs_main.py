@@ -36,7 +36,7 @@ class CombatLogApp:
         print("DEBUG: Initializing CombatLogApp")
         self.root = root
         self.root.title("Combat Log Analyzer")
-        self.root.geometry("260x220")
+        self.root.geometry("260x50")
         self.root.configure(bg=WINDOW_BG)
         
         self.target_hwnd = self.find_target_window()
@@ -56,8 +56,8 @@ class CombatLogApp:
 
         initial_log_path = self.config.get("General", "log_path", fallback="")
         initial_alpha = self.config.getfloat("General", "transparency", fallback=1.0)
-        initial_width = max(MIN_WIDTH, self.config.getint("General", "width", fallback=450))
-        initial_height = max(MIN_HEIGHT, self.config.getint("General", "height", fallback=80))
+        initial_width = max(MIN_WIDTH, self.config.getint("General", "width", fallback=260))
+        initial_height = max(MIN_HEIGHT, self.config.getint("General", "height", fallback=50))
         initial_x = self.config.get("General", "x", fallback="50")
         initial_y = self.config.get("General", "y", fallback="50")
 
@@ -284,10 +284,8 @@ class CombatLogApp:
         self.lbl_refresh = btn("RESCAN", lambda: self.analyze_log(manual=True))
         self.lbl_version = tk.Label(nav, text="1.0", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8)).pack(side=tk.RIGHT)
 
-        stats = tk.Frame(outer, bg=WINDOW_BG); stats.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.lbl_damage_val = self.create_stat_box(stats, "DAMAGE", "0").value_label
-        self.lbl_dps_val = self.create_stat_box(stats, "DPS", "0.00").value_label
-        self.lbl_time_val = self.create_stat_box(stats, "DURATION", "0s").value_label
+        # Spacer to keep minimal height
+        tk.Frame(outer, bg=WINDOW_BG, height=2).pack()
         
         # Add resize handle for main window
         self.resize_handle = tk.Label(outer, text="◢", bg=WINDOW_BG, fg=BORDER_COLOR, font=("Segoe UI", 8), cursor="size_nw_se")
@@ -411,8 +409,6 @@ class CombatLogApp:
             self.root.after(100, self.start_ticker_loop)
 
     def refresh_ui_only(self, force=False):
-        if not hasattr(self, 'lbl_damage_val'): return
-        
         # Pause UI refreshes during interaction to prevent flickering
         if self.is_interacting and not force:
             if time.time() - self.last_interaction_time < 2.0: # 2s safety timeout
@@ -423,26 +419,6 @@ class CombatLogApp:
         now_ts = time.time()
         if now_ts - self.last_pulse_time > 0.3:
             self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
-
-        if not self.app_start_time:
-            self.lbl_damage_val.config(text="0"); self.lbl_dps_val.config(text="0.00"); self.lbl_time_val.config(text="0s", fg="cyan")
-        else:
-            events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= self.app_start_time]
-            dmg_dealt, dmg_taken, dps, dur, miss, hit, avoid, taken = calculate_dps(events)
-            is_paused = self.last_combat_time > 0 and (time.time() - self.last_combat_time) > self.time_window_dm
-            
-            if not is_paused and self.last_combat_time > 0:
-                anchor = getattr(self, 'last_log_sync_time', self.app_start_time)
-                dur = (anchor + timedelta(seconds=time.time() - self.last_combat_time) - self.app_start_time).total_seconds()
-                if dur > 0: dps = dmg_dealt / dur
-                else: dps = 0
-            
-            dur_color = "cyan" if is_paused else TEXT_PRIMARY
-            if dur > 0 and self.last_combat_time == 0: dur_color = "cyan" if self.pulse_state else "#AAAAAA"
-
-            self.lbl_damage_val.config(text=f"{dmg_dealt:.0f}")
-            self.lbl_dps_val.config(text=f"{dps:.2f}")
-            self.lbl_time_val.config(text=f"{dur:.0f}s", fg=dur_color)
 
         # Refresh popout windows
         self.damage_meter_win.refresh(force=force)

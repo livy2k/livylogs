@@ -1,4 +1,5 @@
 import tkinter as tk
+import os
 from tkinter import ttk
 from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, 
@@ -27,6 +28,10 @@ class OptionsWindow(BasePopoutWindow):
                               command=self.on_alpha_change)
         alpha_scale.set(self.app.target_alpha)
         alpha_scale.pack(fill=tk.X, pady=(0, 10))
+        
+        # Prevent slider interaction from being treated as window movement
+        alpha_scale.bind("<Button-1>", lambda e: "break")
+        alpha_scale.bind("<B1-Motion>", lambda e: "break")
 
         # Checkboxes
         def add_check(text, var, cmd=None):
@@ -53,9 +58,12 @@ class OptionsWindow(BasePopoutWindow):
         api_entry.pack(fill=tk.X, pady=(2, 8))
         api_entry.bind("<FocusOut>", lambda e: self.app.save_config())
 
-        # Combat Log Path - ensure it's visible
-        tk.Label(self.content_container, text="LOG FILE", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(10, 2))
-        path_lbl = tk.Label(self.content_container, textvariable=self.app.file_path_var, bg=PANEL_DARK, fg=TEXT_PRIMARY, font=("Segoe UI", 7), wraplength=230, justify=tk.LEFT)
+        # Combat Log Path - simplified
+        tk.Label(self.content_container, text="LOG FILE STATUS", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(10, 2))
+        path_exists = bool(self.app.file_path_var.get() and os.path.exists(self.app.file_path_var.get()))
+        status_text = "SELECTED" if path_exists else "NOT SELECTED"
+        status_color = ACCENT_BLUE if path_exists else "#FF5555"
+        path_lbl = tk.Label(self.content_container, text=status_text, bg=PANEL_DARK, fg=status_color, font=("Segoe UI", 9, "bold"), pady=5)
         path_lbl.pack(fill=tk.X, pady=(0, 5))
 
         # Buttons

@@ -646,11 +646,20 @@ class CombatLogApp:
         p = filedialog.askopenfilename()
         if p: 
             self.file_path_var.set(p)
-            if not self.char_name.get():
-                self.char_name.set(extract_character_id(p))
+            
+            # Prompt for character name
+            from tkinter import simpledialog
+            detected_name = extract_character_id(p)
+            new_name = simpledialog.askstring("Character Name", "Enter your Character Name for synchronization:", initialvalue=detected_name)
+            if new_name:
+                self.char_name.set(new_name)
+            elif not self.char_name.get():
+                self.char_name.set(detected_name)
+                
             self.save_config()
             self.start_c_engine(p)
             self.analyze_log(manual=True)
+            self.options_win.refresh(force=True)
 
     def reset_damage_meter_manual(self):
         self.last_dm_reset = datetime.now()

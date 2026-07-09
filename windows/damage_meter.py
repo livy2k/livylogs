@@ -8,7 +8,7 @@ from windows.base_window import BasePopoutWindow
 
 class DamageMeterWindow(BasePopoutWindow):
     def __init__(self, app):
-        super().__init__(app, "Damage Meter", "DamageMeterWindow", 420, 130)
+        super().__init__(app, "Damage Meter", "DamageMeterWindow", 320, 180)
 
     def show(self, force_open=False):
         super().show(force_open)
@@ -33,33 +33,35 @@ class DamageMeterWindow(BasePopoutWindow):
         if not hasattr(self, 'lbl_dmg'):
             for widget in self.content_container.winfo_children(): widget.destroy()
             grid = tk.Frame(self.content_container, bg=self.window["bg"])
-            grid.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            grid.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
             
             # Row 0
-            tk.Label(grid, text="DAMAGE", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=0, column=0, sticky="w", padx=(0, 10))
+            tk.Label(grid, text="DAMAGE", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=0, column=0, sticky="w")
             self.lbl_dmg = tk.Label(grid, text="0", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
-            self.lbl_dmg.grid(row=0, column=1, sticky="w", padx=(0, 20))
+            self.lbl_dmg.grid(row=0, column=1, sticky="e", padx=(10, 0))
             
-            tk.Label(grid, text="DURATION", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=0, column=2, sticky="w", padx=(0, 10))
+            tk.Label(grid, text="DURATION", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=0, column=2, sticky="w", padx=(30, 0))
             self.lbl_dur = tk.Label(grid, text="0s", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
-            self.lbl_dur.grid(row=0, column=3, sticky="w", padx=(0, 20))
-            
-            tk.Label(grid, text="DPS", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=0, column=4, sticky="w", padx=(0, 10))
-            self.lbl_dps = tk.Label(grid, text="0.0", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
-            self.lbl_dps.grid(row=0, column=5, sticky="w")
+            self.lbl_dur.grid(row=0, column=3, sticky="e", padx=(10, 0))
             
             # Row 1
-            tk.Label(grid, text="HIT%", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(10, 0))
+            tk.Label(grid, text="DPS", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=1, column=0, sticky="w", pady=(10, 0))
+            self.lbl_dps = tk.Label(grid, text="0.0", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
+            self.lbl_dps.grid(row=1, column=1, sticky="e", padx=(10, 0), pady=(10, 0))
+            
+            tk.Label(grid, text="HIT%", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=1, column=2, sticky="w", padx=(30, 0), pady=(10, 0))
             self.lbl_hit = tk.Label(grid, text="0.0%", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
-            self.lbl_hit.grid(row=1, column=1, sticky="w", padx=(0, 20), pady=(10, 0))
+            self.lbl_hit.grid(row=1, column=3, sticky="e", padx=(10, 0), pady=(10, 0))
             
-            tk.Label(grid, text="TAKEN", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=1, column=2, sticky="w", padx=(0, 10), pady=(10, 0))
+            # Row 2
+            tk.Label(grid, text="TAKEN", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=2, column=0, sticky="w", pady=(10, 0))
             self.lbl_taken = tk.Label(grid, text="0", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
-            self.lbl_taken.grid(row=1, column=3, sticky="w", padx=(0, 20), pady=(10, 0))
+            self.lbl_taken.grid(row=2, column=1, sticky="e", padx=(10, 0), pady=(10, 0))
             
-            tk.Label(grid, text="MISS%", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=1, column=4, sticky="w", padx=(0, 10), pady=(10, 0))
+            tk.Label(grid, text="MISS%", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=2, column=2, sticky="w", padx=(30, 0), pady=(10, 0))
             self.lbl_miss = tk.Label(grid, text="0.0%", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
-            self.lbl_miss.grid(row=1, column=5, sticky="w", pady=(10, 0))
+            self.lbl_miss.grid(row=2, column=3, sticky="e", padx=(10, 0), pady=(10, 0))
+            
             do_full = True # Force full on first run
 
         # Calculate duration - ALWAYS UPDATE (High frequency)

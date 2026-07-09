@@ -47,6 +47,8 @@ class BasePopoutWindow:
         
         self.window.bind("<Button-1>", self.click_window)
         self.window.bind("<B1-Motion>", self.drag_window)
+        self.window.bind("<ButtonRelease-1>", self.release_window)
+        self.window.bind("<Configure>", self.on_configure)
         
         border = tk.Frame(self.window, bg=BORDER_COLOR, padx=1, pady=1)
         border.pack(fill=tk.BOTH, expand=True)
@@ -69,9 +71,32 @@ class BasePopoutWindow:
 
         self.resize_handle = tk.Label(self.inner, text="◢", bg=WINDOW_BG, fg=BORDER_COLOR, font=("Segoe UI", 8), cursor="size_nw_se")
         self.resize_handle.place(relx=1.0, rely=1.0, anchor="se")
-        self.resize_handle.bind("<Button-1>", lambda e: self.app.init_resize_popout(e, self.window, self.default_w, self.default_h))
-        self.resize_handle.bind("<B1-Motion>", lambda e: self.app.do_resize_popout(e, self.window, self.default_w, self.default_h))
-        self.resize_handle.bind("<ButtonRelease-1>", lambda e: self.app.save_size(e))
+        self.resize_handle.bind("<Button-1>", self.on_resize_start)
+        self.resize_handle.bind("<B1-Motion>", self.on_resize_drag)
+        self.resize_handle.bind("<ButtonRelease-1>", self.on_resize_end)
+
+    def on_resize_start(self, e):
+        self.app.is_interacting = True
+        self.app.last_interaction_time = __import__("time").time()
+        self._is_resizing = True
+        self.app.init_resize_popout(e, self.window, self.default_w, self.default_h)
+
+    def on_resize_drag(self, e):
+        self.app.is_interacting = True
+        self.app.last_interaction_time = __import__("time").time()
+        self._is_resizing = True
+        self.app.do_resize_popout(e, self.window, self.default_w, self.default_h)
+
+    def on_resize_end(self, e):
+        self.app.is_interacting = False
+        self._is_resizing = False
+        self.app.save_size(e)
+        self.app.refresh_ui_only(force=True)
+
+    def on_configure(self, event):
+        # Only suppress if we are explicitly resizing/interacting
+        if getattr(self, "app", None) and self.app.is_interacting:
+            self.app.last_interaction_time = __import__("time").time()
 
     def close(self):
         if self.window:
@@ -80,15 +105,23 @@ class BasePopoutWindow:
             self.window = None
 
     def click_window(self, event):
+        self.app.is_interacting = True
+        self.app.last_interaction_time = tk.time.time() if hasattr(tk, "time") else __import__("time").time()
         self._offsetx = event.x
         self._offsety = event.y
 
     def drag_window(self, event):
         if not self.window: return
+        self.app.is_interacting = True
+        self.app.last_interaction_time = __import__("time").time()
         x = self.window.winfo_pointerx() - self._offsetx
         y = self.window.winfo_pointery() - self._offsety
         x, y = apply_snapping(self.window, x, y)
         self.window.geometry(f"+{x}+{y}")
+
+    def release_window(self, event=None):
+        self.app.is_interacting = False
+        self.app.refresh_ui_only(force=True)
 
     def refresh(self, force=False):
         pass

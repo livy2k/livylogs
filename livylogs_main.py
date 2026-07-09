@@ -79,6 +79,9 @@ class CombatLogApp:
         self.details_win = DetailsWindow(self)
         self.options_win = OptionsWindow(self)
         
+        self.is_interacting = False
+        self.last_interaction_time = 0
+        
         # Window-specific data containers
         self.dm_damage = {}
         self.dm_taken = {}
@@ -231,7 +234,10 @@ class CombatLogApp:
         self.root_border.pack(fill=tk.BOTH, expand=True)
         outer = tk.Frame(self.root_border, bg=WINDOW_BG)
         outer.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-        outer.bind("<Button-1>", self.click_window); outer.bind("<B1-Motion>", self.drag_window)
+        outer.bind("<Button-1>", self.click_window)
+        outer.bind("<B1-Motion>", self.drag_window)
+        outer.bind("<ButtonRelease-1>", self.release_window)
+        self.root.bind("<Configure>", self.on_configure)
 
         header = tk.Frame(outer, bg=PANEL_DARK, highlightthickness=1, highlightbackground=BORDER_COLOR)
         header.pack(fill=tk.BOTH, expand=True)
@@ -248,6 +254,10 @@ class CombatLogApp:
         self.ontop_btn.bind("<Button-1>", lambda e: self.toggle_always_on_top())
 
         nav = tk.Frame(header, bg=PANEL_DARK); nav.pack(fill=tk.X, padx=10, pady=(0, 5))
+        nav.bind("<Button-1>", self.click_window)
+        nav.bind("<B1-Motion>", self.drag_window)
+        nav.bind("<ButtonRelease-1>", self.release_window)
+
         def btn(t, cmd): 
             l = tk.Label(nav, text=t, bg=PANEL_DARK, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2", padx=5)
             l.pack(side=tk.LEFT); l.bind("<Button-1>", lambda e: cmd())
@@ -264,6 +274,13 @@ class CombatLogApp:
         self.lbl_damage_val = self.create_stat_box(stats, "DAMAGE", "0").value_label
         self.lbl_dps_val = self.create_stat_box(stats, "DPS", "0.00").value_label
         self.lbl_time_val = self.create_stat_box(stats, "DURATION", "0s").value_label
+        
+        # Add resize handle for main window
+        self.resize_handle = tk.Label(outer, text="◢", bg=WINDOW_BG, fg=BORDER_COLOR, font=("Segoe UI", 8), cursor="size_nw_se")
+        self.resize_handle.place(relx=1.0, rely=1.0, anchor="se")
+        self.resize_handle.bind("<Button-1>", self.init_resize)
+        self.resize_handle.bind("<B1-Motion>", self.do_resize)
+        self.resize_handle.bind("<ButtonRelease-1>", self.release_window)
 
     def create_stat_box(self, parent, title, value):
         f = tk.Frame(parent, bg=BORDER_COLOR, padx=1, pady=1); f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2)
@@ -381,6 +398,14 @@ class CombatLogApp:
 
     def refresh_ui_only(self, force=False):
         if not hasattr(self, 'lbl_damage_val'): return
+        
+        # Pause UI refreshes during interaction to prevent flickering
+        if self.is_interacting and not force:
+            if time.time() - self.last_interaction_time < 2.0: # 2s safety timeout
+                return
+            else:
+                self.is_interacting = False
+        
         now_ts = time.time()
         if now_ts - self.last_pulse_time > 0.3:
             self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
@@ -543,11 +568,23 @@ class CombatLogApp:
         with open("settings.ini", "w") as f: self.config.write(f)
 
     def drag_window(self, event):
+        self.is_interacting = True
+        self.last_interaction_time = time.time()
         x, y = apply_snapping(self.root, self.root.winfo_pointerx() - self._offsetx, self.root.winfo_pointery() - self._offsety)
         self.root.geometry(f"+{x}+{y}")
 
     def click_window(self, event):
+        self.is_interacting = True
+        self.last_interaction_time = time.time()
         self._offsetx = event.x_root - self.root.winfo_x(); self._offsety = event.y_root - self.root.winfo_y()
+
+    def release_window(self, event=None):
+        self.is_interacting = False
+        self.refresh_ui_only(force=True)
+
+    def on_configure(self, event):
+        if hasattr(self, "is_interacting") and self.is_interacting:
+            self.last_interaction_time = time.time()
 
     def toggle_menu(self):
         self.options_win.show()
@@ -592,7 +629,13 @@ class CombatLogApp:
     def save_size(self, e): self.save_config()
     
     # Required for main window resizing
-    def init_resize(self, e): self._rs_x = e.x_root; self._rs_y = e.y_root; self._rs_w = self.root.winfo_width(); self._rs_h = self.root.winfo_height()
+    def init_resize(self, e): 
+        self.is_interacting = True
+        self.last_interaction_time = time.time()
+        self._rs_x = e.x_root; self._rs_y = e.y_root; self._rs_w = self.root.winfo_width(); self._rs_h = self.root.winfo_height()
+
     def do_resize(self, e): 
+        self.is_interacting = True
+        self.last_interaction_time = time.time()
         nw, nh = max(MIN_WIDTH, self._rs_w + e.x_root - self._rs_x), max(MIN_HEIGHT, self._rs_h + e.y_root - self._rs_y)
         self.root.geometry(f"{nw}x{nh}")

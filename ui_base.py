@@ -1,5 +1,7 @@
 import tkinter as tk
+from tkinter import ttk
 import ctypes
+import os
 from ctypes import wintypes
 from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, 
@@ -176,6 +178,110 @@ class ThemedMessagebox(tk.Toplevel):
                         tk.Label(no_btn, text="NO", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack()
                         no_btn.bind("<Button-1>", lambda e: box.close_and_callback(False))
         return box
+
+class ThemedListDialog(tk.Toplevel):
+    def __init__(self, parent, title, items, on_select=None):
+        super().__init__(parent)
+        self.on_select_callback = on_select
+        self.title(title)
+        self.overrideredirect(True)
+        self.attributes("-topmost", True)
+        self.configure(bg=PANEL_DARK)
+        self.current_alpha = 0.0
+        self.attributes("-alpha", self.current_alpha)
+
+        # Center on screen
+        w, h = 400, 300
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
+
+        inner = tk.Frame(self, bg=WINDOW_BG, highlightbackground=BORDER_COLOR, highlightthickness=1)
+        inner.pack(fill=tk.BOTH, expand=True)
+
+        title_bar = tk.Frame(inner, bg=PANEL_DARK, height=30)
+        title_bar.pack(fill=tk.X)
+        tk.Label(title_bar, text=title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=10)
+
+        content = tk.Frame(inner, bg=WINDOW_BG, padx=10, pady=10)
+        content.pack(fill=tk.BOTH, expand=True)
+
+        # Scrollable list
+        list_frame = tk.Frame(content, bg=WINDOW_BG)
+        list_frame.pack(fill=tk.BOTH, expand=True)
+
+        canvas = tk.Canvas(list_frame, bg=WINDOW_BG, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=WINDOW_BG)
+
+        scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=360)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Add items
+        for item in items:
+            item_frame = tk.Frame(scrollable_frame, bg=WINDOW_BG, padx=5, pady=5, cursor="hand2")
+            item_frame.pack(fill=tk.X)
+            lbl = tk.Label(item_frame, text=os.path.basename(item), bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9), anchor="w")
+            lbl.pack(fill=tk.X)
+            
+            def make_select(val): return lambda e: self.select(val)
+            item_frame.bind("<Button-1>", make_select(item))
+            lbl.bind("<Button-1>", make_select(item))
+            
+            # Hover effect
+            def on_enter(e, f=item_frame, l=lbl): 
+                f.config(bg=PANEL_DARK)
+                l.config(bg=PANEL_DARK)
+            def on_leave(e, f=item_frame, l=lbl): 
+                f.config(bg=WINDOW_BG)
+                l.config(bg=WINDOW_BG)
+            item_frame.bind("<Enter>", on_enter)
+            item_frame.bind("<Leave>", on_leave)
+
+        btn_area = tk.Frame(inner, bg=WINDOW_BG, height=40)
+        btn_area.pack(fill=tk.X)
+
+        cancel_btn = tk.Frame(btn_area, bg=WINDOW_BG, padx=15, pady=5, cursor="hand2")
+        cancel_btn.pack(side=tk.RIGHT, padx=10, pady=5)
+        l2 = tk.Label(cancel_btn, text="CANCEL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold"))
+        l2.pack()
+        cancel_btn.bind("<Button-1>", lambda e: self.destroy())
+        l2.bind("<Button-1>", lambda e: self.destroy())
+
+        title_bar.bind("<Button-1>", self._click_window)
+        title_bar.bind("<B1-Motion>", self._drag_window)
+        
+        self.lift()
+        self.fade_in()
+
+    def select(self, val):
+        parent = self.master
+        if hasattr(parent, "app"): parent.app.is_dialog_open = False
+        elif hasattr(parent, "is_dialog_open"): parent.is_dialog_open = False
+        self.destroy()
+        if self.on_select_callback:
+            self.after(10, lambda: self.on_select_callback(val))
+
+    def destroy(self):
+        parent = self.master
+        if hasattr(parent, "app"): parent.app.is_dialog_open = False
+        elif hasattr(parent, "is_dialog_open"): parent.is_dialog_open = False
+        super().destroy()
+
+    def _click_window(self, event):
+        self._offsetx = event.x; self._offsety = event.y
+
+    def _drag_window(self, event):
+        self.geometry(f"+{event.x_root - self._offsetx}+{event.y_root - self._offsety}")
+
+    def fade_in(self):
+        if self.current_alpha < 1.0:
+            self.current_alpha += 0.1
+            self.attributes("-alpha", self.current_alpha)
+            self.after(20, self.fade_in)
 
 class ThemedInputDialog(tk.Toplevel):
     def __init__(self, parent, title, prompt, initial_value="", on_submit=None):

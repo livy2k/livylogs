@@ -6,12 +6,14 @@ from constants import (
 from utils import apply_snapping
 
 class BasePopoutWindow:
-    def __init__(self, app, title, config_key, default_w, default_h):
+    def __init__(self, app, title, config_key, default_w, default_h, centered=False, fixed_size=False):
         self.app = app
         self.title = title
         self.config_key = config_key
         self.default_w = default_w
         self.default_h = default_h
+        self.centered = centered
+        self.fixed_size = fixed_size
         self.window = None
 
     def show(self, force_open=False):
@@ -37,18 +39,27 @@ class BasePopoutWindow:
         w = self.app.config.getint(self.config_key, "width", fallback=self.default_w)
         h = self.app.config.getint(self.config_key, "height", fallback=self.default_h)
 
-        x = int(saved_x) if saved_x else 100
-        y = int(saved_y) if saved_y else 100
+        if self.centered:
+            sw = self.window.winfo_screenwidth()
+            sh = self.window.winfo_screenheight()
+            x = (sw - w) // 2
+            y = (sh - h) // 2
+        else:
+            saved_x = self.app.config.get(self.config_key, "x", fallback=None)
+            saved_y = self.app.config.get(self.config_key, "y", fallback=None)
+            x = int(saved_x) if saved_x else 100
+            y = int(saved_y) if saved_y else 100
         
         self.window.geometry(f"{w}x{h}+{x}+{y}")
         self.window.configure(bg=WINDOW_BG)
         self.window.overrideredirect(True)
         self.window.attributes("-alpha", self.app.current_alpha)
         
-        self.window.bind("<Button-1>", self.click_window)
-        self.window.bind("<B1-Motion>", self.drag_window)
-        self.window.bind("<ButtonRelease-1>", self.release_window)
-        self.window.bind("<Configure>", self.on_configure)
+        if not self.fixed_size:
+            self.window.bind("<Button-1>", self.click_window)
+            self.window.bind("<B1-Motion>", self.drag_window)
+            self.window.bind("<ButtonRelease-1>", self.release_window)
+            self.window.bind("<Configure>", self.on_configure)
         
         border = tk.Frame(self.window, bg=BORDER_COLOR, padx=1, pady=1)
         border.pack(fill=tk.BOTH, expand=True)
@@ -57,8 +68,9 @@ class BasePopoutWindow:
 
         self.title_bar = tk.Frame(self.inner, bg=PANEL_DARK, height=30)
         self.title_bar.pack(fill=tk.X)
-        self.title_bar.bind("<Button-1>", self.click_window)
-        self.title_bar.bind("<B1-Motion>", self.drag_window)
+        if not self.fixed_size:
+            self.title_bar.bind("<Button-1>", self.click_window)
+            self.title_bar.bind("<B1-Motion>", self.drag_window)
         
         tk.Label(self.title_bar, text=self.title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=10)
         
@@ -69,11 +81,12 @@ class BasePopoutWindow:
         self.content_container = tk.Frame(self.inner, bg=WINDOW_BG, padx=5, pady=5)
         self.content_container.pack(fill=tk.BOTH, expand=True)
 
-        self.resize_handle = tk.Label(self.inner, text="◢", bg=WINDOW_BG, fg=BORDER_COLOR, font=("Segoe UI", 8), cursor="size_nw_se")
-        self.resize_handle.place(relx=1.0, rely=1.0, anchor="se")
-        self.resize_handle.bind("<Button-1>", self.on_resize_start)
-        self.resize_handle.bind("<B1-Motion>", self.on_resize_drag)
-        self.resize_handle.bind("<ButtonRelease-1>", self.on_resize_end)
+        if not self.fixed_size:
+            self.resize_handle = tk.Label(self.inner, text="◢", bg=WINDOW_BG, fg=BORDER_COLOR, font=("Segoe UI", 8), cursor="size_nw_se")
+            self.resize_handle.place(relx=1.0, rely=1.0, anchor="se")
+            self.resize_handle.bind("<Button-1>", self.on_resize_start)
+            self.resize_handle.bind("<B1-Motion>", self.on_resize_drag)
+            self.resize_handle.bind("<ButtonRelease-1>", self.on_resize_end)
         
         self.refresh(force=True)
 

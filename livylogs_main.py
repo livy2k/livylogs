@@ -5,6 +5,9 @@ import time
 import json
 import threading
 import subprocess
+import pystray
+from pystray import MenuItem as item
+from PIL import Image
 from datetime import datetime, timedelta
 from configparser import ConfigParser
 from pathlib import Path
@@ -109,6 +112,8 @@ class CombatLogApp:
         self.locally_seen_players = {} # name -> last_seen_timestamp
         self.leaderboard_data = {}
         self.loot_data = {}
+        
+        self.setup_tray_icon()
         self.last_dm_reset = None
         self.last_lb_reset = None
         self.last_sk_reset = None
@@ -205,9 +210,16 @@ class CombatLogApp:
             if should_show:
                 self.start_show()
                 for win in self._get_managed_windows():
-                    win.attributes("-topmost", not is_dialog_open)
+                    # If it's a dialog, it handles its own topmost via SetWindowPos
+                    # For managed windows, we only set topmost if NO dialog is open
                     if not is_dialog_open:
+                        win.attributes("-topmost", True)
                         user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                    else:
+                        # If a dialog is open, managed windows should NOT be topmost 
+                        # so they don't cover the dialog (which IS topmost)
+                        win.attributes("-topmost", False)
+                        user32.SetWindowPos(win.winfo_id(), HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
                 self._last_topmost_state = not is_dialog_open
             else:
                 if not hasattr(self, '_hide_grace_after_id') or self._hide_grace_after_id is None:
@@ -232,15 +244,20 @@ class CombatLogApp:
             for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
             self.fade_after_id = self.root.after(20, self.fade_in)
 
-    def start_hide(self):
-        if self.current_alpha > 0: self.fade_out()
+    def start_hide(self, minimize=True):
+        if self.current_alpha > 0:
+            self.fade_out(minimize=minimize)
+        elif minimize:
+            self.root.withdraw()
 
-    def fade_out(self):
+    def fade_out(self, minimize=True):
         if self.current_alpha > 0:
             self.current_alpha = max(0, self.current_alpha - 0.1)
             for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
-            self.fade_after_id = self.root.after(20, self.fade_out)
+            self.fade_after_id = self.root.after(20, lambda: self.fade_out(minimize=minimize))
         else:
+            if minimize:
+                self.root.withdraw()
             for win in self._get_managed_windows(): win.withdraw()
 
     def build_layout(self):
@@ -264,7 +281,7 @@ class CombatLogApp:
         
         exit_btn = tk.Label(title_bar, text=" ✕ ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
         exit_btn.pack(side=tk.RIGHT)
-        exit_btn.bind("<Button-1>", lambda e: self.on_exit())
+        exit_btn.bind("<Button-1>", lambda e: self.start_hide(minimize=True))
 
         menu_btn = tk.Label(title_bar, text=" SETTINGS ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2")
         menu_btn.pack(side=tk.RIGHT)
@@ -590,12 +607,38 @@ class CombatLogApp:
             
             time.sleep(10) # Sync every 10 seconds
 
-    def on_exit(self):
+    def setup_tray_icon(self):
+        try:
+            if os.path.exists("livylogs.ico"):
+                image = Image.open("livylogs.ico")
+            else:
+                image = Image.new('RGB', (64, 64), color=(0, 120, 215)) # Fallback blue square
+            
+            menu = (
+                item('Show/Hide', self.toggle_visibility),
+                item('Options', lambda: self.root.after(0, self.options_win.show)),
+                item('Exit', self.on_exit)
+            )
+            self.tray_icon = pystray.Icon("LivyLogs", image, "LivyLogs", menu)
+            threading.Thread(target=self.tray_icon.run, daemon=True).start()
+        except Exception as e:
+            print(f"DEBUG: Failed to setup tray icon: {e}")
+
+    def toggle_visibility(self):
+        # Determine if we should show or hide based on current state
+        if self.current_alpha > 0.1:
+            self.start_hide()
+        else:
+            self.start_show()
+
+    def on_exit(self, icon=None, item=None):
         self.running = False
+        if hasattr(self, 'tray_icon'):
+            self.tray_icon.stop()
         if self.engine_process: 
             self.engine_process.terminate()
         self.save_config()
-        self.root.destroy()
+        self.root.after(0, self.root.destroy)
 
     def save_config(self):
         if "General" not in self.config: self.config["General"] = {}

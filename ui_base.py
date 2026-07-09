@@ -27,11 +27,12 @@ class ThemedMessagebox(tk.Toplevel):
         self.fade_after_id = None
         self.target_hwnd = None
 
+        # Center on screen
         width, height = 450, 180
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x = max(0, (screen_width // 2) - (width // 2))
-        y = max(0, (screen_height // 2) - (height // 2))
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        x = (sw - width) // 2
+        y = (sh - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
 
         border = tk.Frame(self, bg=BORDER_COLOR, padx=1, pady=1)
@@ -89,10 +90,17 @@ class ThemedMessagebox(tk.Toplevel):
         if not self.winfo_exists(): return
         self.target_hwnd = self.find_target_window()
         if self.target_hwnd:
-            if user32.GetForegroundWindow() == self.target_hwnd or user32.GetForegroundWindow() == user32.GetAncestor(self.winfo_id(), 3):
+            fg = user32.GetForegroundWindow()
+            # Lift if game is focused OR if we are already the focused window
+            if fg == self.target_hwnd or fg == user32.GetAncestor(self.winfo_id(), 3):
                 self.start_show()
-            else: self.start_hide()
-        else: self.start_show()
+                # Use SetWindowPos with NOACTIVATE to stay on top of game without stealing focus
+                user32.SetWindowPos(self.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
+            else: 
+                self.start_hide()
+        else: 
+            self.start_show()
+            user32.SetWindowPos(self.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
         self.after(1000, self.check_target_window)
 
     def start_show(self):
@@ -122,6 +130,9 @@ class ThemedMessagebox(tk.Toplevel):
         parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
             
@@ -137,6 +148,9 @@ class ThemedMessagebox(tk.Toplevel):
         parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
         super().destroy()
@@ -193,7 +207,9 @@ class ThemedListDialog(tk.Toplevel):
         # Center on screen
         w, h = 400, 300
         sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
-        self.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self.geometry(f"{w}x{h}+{x}+{y}")
 
         inner = tk.Frame(self, bg=WINDOW_BG, highlightbackground=BORDER_COLOR, highlightthickness=1)
         inner.pack(fill=tk.BOTH, expand=True)
@@ -248,8 +264,12 @@ class ThemedListDialog(tk.Toplevel):
         cancel_btn.pack(side=tk.RIGHT, padx=10, pady=5)
         l2 = tk.Label(cancel_btn, text="CANCEL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold"))
         l2.pack()
-        cancel_btn.bind("<Button-1>", lambda e: self.destroy())
-        l2.bind("<Button-1>", lambda e: self.destroy())
+        
+        def on_cancel(e):
+            self.destroy()
+
+        cancel_btn.bind("<Button-1>", on_cancel)
+        l2.bind("<Button-1>", on_cancel)
 
         title_bar.bind("<Button-1>", self._click_window)
         title_bar.bind("<B1-Motion>", self._drag_window)
@@ -259,16 +279,19 @@ class ThemedListDialog(tk.Toplevel):
 
     def select(self, val):
         parent = self.master
-        if hasattr(parent, "app"): parent.app.is_dialog_open = False
-        elif hasattr(parent, "is_dialog_open"): parent.is_dialog_open = False
         self.destroy()
         if self.on_select_callback:
             self.after(10, lambda: self.on_select_callback(val))
 
     def destroy(self):
         parent = self.master
-        if hasattr(parent, "app"): parent.app.is_dialog_open = False
-        elif hasattr(parent, "is_dialog_open"): parent.is_dialog_open = False
+        if hasattr(parent, "app"):
+            parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+        elif hasattr(parent, "is_dialog_open"):
+            parent.is_dialog_open = False
         super().destroy()
 
     def _click_window(self, event):
@@ -300,10 +323,10 @@ class ThemedInputDialog(tk.Toplevel):
         self.target_hwnd = None
 
         width, height = 400, 180
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x = max(0, (screen_width // 2) - (width // 2))
-        y = max(0, (screen_height // 2) - (height // 2))
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        x = (sw - width) // 2
+        y = (sh - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
 
         border = tk.Frame(self, bg=BORDER_COLOR, padx=1, pady=1)
@@ -328,7 +351,7 @@ class ThemedInputDialog(tk.Toplevel):
         self.entry.pack(fill=tk.X, padx=5, pady=5)
         self.entry.focus_set()
         self.entry.bind("<Return>", lambda e: self.submit())
-        self.entry.bind("<Escape>", lambda e: self.destroy())
+        self.entry.bind("<Escape>", lambda e: self.cancel())
 
         btn_area = tk.Frame(inner, bg=PANEL_DARK, height=40)
         btn_area.pack(fill=tk.X)
@@ -344,17 +367,22 @@ class ThemedInputDialog(tk.Toplevel):
         cancel_btn.pack(side=tk.RIGHT, padx=5, pady=5)
         l2 = tk.Label(cancel_btn, text="CANCEL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold"))
         l2.pack()
-        cancel_btn.bind("<Button-1>", lambda e: self.destroy())
-        l2.bind("<Button-1>", lambda e: self.destroy())
+        cancel_btn.bind("<Button-1>", lambda e: self.cancel())
+        l2.bind("<Button-1>", lambda e: self.cancel())
 
         title_bar.bind("<Button-1>", self._click_window)
         title_bar.bind("<B1-Motion>", self._drag_window)
         
-        # Ensure dialog is topmost when shown
-        self.attributes("-topmost", True)
+        # Allow interaction without being strictly topmost at all times
         self.lift()
+        user32.SetWindowPos(self.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
         
         self.check_target_window()
+
+    def cancel(self):
+        if hasattr(self.parent, "is_dialog_open"):
+            self.parent.is_dialog_open = False
+        self.destroy()
 
     def find_target_window(self):
         target_hwnd = [None]
@@ -372,10 +400,17 @@ class ThemedInputDialog(tk.Toplevel):
         if not self.winfo_exists(): return
         self.target_hwnd = self.find_target_window()
         if self.target_hwnd:
-            if user32.GetForegroundWindow() == self.target_hwnd or user32.GetForegroundWindow() == user32.GetAncestor(self.winfo_id(), 3):
+            fg = user32.GetForegroundWindow()
+            # Lift if game is focused OR if we are already the focused window
+            if fg == self.target_hwnd or fg == user32.GetAncestor(self.winfo_id(), 3):
                 self.start_show()
-            else: self.start_hide()
-        else: self.start_show()
+                # Use SetWindowPos with NOACTIVATE to stay on top of game without stealing focus
+                user32.SetWindowPos(self.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
+            else: 
+                self.start_hide()
+        else: 
+            self.start_show()
+            user32.SetWindowPos(self.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
         self.after(1000, self.check_target_window)
 
     def start_show(self):
@@ -406,6 +441,9 @@ class ThemedInputDialog(tk.Toplevel):
         parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
             
@@ -419,6 +457,9 @@ class ThemedInputDialog(tk.Toplevel):
         parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
         super().destroy()

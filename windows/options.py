@@ -9,7 +9,7 @@ from windows.base_window import BasePopoutWindow
 
 class OptionsWindow(BasePopoutWindow):
     def __init__(self, app):
-        super().__init__(app, "Options", "OptionsWindow", 300, 480)
+        super().__init__(app, "Options", "OptionsWindow", 300, 480, centered=True, fixed_size=True)
 
     def refresh(self, force=False):
         if not self.window or self.window.state() == "withdrawn": return

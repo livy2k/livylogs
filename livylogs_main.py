@@ -649,31 +649,60 @@ class CombatLogApp:
 
     def change_log_path(self):
         from tkinter import filedialog
-        self.is_dialog_open = True
-        p = filedialog.askopenfilename()
-        self.is_dialog_open = False
-        if p: 
-            self.file_path_var.set(p)
-            
-            # Prompt for character name using themed dialog
-            from ui_base import ThemedInputDialog
-            detected_name = extract_character_id(p)
-            
-            def on_name_submit(new_name):
-                # State is reset inside ThemedInputDialog.destroy() or submit()
-                if new_name:
-                    self.char_name.set(new_name)
-                elif not self.char_name.get():
-                    self.char_name.set(detected_name)
-                
-                self.save_config()
-                self.start_c_engine(p)
-                self.analyze_log(manual=True)
-                self.options_win.refresh(force=True)
+        import os
+        
+        # Determine initial directory and file pattern
+        current_path = self.file_path_var.get()
+        initial_dir = os.path.dirname(current_path) if current_path and os.path.exists(current_path) else None
+        initial_file = None
+        
+        # If we have a character ID, try to pre-filter
+        char_id = extract_character_id(current_path)
+        if char_id:
+            initial_file = f"{char_id}_chatlog.txt"
 
-            self.is_dialog_open = True
-            ThemedInputDialog(self.root, "Character Name", "Enter your Character Name for synchronization:", 
-                              initial_value=detected_name, on_submit=on_name_submit)
+        self.is_dialog_open = True
+        p = filedialog.askopenfilename(
+            initialdir=initial_dir,
+            initialfile=initial_file,
+            filetypes=[("SWG Chat Logs", "*_chatlog.txt"), ("Text Files", "*.txt"), ("All Files", "*.*")]
+        )
+        self.is_dialog_open = False
+        
+        if p:
+            # If we had a char_id, verify the new one matches
+            new_char_id = extract_character_id(p)
+            
+            def proceed_with_log(accepted=True):
+                if not accepted: return
+                
+                self.file_path_var.set(p)
+                # Prompt for character name using themed dialog
+                from ui_base import ThemedInputDialog
+                detected_name = extract_character_id(p)
+                
+                def on_name_submit(new_name):
+                    if new_name:
+                        self.char_name.set(new_name)
+                    elif not self.char_name.get():
+                        self.char_name.set(detected_name)
+                    
+                    self.save_config()
+                    self.start_c_engine(p)
+                    self.analyze_log(manual=True)
+                    self.options_win.refresh(force=True)
+
+                self.is_dialog_open = True
+                ThemedInputDialog(self.root, "Character Name", "Enter your Character Name for synchronization:", 
+                                  initial_value=detected_name, on_submit=on_name_submit)
+
+            if char_id and new_char_id != char_id:
+                self.is_dialog_open = True
+                ThemedMessagebox.askyesno(self.root, "Character Mismatch", 
+                                          f"The selected log ({new_char_id}) does not match your current character ({char_id}).\n\nAre you sure you want to switch?",
+                                          on_close=proceed_with_log)
+            else:
+                proceed_with_log(True)
 
     def reset_damage_meter_manual(self):
         self.last_dm_reset = datetime.now()

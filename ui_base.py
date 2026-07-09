@@ -115,9 +115,29 @@ class ThemedMessagebox(tk.Toplevel):
             self.attributes("-alpha", self.current_alpha)
             self.fade_after_id = self.after(20, self.fade_out)
 
-    def close_and_callback(self):
+    def close_and_callback(self, result=True):
+        # Reset parent dialog state
+        parent = self.master
+        if hasattr(parent, "app"):
+            parent.app.is_dialog_open = False
+        elif hasattr(parent, "is_dialog_open"):
+            parent.is_dialog_open = False
+            
         self.destroy()
-        if self.on_close_callback: self.on_close_callback()
+        if self.on_close_callback:
+            if result is not None:
+                self.on_close_callback(result)
+            else:
+                self.on_close_callback()
+
+    def destroy(self):
+        # Reset parent dialog state on direct close
+        parent = self.master
+        if hasattr(parent, "app"):
+            parent.app.is_dialog_open = False
+        elif hasattr(parent, "is_dialog_open"):
+            parent.is_dialog_open = False
+        super().destroy()
 
     def _click_window(self, event):
         self._offsetx = event.x; self._offsety = event.y
@@ -132,8 +152,30 @@ class ThemedMessagebox(tk.Toplevel):
         return ThemedMessagebox(parent, title, message, "info", on_close, extra_button_text, extra_button_callback)
 
     @staticmethod
-    def showerror(parent, title, message, on_close=None):
-        return ThemedMessagebox(parent, title, message, "error", on_close)
+    def askyesno(parent, title, message, on_close=None):
+        def wrapped_on_close(res):
+            if on_close: on_close(res)
+        
+        box = ThemedMessagebox(parent, title, message, "warning", on_close=on_close)
+        # Re-configure for Yes/No
+        for child in box.winfo_children(): # Find the border
+            for inner in child.winfo_children(): # Find the inner frame
+                for area in inner.winfo_children(): # Find btn_area
+                    if isinstance(area, tk.Frame) and area.cget("height") == 40:
+                        # Clear OK button
+                        for btn in area.winfo_children(): btn.destroy()
+                        
+                        # Add Yes/No
+                        yes_btn = tk.Frame(area, bg=BUTTON_BG, padx=15, pady=5, cursor="hand2")
+                        yes_btn.pack(side=tk.RIGHT, padx=10, pady=5)
+                        tk.Label(yes_btn, text="YES", bg=BUTTON_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold")).pack()
+                        yes_btn.bind("<Button-1>", lambda e: box.close_and_callback(True))
+                        
+                        no_btn = tk.Frame(area, bg=WINDOW_BG, padx=15, pady=5, cursor="hand2")
+                        no_btn.pack(side=tk.RIGHT, padx=5, pady=5)
+                        tk.Label(no_btn, text="NO", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack()
+                        no_btn.bind("<Button-1>", lambda e: box.close_and_callback(False))
+        return box
 
 class ThemedInputDialog(tk.Toplevel):
     def __init__(self, parent, title, prompt, initial_value="", on_submit=None):
@@ -204,6 +246,7 @@ class ThemedInputDialog(tk.Toplevel):
         
         # Ensure dialog is topmost when shown
         self.attributes("-topmost", True)
+        self.lift()
         
         self.check_target_window()
 
@@ -251,24 +294,27 @@ class ThemedInputDialog(tk.Toplevel):
             self.attributes("-alpha", self.current_alpha)
             self.fade_after_id = self.after(20, self.fade_out)
 
-    def submit(self):
+    def submit(self, event=None):
         val = self.entry_var.get()
         # Reset parent dialog state
-        if hasattr(self.master, "app"):
-            self.master.app.is_dialog_open = False
-        elif hasattr(self.master, "is_dialog_open"):
-            self.master.is_dialog_open = False
+        parent = self.master
+        if hasattr(parent, "app"):
+            parent.app.is_dialog_open = False
+        elif hasattr(parent, "is_dialog_open"):
+            parent.is_dialog_open = False
             
         self.destroy()
         if self.on_submit_callback:
-            self.on_submit_callback(val)
+            # Schedule callback on main thread just in case
+            self.after(10, lambda: self.on_submit_callback(val))
 
     def destroy(self):
         # Reset parent dialog state on direct close
-        if hasattr(self.master, "app"):
-            self.master.app.is_dialog_open = False
-        elif hasattr(self.master, "is_dialog_open"):
-            self.master.is_dialog_open = False
+        parent = self.master
+        if hasattr(parent, "app"):
+            parent.app.is_dialog_open = False
+        elif hasattr(parent, "is_dialog_open"):
+            parent.is_dialog_open = False
         super().destroy()
 
     def _click_window(self, event):

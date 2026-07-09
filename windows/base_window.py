@@ -74,6 +74,8 @@ class BasePopoutWindow:
         self.resize_handle.bind("<Button-1>", self.on_resize_start)
         self.resize_handle.bind("<B1-Motion>", self.on_resize_drag)
         self.resize_handle.bind("<ButtonRelease-1>", self.on_resize_end)
+        
+        self.refresh(force=True)
 
     def on_resize_start(self, e):
         self.app.is_interacting = True

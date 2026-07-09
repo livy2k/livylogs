@@ -8,12 +8,17 @@ from windows.base_window import BasePopoutWindow
 
 class OptionsWindow(BasePopoutWindow):
     def __init__(self, app):
-        super().__init__(app, "Options", "OptionsWindow", 300, 350)
+        super().__init__(app, "Options", "OptionsWindow", 300, 480)
 
     def refresh(self, force=False):
         if not self.window or self.window.state() == "withdrawn": return
         # No heavy refresh needed for options unless we want to reflect changes from elsewhere
-        if len(self.content_container.winfo_children()) > 0: return 
+        if not force and len(self.content_container.winfo_children()) > 0: return 
+        
+        # Clear existing content if forcing
+        if force:
+            for child in self.content_container.winfo_children():
+                child.destroy()
 
         # Transparency Slider
         tk.Label(self.content_container, text="TRANSPARENCY", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(5, 2))
@@ -32,6 +37,22 @@ class OptionsWindow(BasePopoutWindow):
 
         add_check("DISABLE WARNINGS", self.app.disable_warnings, self.app.save_config)
         
+        # Web Sync Section
+        tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
+        tk.Label(self.content_container, text="WEB SYNC", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(0, 5))
+        
+        add_check("ENABLE SYNC", self.app.enable_sync, self.app.save_config)
+        
+        tk.Label(self.content_container, text="CHARACTER NAME", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7, "bold")).pack(anchor="w")
+        char_entry = tk.Entry(self.content_container, textvariable=self.app.char_name, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9))
+        char_entry.pack(fill=tk.X, pady=(2, 8))
+        char_entry.bind("<FocusOut>", lambda e: self.app.save_config())
+        
+        tk.Label(self.content_container, text="API URL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7, "bold")).pack(anchor="w")
+        api_entry = tk.Entry(self.content_container, textvariable=self.app.api_url, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9))
+        api_entry.pack(fill=tk.X, pady=(2, 8))
+        api_entry.bind("<FocusOut>", lambda e: self.app.save_config())
+
         # Combat Log Path - ensure it's visible
         tk.Label(self.content_container, text="LOG FILE", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(10, 2))
         path_lbl = tk.Label(self.content_container, textvariable=self.app.file_path_var, bg=PANEL_DARK, fg=TEXT_PRIMARY, font=("Segoe UI", 7), wraplength=230, justify=tk.LEFT)

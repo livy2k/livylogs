@@ -2,7 +2,7 @@ import tkinter as tk
 import time
 from datetime import datetime
 from constants import (
-    PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE
+    PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, WINDOW_BG
 )
 from windows.base_window import BasePopoutWindow
 
@@ -49,10 +49,23 @@ class LeaderboardWindow(BasePopoutWindow):
             tk.Label(h, text="RANK", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(side=tk.LEFT, padx=5)
             tk.Label(h, text="PLAYER", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(side=tk.LEFT, padx=20)
             self.lbl_cat_head = tk.Label(h, text="DAMAGE", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
-            self.lbl_cat_head.pack(side=tk.RIGHT, padx=5)
+            self.lbl_cat_head.pack(side=tk.RIGHT, padx=25) # Extra pad for scrollbar
+        
+            # Scrollable area
+            from tkinter import ttk
+            canvas = tk.Canvas(self.content_container, bg=WINDOW_BG, highlightthickness=0)
+            scrollbar = ttk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview)
+            self.list_container = tk.Frame(canvas, bg=WINDOW_BG)
+
+            self.list_container.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+            canvas.create_window((0, 0), window=self.list_container, anchor="nw", width=self.default_w - 20)
+            canvas.configure(yscrollcommand=scrollbar.set)
             
-            self.list_container = tk.Frame(self.content_container, bg=self.window["bg"])
-            self.list_container.pack(fill=tk.BOTH, expand=True)
+            def _on_mousewheel(event): canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+            canvas.pack(side="left", fill="both", expand=True)
+            scrollbar.pack(side="right", fill="y")
             do_full = True
 
         # Update Category Buttons
@@ -82,13 +95,34 @@ class LeaderboardWindow(BasePopoutWindow):
         # Rebuild only the list part
         for widget in self.list_container.winfo_children(): widget.destroy()
         
-        if not sorted_list:
+        # Merge web data if available
+        merged_data = {name: val for name, val in sorted_list}
+        if self.app.enable_sync.get() and self.app.sync_data:
+            remote_data = self.app.sync_data.get("data", {}).get(cat, {})
+            # remote_data expected to be {char_name: value}
+            for remote_name, remote_val in remote_data.items():
+                # Don't overwrite local "You" with remote "You"
+                if remote_name == self.app.char_name.get(): continue
+                # Update merged data
+                if cat == "loot":
+                    # For loot count, we might get a list or a number from remote
+                    if isinstance(remote_val, list):
+                        count = len(remote_val)
+                    else:
+                        count = remote_val
+                    merged_data[remote_name] = max(merged_data.get(remote_name, 0), count)
+                else:
+                    merged_data[remote_name] = max(merged_data.get(remote_name, 0), remote_val)
+
+        final_list = sorted(merged_data.items(), key=lambda x: x[1], reverse=True)
+
+        if not final_list:
             tk.Label(self.list_container, text=f"No {cat} data", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
             return
 
-        for i, (name, val) in enumerate(sorted_list[:50]): # Limit to top 50
+        for i, (name, val) in enumerate(final_list[:100]): # Limit to top 100
             f = tk.Frame(self.list_container, bg=self.window["bg"]); f.pack(fill=tk.X, pady=2)
-            color = ACCENT_BLUE if name == "You" else TEXT_PRIMARY
+            color = ACCENT_BLUE if name == "You" or name == self.app.char_name.get() else TEXT_PRIMARY
             tk.Label(f, text=f"#{i+1}", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=5)
             tk.Label(f, text=name, bg=self.window["bg"], fg=color, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=10)
             

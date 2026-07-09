@@ -20,7 +20,7 @@ from constants import (
     HWND_TOPMOST, HWND_NOTOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE,
     SWP_SHOWWINDOW, SWP_HIDEWINDOW, ENTRY_BG, WINDOWPLACEMENT
 )
-from utils import is_window_minimized, apply_snapping
+from utils import is_window_minimized, apply_snapping, extract_character_id
 from parser_engine import parse_combat_log, calculate_dps
 from ui_base import ThemedMessagebox
 
@@ -72,6 +72,11 @@ class CombatLogApp:
         self.fade_after_id = None
         self.file_path_var = tk.StringVar(value=initial_log_path)
         self.disable_warnings = tk.BooleanVar(value=self.config.getboolean("General", "disable_warnings", fallback=False))
+        self.char_name = tk.StringVar(value=self.config.get("General", "character_name", fallback=""))
+        if not self.char_name.get() and initial_log_path:
+            self.char_name.set(extract_character_id(initial_log_path))
+        self.api_url = tk.StringVar(value=self.config.get("General", "api_url", fallback=""))
+        self.enable_sync = tk.BooleanVar(value=self.config.getboolean("General", "enable_sync", fallback=False))
 
         self.skimmers_win = SkimmersWindow(self)
         self.damage_meter_win = DamageMeterWindow(self)
@@ -92,6 +97,7 @@ class CombatLogApp:
         self.engine_process = None
         
         threading.Thread(target=self.start_pipe_listener, daemon=True).start()
+        threading.Thread(target=self.web_sync_loop, daemon=True).start()
         
         self.root.after(300, self.initial_show)
         self.root.after(800, self.check_target_window)
@@ -107,6 +113,8 @@ class CombatLogApp:
         self.last_sk_reset = None
         self.last_dt_reset = None
         self.all_events = []
+        self.sync_data = {} # Data from web API
+        self.last_sync_time = 0
         self.last_read_offset = 0
         self.last_processed_file = ""
         self.app_start_time = None
@@ -230,6 +238,11 @@ class CombatLogApp:
             for win in self._get_managed_windows(): win.withdraw()
 
     def build_layout(self):
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("Vertical.TScrollbar", gripcount=0, background=PANEL_DARK, darkcolor=PANEL_DARK, lightcolor=PANEL_DARK, troughcolor=WINDOW_BG, bordercolor=BORDER_COLOR, arrowcolor=TEXT_SECONDARY)
+        style.map("Vertical.TScrollbar", background=[('active', ACCENT_BLUE), ('pressed', ACCENT_BLUE)])
+
         self.root_border = tk.Frame(self.root, bg=BORDER_COLOR, padx=1, pady=1)
         self.root_border.pack(fill=tk.BOTH, expand=True)
         outer = tk.Frame(self.root_border, bg=WINDOW_BG)
@@ -535,6 +548,56 @@ class CombatLogApp:
         self.always_on_top = not self.always_on_top
         self.ontop_btn.config(text="ONTOP: ON" if self.always_on_top else "ONTOP: OFF", fg=ACCENT_BLUE if self.always_on_top else TEXT_SECONDARY)
 
+    def web_sync_loop(self):
+        import urllib.request
+        import json
+        while self.running:
+            try:
+                if self.enable_sync.get() and self.api_url.get() and self.char_name.get():
+                    # Prepare local data to send
+                    # We send current session leaderboard data
+                    # Only send data where "You" has been replaced by the actual character name
+                    local_dmg = self.leaderboard_data.get("damage", {}).copy()
+                    local_heal = self.leaderboard_data.get("healing", {}).copy()
+                    local_loot = {}
+                    for p, items in self.loot_data.items():
+                        # loot_data is {player: [{"item": name, "timestamp": ts}, ...]}
+                        # For sync we might just want to send counts or some representation
+                        # Let's send the list of looted items
+                        local_loot[p] = items
+
+                    if "You" in local_dmg:
+                        local_dmg[self.char_name.get()] = local_dmg.pop("You")
+                    if "You" in local_heal:
+                        local_heal[self.char_name.get()] = local_heal.pop("You")
+                    if "You" in local_loot:
+                        local_loot[self.char_name.get()] = local_loot.pop("You")
+
+                    payload = {
+                        "character": self.char_name.get(),
+                        "timestamp": time.time(),
+                        "data": {
+                            "damage": local_dmg,
+                            "healing": local_heal,
+                            "loot": local_loot,
+                        }
+                    }
+                    
+                    data = json.dumps(payload).encode('utf-8')
+                    req = urllib.request.Request(self.api_url.get(), data=data, method='POST')
+                    req.add_header('Content-Type', 'application/json')
+                    
+                    with urllib.request.urlopen(req, timeout=5) as response:
+                        if response.status == 200:
+                            remote_data = json.loads(response.read().decode('utf-8'))
+                            self.sync_data = remote_data
+                            self.last_sync_time = time.time()
+                
+            except Exception as e:
+                pass # Silent fail for now to avoid spamming
+            
+            time.sleep(10) # Sync every 10 seconds
+
     def on_exit(self):
         self.running = False
         if self.engine_process: 
@@ -565,6 +628,9 @@ class CombatLogApp:
                     "y": str(win.window.winfo_y())
                 })
 
+        self.config.set("General", "character_name", self.char_name.get())
+        self.config.set("General", "api_url", self.api_url.get())
+        self.config.set("General", "enable_sync", str(self.enable_sync.get()))
         with open("settings.ini", "w") as f: self.config.write(f)
 
     def drag_window(self, event):
@@ -593,6 +659,8 @@ class CombatLogApp:
         p = filedialog.askopenfilename()
         if p: 
             self.file_path_var.set(p)
+            if not self.char_name.get():
+                self.char_name.set(extract_character_id(p))
             self.save_config()
             self.start_c_engine(p)
             self.analyze_log(manual=True)

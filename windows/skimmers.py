@@ -67,6 +67,9 @@ class SkimmersWindow(BasePopoutWindow):
             self.scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
             canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
             canvas.configure(yscrollcommand=scrollbar.set)
+            
+            def _on_mousewheel(event): canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
             canvas.pack(side="left", fill="both", expand=True)
             scrollbar.pack(side="right", fill="y")
@@ -108,10 +111,31 @@ class SkimmersWindow(BasePopoutWindow):
         query = self.app.skimmer_search_query.get().lower() if self.app.skimmer_search_mode else ""
         items_to_show = []
         if tab == "loot":
+            # Merge local loot data
             for player, items in self.app.loot_data.items():
                 for item in items:
                     if not query or query in item["item"].lower() or query in player.lower():
                         items_to_show.append({"type": "loot", "player": player, "item": item["item"], "timestamp": item["timestamp"]})
+            
+            # Merge remote loot data if enabled
+            if self.app.enable_sync.get() and self.app.sync_data:
+                remote_loot = self.app.sync_data.get("data", {}).get("loot", {})
+                for remote_player, remote_items in remote_loot.items():
+                    # Don't duplicate local "You"
+                    if remote_player == self.app.char_name.get(): continue
+                    for item in remote_items:
+                        # Remote item structure might need conversion if timestamp is string
+                        ts = item.get("timestamp")
+                        if isinstance(ts, str):
+                            from datetime import datetime
+                            try: ts = datetime.fromisoformat(ts)
+                            except: ts = None
+                        elif isinstance(ts, (int, float)):
+                            from datetime import datetime
+                            ts = datetime.fromtimestamp(ts)
+                        
+                        if not query or query in item["item"].lower() or query in remote_player.lower():
+                            items_to_show.append({"type": "loot", "player": remote_player, "item": item["item"], "timestamp": ts})
 
         if not items_to_show:
             tk.Label(self.scrollable_frame, text="No items found", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
@@ -121,5 +145,5 @@ class SkimmersWindow(BasePopoutWindow):
                 ts = item["timestamp"].strftime("%H:%M:%S") if item["timestamp"] else "??:??:??"
                 f = tk.Frame(self.scrollable_frame, bg=WINDOW_BG, pady=2); f.pack(fill=tk.X)
                 tk.Label(f, text=f"[{ts}]", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Consolas", 8)).pack(side=tk.LEFT)
-                tk.Label(f, text=f" {item['player']}", bg=WINDOW_BG, fg=ACCENT_BLUE if item['player'] == "You" else TEXT_ACCENT, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT)
+                tk.Label(f, text=f" {item['player']}", bg=WINDOW_BG, fg=ACCENT_BLUE if (item['player'] == "You" or item['player'] == self.app.char_name.get()) else TEXT_ACCENT, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT)
                 tk.Label(f, text=f" looted {item['item']}", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9)).pack(side=tk.LEFT)

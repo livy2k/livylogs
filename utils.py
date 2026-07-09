@@ -24,3 +24,15 @@ def apply_snapping(window, x, y):
     if abs(y + wh - sh) < SNAP_THRESHOLD: y = sh - wh
     
     return x, y
+
+def extract_character_id(file_path):
+    """Extracts character name or ID from log filename."""
+    import os
+    import re
+    if not file_path: return ""
+    filename = os.path.basename(file_path)
+    # Match something like "281474996439106_chatlog.txt" or "Livy_chatlog.txt"
+    match = re.match(r"^(?P<id>.+?)_chatlog\.txt", filename, re.IGNORECASE)
+    if match:
+        return match.group("id")
+    return ""

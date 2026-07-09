@@ -20,9 +20,11 @@ class BasePopoutWindow:
                 self.window.deiconify()
                 self.window.attributes("-alpha", self.app.current_alpha)
                 self.window.lift()
+                self.refresh(force=True) # Immediate update on show
                 return
             if force_open:
                 self.window.lift()
+                self.refresh(force=True) # Immediate update on show
                 return
             self.close()
             return
@@ -87,3 +89,6 @@ class BasePopoutWindow:
         y = self.window.winfo_pointery() - self._offsety
         x, y = apply_snapping(self.window, x, y)
         self.window.geometry(f"+{x}+{y}")
+
+    def refresh(self, force=False):
+        pass

@@ -215,11 +215,11 @@ def calculate_dps(events):
     if not events: return 0, 0, 0, 0, 0, 0, 0, 0
     damage_dealt = sum(e["damage"] for e in events if e["type"] == "dealt")
     damage_taken = sum(e["damage"] for e in events if e["type"] == "taken")
-    timestamps = [e["timestamp"] for e in events if e["timestamp"] and e["damage"] > 0]
+    timestamps = [e["timestamp"] for e in events if e["timestamp"] and (e["damage"] > 0 or e["type"] == "dealt")]
     duration = 0
     if timestamps:
         duration = (max(timestamps) - min(timestamps)).total_seconds()
-    dps = damage_dealt / max(1, duration)
+    dps = damage_dealt / max(1, duration) if duration > 0 else 0
     miss_count = sum(1 for e in events if e["type"] == "dealt" and e.get("is_mitigated"))
     hit_count = sum(1 for e in events if e["type"] == "dealt" and e["damage"] > 0)
     avoided_count = sum(1 for e in events if e["type"] == "taken" and e.get("is_mitigated"))

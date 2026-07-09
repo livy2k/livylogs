@@ -29,6 +29,7 @@ from windows.skimmers import SkimmersWindow
 from windows.damage_meter import DamageMeterWindow
 from windows.leaderboard import LeaderboardWindow
 from windows.details import DetailsWindow
+from windows.options import OptionsWindow
 
 class CombatLogApp:
     def __init__(self, root):
@@ -72,19 +73,16 @@ class CombatLogApp:
         self.file_path_var = tk.StringVar(value=initial_log_path)
         self.disable_warnings = tk.BooleanVar(value=self.config.getboolean("General", "disable_warnings", fallback=False))
 
-        # Windows
         self.skimmers_win = SkimmersWindow(self)
         self.damage_meter_win = DamageMeterWindow(self)
         self.leaderboard_win = LeaderboardWindow(self)
         self.details_win = DetailsWindow(self)
+        self.options_win = OptionsWindow(self)
         
-        # Backward compatibility aliases
-        self.skimmers_window = None 
-        self.damage_meter_window = None
-        self.leaderboard_window = None
-        self.details_window = None
-        self.options_window = None
-
+        # Window-specific data containers
+        self.dm_damage = {}
+        self.dm_taken = {}
+        
         self.actual_app_start_time = datetime.now()
         self.last_reset_time = self.actual_app_start_time
         self.running = True
@@ -93,14 +91,18 @@ class CombatLogApp:
         threading.Thread(target=self.start_pipe_listener, daemon=True).start()
         
         self.root.after(300, self.initial_show)
-        self.root.after(800, self.start_window_tracking)
+        self.root.after(800, self.check_target_window)
         self.root.after(1000, self.start_show)
         if initial_log_path:
             self.root.after(1200, lambda: self.start_c_engine(initial_log_path))
-
+        
         self.player_data = {}
         self.leaderboard_data = {}
         self.loot_data = {}
+        self.last_dm_reset = None
+        self.last_lb_reset = None
+        self.last_sk_reset = None
+        self.last_dt_reset = None
         self.all_events = []
         self.last_read_offset = 0
         self.last_processed_file = ""
@@ -125,6 +127,7 @@ class CombatLogApp:
         self.inventory_full_time = None
 
         self.build_layout()
+        self.start_ticker_loop()
 
     def initial_show(self):
         try:
@@ -134,14 +137,19 @@ class CombatLogApp:
         except: pass
 
     def start_c_engine(self, log_path):
+        print(f"DEBUG: Attempting to start C Engine for: {log_path}")
         try:
             subprocess.run(["taskkill", "/F", "/IM", "log_engine.exe", "/T"], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
             if self.engine_process: self.engine_process.terminate()
             base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
             engine_exe = os.path.join(base_path, "log_engine.exe")
             if os.path.exists(engine_exe):
+                print(f"DEBUG: Launching C Engine: {engine_exe}")
                 self.engine_process = subprocess.Popen([engine_exe, log_path], creationflags=subprocess.CREATE_NO_WINDOW)
-        except: pass
+            else:
+                print(f"DEBUG: log_engine.exe not found at {engine_exe}")
+        except Exception as e:
+            print(f"DEBUG: Error starting C Engine: {e}")
 
     def find_target_window(self):
         target = [None]
@@ -170,9 +178,8 @@ class CombatLogApp:
 
     def _get_managed_windows(self):
         managed = [self.root]
-        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win]:
+        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win]:
             if w.window and w.window.winfo_exists(): managed.append(w.window)
-        if self.options_window and self.options_window.winfo_exists(): managed.append(self.options_window)
         return managed
 
     def check_target_window(self):
@@ -230,8 +237,13 @@ class CombatLogApp:
         header.pack(fill=tk.BOTH, expand=True)
         title_bar = tk.Frame(header, bg=PANEL_DARK, height=25); title_bar.pack(fill=tk.X)
         
-        tk.Label(title_bar, text=" ✕ ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2").pack(side=tk.RIGHT).bind("<Button-1>", lambda e: self.on_exit())
-        tk.Label(title_bar, text=" SETTINGS ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2").pack(side=tk.RIGHT).bind("<Button-1>", lambda e: self.toggle_menu())
+        exit_btn = tk.Label(title_bar, text=" ✕ ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
+        exit_btn.pack(side=tk.RIGHT)
+        exit_btn.bind("<Button-1>", lambda e: self.on_exit())
+
+        menu_btn = tk.Label(title_bar, text=" SETTINGS ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2")
+        menu_btn.pack(side=tk.RIGHT)
+        menu_btn.bind("<Button-1>", lambda e: self.toggle_menu())
         self.ontop_btn = tk.Label(title_bar, text="ONTOP: OFF", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2"); self.ontop_btn.pack(side=tk.LEFT)
         self.ontop_btn.bind("<Button-1>", lambda e: self.toggle_always_on_top())
 
@@ -245,6 +257,7 @@ class CombatLogApp:
         self.lbl_skm = btn("SKIMMERS", self.skimmers_win.show)
         self.lbl_ldb = btn("LEADERBOARD", self.leaderboard_win.show)
         self.lbl_loot = btn("LOOT", self.skimmers_win.show)
+        self.lbl_refresh = btn("RESCAN", lambda: self.analyze_log(manual=True))
         self.lbl_version = tk.Label(nav, text="1.0", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8)).pack(side=tk.RIGHT)
 
         stats = tk.Frame(outer, bg=WINDOW_BG); stats.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -261,10 +274,16 @@ class CombatLogApp:
 
     def start_pipe_listener(self):
         pipe_path = r'\\.\pipe\LivyLogsPipe'
+        print(f"DEBUG: Starting Pipe Listener on {pipe_path}")
         while self.running:
-            if not kernel32.WaitNamedPipeW(pipe_path, 1000): time.sleep(1); continue
+            if not kernel32.WaitNamedPipeW(pipe_path, 1000):
+                time.sleep(1); continue
+            print("DEBUG: Pipe available, connecting...")
             h = kernel32.CreateFileW(pipe_path, 0x80000000, 0, None, 3, 0x80, None)
-            if h == -1: time.sleep(1); continue
+            if h == -1:
+                print(f"DEBUG: Pipe connection failed: {kernel32.GetLastError()}")
+                time.sleep(1); continue
+            print("DEBUG: Connected to C Engine Pipe")
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
                 if kernel32.ReadFile(h, buf, 65536, ctypes.byref(bytes_read), None) and bytes_read.value > 0:
@@ -275,9 +294,13 @@ class CombatLogApp:
                             try:
                                 data = json.loads(line); data["timestamp"] = datetime.now()
                                 self.process_external_event(data, is_last=(i == len(lines)-1))
-                            except: pass
-                else: break
+                            except Exception as e:
+                                print(f"DEBUG: JSON parse error: {e}")
+                else:
+                    print(f"DEBUG: Pipe read failed or closed. Last error: {kernel32.GetLastError()}")
+                    break
             kernel32.CloseHandle(h)
+            print("DEBUG: Pipe closed, retrying...")
 
     def process_external_event(self, event, is_last=False):
         # Implementation of event processing
@@ -308,18 +331,27 @@ class CombatLogApp:
             if self.app_start_time is None: self.app_start_time = timestamp
 
         if is_last or (now - self.last_ui_update_time > self.ui_update_delay):
-            self.root.after(0, self.refresh_ui_only); self.last_ui_update_time = now
+            if self.running:
+                try:
+                    self.root.after_idle(lambda: self.refresh_ui_only(force=is_last))
+                    self.last_ui_update_time = now
+                except: pass
 
     def analyze_log(self, manual=False):
-        if manual: self.all_events = []; self.last_read_offset = -1; self.app_start_time = None; self.last_combat_time = 0; self.player_data = {}; self.loot_data = {}; self.leaderboard_data = {}
+        if manual: 
+            self.all_events = []; self.last_read_offset = -1; self.app_start_time = None; 
+            self.last_combat_time = 0; self.player_data = {}; self.loot_data = {}; self.leaderboard_data = {}
+            self.last_log_mtime = 0; self.last_log_size = 0
+            print("DEBUG: Manual reset triggered")
         path = self.file_path_var.get().strip()
         if not path or not os.path.exists(path): return
         
         try:
             st = os.stat(path); mtime, size = st.st_mtime, st.st_size
             if not manual and hasattr(self, 'last_log_mtime') and mtime <= self.last_log_mtime and size <= self.last_log_size:
-                if time.time() - getattr(self, 'last_forced_read_time', 0) < 0.2: self.refresh_ui_only(); return
+                if time.time() - getattr(self, 'last_forced_read_time', 0) < 0.2: return
             self.last_log_mtime, self.last_log_size = mtime, size
+            self.last_forced_read_time = time.time()
         except: pass
 
         if os.path.isdir(path):
@@ -338,13 +370,17 @@ class CombatLogApp:
         self.last_read_offset = new_offset
         
         self.process_events_for_ui(self.all_events, manual=manual)
-        self.refresh_ui_only()
+        self.refresh_ui_only(force=True)
 
     def start_ticker_loop(self):
         if self.running:
-            self.refresh_ui_only(); self.root.after(100, self.start_ticker_loop)
+            self.analyze_log()
+            # ticker updates are never forced to maintain high FPS performance
+            self.refresh_ui_only(force=False)
+            self.root.after(100, self.start_ticker_loop)
 
-    def refresh_ui_only(self):
+    def refresh_ui_only(self, force=False):
+        if not hasattr(self, 'lbl_damage_val'): return
         now_ts = time.time()
         if now_ts - self.last_pulse_time > 0.3:
             self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
@@ -360,6 +396,7 @@ class CombatLogApp:
                 anchor = getattr(self, 'last_log_sync_time', self.app_start_time)
                 dur = (anchor + timedelta(seconds=time.time() - self.last_combat_time) - self.app_start_time).total_seconds()
                 if dur > 0: dps = dmg_dealt / dur
+                else: dps = 0
             
             dur_color = "cyan" if is_paused else TEXT_PRIMARY
             if dur > 0 and self.last_combat_time == 0: dur_color = "cyan" if self.pulse_state else "#AAAAAA"
@@ -368,39 +405,106 @@ class CombatLogApp:
             self.lbl_dps_val.config(text=f"{dps:.2f}")
             self.lbl_time_val.config(text=f"{dur:.0f}s", fg=dur_color)
 
+        # Refresh popout windows
+        self.damage_meter_win.refresh(force=force)
+        self.leaderboard_win.refresh(force=force)
+        self.skimmers_win.refresh(force=force)
+        self.details_win.refresh(force=force)
+        self.options_win.refresh(force=force)
+
     def process_events_for_ui(self, all_events, manual=False):
         now_dt = datetime.now()
         sk_limit = now_dt - timedelta(minutes=self.time_window_skimmers)
         dt_limit = now_dt - timedelta(minutes=self.time_window_details)
         
-        self.player_data = {}; self.loot_data = {}; self.inventory_full = False
+        # We'll use local dictionaries to build the state and then assign them
+        # This prevents flickering if the loop is interrupted
+        new_player_data = {}
+        new_loot_data = {}
+        new_inventory_full = False
+        
         active_ids = set(id(e) for e in all_events if self.app_start_time and e["timestamp"] and e["timestamp"] >= self.app_start_time)
 
         for e in all_events:
+            ts = e["timestamp"]
+            if not ts: continue
+            
             src = e["source"].capitalize(); src = "You" if src.lower() == "you" else src
+            tgt_raw = e["target"].capitalize(); tgt_raw = "You" if tgt_raw.lower() == "you" else tgt_raw
             is_npc = " (" in src or src.lower().startswith(("a ", "an ", "your target"))
             
             if e["type"] == "loot":
-                if e["timestamp"] and e["timestamp"] >= sk_limit:
-                    if src not in self.loot_data: self.loot_data[src] = []
-                    self.loot_data[src].append({"item": e["item"], "target": e["target"], "timestamp": e["timestamp"]})
+                # Check skimmer reset
+                if ts >= sk_limit and (not self.last_sk_reset or ts >= self.last_sk_reset):
+                    if src not in new_loot_data: new_loot_data[src] = []
+                    new_loot_data[src].append({"item": e["item"], "target": e["target"], "timestamp": ts})
+                
+                # Also track for leaderboard if not reset there
+                if not self.last_lb_reset or ts >= self.last_lb_reset:
+                    if "lb_loot" not in new_player_data.get(src, {}):
+                        if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0}
+                        else: new_player_data[src]["lb_loot"] = 0
+                    new_player_data[src]["lb_loot"] += 1
                 continue
             
             if e["type"] == "inventory_full":
-                if e["timestamp"] and e["timestamp"] >= sk_limit: self.inventory_full = True; continue
+                if ts >= sk_limit and (not self.last_sk_reset or ts >= self.last_sk_reset): 
+                    new_inventory_full = True
+                continue
 
-            if e["timestamp"] and e["timestamp"] < dt_limit and id(e) not in active_ids: continue
+            # Filtering for Player Data (Damage/Healing)
+            # DM uses app_start_time (current combat) + dm_reset
+            # DT uses dt_limit + dt_reset
+            # LB uses all data (potentially filtered by lb_reset)
+            
+            # For simplicity, we populate a unified player_data but we'll filter it inside windows if needed,
+            # OR we populate it with everything relevant to ANY window.
             
             if not is_npc:
-                if src not in self.player_data: self.player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False}
-                if id(e) in active_ids:
-                    self.player_data[src]["damage"] += e["damage"]; self.player_data[src]["healing"] += e["healing"]
+                if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0}
+                
+                # Global/Details log
+                if ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset):
+                    if e["damage"] > 0:
+                        ts_str = ts.strftime("%H:%M:%S")
+                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt_raw}", "timestamp": ts})
+                    elif e["healing"] > 0:
+                        ts_str = ts.strftime("%H:%M:%S")
+                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt_raw}", "timestamp": ts})
+
+                # Damage Meter stats
+                if id(e) in active_ids and (not self.last_dm_reset or ts >= self.last_dm_reset):
+                    new_player_data[src]["dm_damage"] += e["damage"]
+                    new_player_data[src]["dm_healing"] += e["healing"]
+                    if e["type"] == "dealt":
+                        if e.get("is_mitigated"):
+                            new_player_data[src]["dm_misses"] = new_player_data[src].get("dm_misses", 0) + 1
+                        elif e["damage"] > 0:
+                            new_player_data[src]["dm_hits"] = new_player_data[src].get("dm_hits", 0) + 1
+                
+                # Leaderboard stats (Damage/Healing)
+                if not self.last_lb_reset or ts >= self.last_lb_reset:
+                    new_player_data[src]["damage"] += e["damage"]
+                    new_player_data[src]["healing"] += e["healing"]
             
-            tgt = e["target"].capitalize(); tgt = "You" if tgt.lower() == "you" else tgt
+            tgt = tgt_raw
             if e["damage"] > 0 and not (" (" in tgt or tgt.lower().startswith(("a ", "an "))):
-                if tgt not in self.player_data: self.player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False}
-                ts_str = e["timestamp"].strftime("%H:%M:%S") if e["timestamp"] else "??:??:??"
-                self.player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": e["timestamp"]})
+                if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0}
+                if ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset):
+                    ts_str = ts.strftime("%H:%M:%S")
+                    new_player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": ts})
+                
+                # Track taken for Damage Meter
+                if id(e) in active_ids and (not self.last_dm_reset or ts >= self.last_dm_reset):
+                    new_player_data[tgt]["dm_taken"] = new_player_data[tgt].get("dm_taken", 0) + e["damage"]
+                    if e.get("is_mitigated"):
+                        new_player_data[tgt]["dm_avoided"] = new_player_data[tgt].get("dm_avoided", 0) + 1
+                    elif e["damage"] > 0:
+                        new_player_data[tgt]["dm_taken_hits"] = new_player_data[tgt].get("dm_taken_hits", 0) + 1
+
+        self.player_data = new_player_data
+        self.loot_data = new_loot_data
+        self.inventory_full = new_inventory_full
 
     def toggle_always_on_top(self):
         self.always_on_top = not self.always_on_top
@@ -415,7 +519,27 @@ class CombatLogApp:
 
     def save_config(self):
         if "General" not in self.config: self.config["General"] = {}
-        self.config["General"].update({"log_path": self.file_path_var.get(), "transparency": str(self.target_alpha), "width": str(self.root.winfo_width()), "height": str(self.root.winfo_height()), "x": str(self.root.winfo_x()), "y": str(self.root.winfo_y())})
+        self.config["General"].update({
+            "log_path": self.file_path_var.get(),
+            "transparency": str(self.target_alpha),
+            "width": str(self.root.winfo_width()),
+            "height": str(self.root.winfo_height()),
+            "x": str(self.root.winfo_x()),
+            "y": str(self.root.winfo_y()),
+            "disable_warnings": str(self.disable_warnings.get())
+        })
+        
+        # Save popout positions/sizes
+        for win in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win]:
+            if win.window and win.window.winfo_exists():
+                if win.config_key not in self.config: self.config[win.config_key] = {}
+                self.config[win.config_key].update({
+                    "width": str(win.window.winfo_width()),
+                    "height": str(win.window.winfo_height()),
+                    "x": str(win.window.winfo_x()),
+                    "y": str(win.window.winfo_y())
+                })
+
         with open("settings.ini", "w") as f: self.config.write(f)
 
     def drag_window(self, event):
@@ -426,8 +550,7 @@ class CombatLogApp:
         self._offsetx = event.x_root - self.root.winfo_x(); self._offsety = event.y_root - self.root.winfo_y()
 
     def toggle_menu(self):
-        # Mini-settings implementation omitted for brevity but placeholder for functional parity
-        pass
+        self.options_win.show()
 
     def change_log_path(self):
         p = filedialog.askopenfilename()
@@ -436,6 +559,32 @@ class CombatLogApp:
             self.save_config()
             self.start_c_engine(p)
             self.analyze_log(manual=True)
+
+    def reset_damage_meter_manual(self):
+        self.last_dm_reset = datetime.now()
+        # Reprocess current events to update UI immediately
+        self.process_events_for_ui(self.all_events)
+        self.refresh_ui_only()
+
+    def reset_leaderboard_manual(self):
+        self.last_lb_reset = datetime.now()
+        self.process_events_for_ui(self.all_events)
+        self.refresh_ui_only()
+
+    def reset_skimmers_manual(self):
+        self.last_sk_reset = datetime.now()
+        self.inventory_full = False
+        self.process_events_for_ui(self.all_events)
+        self.refresh_ui_only()
+
+    def reset_details_manual(self):
+        self.last_dt_reset = datetime.now()
+        self.process_events_for_ui(self.all_events)
+        self.refresh_ui_only()
+
+    def toggle_skimmer_search(self):
+        self.skimmer_search_mode = not self.skimmer_search_mode
+        self.skimmers_win.show(force_open=True)
 
     # Required for popout window resizing
     def init_resize_popout(self, e, w, dw, dh): self._rs_x = e.x_root; self._rs_y = e.y_root; self._rs_w = w.winfo_width(); self._rs_h = w.winfo_height()

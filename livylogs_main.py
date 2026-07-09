@@ -609,10 +609,12 @@ class CombatLogApp:
 
     def setup_tray_icon(self):
         try:
-            if os.path.exists("livylogs.ico"):
+            if os.path.exists("livylogs.png"):
+                image = Image.open("livylogs.png")
+            elif os.path.exists("livylogs.ico"):
                 image = Image.open("livylogs.ico")
             else:
-                image = Image.new('RGB', (64, 64), color=(0, 120, 215)) # Fallback blue square
+                image = Image.new('RGBA', (64, 64), color=(0, 160, 255, 255)) # Brighter blue square
             
             import webbrowser
             menu = (

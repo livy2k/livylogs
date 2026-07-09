@@ -1,5 +1,6 @@
 import tkinter as tk
 import os
+import time
 from tkinter import ttk
 from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, 
@@ -34,8 +35,14 @@ class OptionsWindow(BasePopoutWindow):
         alpha_scale.set(self.app.target_alpha)
         alpha_scale.pack(fill=tk.X, pady=(0, 10))
         
-        alpha_scale.bind("<Button-1>", lambda e: "break")
-        alpha_scale.bind("<B1-Motion>", lambda e: "break")
+        # Prevent window dragging when interacting with the slider
+        def stop_drag_propagation(e):
+            self.app.is_interacting = True
+            self.app.last_interaction_time = time.time()
+            return # Let the scale handle its own event
+            
+        alpha_scale.bind("<Button-1>", stop_drag_propagation, add="+")
+        alpha_scale.bind("<ButtonRelease-1>", lambda e: self.app.__setattr__('is_interacting', False), add="+")
 
         # Checkboxes
         def add_check(text, var, cmd=None):

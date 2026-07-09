@@ -30,4 +30,5 @@ desktop.ini
 # Documentation and sync server
 *.md
 !README.md
+!OVERWOLF_MIGRATION.md
 sync_server.py

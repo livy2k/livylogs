@@ -65,9 +65,35 @@ class OptionsWindow(BasePopoutWindow):
                                font=("Segoe UI", 9), state=tk.DISABLED)
         sync_cb.pack(anchor="w", pady=2)
         
-        tk.Label(self.content_container, text="CHARACTER NAME", bg=WINDOW_BG, fg="#888888", font=("Segoe UI", 7, "bold")).pack(anchor="w")
-        char_entry = tk.Entry(self.content_container, textvariable=self.app.char_name, bg=PANEL_DARK, fg="#888888", insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9), state=tk.DISABLED)
-        char_entry.pack(fill=tk.X, pady=(2, 8))
+        tk.Label(self.content_container, text="CHARACTER NAME", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7, "bold")).pack(anchor="w")
+        
+        char_frame = tk.Frame(self.content_container, bg=WINDOW_BG)
+        char_frame.pack(fill=tk.X, pady=(2, 8))
+        
+        char_entry = tk.Entry(char_frame, textvariable=self.app.char_name, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Segoe UI", 9))
+        char_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        
+        def set_name_from_log():
+            from utils import extract_character_id
+            log_path = self.app.file_path_var.get()
+            if log_path:
+                detected_id = extract_character_id(log_path)
+                if detected_id:
+                    self.app.char_name.set(detected_id)
+                    self.app.save_config()
+                    self.refresh(force=True)
+
+        set_btn = tk.Label(char_frame, text=" SET ", bg=ACCENT_BLUE, fg=TEXT_PRIMARY, font=("Segoe UI", 8, "bold"), cursor="hand2")
+        set_btn.pack(side=tk.RIGHT)
+        set_btn.bind("<Button-1>", lambda e: set_name_from_log())
+        
+        def on_name_change(e):
+            self.app.save_config()
+            # Force refresh to update any UI elements that depend on character name
+            self.refresh(force=True)
+
+        char_entry.bind("<FocusOut>", on_name_change)
+        char_entry.bind("<Return>", on_name_change)
 
         # Combat Log Path - simplified status
         tk.Label(self.content_container, text="LOG FILE STATUS", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(10, 2))

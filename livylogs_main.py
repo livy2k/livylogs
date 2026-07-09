@@ -797,28 +797,39 @@ class CombatLogApp:
         new_char_id = extract_character_id(p)
         
         def finalize(accepted=True):
-            if not accepted: return
+            if not accepted:
+                self.is_dialog_open = False
+                return
             
             self.file_path_var.set(p)
-            detected_name = extract_character_id(p)
+            detected_id = extract_character_id(p)
             
             def apply_settings(new_name):
                 if new_name:
                     self.char_name.set(new_name)
                 elif not self.char_name.get():
-                    self.char_name.set(detected_name)
+                    self.char_name.set(detected_id)
                 
                 self.save_config()
                 self.start_c_engine(p)
                 self.analyze_log(manual=True)
                 self.options_win.refresh(force=True)
 
-            if skip_prompt:
+            if skip_prompt or (new_char_id == char_id and self.char_name.get()):
+                # We skip if explicitly asked OR if it matches current char AND name is already set
+                self.is_dialog_open = False
                 apply_settings(None)
+            elif self.char_name.get() and new_char_id == char_id:
+                # Extra guard: if name is set and ID matches, just apply
+                self.is_dialog_open = False
+                apply_settings(self.char_name.get())
             else:
                 self.is_dialog_open = True
+                def input_callback(val):
+                    self.is_dialog_open = False # Explicitly clear flag before calling apply
+                    apply_settings(val)
                 ThemedInputDialog(self.root, "Character Name", "Enter your Character Name for synchronization:", 
-                                  initial_value=detected_name, on_submit=apply_settings)
+                                  initial_value=detected_id, on_submit=input_callback)
 
         if char_id and new_char_id and new_char_id != char_id:
             self.is_dialog_open = True

@@ -102,7 +102,6 @@ class BasePopoutWindow:
 
     def close(self):
         if self.window:
-            self.app.save_config()
             self.window.destroy()
             self.window = None
 

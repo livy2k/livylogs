@@ -650,33 +650,11 @@ class CombatLogApp:
     def change_log_path(self):
         from tkinter import filedialog
         import os
-        from ui_base import ThemedListDialog
-        from utils import extract_character_id
-        import glob
         
         current_path = self.file_path_var.get()
-        char_id = extract_character_id(current_path)
-        
-        # If we have a char_id, try to find matching logs automatically
-        if char_id:
-            initial_dir = os.path.dirname(current_path) if current_path and os.path.exists(current_path) else os.getcwd()
-            pattern = os.path.join(initial_dir, f"{char_id}_chatlog.txt")
-            matching_files = glob.glob(pattern)
-            
-            if matching_files:
-                # If there are matching files, show a themed list dialog to choose
-                self.is_dialog_open = True
-                
-                def on_file_selected(p):
-                    if p:
-                        self.proceed_with_log(p, skip_prompt=True)
-                
-                ThemedListDialog(self.root, "Select Log File", matching_files, on_select=on_file_selected)
-                return
-
-        # Fallback to standard dialog if no char_id or no matching files found automatically
-        self.is_dialog_open = True
         initial_dir = os.path.dirname(current_path) if current_path and os.path.exists(current_path) else None
+        
+        self.is_dialog_open = True
         p = filedialog.askopenfilename(
             initialdir=initial_dir,
             filetypes=[("SWG Chat Logs", "*_chatlog.txt"), ("Text Files", "*.txt"), ("All Files", "*.*")]
@@ -691,8 +669,9 @@ class CombatLogApp:
         
         current_path = self.file_path_var.get()
         char_id = extract_character_id(current_path)
+        # If we had a char_id, verify the new one matches
         new_char_id = extract_character_id(p)
-
+        
         def finalize(accepted=True):
             if not accepted: return
             
@@ -717,7 +696,7 @@ class CombatLogApp:
                 ThemedInputDialog(self.root, "Character Name", "Enter your Character Name for synchronization:", 
                                   initial_value=detected_name, on_submit=apply_settings)
 
-        if char_id and new_char_id != char_id:
+        if char_id and new_char_id and new_char_id != char_id:
             self.is_dialog_open = True
             ThemedMessagebox.askyesno(self.root, "Character Mismatch", 
                                       f"The selected log ({new_char_id}) does not match your current character ({char_id}).\n\nAre you sure you want to switch?",

@@ -118,8 +118,8 @@ def parse_combat_log(file_path, start_offset=0):
                         source_candidate = swg_miss_match.group("source").strip()
                         target_candidate = swg_miss_match.group("target").strip()
                 
-                if source_candidate.lower().startswith("corpse of "): source_candidate = source_candidate[10:]
-                if target_candidate.lower().startswith("corpse of "): target_candidate = target_candidate[10:]
+                if source_candidate.lower().startswith("corpse of "): source_candidate = source_candidate[len("corpse of "):]
+                if target_candidate.lower().startswith("corpse of "): target_candidate = target_candidate[len("corpse of "):]
                 
                 if source_candidate:
                     source_name = "You" if source_candidate.lower() == "you" else source_candidate
@@ -146,8 +146,8 @@ def parse_combat_log(file_path, start_offset=0):
                 action = swg_match.group("action").lower()
                 amount = float(swg_match.group("amount"))
                 target_name = swg_match.group("target").strip()
-                if source_name.lower().startswith("corpse of "): source_name = source_name[10:]
-                if target_name.lower().startswith("corpse of "): target_name = target_name[10:]
+                if source_name.lower().startswith("corpse of "): source_name = source_name[len("corpse of "):]
+                if target_name.lower().startswith("corpse of "): target_name = target_name[len("corpse of "):]
                 if not source_name: source_name = "Unknown"
                 if not target_name: target_name = "Unknown"
 

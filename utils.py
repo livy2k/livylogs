@@ -36,3 +36,21 @@ def extract_character_id(file_path):
     if match:
         return match.group("id")
     return ""
+
+def clean_npc_name(name):
+    """Aggregates NPC names by removing parenthetical descriptions and unique prefixes."""
+    import re
+    if not name: return ""
+    # Example: "Thelowe (a visionary of Lord Nyax)" -> "Thelowe"
+    # Example: "a Gundark" -> "Gundark"
+    
+    # 1. Remove parenthetical info
+    name = re.sub(r"\s*\(.*?\)", "", name)
+    
+    # 2. Remove "a " or "an " prefix
+    name = re.sub(r"^(a|an)\s+", "", name, flags=re.IGNORECASE)
+
+    # 3. Remove "corpse of " prefix
+    name = re.sub(r"^corpse\s+of\s+", "", name, flags=re.IGNORECASE)
+    
+    return name.strip()

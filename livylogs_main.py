@@ -393,6 +393,17 @@ class CombatLogApp:
             self.all_events = []; self.last_read_offset = -1; self.app_start_time = None; 
             self.last_combat_time = 0; self.player_data = {}; self.loot_data = {}; self.leaderboard_data = {}
             self.last_log_mtime = 0; self.last_log_size = 0
+            # Reset all manual window timers to now to ensure a clean slate
+            now_dt = datetime.now()
+            self.last_dm_reset = now_dt
+            self.last_lb_reset = now_dt
+            self.last_sk_reset = now_dt
+            self.last_dt_reset = now_dt
+            # Return windows to top level
+            self.damage_meter_win.drill_down_player = None
+            self.leaderboard_win.drill_down_player = None
+            self.skimmers_win.drill_down_player = None
+            self.details_win.drill_down_player = None
             print("DEBUG: Manual reset triggered")
         path = self.file_path_var.get().strip()
         if not path or not os.path.exists(path): return
@@ -452,6 +463,7 @@ class CombatLogApp:
             self.options_win.refresh(force=True)
 
     def process_events_for_ui(self, all_events, manual=False):
+        from utils import clean_npc_name
         now_dt = datetime.now()
         sk_limit = now_dt - timedelta(minutes=self.time_window_skimmers)
         dt_limit = now_dt - timedelta(minutes=self.time_window_details)
@@ -464,13 +476,43 @@ class CombatLogApp:
         
         active_ids = set(id(e) for e in all_events if self.app_start_time and e["timestamp"] and e["timestamp"] >= self.app_start_time)
 
+        # Group events by second and player to detect area attacks
+        time_player_counts = {}
+        for e in all_events:
+            if not e["timestamp"]: continue
+            # Only care about damage dealt
+            if e["type"] != "dealt" or e["damage"] <= 0: continue
+            
+            ts_sec = e["timestamp"].replace(microsecond=0)
+            src = e["source"].capitalize(); src = "You" if src.lower() == "you" else src
+            
+            key = (ts_sec, src)
+            time_player_counts[key] = time_player_counts.get(key, 0) + 1
+
         for e in all_events:
             ts = e["timestamp"]
             if not ts: continue
             
-            src = e["source"].capitalize(); src = "You" if src.lower() == "you" else src
+            src_raw = e["source"].capitalize(); src_raw = "You" if src_raw.lower() == "you" else src_raw
             tgt_raw = e["target"].capitalize(); tgt_raw = "You" if tgt_raw.lower() == "you" else tgt_raw
-            is_npc = " (" in src or src.lower().startswith(("a ", "an ", "your target"))
+            
+            is_src_npc = " (" in src_raw or src_raw.lower().startswith(("a ", "an ", "your target"))
+            is_tgt_npc = " (" in tgt_raw or tgt_raw.lower().startswith(("a ", "an ", "your target"))
+            
+            # Aggregate NPC names
+            src = clean_npc_name(src_raw) if is_src_npc else src_raw
+            tgt = clean_npc_name(tgt_raw) if is_tgt_npc else tgt_raw
+
+            # Area attack multiplier detection
+            mult = 1
+            if e["type"] == "dealt" and e["damage"] > 0:
+                ts_sec = ts.replace(microsecond=0)
+                hit_count = time_player_counts.get((ts_sec, src_raw), 0)
+                if hit_count > 1:
+                    # Mark as AOE hit if multiple hits in same second
+                    if not is_src_npc:
+                        if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0}
+                        new_player_data[src]["aoe_hits"] += 1
             
             if e["type"] == "loot":
                 # Check skimmer reset
@@ -499,21 +541,27 @@ class CombatLogApp:
             # For simplicity, we populate a unified player_data but we'll filter it inside windows if needed,
             # OR we populate it with everything relevant to ANY window.
             
-            if not is_npc:
+            if not is_src_npc:
                 # Track as locally seen
                 self.locally_seen_players[src] = ts
-                self.locally_seen_players[tgt_raw] = ts
+                self.locally_seen_players[tgt] = ts
                 
-                if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0}
+                if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0}
                 
                 # Global/Details log
                 if ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset):
                     if e["damage"] > 0:
                         ts_str = ts.strftime("%H:%M:%S")
-                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt_raw}", "timestamp": ts})
+                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt}", "timestamp": ts})
+                        # Track target damage
+                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
+                        new_player_data[src]["targets"][tgt]["damage"] += e["damage"]
                     elif e["healing"] > 0:
                         ts_str = ts.strftime("%H:%M:%S")
-                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt_raw}", "timestamp": ts})
+                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt}", "timestamp": ts})
+                        # Track target healing
+                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
+                        new_player_data[src]["targets"][tgt]["healing"] += e["healing"]
 
                 # Damage Meter stats
                 if id(e) in active_ids and (not self.last_dm_reset or ts >= self.last_dm_reset):
@@ -531,8 +579,9 @@ class CombatLogApp:
                     new_player_data[src]["healing"] += e["healing"]
             
             tgt = tgt_raw
-            if e["damage"] > 0 and not (" (" in tgt or tgt.lower().startswith(("a ", "an "))):
-                if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0}
+            if e["damage"] > 0 and not is_tgt_npc:
+                tgt = clean_npc_name(tgt_raw) if is_tgt_npc else tgt_raw
+                if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0}
                 if ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset):
                     ts_str = ts.strftime("%H:%M:%S")
                     new_player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": ts})
@@ -774,23 +823,29 @@ class CombatLogApp:
         self.last_dm_reset = datetime.now()
         # Reprocess current events to update UI immediately
         self.process_events_for_ui(self.all_events)
-        self.refresh_ui_only()
+        self.refresh_ui_only(force=True)
 
     def reset_leaderboard_manual(self):
         self.last_lb_reset = datetime.now()
+        self.leaderboard_win.drill_down_player = None
+        if hasattr(self.leaderboard_win, 'back_btn'): self.leaderboard_win.back_btn.pack_forget()
         self.process_events_for_ui(self.all_events)
-        self.refresh_ui_only()
+        self.refresh_ui_only(force=True)
 
     def reset_skimmers_manual(self):
         self.last_sk_reset = datetime.now()
         self.inventory_full = False
+        self.skimmers_win.drill_down_player = None
+        if hasattr(self.skimmers_win, 'back_btn'): self.skimmers_win.back_btn.pack_forget()
         self.process_events_for_ui(self.all_events)
-        self.refresh_ui_only()
+        self.refresh_ui_only(force=True)
 
     def reset_details_manual(self):
         self.last_dt_reset = datetime.now()
+        self.details_win.drill_down_player = None
+        if hasattr(self.details_win, 'back_btn'): self.details_win.back_btn.pack_forget()
         self.process_events_for_ui(self.all_events)
-        self.refresh_ui_only()
+        self.refresh_ui_only(force=True)
 
     def toggle_skimmer_search(self):
         self.skimmer_search_mode = not self.skimmer_search_mode

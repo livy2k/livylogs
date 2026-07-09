@@ -20,11 +20,17 @@ def main():
         app = CombatLogApp(root)
         root.mainloop()
     except Exception as e:
-        print(f"CRITICAL ERROR: {e}")
         import traceback
-        traceback.print_exc()
+        import os
+        error_msg = traceback.format_exc()
+        print(f"CRITICAL ERROR: {e}")
+        print(error_msg)
         try:
-            messagebox.showerror("LivyLogs Critical Error", f"The application encountered a critical error:\n{e}")
+            with open("crash_log.txt", "w") as f:
+                f.write(error_msg)
+        except: pass
+        try:
+            messagebox.showerror("LivyLogs Critical Error", f"The application encountered a critical error:\n{e}\n\nSee crash_log.txt for details.")
         except: pass
     finally:
         if mutex: kernel32.CloseHandle(mutex)

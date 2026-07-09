@@ -2,6 +2,17 @@ import ctypes
 from ctypes import wintypes
 from constants import user32, SNAP_THRESHOLD
 
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    import os
+    import sys
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 def is_window_minimized(hwnd):
     """Checks if a window is minimized using Win32 API."""
     from constants import WINDOWPLACEMENT
@@ -47,8 +58,9 @@ def clean_npc_name(name):
     # 1. Remove parenthetical info
     name = re.sub(r"\s*\(.*?\)", "", name)
     
-    # 2. Remove "a " or "an " prefix
-    name = re.sub(r"^(a|an)\s+", "", name, flags=re.IGNORECASE)
+    # 2. Remove "a " or "an " or "the " prefix, or leading '('
+    name = re.sub(r"^(a|an|the)\s+", "", name, flags=re.IGNORECASE)
+    name = name.lstrip("(")
 
     # 3. Remove "corpse of " prefix
     name = re.sub(r"^corpse\s+of\s+", "", name, flags=re.IGNORECASE)

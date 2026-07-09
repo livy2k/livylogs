@@ -17,7 +17,7 @@ class SkimmersWindow(BasePopoutWindow):
         if not self.window: return
 
         self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
-        self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+        self.back_btn.pack(side=tk.LEFT)
         self.back_btn.bind("<Button-1>", lambda e: self.go_back())
         self.back_btn.pack_forget()
 
@@ -38,7 +38,7 @@ class SkimmersWindow(BasePopoutWindow):
 
     def drill_down(self, player):
         self.drill_down_player = player
-        self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+        self.back_btn.pack(side=tk.LEFT)
         self.refresh(force=True)
 
     def refresh(self, force=False):
@@ -70,10 +70,11 @@ class SkimmersWindow(BasePopoutWindow):
                 btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
                 btn.bind("<Button-1>", make_tab_cmd(val))
                 self.tab_btns[val] = btn
-
-            # Inventory Full Alert
+            
+            # Inventory Full Alert (placed after tabs initially)
             self.inventory_alert = tk.Frame(self.header_area, bg="#442222", pady=5)
             tk.Label(self.inventory_alert, text="⚠ INVENTORY FULL", bg="#442222", fg="#ff6666", font=("Segoe UI", 9, "bold")).pack()
+            self.inventory_alert.pack_forget() # Hide it initially
 
             # Scrollable area
             canvas = tk.Canvas(self.content_container, bg=WINDOW_BG, highlightthickness=0)
@@ -108,13 +109,13 @@ class SkimmersWindow(BasePopoutWindow):
 
         # Visibility logic for tabs during drill down
         if self.drill_down_player:
-            if hasattr(self, 'back_btn'): self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+            if hasattr(self, 'back_btn'): self.back_btn.pack(side=tk.LEFT)
             self.t_frame.pack_forget()
             if hasattr(self, 'search_frame'): self.search_frame.pack_forget()
         else:
             if hasattr(self, 'back_btn'): self.back_btn.pack_forget()
-            self.t_frame.pack(fill=tk.X, pady=(0, 5), before=self.inventory_alert)
-            if hasattr(self, 'search_frame'): self.search_frame.pack(fill=tk.X, pady=(0, 5), before=self.inventory_alert)
+            self.t_frame.pack(fill=tk.X, pady=(0, 5)) # Removed before=self.inventory_alert
+            if hasattr(self, 'search_frame'): self.search_frame.pack(fill=tk.X, pady=(0, 5)) # Removed before=self.inventory_alert
             
             # Update Tab Buttons
             tab = getattr(self.app, 'skimmer_tab', 'loot')

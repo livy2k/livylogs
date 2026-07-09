@@ -72,7 +72,8 @@ class BasePopoutWindow:
             self.title_bar.bind("<Button-1>", self.click_window)
             self.title_bar.bind("<B1-Motion>", self.drag_window)
         
-        tk.Label(self.title_bar, text=self.title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=10)
+        self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9))
+        self.title_label.pack(side=tk.LEFT, padx=10)
         
         close_btn = tk.Label(self.title_bar, text="✕", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2", padx=10)
         close_btn.pack(side=tk.RIGHT)

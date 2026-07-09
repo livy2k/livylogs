@@ -16,7 +16,7 @@ class DetailsWindow(BasePopoutWindow):
         if not self.window: return
 
         self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
-        self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+        self.back_btn.pack(side=tk.LEFT)
         self.back_btn.bind("<Button-1>", lambda e: self.go_back())
         self.back_btn.pack_forget()
 
@@ -31,7 +31,7 @@ class DetailsWindow(BasePopoutWindow):
 
     def drill_down(self, player):
         self.drill_down_player = player
-        self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+        self.back_btn.pack(side=tk.LEFT)
         self.refresh(force=True)
 
     def refresh(self, force=False):
@@ -95,7 +95,7 @@ class DetailsWindow(BasePopoutWindow):
             do_full = True
 
         if self.drill_down_player:
-            if hasattr(self, 'back_btn'): self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+            if hasattr(self, 'back_btn'): self.back_btn.pack(side=tk.LEFT)
             self.top_view.pack_forget()
             self.detail_view.pack(fill=tk.BOTH, expand=True)
         else:
@@ -116,10 +116,19 @@ class DetailsWindow(BasePopoutWindow):
                 for p in players:
                     f = tk.Frame(self.player_list_frame, bg=WINDOW_BG, pady=4, cursor="hand2"); f.pack(fill=tk.X)
                     f.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
+                    
+                    is_boss = p.lower() in self.app.bosses
+                    
                     color = ACCENT_BLUE if (p == "You" or p == self.app.char_name.get()) else TEXT_ACCENT
+                    if is_boss:
+                        color = "#ff4444" # Red text for bosses
+                    
                     lbl = tk.Label(f, text=p, bg=WINDOW_BG, fg=color, font=("Segoe UI", 10, "bold"))
                     lbl.pack(side=tk.LEFT, padx=10)
                     lbl.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
+                    
+                    if is_boss:
+                        tk.Label(f, text="☠", bg=WINDOW_BG, fg="#ff4444", font=("Segoe UI", 12)).pack(side=tk.LEFT)
             return
 
         # Drill-down player view

@@ -1,0 +1,13 @@
+# Add phrases here (one per line) that you want to filter out of the player/details list.
+# Any name containing these phrases will be hidden.
+# Lines starting with # are ignored.
+
+[TEMP]
+corpse of
+a dummy
+target
+(invisible)
+You use
+[galaxychat]
+[groupchat]
+tells you

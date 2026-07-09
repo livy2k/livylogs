@@ -10,7 +10,7 @@ An Overwolf app consists of two main parts:
 
 ### Integration Strategy for LivyLogs:
 *   **The UI:** Use TypeScript/React for the overlays (Damage Meter, Leaderboard, etc.).
-*   **The Engine:** Continue using `log_engine.exe` as the primary log harvester. Overwolf's **Process Manager Plugin** will launch and manage this process.
+*   **The Engine:** Continue using `parser.exe` as the primary log harvester. Overwolf's **Process Manager Plugin** will launch and manage this process.
 *   **The Parser:** Port the `parser_engine.py` logic to TypeScript (preferred for responsiveness) or a C#/.NET plugin (if complex math/regex performance is critical).
 
 ---
@@ -29,7 +29,7 @@ Overwolf handles window management via `manifest.json`. You will map your curren
 
 ### Log Harvesting (The C Engine)
 Overwolf apps cannot directly "listen" to pipes as easily as Python can. You have two options:
-1.  **Process Manager:** Launch `log_engine.exe` and have it write to a temporary JSON file or a local WebSocket. Overwolf can then read this file using the `overwolf.io` API.
+1.  **Process Manager:** Launch `parser.exe` and have it write to a temporary JSON file or a local WebSocket. Overwolf can then read this file using the `overwolf.io` API.
 2.  **Native Plugin:** Re-write the C logic into a .NET DLL that uses `NamedPipeClientStream` to talk to the engine, exposing events directly to JavaScript.
 
 ---
@@ -52,12 +52,12 @@ Download the [Overwolf Sample App](https://github.com/overwolf/sample-app-ts) an
 Use the [Simple I/O Plugin](https://github.com/overwolf/overwolf-simple-io-plugin) to detect and read the SWG combat log files. This replaces the `os.path` and `polling` logic in Python.
 
 ### Step 3: Launch the C Engine
-Use the [Process Manager Plugin](https://github.com/overwolf/process-manager-plugin) to start `log_engine.exe`.
+Use the [Process Manager Plugin](https://github.com/overwolf/process-manager-plugin) to start `parser.exe`.
 ```javascript
 overwolf.extensions.current.getExtraObject("process-manager", (result) => {
     if (result.status === "success") {
         const processManager = result.object;
-        processManager.launchProcess("log_engine.exe", "path_to_log.txt", (res) => {
+        processManager.launchProcess("parser.exe", "path_to_log.txt", (res) => {
             console.log("C Engine Started");
         });
     }
@@ -78,4 +78,4 @@ The regex logic in `parser_engine.py` can be moved to a TypeScript service. This
 
 ---
 
-*Note: This transition requires moving from Python to TypeScript/C#. The core C engine (`log_engine.exe`) remains your "secret sauce" and can be reused directly.*
+*Note: This transition requires moving from Python to TypeScript/C#. The core C engine (`parser.exe`) remains your "secret sauce" and can be reused directly.*

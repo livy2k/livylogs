@@ -23,7 +23,7 @@ from constants import (
     HWND_TOPMOST, HWND_NOTOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE,
     SWP_SHOWWINDOW, SWP_HIDEWINDOW, ENTRY_BG, WINDOWPLACEMENT
 )
-from utils import is_window_minimized, apply_snapping, extract_character_id
+from utils import is_window_minimized, apply_snapping, extract_character_id, get_resource_path
 from parser_engine import parse_combat_log, calculate_dps
 from ui_base import ThemedMessagebox
 
@@ -133,6 +133,8 @@ class CombatLogApp:
         self.time_window_leaderboard = self.config.getint("General", "time_window_leaderboard", fallback=30)
         self.time_window_skimmers = 60
         self.time_window_dm = 30
+        self.bosses = self.load_bosses()
+        self.filters = self.load_filters()
         self.always_on_top = False
         self.skimmer_search_query = tk.StringVar()
         self.skimmer_search_mode = False
@@ -154,6 +156,34 @@ class CombatLogApp:
 
         self.start_ticker_loop()
 
+    def load_bosses(self):
+        boss_list = []
+        try:
+            path = get_resource_path("bosses.txt")
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    for line in f:
+                        name = line.strip()
+                        if name and not name.startswith("#"):
+                            boss_list.append(name.lower())
+        except Exception as e:
+            print(f"DEBUG: Error loading bosses.txt: {e}")
+        return boss_list
+
+    def load_filters(self):
+        filter_list = []
+        try:
+            path = get_resource_path("filters.txt")
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    for line in f:
+                        phrase = line.strip()
+                        if phrase and not phrase.startswith("#"):
+                            filter_list.append(phrase.lower())
+        except Exception as e:
+            print(f"DEBUG: Error loading filters.txt: {e}")
+        return filter_list
+
     def initial_show(self):
         try:
             self.root.withdraw()
@@ -164,15 +194,15 @@ class CombatLogApp:
     def start_c_engine(self, log_path):
         print(f"DEBUG: Attempting to start C Engine for: {log_path}")
         try:
-            subprocess.run(["taskkill", "/F", "/IM", "log_engine.exe", "/T"], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            subprocess.run(["taskkill", "/F", "/IM", "parser.exe", "/T"], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
             if self.engine_process: self.engine_process.terminate()
             base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
-            engine_exe = os.path.join(base_path, "log_engine.exe")
+            engine_exe = get_resource_path("parser.exe")
             if os.path.exists(engine_exe):
-                print(f"DEBUG: Launching C Engine: {engine_exe}")
+                print(f"DEBUG: Launching Parser: {engine_exe}")
                 self.engine_process = subprocess.Popen([engine_exe, log_path], creationflags=subprocess.CREATE_NO_WINDOW)
             else:
-                print(f"DEBUG: log_engine.exe not found at {engine_exe}")
+                print(f"DEBUG: parser.exe not found at {engine_exe}")
         except Exception as e:
             print(f"DEBUG: Error starting C Engine: {e}")
 
@@ -285,7 +315,14 @@ class CombatLogApp:
 
         header = tk.Frame(outer, bg=PANEL_DARK, highlightthickness=1, highlightbackground=BORDER_COLOR)
         header.pack(fill=tk.X)
+        header.bind("<Button-1>", self.click_window)
+        header.bind("<B1-Motion>", self.drag_window)
+        header.bind("<ButtonRelease-1>", self.release_window)
+
         title_bar = tk.Frame(header, bg=PANEL_DARK, height=25); title_bar.pack(fill=tk.X)
+        title_bar.bind("<Button-1>", self.click_window)
+        title_bar.bind("<B1-Motion>", self.drag_window)
+        title_bar.bind("<ButtonRelease-1>", self.release_window)
         
         exit_btn = tk.Label(title_bar, text=" ✕ ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
         exit_btn.pack(side=tk.RIGHT)
@@ -296,6 +333,12 @@ class CombatLogApp:
         menu_btn.bind("<Button-1>", lambda e: self.toggle_menu())
         self.ontop_btn = tk.Label(title_bar, text="ONTOP: OFF", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2"); self.ontop_btn.pack(side=tk.LEFT)
         self.ontop_btn.bind("<Button-1>", lambda e: self.toggle_always_on_top())
+
+        title_lbl = tk.Label(title_bar, text="LIVYLOGS", bg=PANEL_DARK, fg=TEXT_ACCENT, font=self.font_title_obj)
+        title_lbl.pack(side=tk.LEFT, padx=5)
+        title_lbl.bind("<Button-1>", self.click_window)
+        title_lbl.bind("<B1-Motion>", self.drag_window)
+        title_lbl.bind("<ButtonRelease-1>", self.release_window)
 
         nav = tk.Frame(header, bg=PANEL_DARK); nav.pack(fill=tk.X, padx=10, pady=(0, 5))
         nav.bind("<Button-1>", self.click_window)
@@ -523,13 +566,39 @@ class CombatLogApp:
             src_raw = e["source"].capitalize(); src_raw = "You" if src_raw.lower() == "you" else src_raw
             tgt_raw = e["target"].capitalize(); tgt_raw = "You" if tgt_raw.lower() == "you" else tgt_raw
             
-            is_src_npc = " (" in src_raw or src_raw.lower().startswith(("a ", "an ", "your target"))
-            is_tgt_npc = " (" in tgt_raw or tgt_raw.lower().startswith(("a ", "an ", "your target"))
+            is_src_npc = src_raw.lower().startswith(("a ", "an ", "the ", "your target", "level ", "(")) or src_raw.lower() == "target"
+            is_tgt_npc = tgt_raw.lower().startswith(("a ", "an ", "the ", "your target", "level ", "(")) or tgt_raw.lower() == "target"
             
             # Aggregate NPC names
-            src = clean_npc_name(src_raw) if is_src_npc else src_raw
-            tgt = clean_npc_name(tgt_raw) if is_tgt_npc else tgt_raw
+            src = clean_npc_name(src_raw) if is_src_npc or " (" in src_raw else src_raw
+            tgt = clean_npc_name(tgt_raw) if is_tgt_npc or " (" in tgt_raw else tgt_raw
 
+            # Normalize for internal tracking (Players/Bosses)
+            # Only capitalize if it's NOT an NPC, as cleaning might have already normalized it
+            # and we want to preserve boss list matches.
+            if not is_src_npc:
+                src = src.capitalize() if src.lower() != "you" else "You"
+            if not is_tgt_npc:
+                tgt = tgt.capitalize() if tgt.lower() != "you" else "You"
+            
+            # Override NPC status if in boss list
+            is_src_boss = src.lower() in self.bosses
+            is_tgt_boss = tgt.lower() in self.bosses
+            
+            if is_src_boss: 
+                is_src_npc = False
+                src = src.title() # Ensure "Hutt Crime Lord" for UI
+            if is_tgt_boss: 
+                is_tgt_npc = False
+                tgt = tgt.title()
+
+            # Check general filters
+            is_src_filtered = any(phrase in src.lower() for phrase in self.filters)
+            is_tgt_filtered = any(phrase in tgt.lower() for phrase in self.filters)
+
+            if is_src_filtered: is_src_npc = True
+            if is_tgt_filtered: is_tgt_npc = True
+            
             # Determine if this event is relevant for ANY window
             # If it's too old for everything, skip processing it into player_data
             is_skimmer_relevant = ts >= sk_limit and (not self.last_sk_reset or ts >= self.last_sk_reset)
@@ -558,7 +627,7 @@ class CombatLogApp:
                     new_loot_data[src].append({"item": e["item"], "target": e["target"], "timestamp": ts})
             
                 # Also track for leaderboard if not reset there
-                if is_lb_relevant:
+                if is_lb_relevant and not is_src_npc:
                     if src not in new_player_data: 
                         new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
                     new_player_data[src]["lb_loot"] += 1
@@ -585,56 +654,56 @@ class CombatLogApp:
                 if src not in new_player_data: 
                     new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
                 
-        # Global/Details log
-        if is_details_relevant:
-            if e["damage"] > 0:
-                ts_str = ts.strftime("%H:%M:%S")
-                new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt}", "timestamp": ts})
-                # Track target damage
-                if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
-                new_player_data[src]["targets"][tgt]["damage"] += e["damage"]
-            elif e["healing"] > 0:
-                ts_str = ts.strftime("%H:%M:%S")
-                new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt}", "timestamp": ts})
-                # Track target healing
-                if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
-                new_player_data[src]["targets"][tgt]["healing"] += e["healing"]
+                # Global/Details log
+                if is_details_relevant:
+                    if e["damage"] > 0:
+                        ts_str = ts.strftime("%H:%M:%S")
+                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt}", "timestamp": ts})
+                        # Track target damage
+                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
+                        new_player_data[src]["targets"][tgt]["damage"] += e["damage"]
+                    elif e["healing"] > 0:
+                        ts_str = ts.strftime("%H:%M:%S")
+                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt}", "timestamp": ts})
+                        # Track target healing
+                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
+                        new_player_data[src]["targets"][tgt]["healing"] += e["healing"]
 
-        # Damage Meter stats
-        if is_dm_relevant:
-            new_player_data[src]["dm_damage"] += e["damage"]
-            new_player_data[src]["dm_healing"] += e["healing"]
-            if e["type"] == "dealt":
-                if e.get("is_mitigated"):
-                    new_player_data[src]["dm_misses"] = new_player_data[src].get("dm_misses", 0) + 1
-                elif e["damage"] > 0:
-                    new_player_data[src]["dm_hits"] = new_player_data[src].get("dm_hits", 0) + 1
-        
-        # Leaderboard stats (Damage/Healing)
-        if is_lb_relevant:
-            new_player_data[src]["damage"] += e["damage"]
-            new_player_data[src]["healing"] += e["healing"]
-        
-    tgt = tgt_raw
-    if e["damage"] > 0 or e.get("is_mitigated"):
-        # Always track 'You' for damage taken, regardless of is_tgt_npc
-        if tgt == "You" or not is_tgt_npc:
-            if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-            if is_details_relevant:
-                ts_str = ts.strftime("%H:%M:%S")
-                new_player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": ts})
-            
-            # Track taken for Damage Meter
-            if is_dm_relevant:
-                new_player_data[tgt]["dm_taken"] = new_player_data[tgt].get("dm_taken", 0) + e["damage"]
-                if e.get("is_mitigated"):
-                    new_player_data[tgt]["dm_avoided"] = new_player_data[tgt].get("dm_avoided", 0) + 1
-                elif e["damage"] > 0:
-                    new_player_data[tgt]["dm_taken_hits"] = new_player_data[tgt].get("dm_taken_hits", 0) + 1
-        elif is_lb_relevant:
-            # Still add NPCs to player_data so they show up in leaderboard if attacked
-            # but we don't need to track full details for them unless they are 'You'
-            if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+                # Damage Meter stats
+                if is_dm_relevant:
+                    new_player_data[src]["dm_damage"] += e["damage"]
+                    new_player_data[src]["dm_healing"] += e["healing"]
+                    if e["type"] == "dealt":
+                        if e.get("is_mitigated"):
+                            new_player_data[src]["dm_misses"] = new_player_data[src].get("dm_misses", 0) + 1
+                        elif e["damage"] > 0:
+                            new_player_data[src]["dm_hits"] = new_player_data[src].get("dm_hits", 0) + 1
+                
+                # Leaderboard stats (Damage/Healing)
+                if is_lb_relevant:
+                    new_player_data[src]["damage"] += e["damage"]
+                    new_player_data[src]["healing"] += e["healing"]
+                
+            tgt = tgt_raw
+            if e["damage"] > 0 or e.get("is_mitigated"):
+                # Always track 'You' for damage taken, regardless of is_tgt_npc
+                if tgt == "You" or not is_tgt_npc:
+                    if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+                    if is_details_relevant:
+                        ts_str = ts.strftime("%H:%M:%S")
+                        new_player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": ts})
+                    
+                    # Track taken for Damage Meter
+                    if is_dm_relevant:
+                        new_player_data[tgt]["dm_taken"] = new_player_data[tgt].get("dm_taken", 0) + e["damage"]
+                        if e.get("is_mitigated"):
+                            new_player_data[tgt]["dm_avoided"] = new_player_data[tgt].get("dm_avoided", 0) + 1
+                        elif e["damage"] > 0:
+                            new_player_data[tgt]["dm_taken_hits"] = new_player_data[tgt].get("dm_taken_hits", 0) + 1
+                elif is_lb_relevant and not is_tgt_npc:
+                    # Still add NPCs to player_data so they show up in leaderboard if attacked
+                    # but we don't need to track full details for them unless they are 'You'
+                    if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
 
         self.player_data = new_player_data
         self.loot_data = new_loot_data
@@ -700,10 +769,12 @@ class CombatLogApp:
 
     def setup_tray_icon(self):
         try:
-            if os.path.exists("livylogs.png"):
-                image = Image.open("livylogs.png")
-            elif os.path.exists("livylogs.ico"):
-                image = Image.open("livylogs.ico")
+            png_path = get_resource_path("livylogs.png")
+            ico_path = get_resource_path("livylogs.ico")
+            if os.path.exists(png_path):
+                image = Image.open(png_path)
+            elif os.path.exists(ico_path):
+                image = Image.open(ico_path)
             else:
                 image = Image.new('RGBA', (64, 64), color=(0, 160, 255, 255)) # Brighter blue square
             

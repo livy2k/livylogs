@@ -173,12 +173,20 @@ class LeaderboardWindow(BasePopoutWindow):
             f.config(cursor="hand2")
             f.bind("<Button-1>", lambda e, n=name: self.drill_down(n))
             
+            is_boss = name.lower() in self.app.bosses
+            
             color = ACCENT_BLUE if name == "You" or name == self.app.char_name.get() else TEXT_PRIMARY
+            if is_boss:
+                color = "#ff4444"
+            
             tk.Label(f, text=f"#{i+1}", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=5)
             
             p_lbl = tk.Label(f, text=name, bg=self.window["bg"], fg=color, font=("Segoe UI", 9, "bold"))
             p_lbl.pack(side=tk.LEFT, padx=10)
             p_lbl.bind("<Button-1>", lambda e, n=name: self.drill_down(n))
+            
+            if is_boss:
+                tk.Label(f, text="☠", bg=self.window["bg"], fg="#ff4444", font=("Segoe UI", 11)).pack(side=tk.LEFT)
 
             val_str = f"{val:,.0f}" if isinstance(val, (int, float)) else str(val)
             v_lbl = tk.Label(f, text=val_str, bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 9))

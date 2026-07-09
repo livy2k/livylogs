@@ -209,10 +209,6 @@ class ThemedInputDialog(tk.Toplevel):
         title_bar.pack(fill=tk.X)
         tk.Label(title_bar, text=title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=10)
         
-        close_btn = tk.Label(title_bar, text="✕", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2", padx=10)
-        close_btn.pack(side=tk.RIGHT)
-        close_btn.bind("<Button-1>", lambda e: self.destroy())
-
         content = tk.Frame(inner, bg=WINDOW_BG, padx=20, pady=20)
         content.pack(fill=tk.BOTH, expand=True)
         
@@ -233,13 +229,17 @@ class ThemedInputDialog(tk.Toplevel):
         
         submit_btn = tk.Frame(btn_area, bg=BUTTON_BG, padx=15, pady=5, cursor="hand2")
         submit_btn.pack(side=tk.RIGHT, padx=10, pady=5)
-        tk.Label(submit_btn, text="SUBMIT", bg=BUTTON_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold")).pack()
+        l1 = tk.Label(submit_btn, text="SUBMIT", bg=BUTTON_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold"))
+        l1.pack()
         submit_btn.bind("<Button-1>", lambda e: self.submit())
+        l1.bind("<Button-1>", lambda e: self.submit())
 
         cancel_btn = tk.Frame(btn_area, bg=WINDOW_BG, padx=15, pady=5, cursor="hand2")
         cancel_btn.pack(side=tk.RIGHT, padx=5, pady=5)
-        tk.Label(cancel_btn, text="CANCEL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack()
+        l2 = tk.Label(cancel_btn, text="CANCEL", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold"))
+        l2.pack()
         cancel_btn.bind("<Button-1>", lambda e: self.destroy())
+        l2.bind("<Button-1>", lambda e: self.destroy())
 
         title_bar.bind("<Button-1>", self._click_window)
         title_bar.bind("<B1-Motion>", self._drag_window)

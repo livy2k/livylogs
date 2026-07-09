@@ -144,6 +144,15 @@ class CombatLogApp:
         self.inventory_full_time = None
 
         self.build_layout()
+
+        # Initialize all reset timers to current time on launch
+        now_dt = datetime.now()
+        self.last_dm_reset = now_dt
+        self.last_lb_reset = now_dt
+        self.last_sk_reset = now_dt
+        self.last_dt_reset = now_dt
+        self.app_start_time = now_dt # Ensure combat sessions also start fresh
+
         self.start_ticker_loop()
 
     def initial_show(self):

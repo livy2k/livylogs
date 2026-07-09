@@ -1396,15 +1396,22 @@ class CombatLogApp:
                     self._last_topmost_state = None
 
                 if is_topmost_needed:
-                    if self._last_topmost_state != True:
-                        for win in managed_windows:
-                            try:
+                    # Always re-apply topmost if we are showing, to fight against game focus stealing
+                    for win in managed_windows:
+                        try:
+                            # Only apply if not already topmost or if we just showed
+                            if getattr(win, '_force_topmost_tick', 0) < 5: # Force for a few ticks
                                 win_hwnd = win.winfo_id()
                                 user32.SetWindowPos(win_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
                                 win.attributes("-topmost", True)
-                            except:
-                                pass
-                        self._last_topmost_state = True
+                                win._force_topmost_tick = getattr(win, '_force_topmost_tick', 0) + 1
+                            elif self._last_topmost_state != True:
+                                win_hwnd = win.winfo_id()
+                                user32.SetWindowPos(win_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                                win.attributes("-topmost", True)
+                        except:
+                            pass
+                    self._last_topmost_state = True
                 else:
                     if self._last_topmost_state != False:
                         for win in managed_windows:
@@ -1464,12 +1471,25 @@ class CombatLogApp:
             self.root.after_cancel(self._hide_grace_after_id)
             self._hide_grace_after_id = None
             
+        managed_windows = self._get_managed_windows()
         is_hidden = self.root.state() == "withdrawn"
+        
+        # Check if any managed window is hidden and force deiconify if needed
+        for win in managed_windows:
+            try:
+                # Reset force topmost counter
+                win._force_topmost_tick = 0
+                if win.state() == "withdrawn":
+                    win.overrideredirect(True) # Re-apply for focus issues
+                    win.attributes("-alpha", 0.0)
+                    win.deiconify()
+                    win.attributes("-topmost", True)
+            except:
+                pass
+
         if is_hidden:
             self.current_alpha = 0.0
-            for win in self._get_managed_windows():
-                win.attributes("-alpha", 0.0)
-                win.deiconify()
+            # Already deiconified above
         
         if self.current_alpha < self.target_alpha:
             if self.fade_after_id:
@@ -1480,6 +1500,14 @@ class CombatLogApp:
             
             self._fading_direction = 'in'
             self.fade_in()
+        else:
+            # Ensure they are visible even if already at target alpha
+            for win in managed_windows:
+                try:
+                    win.attributes("-alpha", self.target_alpha)
+                except:
+                    pass
+            self._fading_direction = None
 
     def fade_in(self):
         if self.current_alpha < self.target_alpha:
@@ -1924,12 +1952,13 @@ class CombatLogApp:
 
                 # If app_start_time is None (initial launch or after timeout),
                 # try to initialize it from the FIRST damage event in the new batch.
-                # If this is the initial history load, only initialize if the latest damage is recent (within 2 mins)
+                # If this is the initial history load, only initialize if the latest damage is VERY recent (within 10s)
                 if self.app_start_time is None:
                     damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
                     if damage_events:
                         latest_damage_ts = max(e["timestamp"] for e in damage_events)
-                        is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 120
+                        # Reduced threshold from 120s to 10s for initial load to prevent "time jumps"
+                        is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 10
                         
                         if not is_initial_history_load or is_recent:
                             self.app_start_time = min(e["timestamp"] for e in damage_events)
@@ -1979,8 +2008,8 @@ class CombatLogApp:
                     damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
                     latest_new_damage_ts = max(e["timestamp"] for e in damage_events)
                     
-                    # If this is the initial history load, we only sync if damage is recent
-                    is_recent = (datetime.now() - latest_new_damage_ts).total_seconds() < 120
+                    # If this is the initial history load, we only sync if damage is VERY recent
+                    is_recent = (datetime.now() - latest_new_damage_ts).total_seconds() < 10
                     
                     if not is_initial_history_load or is_recent:
                         # If it's been more than X seconds since the last damage, reset the meter
@@ -2102,7 +2131,7 @@ class CombatLogApp:
                     damage_events = [e for e in new_events if e["damage"] > 0 and e["timestamp"]]
                     if damage_events:
                         latest_damage_ts = max(e["timestamp"] for e in damage_events)
-                        is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 120
+                        is_recent = (datetime.now() - latest_damage_ts).total_seconds() < 10
                         
                         if not is_initial_history_load or is_recent:
                             self.app_start_time = min(e["timestamp"] for e in damage_events)
@@ -2473,8 +2502,17 @@ class CombatLogApp:
                     
         return x, y
 
-    def show_skimmers_window(self):
+    def show_skimmers_window(self, force_open=False):
         if self.skimmers_window and self.skimmers_window.winfo_exists():
+            if self.skimmers_window.state() == "withdrawn":
+                self.skimmers_window.deiconify()
+                self.skimmers_window.attributes("-alpha", self.current_alpha)
+                self.skimmers_window.lift()
+                return
+            if force_open:
+                self.skimmers_window.lift()
+                return
+            self.on_close_skimmers()
             return
 
         self.skimmers_window = tk.Toplevel(self.root)
@@ -2600,8 +2638,7 @@ class CombatLogApp:
     def on_close_skimmers(self):
         if self.skimmers_window:
             self.save_config()
-            self.skimmers_window.destroy()
-            self.skimmers_window = None
+            self.skimmers_window.withdraw()
             self.save_config()
 
     def toggle_always_on_top(self):
@@ -2890,8 +2927,16 @@ class CombatLogApp:
         x, y = self.apply_snapping(self.skimmers_window, x, y)
         self.skimmers_window.geometry(f"+{x}+{y}")
 
-    def show_damage_meter_window(self):
+    def show_damage_meter_window(self, force_open=False):
         if self.damage_meter_window and self.damage_meter_window.winfo_exists():
+            if self.damage_meter_window.state() == "withdrawn":
+                self.damage_meter_window.deiconify()
+                self.damage_meter_window.attributes("-alpha", self.current_alpha)
+                self.damage_meter_window.lift()
+                return
+            if force_open:
+                self.damage_meter_window.lift()
+                return
             self.on_close_damage_meter()
             return
 
@@ -2976,10 +3021,8 @@ class CombatLogApp:
     def on_close_damage_meter(self):
         if self.damage_meter_window:
             self.save_config()
-            self.damage_meter_window.destroy()
-            self.damage_meter_window = None
-            # Clear references
-            self.dm_labels_created = False
+            self.damage_meter_window.withdraw()
+            # self.damage_meter_window = None  # Keep reference for withdraw/deiconify
 
     def reset_damage_meter_manual(self):
         self.leaderboard_data = {}
@@ -3174,8 +3217,16 @@ class CombatLogApp:
         x, y = self.apply_snapping(self.damage_meter_window, x, y)
         self.damage_meter_window.geometry(f"+{x}+{y}")
 
-    def show_leaderboard_window(self):
+    def show_leaderboard_window(self, force_open=False):
         if self.leaderboard_window and self.leaderboard_window.winfo_exists():
+            if self.leaderboard_window.state() == "withdrawn":
+                self.leaderboard_window.deiconify()
+                self.leaderboard_window.attributes("-alpha", self.current_alpha)
+                self.leaderboard_window.lift()
+                return
+            if force_open:
+                self.leaderboard_window.lift()
+                return
             self.on_close_leaderboard()
             return
 
@@ -3277,8 +3328,7 @@ class CombatLogApp:
     def on_close_leaderboard(self):
         if self.leaderboard_window:
             self.save_config()
-            self.leaderboard_window.destroy()
-            self.leaderboard_window = None
+            self.leaderboard_window.withdraw()
 
     def reset_leaderboard_manual(self):
         self.leaderboard_reset_time = datetime.now()
@@ -3334,6 +3384,11 @@ class CombatLogApp:
 
     def show_details_window(self, force_open=False):
         if self.details_window and self.details_window.winfo_exists():
+            if self.details_window.state() == "withdrawn":
+                self.details_window.deiconify()
+                self.details_window.attributes("-alpha", self.current_alpha)
+                self.details_window.lift()
+                return
             if force_open:
                 self.details_window.lift()
                 return
@@ -3433,8 +3488,7 @@ class CombatLogApp:
     def on_close_details(self):
         if self.details_window:
             self.save_config()
-            self.details_window.destroy()
-            self.details_window = None
+            self.details_window.withdraw()
 
     def reset_details_manual(self):
         self.player_data = {}
@@ -3911,9 +3965,17 @@ class CombatLogApp:
             
         slider.config(command=on_slider_move)
 
-    def show_options_window(self):
+    def show_options_window(self, force_open=False):
         if self.options_window and self.options_window.winfo_exists():
-            self.options_window.focus_force()
+            if self.options_window.state() == "withdrawn":
+                self.options_window.deiconify()
+                self.options_window.attributes("-alpha", self.current_alpha)
+                self.options_window.lift()
+                return
+            if force_open:
+                self.options_window.focus_force()
+                return
+            self.on_close_options()
             return
 
         self.options_window = tk.Toplevel(self.root)
@@ -4088,8 +4150,7 @@ class CombatLogApp:
     def on_close_options(self):
         if self.options_window:
             self.save_config()
-            self.options_window.destroy()
-            self.options_window = None
+            self.options_window.withdraw()
 
     def click_window_options(self, event):
         self._opt_offsetx = event.x_root - self.options_window.winfo_x()

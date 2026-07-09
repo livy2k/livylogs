@@ -130,6 +130,9 @@ class ThemedMessagebox(tk.Toplevel):
         parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
             
@@ -145,6 +148,9 @@ class ThemedMessagebox(tk.Toplevel):
         parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
         super().destroy()
@@ -281,6 +287,9 @@ class ThemedListDialog(tk.Toplevel):
         parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
         super().destroy()
@@ -300,7 +309,6 @@ class ThemedListDialog(tk.Toplevel):
 class ThemedInputDialog(tk.Toplevel):
     def __init__(self, parent, title, prompt, initial_value="", on_submit=None):
         super().__init__(parent)
-        self.parent_obj = parent # Use a custom attribute to avoid potential Tkinter conflicts
         self.title(title)
         self.configure(bg=WINDOW_BG)
         self.attributes("-alpha", 0.0)
@@ -372,11 +380,8 @@ class ThemedInputDialog(tk.Toplevel):
         self.check_target_window()
 
     def cancel(self):
-        parent = self.parent_obj
-        if hasattr(parent, "app"):
-            parent.app.is_dialog_open = False
-        elif hasattr(parent, "is_dialog_open"):
-            parent.is_dialog_open = False
+        if hasattr(self.parent, "is_dialog_open"):
+            self.parent.is_dialog_open = False
         self.destroy()
 
     def find_target_window(self):
@@ -433,9 +438,12 @@ class ThemedInputDialog(tk.Toplevel):
     def submit(self, event=None):
         val = self.entry_var.get()
         # Reset parent dialog state
-        parent = self.parent_obj
+        parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
             
@@ -446,9 +454,12 @@ class ThemedInputDialog(tk.Toplevel):
 
     def destroy(self):
         # Reset parent dialog state on direct close
-        parent = self.parent_obj
+        parent = self.master
         if hasattr(parent, "app"):
             parent.app.is_dialog_open = False
+            # Safety call to SetWindowPos for managed windows when dialog closes
+            for win in parent.app._get_managed_windows():
+                user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
         elif hasattr(parent, "is_dialog_open"):
             parent.is_dialog_open = False
         super().destroy()

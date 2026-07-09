@@ -77,9 +77,9 @@ class OptionsWindow(BasePopoutWindow):
             from utils import extract_character_id
             log_path = self.app.file_path_var.get()
             if log_path:
-                detected_id = extract_character_id(log_path)
-                if detected_id:
-                    self.app.char_name.set(detected_id)
+                detected_name = extract_character_id(log_path)
+                if detected_name:
+                    self.app.char_name.set(detected_name)
                     self.app.save_config()
                     self.refresh(force=True)
 
@@ -113,6 +113,10 @@ class OptionsWindow(BasePopoutWindow):
         add_btn("SELECT LOG (MATCHING CHAR)", self.app.select_log_filtered)
         add_btn("BROWSE ALL LOGS", self.app.change_log_path)
         add_btn("RESET ALL DATA", lambda: self.app.analyze_log(manual=True))
+
+    def close(self):
+        super().close()
+        self.app.on_options_closed()
 
     def update_status_indicator(self):
         if not hasattr(self, 'status_lbl'): return

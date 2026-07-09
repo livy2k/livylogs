@@ -1,6 +1,7 @@
-Hutt Crime Lord
-Krayt Dragon
-Ancient Krayt Dragon
-Darth Vader
+# Add npc names here (one per line) that make an exception for in the player/details list.
+# Any name containing these phrases will be displayed in details.
+# Lines starting with # are ignored
+
 Acklay
-Bobo the Boss
+Fire Breathing Spider
+

@@ -100,9 +100,18 @@ class LeaderboardWindow(BasePopoutWindow):
         if self.app.enable_sync.get() and self.app.sync_data:
             remote_data = self.app.sync_data.get("data", {}).get(cat, {})
             # remote_data expected to be {char_name: value}
+            
+            seen_recently = set(self.app.locally_seen_players.keys())
+            
             for remote_name, remote_val in remote_data.items():
                 # Don't overwrite local "You" with remote "You"
                 if remote_name == self.app.char_name.get(): continue
+                
+                # Proximity filtering for damage/healing:
+                # Only show if they have been seen locally in recent combat (last 5 mins)
+                if cat in ["damage", "healing"] and remote_name not in seen_recently:
+                    continue
+                
                 # Update merged data
                 if cat == "loot":
                     # For loot count, we might get a list or a number from remote

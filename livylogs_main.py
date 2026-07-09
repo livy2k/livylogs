@@ -106,6 +106,7 @@ class CombatLogApp:
             self.root.after(1200, lambda: self.start_c_engine(initial_log_path))
         
         self.player_data = {}
+        self.locally_seen_players = {} # name -> last_seen_timestamp
         self.leaderboard_data = {}
         self.loot_data = {}
         self.last_dm_reset = None
@@ -499,6 +500,10 @@ class CombatLogApp:
             # OR we populate it with everything relevant to ANY window.
             
             if not is_npc:
+                # Track as locally seen
+                self.locally_seen_players[src] = ts
+                self.locally_seen_players[tgt_raw] = ts
+                
                 if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0}
                 
                 # Global/Details log
@@ -543,6 +548,10 @@ class CombatLogApp:
         self.player_data = new_player_data
         self.loot_data = new_loot_data
         self.inventory_full = new_inventory_full
+        
+        # Cleanup locally_seen_players occasionally (older than 10 mins)
+        seen_limit = now_dt - timedelta(minutes=10)
+        self.locally_seen_players = {name: t for name, t in self.locally_seen_players.items() if t >= seen_limit}
 
     def toggle_always_on_top(self):
         self.always_on_top = not self.always_on_top

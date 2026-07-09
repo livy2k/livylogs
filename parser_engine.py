@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 import ctypes
@@ -25,12 +26,19 @@ def parse_combat_log(file_path, start_offset=0):
 
     events = []
     timestamp_pattern = re.compile(r"\[?(\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2})\]?")
+    
+    # Improved SWG pattern
+    # Handles: Source [action] [ability] on Target for Amount [unit]
     swg_pattern = re.compile(
-        r"(?:\[\w+\]\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?(?P<name>you|.+?)\s+(?P<action>uses|use|attacks|attack|deals|deal|heals|heal|hits|hit)\b\s+(?:(?P<ability>.+?)\s+(?:on|to|for)\s+)?(?P<target>.+?)\s+for\s+(?P<amount>\d+(?:\.\d+)?)\s*(?P<unit>damage|dmg|points|health)?",
+        r"^(?P<source>you|.+?)\s+(?P<action>uses|use|attacks|attack|deals|deal|heals|heal|hits|hit)\b\s+(?:(?P<ability>.+?)\s+(?:on|to|for)\s+)?(?P<target>.+?)\s+for\s+(?P<amount>\d+(?:\.\d+)?)\s*(?P<unit>damage|dmg|points|health)?",
         re.IGNORECASE
     )
     
+    # Mitigation pattern
+    mitigation_suffix = re.compile(r",?\s+but\s+(?:he|she|it|you)\s+(?P<mitigation>evades|evaded|dodges|parries|blocks it|counterattacks)(?:\s+it)?", re.IGNORECASE)
+    
     swg_keywords = ["uses", "use", "attacks", "attack", "deals", "deal", "heals", "heal", "hits", "hit"]
+    mitigation_keywords = ["counterattacks", "blocks it", "misses", "evades", "evaded", "dodges", "parries", "counterattack"]
     pvp_kws = ["has bested"]
     msg_kws = ["says", "shouts", "whispers", "tells", "emotes", "performs", "is", "has", "does", "goes", "starts", "stops", "completes"]
     act_kws = ["is", "has", "does", "goes", "starts", "stops", "completes", "stands", "kneels", "performs", "sits", "says", "shouts", "whispers", "tells", "emotes", "tosses", "nods", "waves", "smiles", "laughs", "cheers", "misses", "evade", "dodge", "parr", "block", "counterattack", "attack", "use", "hit"]
@@ -96,89 +104,77 @@ def parse_combat_log(file_path, start_offset=0):
                     else:
                         events.append({
                             "line_number": line_number, "damage": 0, "healing": 0, "type": "taken",
-                            "source": "Unknown", "target": "you", "timestamp": timestamp, "raw": original_line,
+                            "source": "Unknown", "target": "You", "timestamp": timestamp, "raw": original_line,
                         })
                         current_offset = log_file.tell()
                         continue
 
-            is_mitigated = False
-            mitigation_keywords = ["counterattacks", "blocks it", "misses", "evades", "evaded", "dodges", "parries"]
-            if any(kw in lower_line for kw in mitigation_keywords):
-                is_mitigated = True
-                source_candidate = "Unknown"
-                target_candidate = "Unknown"
-                content = re.sub(r"^(\[\w+\]\s+)?(\d{2}:\d{2}:\d{2}\s+)?", "", original_line)
-                miss_match = re.search(r"(?P<source>.+?)(?:'s\s+(?P<ability>.+?))?\s+(?P<action>misses|evades|evaded|dodges|parries|counterattacks|blocks it)\b(?:\s+(?P<target>.+))?", content, re.IGNORECASE)
-                if miss_match:
-                    source_candidate = miss_match.group("source").strip()
-                    target_candidate = miss_match.group("target").strip() if miss_match.group("target") else "Unknown"
-                else:
-                    swg_miss_match = re.search(r"(?P<source>you|.+?)\s+(?P<action>uses|use|attacks|attack|deals|deal|heals|heal|hits|hit)\b\s+(?:(?P<ability>.+?)\s+(?:on|to|for)\s+)?(?P<target>.+?)\s+for\s+(?P<amount>\d+(?:\.\d+)?)\s*.+?,\s*but\s+(?:he|she|it|you)\s+(?P<mitigation>evades|evaded|dodges|parries|blocks it|counterattacks)", content, re.IGNORECASE)
-                    if swg_miss_match:
-                        source_candidate = swg_miss_match.group("source").strip()
-                        target_candidate = swg_miss_match.group("target").strip()
-                
-                if source_candidate.lower().startswith("corpse of "): source_candidate = source_candidate[len("corpse of "):]
-                if target_candidate.lower().startswith("corpse of "): target_candidate = target_candidate[len("corpse of "):]
-                
-                if source_candidate:
-                    source_name = "You" if source_candidate.lower() == "you" else source_candidate
-                    target_name = "You" if target_candidate.lower() == "you" else target_candidate
-                    etype = "dealt" if source_name == "You" else "taken" if target_name == "You" else "dealt"
-                    event = {
-                        "line_number": line_number, "damage": 0, "healing": 0, "type": etype,
-                        "source": source_name, "target": target_name, "timestamp": timestamp, "raw": original_line, "is_mitigated": True
-                    }
-                    events.append(event)
-                    if etype == "taken": last_taken_event = event
-                    current_offset = log_file.tell()
-                    continue
-
-            swg_match = None
-            if any(kw in lower_line for kw in swg_keywords):
-                swg_match = swg_pattern.search(original_line)
-            
             damage, healing, event_type = 0, 0, None
             source_name, target_name = "Unknown", "Unknown"
-            
-            if swg_match:
-                source_name = swg_match.group("name").strip()
-                action = swg_match.group("action").lower()
-                amount = float(swg_match.group("amount"))
-                target_name = swg_match.group("target").strip()
-                if source_name.lower().startswith("corpse of "): source_name = source_name[len("corpse of "):]
-                if target_name.lower().startswith("corpse of "): target_name = target_name[len("corpse of "):]
-                if not source_name: source_name = "Unknown"
-                if not target_name: target_name = "Unknown"
+            is_mitigated = False
+            item = ""
 
-                if "heal" in action:
-                    healing = amount
-                    event_type = "healing"
-                else:
-                    damage = amount
-                    if source_name.lower() == "you": event_type = "dealt"
-                    elif target_name.lower() == "you": event_type = "taken"
-                    else: event_type = "other_dealt"
-                
-                if "evades" in lower_line or "counterattacks" in lower_line:
-                    damage, is_mitigated = 0, True
+            # 1. Clean line (remove timestamp/channel)
+            clean_line = re.sub(r"^(?:\[\w+\]\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?", "", original_line).strip()
             
-            if not event_type:
-                if any(kw in lower_line for kw in mitigation_keywords):
+            # 2. Check for SWG combat keywords
+            if any(kw in lower_line for kw in swg_keywords):
+                # Check for mitigation
+                mit_match = mitigation_suffix.search(clean_line)
+                line_to_parse = clean_line
+                if mit_match:
                     is_mitigated = True
-                    parts = original_line.split(" ")
-                    clean_parts = [p for p in parts if ":" not in p and "[" not in p and "]" not in p]
-                    if len(clean_parts) >= 3:
-                        source_candidate = clean_parts[0]
-                        target_candidate = clean_parts[-1].rstrip(".!")
-                        if source_candidate.lower() == "you":
-                            source_name, target_name, event_type = "you", target_candidate, "dealt"
-                        elif target_candidate.lower() == "you":
-                            source_name, target_name, event_type = source_candidate, "you", "taken"
-                        elif source_candidate:
-                            source_name, event_type = source_candidate, "other_dealt"
-                        if event_type: damage = 0
+                    line_to_parse = clean_line[:mit_match.start()].strip().rstrip(",")
+                
+                # Parse core action
+                swg_match = swg_pattern.search(line_to_parse)
+                if swg_match:
+                    source_name = swg_match.group("source").strip()
+                    action = swg_match.group("action").lower()
+                    target_name = swg_match.group("target").strip().rstrip("!")
+                    amount = float(swg_match.group("amount"))
+                    
+                    # Strip 'corpse of '
+                    if source_name.lower().startswith("corpse of "): source_name = source_name[10:]
+                    if target_name.lower().startswith("corpse of "): target_name = target_name[10:]
+                    
+                    # Filter system names
+                    sys_names = ["target", "your target"]
+                    if any(sn == source_name.lower() or source_name.lower().startswith("your target") for sn in sys_names): source_name = "Unknown"
+                    if any(sn == target_name.lower() or target_name.lower().startswith("your target") for sn in sys_names): target_name = "Unknown"
+                    
+                    if source_name != "Unknown" and target_name != "Unknown":
+                        source_name = "You" if source_name.lower() == "you" else source_name
+                        target_name = "You" if target_name.lower() == "you" else target_name
+                        
+                        if "heal" in action:
+                            healing = amount
+                            event_type = "healing"
+                        else:
+                            damage = amount
+                            if is_mitigated: damage = 0
+                            if source_name == "You": event_type = "dealt"
+                            elif target_name == "You": event_type = "taken"
+                            else: event_type = "other_dealt"
+            
+            # 3. If not parsed, try mitigation-only line
+            if not event_type and any(kw in lower_line for kw in mitigation_keywords):
+                is_mitigated = True
+                content = clean_line
+                miss_match = re.search(r"(?P<source>.+?)(?:'s\s+(?P<ability>.+?))?\s+(?P<action>misses|evades|evaded|dodges|parries|counterattacks|blocks it)\b(?:\s+(?P<target>.+))?", content, re.IGNORECASE)
+                if miss_match:
+                    source_name = miss_match.group("source").strip()
+                    target_name = miss_match.group("target").strip().rstrip(".!") if miss_match.group("target") else "Unknown"
+                    
+                    if source_name.lower().startswith("corpse of "): source_name = source_name[10:]
+                    if target_name.lower().startswith("corpse of "): target_name = target_name[10:]
+                    
+                    source_name = "You" if source_name.lower() == "you" else source_name
+                    target_name = "You" if target_name.lower() == "you" else target_name
+                    
+                    event_type = "dealt" if source_name == "You" else "taken" if target_name == "You" else "dealt"
 
+            # 4. Activity Patterns (Loot, death, etc)
             if not event_type:
                 for pattern, keywords in activity_patterns:
                     if any(kw in lower_line for kw in keywords):
@@ -186,22 +182,22 @@ def parse_combat_log(file_path, start_offset=0):
                         if act_match:
                             gd = act_match.groupdict()
                             name = gd.get("name") or gd.get("winner") or gd.get("loser")
-                            item = gd.get("item")
-                            target = gd.get("target")
+                            item = gd.get("item", "")
+                            target = gd.get("target", "Unknown")
                             if name:
                                 event_type = "activity"
                                 source_name = "You" if name.lower() == "you" else name
                                 if item:
                                     event_type = "loot"
-                                    target_name = target if target else "Unknown"
+                                    target_name = target
                                 break
-            
+
             if event_type:
                 event = {
                     "line_number": line_number, "damage": damage, "healing": healing,
                     "type": event_type, "source": source_name, "target": target_name,
                     "timestamp": timestamp, "raw": original_line, "is_mitigated": is_mitigated,
-                    "item": item if event_type == "loot" else ""
+                    "item": item
                 }
                 events.append(event)
                 if event_type == "taken" and damage > 0: last_taken_event = event

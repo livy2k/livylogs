@@ -110,7 +110,6 @@ class CombatLogApp:
         
         self.player_data = {}
         self.locally_seen_players = {} # name -> last_seen_timestamp
-        self.leaderboard_data = {}
         self.loot_data = {}
         
         self.setup_tray_icon()
@@ -311,8 +310,6 @@ class CombatLogApp:
         self.lbl_det = btn("DETAILS", self.details_win.show)
         self.lbl_skm = btn("SKIMMERS", self.skimmers_win.show)
         self.lbl_ldb = btn("LEADERBOARD", self.leaderboard_win.show)
-        self.lbl_loot = btn("LOOT", self.skimmers_win.show)
-        self.lbl_refresh = btn("RESCAN", lambda: self.analyze_log(manual=True))
         self.lbl_version = tk.Label(nav, text="1.0", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8)).pack(side=tk.RIGHT)
 
         # Spacer to keep minimal height
@@ -383,24 +380,35 @@ class CombatLogApp:
         if len(self.all_events) > 5000: self.all_events = self.all_events[-5000:]
 
         now = time.time()
+        # Ensure we keep some history for windows that need it (skimmers/details usually 5-60 mins)
+        history_limit = datetime.now() - timedelta(hours=1)
         if self.app_start_time and (now - self.last_combat_time > self.time_window_dm):
-            self.app_start_time = None; self.last_log_sync_time = None; self.leaderboard_data = {}; self.player_data = {}
+            self.app_start_time = None; self.last_log_sync_time = None; self.leaderboard_data = {}; 
+            # We don't want to completely clear player_data here because Leaderboard might need it
+            # But we reset the DM relevant stats for 'You' and others
+            for p in self.player_data:
+                self.player_data[p]["dm_damage"] = 0
+                self.player_data[p]["dm_healing"] = 0
+                if "dm_taken" in self.player_data[p]: self.player_data[p]["dm_taken"] = 0
+            
+            self.all_events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= history_limit]
+            self.process_events_for_ui(self.all_events)
 
         if is_damage:
             self.last_combat_time = now; self.last_log_sync_time = timestamp
             if self.app_start_time is None: self.app_start_time = timestamp
 
-        if is_last or (now - self.last_ui_update_time > self.ui_update_delay):
+        if is_last or (now - self.last_ui_update_time > 0.02):
             if self.running:
                 try:
-                    self.root.after_idle(lambda: self.refresh_ui_only(force=is_last))
+                    self.root.after(0, lambda: self.refresh_ui_only(force=is_last))
                     self.last_ui_update_time = now
                 except: pass
 
     def analyze_log(self, manual=False):
         if manual: 
             self.all_events = []; self.last_read_offset = -1; self.app_start_time = None; 
-            self.last_combat_time = 0; self.player_data = {}; self.loot_data = {}; self.leaderboard_data = {}
+            self.last_combat_time = 0; self.player_data = {}; self.locally_seen_players = {}; self.loot_data = {}
             self.last_log_mtime = 0; self.last_log_size = 0
             # Reset all manual window timers to now to ensure a clean slate
             now_dt = datetime.now()
@@ -462,11 +470,21 @@ class CombatLogApp:
         if now_ts - self.last_pulse_time > 0.3:
             self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
 
-        # Refresh popout windows
+        # Smooth ticker update for main window components if any existed
+        # Currently main window is just navigation hub, but we keep the logic clean
+
+        # Damage meter is highest priority for real-time feel
         self.damage_meter_win.refresh(force=force)
-        self.leaderboard_win.refresh(force=force)
-        self.skimmers_win.refresh(force=force)
-        self.details_win.refresh(force=force)
+
+        # Other windows are lower priority
+        # We ensure they refresh at least once every 100ms if force is True (e.g. from log parsing)
+        # but otherwise they are throttled by the damage meter's own internal logic or this loop
+        if force or (now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.2):
+            self.leaderboard_win.refresh(force=force)
+            self.skimmers_win.refresh(force=force)
+            self.details_win.refresh(force=force)
+            self.last_heavy_refresh = now_ts
+        
         # Options window doesn't need to refresh every tick, only when forced
         if force:
             self.options_win.refresh(force=True)
@@ -512,6 +530,16 @@ class CombatLogApp:
             src = clean_npc_name(src_raw) if is_src_npc else src_raw
             tgt = clean_npc_name(tgt_raw) if is_tgt_npc else tgt_raw
 
+            # Determine if this event is relevant for ANY window
+            # If it's too old for everything, skip processing it into player_data
+            is_skimmer_relevant = ts >= sk_limit and (not self.last_sk_reset or ts >= self.last_sk_reset)
+            is_details_relevant = ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset)
+            is_dm_relevant = id(e) in active_ids and (not self.last_dm_reset or ts >= self.last_dm_reset)
+            is_lb_relevant = (not self.last_lb_reset or ts >= self.last_lb_reset)
+
+            if not (is_skimmer_relevant or is_details_relevant or is_dm_relevant or is_lb_relevant):
+                continue
+
             # Area attack multiplier detection
             mult = 1
             if e["type"] == "dealt" and e["damage"] > 0:
@@ -520,25 +548,24 @@ class CombatLogApp:
                 if hit_count > 1:
                     # Mark as AOE hit if multiple hits in same second
                     if not is_src_npc:
-                        if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0}
+                        if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
                         new_player_data[src]["aoe_hits"] += 1
-            
+        
             if e["type"] == "loot":
                 # Check skimmer reset
-                if ts >= sk_limit and (not self.last_sk_reset or ts >= self.last_sk_reset):
+                if is_skimmer_relevant:
                     if src not in new_loot_data: new_loot_data[src] = []
                     new_loot_data[src].append({"item": e["item"], "target": e["target"], "timestamp": ts})
-                
+            
                 # Also track for leaderboard if not reset there
-                if not self.last_lb_reset or ts >= self.last_lb_reset:
-                    if "lb_loot" not in new_player_data.get(src, {}):
-                        if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0}
-                        else: new_player_data[src]["lb_loot"] = 0
+                if is_lb_relevant:
+                    if src not in new_player_data: 
+                        new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
                     new_player_data[src]["lb_loot"] += 1
                 continue
-            
+        
             if e["type"] == "inventory_full":
-                if ts >= sk_limit and (not self.last_sk_reset or ts >= self.last_sk_reset): 
+                if is_skimmer_relevant: 
                     new_inventory_full = True
                 continue
 
@@ -546,62 +573,68 @@ class CombatLogApp:
             # DM uses app_start_time (current combat) + dm_reset
             # DT uses dt_limit + dt_reset
             # LB uses all data (potentially filtered by lb_reset)
-            
+        
             # For simplicity, we populate a unified player_data but we'll filter it inside windows if needed,
             # OR we populate it with everything relevant to ANY window.
-            
+        
             if not is_src_npc:
                 # Track as locally seen
                 self.locally_seen_players[src] = ts
                 self.locally_seen_players[tgt] = ts
-                
-                if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0}
-                
-                # Global/Details log
-                if ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset):
-                    if e["damage"] > 0:
-                        ts_str = ts.strftime("%H:%M:%S")
-                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt}", "timestamp": ts})
-                        # Track target damage
-                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
-                        new_player_data[src]["targets"][tgt]["damage"] += e["damage"]
-                    elif e["healing"] > 0:
-                        ts_str = ts.strftime("%H:%M:%S")
-                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt}", "timestamp": ts})
-                        # Track target healing
-                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
-                        new_player_data[src]["targets"][tgt]["healing"] += e["healing"]
-
-                # Damage Meter stats
-                if id(e) in active_ids and (not self.last_dm_reset or ts >= self.last_dm_reset):
-                    new_player_data[src]["dm_damage"] += e["damage"]
-                    new_player_data[src]["dm_healing"] += e["healing"]
-                    if e["type"] == "dealt":
-                        if e.get("is_mitigated"):
-                            new_player_data[src]["dm_misses"] = new_player_data[src].get("dm_misses", 0) + 1
-                        elif e["damage"] > 0:
-                            new_player_data[src]["dm_hits"] = new_player_data[src].get("dm_hits", 0) + 1
-                
-                # Leaderboard stats (Damage/Healing)
-                if not self.last_lb_reset or ts >= self.last_lb_reset:
-                    new_player_data[src]["damage"] += e["damage"]
-                    new_player_data[src]["healing"] += e["healing"]
             
-            tgt = tgt_raw
-            if e["damage"] > 0 and not is_tgt_npc:
-                tgt = clean_npc_name(tgt_raw) if is_tgt_npc else tgt_raw
-                if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0}
-                if ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset):
-                    ts_str = ts.strftime("%H:%M:%S")
-                    new_player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": ts})
+                if src not in new_player_data: 
+                    new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
                 
-                # Track taken for Damage Meter
-                if id(e) in active_ids and (not self.last_dm_reset or ts >= self.last_dm_reset):
-                    new_player_data[tgt]["dm_taken"] = new_player_data[tgt].get("dm_taken", 0) + e["damage"]
-                    if e.get("is_mitigated"):
-                        new_player_data[tgt]["dm_avoided"] = new_player_data[tgt].get("dm_avoided", 0) + 1
-                    elif e["damage"] > 0:
-                        new_player_data[tgt]["dm_taken_hits"] = new_player_data[tgt].get("dm_taken_hits", 0) + 1
+        # Global/Details log
+        if is_details_relevant:
+            if e["damage"] > 0:
+                ts_str = ts.strftime("%H:%M:%S")
+                new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt}", "timestamp": ts})
+                # Track target damage
+                if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
+                new_player_data[src]["targets"][tgt]["damage"] += e["damage"]
+            elif e["healing"] > 0:
+                ts_str = ts.strftime("%H:%M:%S")
+                new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt}", "timestamp": ts})
+                # Track target healing
+                if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
+                new_player_data[src]["targets"][tgt]["healing"] += e["healing"]
+
+        # Damage Meter stats
+        if is_dm_relevant:
+            new_player_data[src]["dm_damage"] += e["damage"]
+            new_player_data[src]["dm_healing"] += e["healing"]
+            if e["type"] == "dealt":
+                if e.get("is_mitigated"):
+                    new_player_data[src]["dm_misses"] = new_player_data[src].get("dm_misses", 0) + 1
+                elif e["damage"] > 0:
+                    new_player_data[src]["dm_hits"] = new_player_data[src].get("dm_hits", 0) + 1
+        
+        # Leaderboard stats (Damage/Healing)
+        if is_lb_relevant:
+            new_player_data[src]["damage"] += e["damage"]
+            new_player_data[src]["healing"] += e["healing"]
+        
+    tgt = tgt_raw
+    if e["damage"] > 0 or e.get("is_mitigated"):
+        # Always track 'You' for damage taken, regardless of is_tgt_npc
+        if tgt == "You" or not is_tgt_npc:
+            if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+            if is_details_relevant:
+                ts_str = ts.strftime("%H:%M:%S")
+                new_player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": ts})
+            
+            # Track taken for Damage Meter
+            if is_dm_relevant:
+                new_player_data[tgt]["dm_taken"] = new_player_data[tgt].get("dm_taken", 0) + e["damage"]
+                if e.get("is_mitigated"):
+                    new_player_data[tgt]["dm_avoided"] = new_player_data[tgt].get("dm_avoided", 0) + 1
+                elif e["damage"] > 0:
+                    new_player_data[tgt]["dm_taken_hits"] = new_player_data[tgt].get("dm_taken_hits", 0) + 1
+        elif is_lb_relevant:
+            # Still add NPCs to player_data so they show up in leaderboard if attacked
+            # but we don't need to track full details for them unless they are 'You'
+            if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
 
         self.player_data = new_player_data
         self.loot_data = new_loot_data
@@ -624,14 +657,9 @@ class CombatLogApp:
                     # Prepare local data to send
                     # We send current session leaderboard data
                     # Only send data where "You" has been replaced by the actual character name
-                    local_dmg = self.leaderboard_data.get("damage", {}).copy()
-                    local_heal = self.leaderboard_data.get("healing", {}).copy()
-                    local_loot = {}
-                    for p, items in self.loot_data.items():
-                        # loot_data is {player: [{"item": name, "timestamp": ts}, ...]}
-                        # For sync we might just want to send counts or some representation
-                        # Let's send the list of looted items
-                        local_loot[p] = items
+                    local_dmg = {p: d.get("damage", 0) for p, d in self.player_data.items() if d.get("damage", 0) > 0}
+                    local_heal = {p: d.get("healing", 0) for p, d in self.player_data.items() if d.get("healing", 0) > 0}
+                    local_loot = self.loot_data.copy()
 
                     if "You" in local_dmg:
                         local_dmg[self.char_name.get()] = local_dmg.pop("You")
@@ -639,6 +667,11 @@ class CombatLogApp:
                         local_heal[self.char_name.get()] = local_heal.pop("You")
                     if "You" in local_loot:
                         local_loot[self.char_name.get()] = local_loot.pop("You")
+
+                    # Filter local_dmg/heal to only include players we've seen locally
+                    seen_recently = set(self.locally_seen_players.keys())
+                    local_dmg = {p: v for p, v in local_dmg.items() if p in seen_recently or p == self.char_name.get()}
+                    local_heal = {p: v for p, v in local_heal.items() if p in seen_recently or p == self.char_name.get()}
 
                     payload = {
                         "character": self.char_name.get(),

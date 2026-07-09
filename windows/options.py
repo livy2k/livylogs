@@ -80,9 +80,8 @@ class OptionsWindow(BasePopoutWindow):
             b.bind("<Leave>", lambda e: b.config(bg=BUTTON_BG))
             b.bind("<Button-1>", lambda e: [cmd(), self.refresh()])
 
-        add_btn("SELECT NEW LOG", self.app.change_log_path)
-        tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
-        add_btn("CHANGE LOG PATH", self.app.change_log_path)
+        add_btn("SELECT LOG (MATCHING CHAR)", self.app.select_log_filtered)
+        add_btn("BROWSE ALL LOGS", self.app.change_log_path)
         add_btn("RESET ALL DATA", lambda: self.app.analyze_log(manual=True))
 
     def update_status_indicator(self):

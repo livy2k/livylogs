@@ -647,6 +647,33 @@ class CombatLogApp:
     def toggle_menu(self):
         self.options_win.show()
 
+    def select_log_filtered(self):
+        from ui_base import ThemedListDialog
+        from utils import extract_character_id
+        import os
+        import glob
+        
+        current_path = self.file_path_var.get()
+        char_id = extract_character_id(current_path)
+        
+        # Try to find matching logs automatically
+        if char_id:
+            initial_dir = os.path.dirname(current_path) if current_path and os.path.exists(current_path) else os.getcwd()
+            pattern = os.path.join(initial_dir, f"{char_id}_chatlog.txt")
+            matching_files = glob.glob(pattern)
+            
+            if matching_files:
+                self.is_dialog_open = True
+                def on_file_selected(p):
+                    if p:
+                        self.proceed_with_log(p, skip_prompt=True)
+                
+                ThemedListDialog(self.root, "Select Log File", matching_files, on_select=on_file_selected)
+                return
+
+        # If no char_id or no matching files found, fallback to standard
+        self.change_log_path()
+
     def change_log_path(self):
         from tkinter import filedialog
         import os

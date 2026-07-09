@@ -669,7 +669,7 @@ class CombatLogApp:
                 
                 def on_file_selected(p):
                     if p:
-                        self.proceed_with_log(p)
+                        self.proceed_with_log(p, skip_prompt=True)
                 
                 ThemedListDialog(self.root, "Select Log File", matching_files, on_select=on_file_selected)
                 return
@@ -685,7 +685,7 @@ class CombatLogApp:
         if p:
             self.proceed_with_log(p)
 
-    def proceed_with_log(self, p):
+    def proceed_with_log(self, p, skip_prompt=False):
         from utils import extract_character_id
         from ui_base import ThemedInputDialog, ThemedMessagebox
         
@@ -699,7 +699,7 @@ class CombatLogApp:
             self.file_path_var.set(p)
             detected_name = extract_character_id(p)
             
-            def on_name_submit(new_name):
+            def apply_settings(new_name):
                 if new_name:
                     self.char_name.set(new_name)
                 elif not self.char_name.get():
@@ -710,9 +710,12 @@ class CombatLogApp:
                 self.analyze_log(manual=True)
                 self.options_win.refresh(force=True)
 
-            self.is_dialog_open = True
-            ThemedInputDialog(self.root, "Character Name", "Enter your Character Name for synchronization:", 
-                              initial_value=detected_name, on_submit=on_name_submit)
+            if skip_prompt:
+                apply_settings(None)
+            else:
+                self.is_dialog_open = True
+                ThemedInputDialog(self.root, "Character Name", "Enter your Character Name for synchronization:", 
+                                  initial_value=detected_name, on_submit=apply_settings)
 
         if char_id and new_char_id != char_id:
             self.is_dialog_open = True

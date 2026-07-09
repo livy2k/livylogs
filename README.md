@@ -31,7 +31,7 @@ A lightweight, real-time combat log parser for Star Wars Galaxies (SWG). This ap
    ```
 3. Run the application:
    ```bash
-   python combat_log_parser_app.py
+   python livylogs.py
    ```
 
 ## 🛠 Usage

@@ -584,54 +584,37 @@ def parse_combat_log(file_path, start_offset=0):
                 except ValueError:
                     pass
 
-            # Try the SWG pattern first
-            swg_match = None
-            if any(kw in lower_line for kw in swg_keywords):
-                try:
-                    swg_match = swg_pattern.search(original_line)
-                except Exception:
-                    swg_match = None
-            
-            damage = 0
-            healing = 0
-            event_type = None
-            source_name = "Unknown"
-            target_name = "Unknown"
-            is_mitigated = False
-            
-            if swg_match:
-                source_name = swg_match.group("name").strip()
-                action = swg_match.group("action").lower()
-                amount = float(swg_match.group("amount"))
-                target_name = swg_match.group("target").strip()
-                
-                # Clean up names (e.g. corpse of)
-                if source_name.lower().startswith("corpse of "):
-                    source_name = source_name[10:]
-                if target_name.lower().startswith("corpse of "):
-                    target_name = target_name[10:]
-
-                # Basic validation: if name is empty after strip, fallback to Unknown
-                if not source_name: source_name = "Unknown"
-                if not target_name: target_name = "Unknown"
-
-                if "heal" in action and "health" in lower_line:
-                    healing = amount
-                    event_type = "healing"
-                elif "heal" in action:
-                    # Some SWG abilities use 'heals' but it's not actually health (maybe action/mind)
-                    # For now, if 'health' isn't in the line, treat it as activity unless we're sure
-                    healing = amount
-                    event_type = "healing"
-                else:
-                    damage = amount
-                    if source_name.lower() == "you":
-                        event_type = "dealt"
-                    elif target_name.lower() == "you":
-                        event_type = "taken"
+            # Detect armor prevention lines FIRST (they modify previous events)
+            if "prevented" in lower_line:
+                prev_match = prevented_pattern.search(original_line)
+                if prev_match:
+                    reduction = float(prev_match.group("amount"))
+                    # If we have a very recent taken event WITH damage, apply reduction
+                    # Look back through recent events for a 'taken' with damage > 0
+                    target_event = None
+                    if last_taken_event and last_taken_event["damage"] > 0:
+                        target_event = last_taken_event
+                    
+                    if target_event and (not timestamp or not target_event["timestamp"] or \
+                       abs((timestamp - target_event["timestamp"]).total_seconds()) <= 2.0):
+                        target_event["damage"] = max(0, target_event["damage"] - reduction)
+                        current_offset = log_file.tell()
+                        continue
                     else:
-                        event_type = "other_dealt"
-            
+                        # If no recent taken event, record it as a potential zero damage event for taken stats
+                        events.append({
+                            "line_number": line_number,
+                            "damage": 0,
+                            "healing": 0,
+                            "type": "taken",
+                            "source": "Unknown",
+                            "target": "you",
+                            "timestamp": timestamp,
+                            "raw": original_line,
+                        })
+                        current_offset = log_file.tell()
+                        continue
+
             # Detect misses/evades/etc early to mark as zero-damage events
             is_mitigated = False
             mitigation_keywords = ["counterattacks", "blocks it", "misses", "evades", "evaded", "dodges", "parries"]
@@ -691,22 +674,88 @@ def parse_combat_log(file_path, start_offset=0):
                     if etype == "taken": last_taken_event = event
                     current_offset = log_file.tell()
                     continue
+
+            # Try the SWG pattern first
+            swg_match = None
+            if any(kw in lower_line for kw in swg_keywords):
+                try:
+                    swg_match = swg_pattern.search(original_line)
+                except Exception:
+                    swg_match = None
+            
+            damage = 0
+            healing = 0
+            event_type = None
+            source_name = "Unknown"
+            target_name = "Unknown"
+            
+            if swg_match:
+                source_name = swg_match.group("name").strip()
+                action = swg_match.group("action").lower()
+                amount = float(swg_match.group("amount"))
+                target_name = swg_match.group("target").strip()
+                
+                # Clean up names (e.g. corpse of)
+                if source_name.lower().startswith("corpse of "):
+                    source_name = source_name[10:]
+                if target_name.lower().startswith("corpse of "):
+                    target_name = target_name[10:]
+
+                # Basic validation: if name is empty after strip, fallback to Unknown
+                if not source_name: source_name = "Unknown"
+                if not target_name: target_name = "Unknown"
+
+                if "heal" in action and "health" in lower_line:
+                    healing = amount
+                    event_type = "healing"
+                elif "heal" in action:
+                    healing = amount
+                    event_type = "healing"
+                else:
+                    damage = amount
+                    if source_name.lower() == "you":
+                        event_type = "dealt"
+                    elif target_name.lower() == "you":
+                        event_type = "taken"
+                    else:
+                        event_type = "other_dealt"
+                
+                # Check for "but he evades it" style mitigation in SWG lines
+                if "evades" in lower_line or "counterattacks" in lower_line:
+                    damage = 0
+                    is_mitigated = True
+            
+            # Detect misses/evades/etc early to mark as zero-damage events if not already combat
+            if not event_type:
+                mitigation_keywords = ["counterattacks", "blocks it", "misses", "evades", "evaded", "dodges", "parries"]
+                if any(kw in lower_line for kw in mitigation_keywords):
+                    is_mitigated = True
+                    # Look for source/target in mitigation lines
+                    # Simple heuristic: "Source misses Target"
+                    parts = original_line.split(" ")
+                    # Filter out timestamp/Spatial parts
+                    clean_parts = [p for p in parts if ":" not in p and "[" not in p and "]" not in p]
+                    if len(clean_parts) >= 3:
+                        source_candidate = clean_parts[0]
+                        target_candidate = clean_parts[-1].rstrip(".!")
+                        
+                        if source_candidate.lower() == "you":
+                            source_name = "you"
+                            target_name = target_candidate
+                            event_type = "dealt"
+                        elif target_candidate.lower() == "you":
+                            source_name = source_candidate
+                            target_name = "you"
+                            event_type = "taken"
+                        elif source_candidate:
+                            source_name = source_candidate
+                            event_type = "other_dealt"
+                        
+                        if event_type:
+                            damage = 0
             
             # Healing should not start combat or extend duration if we are strictly looking for damage
             # We will mark it as healing event but it won't trigger app_start_time resets later
-
-            # Check for armor prevention lines that reduce damage taken
-            if "prevented" in lower_line:
-                prev_match = prevented_pattern.search(original_line)
-                if prev_match and last_taken_event:
-                    # If timestamp matches or is within 1 second, apply reduction
-                    if not timestamp or not last_taken_event["timestamp"] or \
-                       abs((timestamp - last_taken_event["timestamp"]).total_seconds()) <= 1:
-                        reduction = float(prev_match.group("amount"))
-                        last_taken_event["damage"] = max(0, last_taken_event["damage"] - reduction)
-                        # Skip further processing for this line
-                        current_offset = log_file.tell()
-                        continue
             
             # Try specific activity patterns if no event_type yet
             if not event_type:
@@ -1109,7 +1158,7 @@ class CombatLogApp:
             print("DEBUG: Initial show triggered")
             # Border removal is now handled in __init__ for immediate effect
             self.root.withdraw() # Keep it withdrawn initially
-        
+            
             # We don't force topmost here anymore, let check_target_window handle it
             
             # Ensure Z-order is prepared using Win32, but keep hidden
@@ -2033,13 +2082,13 @@ class CombatLogApp:
             
             # Check both modification time and size to catch all appends reliably on Windows
             if not manual and hasattr(self, 'last_log_mtime') and hasattr(self, 'last_log_size'):
-                # Bypass optimization every 1 second to force a metadata refresh and check for new data
+                # Bypass optimization periodically to force a metadata refresh and check for new data
                 # This helps if the game client uses buffering that doesn't update mtime/size immediately
                 now = time.time()
                 if not hasattr(self, 'last_forced_read_time'):
                     self.last_forced_read_time = 0
                     
-                if now - self.last_forced_read_time < 0.5: # Reduced from 1.0 to 0.5
+                if now - self.last_forced_read_time < 0.2: # Reduced from 0.5 to 0.2
                     if mtime <= self.last_log_mtime and size <= self.last_log_size:
                         self.refresh_ui_only()
                         return
@@ -3713,7 +3762,8 @@ class CombatLogApp:
         self.save_config()
         self.analyze_log(manual=True)
         if self.skimmers_window and self.skimmers_window.winfo_exists():
-            self.refresh_skimmers_window()
+            self.show_skimmers_window()
+            self.show_skimmers_window()
 
     def click_window_details(self, event):
         self._dw_offsetx = event.x_root - self.details_window.winfo_x()
@@ -4341,7 +4391,6 @@ class CombatLogApp:
             self.on_close_options()
         
         # Re-initialize what we can or just let the next save_config handle it
-        # Actually, it might be better to show a notice
         # ThemedMessagebox.showinfo(self.root, "Settings Reset", "Settings have been reset to defaults.\nPositions will be reset on next launch.")
         print("Settings have been reset to defaults.")
 

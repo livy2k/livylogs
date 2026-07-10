@@ -129,3 +129,8 @@
 [Spatial]  01:38:45 [GROUP] Turd hits Rehote for 282 points of damage.
 [Spatial]  01:38:47 [GROUP] Eliemau hits Fikiosa for 64 points of damage.
 [Spatial]  01:38:48 [GROUP] Leloglo has defeated a SpecForce marine.
+[Spatial]  02:04:36 [GROUP] You hits Rehote for 314 points of damage.
+[Spatial]  02:05:40 [GROUP] Eliemau hits Rehote for 350 points of damage.
+[Spatial]  02:09:06 [GROUP] Ma-o looted 106 credits from a fallen foe.
+[Spatial]  02:10:40 [GROUP] You receive 370 points of Weapon experience.
+[Spatial]  02:11:44 [GROUP] You receive 289 points of Weapon experience.

@@ -479,70 +479,94 @@ void p_l(HANDLE h, char* l) {
 
 void e_t(void* arg) {
     char* l_p = (char*)arg;
-    char d_pn[64];
-    strcpy(d_pn, (char*)p_name); d(d_pn);
-
-    HANDLE hp = CreateNamedPipe(d_pn, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT, 1, 0, 0, 0, NULL);
-    if (hp == INVALID_HANDLE_VALUE) return;
-    g_pipe = hp;
-
-    ConnectNamedPipe(hp, NULL);
-
-    HANDLE hf = CreateFile(l_p, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hf == INVALID_HANDLE_VALUE) { CloseHandle(hp); return; }
-
-    SetFilePointer(hf, 0, NULL, FILE_END);
+    char d_pn[128];
+    // Use a unique pipe name per process to avoid conflicts during rapid restarts
+    sprintf(d_pn, "\\\\.\\pipe\\LivyLogsPipe_%lu", GetCurrentProcessId());
     
-    // Safety check: if file is large, we might want to read the last 10KB 
-    // to catch up on very recent events if we just started.
-    // For now, seeking to end is safest to avoid "double counting" 
-    // when engine restarts.
-
-    char b_buf[BUFFER_SIZE];
-    DWORD r_b;
-    char l_o[BUFFER_SIZE] = "";
-    time_t last_sync = time(NULL);
-
+    char pid_file[256];
+    sprintf(pid_file, "engine_pid_%lu.tmp", GetCurrentProcessId());
+    
     while (1) {
-        if (ReadFile(hf, b_buf, BUFFER_SIZE - 2, &r_b, NULL) && r_b > 0) {
-            b_buf[r_b] = '\0';
-            
-            // Check for buffer overflow risk
-            if (strlen(l_o) + r_b >= BUFFER_SIZE * 2) {
-                l_o[0] = '\0'; // Clear leftover if it's too big (should not happen normally)
-            }
+        // Broaden permissions: PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE might be too restrictive
+        // if we are restarting quickly. But for a server pipe, OUTBOUND is correct.
+        HANDLE hp = CreateNamedPipe(d_pn, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT, 1, 65536, 65536, 0, NULL);
+        if (hp == INVALID_HANDLE_VALUE) { 
+            // If pipe exists, maybe wait or try to reuse? Usually we kill old ones first.
+            Sleep(500); continue; 
+        }
+        g_pipe = hp;
 
-            char t_buf[BUFFER_SIZE * 2];
-            strcpy(t_buf, l_o);
-            strcat(t_buf, b_buf);
+        // Create an empty file to signal our PID and pipe name ONLY when pipe is ready
+        FILE* pf = fopen(pid_file, "w");
+        if (pf) {
+            fprintf(pf, "%lu", GetCurrentProcessId());
+            fclose(pf);
+        }
+
+        if (ConnectNamedPipe(hp, NULL) || GetLastError() == ERROR_PIPE_CONNECTED) {
+            // Signal connection success for debugging
+            // (Optional: write to engine_debug.txt if needed)
             
-            char* line = t_buf;
-            char* next;
-            while ((next = strchr(line, '\n')) != NULL) {
-                *next = '\0';
-                if (next > line && *(next-1) == '\r') *(next-1) = '\0';
-                p_l(hp, line);
-                line = next + 1;
+            HANDLE hf = CreateFile(l_p, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (hf != INVALID_HANDLE_VALUE) {
+                // If it's a test log, we might want to start from the beginning 
+                // but usually for combat logs we want the end.
+                if (strstr(l_p, "test_chatlog.txt") == NULL) {
+                    SetFilePointer(hf, 0, NULL, FILE_END);
+                }
+
+                char b_buf[BUFFER_SIZE];
+                DWORD r_b;
+                char l_o[BUFFER_SIZE] = "";
+                time_t last_sync = time(NULL);
+
+                while (1) {
+                    if (ReadFile(hf, b_buf, BUFFER_SIZE - 2, &r_b, NULL) && r_b > 0) {
+                        b_buf[r_b] = '\0';
+                        if (strlen(l_o) + r_b < BUFFER_SIZE * 2) {
+                            char t_buf[BUFFER_SIZE * 2];
+                            strcpy(t_buf, l_o);
+                            strcat(t_buf, b_buf);
+                            char* line = t_buf;
+                            char* next;
+                            while ((next = strchr(line, '\n')) != NULL) {
+                                *next = '\0';
+                                if (next > line && *(next-1) == '\r') *(next-1) = '\0';
+                                p_l(hp, line);
+                                line = next + 1;
+                            }
+                            if (strlen(line) < BUFFER_SIZE) strcpy(l_o, line);
+                            else l_o[0] = '\0';
+                        } else {
+                            l_o[0] = '\0';
+                        }
+                    } else {
+                        // Check if pipe is still broken by trying a tiny write
+                        DWORD w_b;
+                        // Use a non-empty string to ensure WriteFile actually does something
+                        // We use a specific non-printable character to minimize risk of collision
+                        if (!WriteFile(hp, "\x01", 1, &w_b, NULL) && GetLastError() != ERROR_SUCCESS) {
+                            break; // Pipe broken
+                        }
+                        Sleep(200);
+                    }
+
+                    time_t now = time(NULL);
+                    if (now - last_sync >= 1) {
+                        s_s(hp);
+                        last_sync = now;
+                    }
+                }
+                CloseHandle(hf);
             }
-            // Copy remaining data to l_o safely
-            if (strlen(line) < BUFFER_SIZE) {
-                strcpy(l_o, line);
-            } else {
-                l_o[0] = '\0';
-            }
-        } else {
-            Sleep(100);
         }
-        
-        time_t now = time(NULL);
-        if(now - last_sync >= 1) {
-            s_s(hp);
-            last_sync = now;
-        }
+        DisconnectNamedPipe(hp);
+        CloseHandle(hp);
+        g_pipe = INVALID_HANDLE_VALUE;
+        // Remove signal file when pipe is closed so Python doesn't try to connect
+        DeleteFile(pid_file);
+        Sleep(500);
     }
-    g_pipe = INVALID_HANDLE_VALUE;
-    CloseHandle(hf);
-    CloseHandle(hp);
 }
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
@@ -590,10 +614,23 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
 
     if (a >= 2) {
         _beginthread(e_t, 0, v[1]);
+        
+        // Broadcast the pipe name to a known location or use a standard way
+        // For simplicity, we'll try to use a temporary file or just use the same pipe name
+        // but with the PID. The Python side will need to find the right pipe.
+        // Actually, let's keep it simple: the Python side will look for ANY pipe 
+        // starting with LivyLogsPipe and connect to the newest one.
+    } else {
+        // Fallback for debugging - if no log path provided, try to find one or stay idle
     }
 
     // Start managing windows
     DWORD start_time = GetTickCount();
+
+    // Clean up any stale signal files from previous runs of THIS process
+    char my_pid_file[256];
+    sprintf(my_pid_file, "engine_pid_%lu.tmp", GetCurrentProcessId());
+    DeleteFile(my_pid_file);
 
     while (1) {
         // High frequency loop for visibility (ONLY combat parsing now)
@@ -607,13 +644,13 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
         // If Python dies, the engine should also eventually exit
         // and let the next instance take over.
         if (python_pid > 0) {
-            HANDLE hp = OpenProcess(SYNCHRONIZE, FALSE, python_pid);
-            if (hp) {
-                if (WaitForSingleObject(hp, 0) == WAIT_OBJECT_0) {
-                    CloseHandle(hp);
+            HANDLE hpro = OpenProcess(SYNCHRONIZE, FALSE, python_pid);
+            if (hpro) {
+                if (WaitForSingleObject(hpro, 0) == WAIT_OBJECT_0) {
+                    CloseHandle(hpro);
                     exit(0);
                 }
-                CloseHandle(hp);
+                CloseHandle(hpro);
             }
         }
 

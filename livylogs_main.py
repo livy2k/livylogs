@@ -356,23 +356,60 @@ class CombatLogApp:
                         win.withdraw()
 
     def start_c_engine(self, log_path):
-        # Terminate any existing engine processes first
-        try:
-            os.system('taskkill /F /IM LivyLogsEngine.exe /IM parser.exe /IM LL_Engine.exe /T 2>nul')
-        except: pass
-        
-        # C Engine now starts Python, but we can also restart it if needed
-        # We use the 'LivyLogsEngine.exe' as the primary one
-        exe_path = os.path.join(os.getcwd(), "LivyLogsEngine.exe")
-        if os.path.exists(exe_path):
+        def _bg_start():
+            # Terminate any existing engine processes first
             try:
-                # Use subprocess to start it detached
                 import subprocess
-                # We pass the log path as an argument. 
-                # parser.c expects argv[1] to be the log path if argc >= 2
-                subprocess.Popen([exe_path, log_path], creationflags=subprocess.CREATE_NO_WINDOW)
-            except Exception as e:
-                print(f"Error starting engine: {e}")
+                # Use taskkill to clean up any orphaned engines
+                subprocess.run(['taskkill', '/F', '/IM', 'LivyLogsEngine.exe', '/IM', 'parser.exe', '/IM', 'LL_Engine.exe', '/T'], 
+                               capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                
+                # Additional check to ensure processes are GONE
+                import time
+                max_wait = 1.5
+                start_wait = time.time()
+                while time.time() - start_wait < max_wait:
+                    res = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq LivyLogsEngine.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                    if "LivyLogsEngine.exe" not in res.stdout:
+                        break
+                    time.sleep(0.2)
+
+                # Clean up stale tmp files
+                if os.path.exists("."):
+                    for f in os.listdir("."):
+                        if f.startswith("engine_pid_") and f.endswith(".tmp"):
+                            try: os.remove(f)
+                            except: pass
+            except: pass
+            
+            # Small delay to ensure OS releases resources
+            time.sleep(0.3)
+            
+            # We use the 'LivyLogsEngine.exe' as the primary one
+            exe_path = os.path.join(os.getcwd(), "LivyLogsEngine.exe")
+            if os.path.exists(exe_path):
+                try:
+                    import subprocess
+                    # Start the engine in the background
+                    subprocess.Popen([exe_path, log_path], creationflags=subprocess.CREATE_NO_WINDOW)
+                    try:
+                        with open("crash_log.txt", "a") as f:
+                            f.write(f"--- ENGINE STARTED {datetime.now()} ---\nLog: {log_path}\n")
+                    except: pass
+                except Exception as e:
+                    try:
+                        with open("crash_log.txt", "a") as f:
+                            f.write(f"--- ENGINE START ERROR {datetime.now()} ---\n{e}\n")
+                    except: pass
+            else:
+                try:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- ENGINE MISSING {datetime.now()} ---\nPath: {exe_path}\n")
+                except: pass
+
+        # Run the startup sequence in a thread to avoid blocking UI
+        t = threading.Thread(target=_bg_start, daemon=True)
+        t.start()
 
     def build_layout(self):
         # style = ttk.Style()
@@ -486,73 +523,155 @@ class CombatLogApp:
         f.value_label = v; return f
 
     def start_pipe_listener(self):
-        pipe_path = r'\\.\pipe\LivyLogsPipe'
         retry_count = 0
         
+        def find_newest_pipe():
+            import subprocess
+            try:
+                # 1. Look for the .tmp files we created
+                try:
+                    tmp_files = [f for f in os.listdir(".") if f.startswith("engine_pid_") and f.endswith(".tmp")]
+                    if tmp_files:
+                        # Sort by modification time to get the newest one
+                        tmp_files.sort(key=lambda x: os.path.getmtime(os.path.join(".", x)))
+                        newest_file = tmp_files[-1]
+                        
+                        # Verify the file is NOT zero bytes (engine writes PID to it)
+                        if os.path.getsize(os.path.join(".", newest_file)) == 0:
+                            # It's still being created by the engine, wait a bit
+                            return None
+
+                        pid = newest_file.replace("engine_pid_", "").replace(".tmp", "")
+                        pipe_path = f"\\\\.\\pipe\\LivyLogsPipe_{pid}"
+                        # Check if it's there
+                        if kernel32.WaitNamedPipeW(pipe_path, 1):
+                            return pipe_path
+                        else:
+                            # It's stale, try to delete it
+                            try: os.remove(os.path.join(".", newest_file))
+                            except: pass
+                except: pass
+
+                # 2. Fallback to PowerShell discovery
+                cmd = 'powershell -Command "[System.IO.Directory]::GetFiles(\'\\\\.\\pipe\\\', \'LivyLogsPipe_*\')"'
+                result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                raw_pipes = result.stdout.replace('\r\n', '\n').split('\n')
+                pipes = [p.strip() for p in raw_pipes if p.strip()]
+                
+                # Check for the legacy one too
+                all_pipes = pipes + [r'\\.\pipe\LivyLogsPipe']
+                
+                for p in all_pipes:
+                    if kernel32.WaitNamedPipeW(p, 1):
+                        return p
+            except Exception as e:
+                try:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- PIPE DISCOVERY ERROR {datetime.now()} ---\n{e}\n")
+                except: pass
+            return None
+
         while self.running:
             if hasattr(self, 'lbl_status'):
                 self.lbl_status.config(text="RECONNECTING...", fg="#ffaa00")
             
-            if not kernel32.WaitNamedPipeW(pipe_path, 1000):
+            # DEBUG: Log discovery attempts
+            # try:
+            #     with open("pipe_debug.txt", "a") as f:
+            #         f.write(f"DISCOVERY {datetime.now()} starting...\n")
+            # except: pass
+
+            pipe_path = find_newest_pipe()
+            
+            if not pipe_path:
                 retry_count += 1
-                if retry_count > 300: # 5 minutes total retry
-                    # If engine is gone for 5 minutes, exit UI
-                    msg = f"DEBUG: Engine pipe lost for 5 mins at {datetime.now()}, exiting UI..."
-                    print(msg)
+                if retry_count % 20 == 0:
                     try:
                         with open("crash_log.txt", "a") as f:
-                            f.write(f"--- PIPE LOSS EXIT {datetime.now()} ---\n{msg}\n")
+                            f.write(f"--- PIPE DISCOVERY FAILED {datetime.now()} (retry {retry_count}) ---\n")
+                    except: pass
+                if retry_count > 1200: # 10 minutes
+                    try:
+                        with open("crash_log.txt", "a") as f:
+                            f.write(f"--- PIPE TIMEOUT EXIT {datetime.now()} ---\n")
                     except: pass
                     self.root.after(0, self.on_exit)
                     break
-                
-                # Check if parser.exe is still alive
-                if retry_count % 10 == 0:
-                    try:
-                        # We don't have a direct way to know the parent pid easily in cross-process way 
-                        # without more complexity, but we can check if ANY parser.exe is running.
-                        # If not, we might want to exit sooner or try to restart.
-                        pass
-                    except: pass
-                
-                time.sleep(1); continue
+                time.sleep(0.5); continue
             
-            retry_count = 0 # Reset on successful wait
-            h = kernel32.CreateFileW(pipe_path, 0x80000000, 0, None, 3, 0x80, None)
-            if h == -1:
-                time.sleep(1); continue
+            retry_count = 0
+            
+            # Use a slightly longer wait before CreateFile to avoid "Access Denied" race
+            if not kernel32.WaitNamedPipeW(pipe_path, 2000):
+                time.sleep(0.5); continue
+
+            # Open with GENERIC_READ and share mode to avoid Access Denied if engine is still initializing
+            # 0x80000000 = GENERIC_READ, 0x00000003 = FILE_SHARE_READ | FILE_SHARE_WRITE
+            h = kernel32.CreateFileW(pipe_path, 0x80000000, 0x00000003, None, 3, 0, None)
+            if h == -1 or h == 0xFFFFFFFF:
+                err = kernel32.GetLastError()
+                # If Access Denied (5), wait and retry
+                if err == 5:
+                    time.sleep(0.5)
+                else:
+                    time.sleep(1)
+                continue
             
             if hasattr(self, 'lbl_status'):
                 self.lbl_status.config(text="CONNECTED", fg="#00ff88")
             
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
+                # Use a peek-like check or just rely on ReadFile failing
                 if kernel32.ReadFile(h, buf, 65536, ctypes.byref(bytes_read), None) and bytes_read.value > 0:
                     try:
                         decoded = buf.raw[:bytes_read.value].decode('utf-8', 'ignore')
+                        
+                        # Filter out the \x01 dummy health check byte
+                        if decoded == "\x01":
+                            continue
+                            
+                        # If the dummy byte is part of a larger buffer, strip it out
+                        if "\x01" in decoded:
+                            decoded = decoded.replace("\x01", "")
+                            if not decoded:
+                                continue
+                        
+                        # DEBUG: Print to a file to see what we are getting
+                        # with open("pipe_debug.txt", "a") as f:
+                        #     f.write(f"RECEIVED: {repr(decoded)}\n")
+
                         lines = (leftover + decoded).split('\n')
                         leftover = lines.pop()
                         for i, line in enumerate(lines):
-                            if line.strip():
+                            line = line.strip()
+                            if line:
                                 try:
                                     data = json.loads(line); data["timestamp"] = datetime.now()
                                     self.process_external_event(data, is_last=(i == len(lines)-1))
                                 except Exception as e:
-                                    try:
-                                        with open("crash_log.txt", "a") as f:
-                                            f.write(f"--- JSON ERROR {datetime.now()} ---\nLine: {line}\nError: {e}\n")
-                                    except: pass
+                                    # Ignore tiny strings that might be remnants of dummy writes
+                                    if len(line) > 5:
+                                        try:
+                                            with open("crash_log.txt", "a") as f:
+                                                f.write(f"--- JSON ERROR {datetime.now()} ---\nLine: {line}\nError: {e}\n")
+                                        except: pass
                     except Exception as e:
                         try:
                             with open("crash_log.txt", "a") as f:
-                                f.write(f"--- READ ERROR {datetime.now()} ---\n{e}\n")
+                                f.write(f"--- PIPE READ ERROR {datetime.now()} ---\n{e}\n")
                         except: pass
                 else:
-                    # ReadFile failed or 0 bytes - pipe closed
+                    # Pipe probably closed or error
+                    err = kernel32.GetLastError()
+                    if err != 0:
+                        try:
+                            with open("crash_log.txt", "a") as f:
+                                f.write(f"--- PIPE DISCONNECT {datetime.now()} (Error: {err}) ---\n")
+                        except: pass
                     break
             kernel32.CloseHandle(h)
-            # Short sleep before trying to reconnect
-            time.sleep(0.5)
+            time.sleep(1) # Wait before reconnecting to avoid tight loop on failure
 
     def process_external_event(self, event, is_last=False):
         event_type = event.get("type")
@@ -841,8 +960,9 @@ class CombatLogApp:
             except: pass
             
     def on_exit(self, icon=None, item=None):
-        if not self.running: return
-        self.running = False
+        if hasattr(self, '_exiting') and self._exiting:
+            return
+        self._exiting = True
         
         # Immediate UI hiding to make it feel responsive
         try:
@@ -863,6 +983,7 @@ class CombatLogApp:
         threading.Thread(target=force_kill, daemon=True).start()
 
         def background_cleanup():
+            self.running = False
             try:
                 with open("crash_log.txt", "a") as f:
                     f.write(f"--- ON_EXIT CALLED {datetime.now()} ---\n")
@@ -874,9 +995,11 @@ class CombatLogApp:
                 except: pass
             
             # Kill any engine processes that might be running
-            # Use /F to force and /T for tree kill. 
-            # Combining into one command might be slightly faster, or running in background
-            os.system("taskkill /F /IM LL_Engine.exe /IM LivyLogsEngine.exe /IM parser.exe /T >nul 2>&1")
+            try:
+                import subprocess
+                subprocess.run(['taskkill', '/F', '/IM', 'LivyLogsEngine.exe', '/IM', 'parser.exe', '/IM', 'LL_Engine.exe', '/T'], 
+                               capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            except: pass
 
             try:
                 self.save_config()
@@ -885,9 +1008,7 @@ class CombatLogApp:
             # Force exit to ensure the process actually terminates
             os._exit(0)
 
-        # Run cleanup in a separate thread so we can (theoretically) let the main thread 
-        # finish if needed, but since we use os._exit(0) it will kill everything anyway.
-        # The key is to withdraw() the window first.
+        # Run cleanup in a separate thread
         threading.Thread(target=background_cleanup, daemon=True).start()
 
     def save_config(self):
@@ -1060,45 +1181,88 @@ class CombatLogApp:
 
     def toggle_test_mode(self, active=None):
         if active is not None:
+            if self.test_mode.get() == active:
+                return # No change
             self.test_mode.set(active)
             
+        # Debounce/Lock
+        now = time.time()
+        if hasattr(self, '_last_test_toggle') and now - self._last_test_toggle < 0.5:
+            return
+        self._last_test_toggle = now
+
         if self.test_mode.get():
-            # Auto-select test log
-            self.original_log_path = self.file_path_var.get()
-            test_log = os.path.join(os.getcwd(), "test_chatlog.txt")
-            if not os.path.exists(test_log):
-                with open(test_log, "w") as f:
-                    f.write("[Spatial]  00:00:00 [GROUP] System: Welcome to the test log.\n")
+            # Reset generator flag
+            if hasattr(self, '_generator_started'):
+                del self._generator_started
+
+            # Ensure any previous test thread is dead
+            if self.test_thread and self.test_thread.is_alive():
+                # We just let it exit via test_mode check
+                pass
+
+            # Start generator thread
+            self.test_thread = threading.Thread(target=self.test_data_generator_loop, daemon=True)
+            self.test_thread.start()
             
-            self.file_path_var.set(test_log)
-            self.start_c_engine(test_log)
-            
-            if not self.test_thread or not self.test_thread.is_alive():
-                self.test_thread = threading.Thread(target=self.test_data_generator_loop, daemon=True)
-                self.test_thread.start()
-            
-            # Immediate refresh to show connection status
-            self.refresh_ui_only(force=True)
+            def _bg_start_test():
+                try:
+                    if not hasattr(self, 'original_log_path') or not self.original_log_path:
+                        self.original_log_path = self.file_path_var.get()
+                    
+                    test_log = os.path.join(os.getcwd(), "test_chatlog.txt")
+                    if not os.path.exists(test_log):
+                        with open(test_log, "w") as f:
+                            f.write("[Spatial]  00:00:00 [GROUP] System: Welcome to the test log.\n")
+                    
+                    # Switch to test log
+                    self.root.after(0, lambda: self.file_path_var.set(test_log))
+                    
+                    # RESTART ENGINE for test log
+                    self.start_c_engine(test_log)
+                    
+                    # Immediate refresh to show connection status
+                    self.root.after(0, lambda: self.refresh_ui_only(force=True))
+                except Exception as e:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- TEST MODE START ERROR {datetime.now()} ---\n{e}\n")
+
+            threading.Thread(target=_bg_start_test, daemon=True).start()
         else:
-            # Restore original log if it existed
-            if hasattr(self, 'original_log_path') and self.original_log_path:
-                self.file_path_var.set(self.original_log_path)
-                if os.path.exists(self.original_log_path):
-                    self.start_c_engine(self.original_log_path)
-            
-            # Immediate refresh to show connection status
-            self.refresh_ui_only(force=True)
+            def _bg_stop_test():
+                try:
+                    if hasattr(self, 'original_log_path') and self.original_log_path:
+                        orig = self.original_log_path
+                        self.original_log_path = None
+                        self.root.after(0, lambda: self.file_path_var.set(orig))
+                        if os.path.exists(orig):
+                            self.start_c_engine(orig)
+                    self.root.after(0, lambda: self.refresh_ui_only(force=True))
+                except Exception as e:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- TEST MODE STOP ERROR {datetime.now()} ---\n{e}\n")
+
+            threading.Thread(target=_bg_stop_test, daemon=True).start()
 
     def test_data_generator_loop(self):
         import random
         import time
+        from datetime import datetime
         
         players = ["You", "Turd", "Leloglo", "Rehote", "Ma-o", "Fikiosa", "Eliemau"]
         items = ["Work light", "Broken Electrobinoculars", "A Damaged Datapad", "CDEF Pistol", "Stun Baton"]
         xp_types = ["Combat", "Weapon", "General", "Medicine"]
         
+        log_path = os.path.join(os.getcwd(), "test_chatlog.txt")
+        
+        # Wait until we are CONNECTED before starting to generate data
         while self.running and self.test_mode.get():
-            log_path = os.path.join(os.getcwd(), "test_chatlog.txt")
+            if hasattr(self, 'lbl_status') and self.lbl_status.cget("text") == "CONNECTED":
+                time.sleep(1.5)
+                break
+            time.sleep(0.5)
+
+        while self.running and self.test_mode.get():
             try:
                 with open(log_path, "a") as f:
                     ts = datetime.now().strftime("%H:%M:%S")
@@ -1133,7 +1297,10 @@ class CombatLogApp:
                     
                     f.flush()
             except Exception as e:
-                print(f"Test Generator Error: {e}")
+                try:
+                    with open("crash_log.txt", "a") as cf:
+                        cf.write(f"--- TEST GENERATOR ERROR {datetime.now()} ---\n{e}\n")
+                except: pass
             
             time.sleep(random.uniform(0.5, 2.0))
 

@@ -191,11 +191,16 @@ void u_v() {
         }
     }
 
-    // Safety check for TtkMonitorWindow - if this is the foreground, DON'T hide
+    // Safety check for TtkMonitorWindow and Start menu - if this is the foreground, DON'T hide
     if (!o && fg) {
         char cls[256];
         GetClassNameA(fg, cls, 256);
-        if (strstr(cls, "TtkMonitorWindow")) o = TRUE;
+        if (strstr(cls, "TtkMonitorWindow") || strstr(cls, "Windows.UI.Core.CoreWindow") || 
+            strstr(cls, "Immersive") || strstr(cls, "Shell_TrayWnd") || strstr(cls, "DV2ControlHost") ||
+            strstr(cls, "Discord") || strstr(cls, "Explorer") || strstr(cls, "Launcher")) {
+            // This flag indicates the foreground is a "safe" window
+            // We'll use a separate flag to avoid confusing 'o' (active focus)
+        }
     }
 
     DWORD t_pid = 0;
@@ -203,74 +208,60 @@ void u_v() {
     if (target_hwnd) GetWindowThreadProcessId(target_hwnd, &t_pid);
     if (fg) GetWindowTextW(fg, fg_title, 256);
 
+    // Main window state
     BOOL m = (target_hwnd != NULL) ? IsIconic(target_hwnd) : FALSE;
-    BOOL s_s = (o || GetAsyncKeyState(VK_MENU)) && !m;
-    
-    // Safety check: if target_hwnd is lost, but was recently found, keep it
-    static HWND last_valid_target = NULL;
-    if (target_hwnd) last_valid_target = target_hwnd;
-    
-    // Grace period for hiding - increased for better stability
-    static DWORD last_show_time = 0;
-    if (s_s) last_show_time = GetTickCount();
-    if (!s_s && (GetTickCount() - last_show_time < 2000)) s_s = TRUE;
 
-    // Additional check: If the foreground window title is empty OR common system/utility titles
-    // don't hide yet. Added "Discord", "Avast", and "NVIDIA" to the list.
-    // BUT we only do this for the purpose of KEEPING windows, not for TOPMOST status.
-    // So we'll refine this later.
-    if (!s_s) {
-        if (wcslen(fg_title) == 0) s_s = TRUE;
-        else if (wcsstr(fg_title, L"Search") != NULL) s_s = TRUE;
-        else if (wcsstr(fg_title, L"Start") != NULL) s_s = TRUE;
-        else if (wcsstr(fg_title, L"Task Manager") != NULL) s_s = TRUE;
-        else if (wcsstr(fg_title, L"Discord") != NULL) s_s = TRUE;
-        else if (wcsstr(fg_title, L"Avast") != NULL) s_s = TRUE;
-        else if (wcsstr(fg_title, L"NVIDIA") != NULL) s_s = TRUE;
-        else if (wcsstr(fg_title, L"Steam") != NULL) s_s = TRUE;
-    }
-
-    // Force show if game window is detected but we are in-game (o is true)
-    // even if IsIconic is somehow true (might happen in some borderless modes)
-    if (o) s_s = TRUE;
-
-    // If we haven't found the game window yet, don't hide the overlay
-    if (!target_hwnd && !last_valid_target) s_s = TRUE;
-    
-    // Safety: If game is found but we lost focus tracking for some reason, 
-    // allow force-showing with ALT
-    if (GetAsyncKeyState(VK_MENU)) s_s = TRUE;
-
-    // Let's add one more thing: if we fail to find target_hwnd, keep it shown.
-    if (!target_hwnd) s_s = TRUE;
-
-        // ACTUAL VISIBILITY vs TOPMOST logic
-        // We want the windows to only be TOPMOST if 'o' is true (game or app has focus)
-        // or if we are in the grace period but the game is actually the foreground.
-        BOOL t_m = o; // t_m = Topmost Mode
-        if (!t_m && s_s && target_hwnd) {
-            // If we are in grace period and game is still foreground (but maybe f_p != t_p due to popups)
-            if (f_p == t_pid) t_m = TRUE;
-        }
-        
-    // Safety check: If the foreground window is "Start" or belongs to Explorer.exe, 
-    // treat it as a "safe" window that keeps our current visibility state.
-    if (!t_m && fg) {
-        char cls[256];
+    // Determine if we are in a "Safe Zone" (Start Menu, Taskbar, Discord, etc.)
+    BOOL is_safe = FALSE;
+    if (fg) {
+        char cls[256] = "";
         GetClassNameA(fg, cls, 256);
         if (strstr(cls, "Windows.UI.Core.CoreWindow") || strstr(cls, "Explorer") || 
-            strstr(cls, "TrayNotifyWnd") || strstr(cls, "Launcher") || strstr(cls, "Shell_TrayWnd") ||
-            strstr(cls, "DV2ControlHost") || strstr(cls, "BaseBar") || strstr(cls, "NotifyIconOverflowWindow")) {
-            // Keep visibility but don't force topmost
-            s_s = TRUE;
+            strstr(cls, "Shell_TrayWnd") || strstr(cls, "DV2ControlHost") || strstr(cls, "BaseBar") ||
+            strstr(cls, "Immersive") || strstr(cls, "Launcher") || strstr(cls, "NotifyIconOverflowWindow") ||
+            strstr(cls, "Discord") || strstr(cls, "TtkMonitorWindow") || strstr(cls, "Task View") ||
+            strstr(cls, "Windows.UI.Input.InputSite.WindowClass") || strstr(cls, "PopUp") || strstr(cls, "TrayNotifyWnd")) {
+            is_safe = TRUE;
+        }
+        if (!is_safe) {
+            if (wcslen(fg_title) == 0) is_safe = TRUE;
+            else if (wcsstr(fg_title, L"Search") != NULL || wcsstr(fg_title, L"Start") != NULL || 
+                     wcsstr(fg_title, L"Cortana") != NULL || wcsstr(fg_title, L"Task Manager") != NULL) is_safe = TRUE;
         }
     }
 
-    // FORCED OVERRIDE: If game is in foreground, WE ARE TOPMOST. Period.
-    if (target_hwnd && f_p == t_pid) {
-        s_s = TRUE;
-        t_m = TRUE;
+    // Secondary windows visibility state
+    // Show if: (Active Focus OR Alt key OR Safe Zone) AND Game not minimized
+    BOOL secondary_show = (o || GetAsyncKeyState(VK_MENU) || is_safe) && !m;
+    
+    // Grace period for hiding secondaries - 3.0 seconds for stability
+    static DWORD last_sec_show_time = 0;
+    if (secondary_show) last_sec_show_time = GetTickCount();
+    if (!secondary_show && (GetTickCount() - last_sec_show_time < 3000)) secondary_show = TRUE;
+
+    // t_m = Topmost Mode (Game or App has active focus)
+    // We ONLY want to be topmost if the user is actually in the game/app.
+    // If they are in a "Safe Zone" (like Start menu), we stay visible but NOT topmost.
+    BOOL t_m = o;
+    if (!t_m && secondary_show && target_hwnd && f_p == t_pid) t_m = TRUE;
+
+    // FIX: Transition from Start Menu directly into Game
+    if (t_m && !o) {
+        // This means we are topmost because of PID match but 'o' is false (maybe focus pending)
+        // Force 'o' to TRUE to stabilize
+        o = TRUE;
     }
+
+    // NEW: Persistent Main Window Visibility Failsafe
+    // We want the main window to be ALWAYS visible unless explicitly minimized,
+    // regardless of whether we are in a safe zone or the game.
+    BOOL main_visible = !m; // If game is not minimized, main window should be visible
+
+    // FIX: Click from Start Menu directly into Game hiding main window.
+    // If we transition from is_safe to game focus, we need to ensure visibility is sticky.
+    static BOOL was_safe = FALSE;
+    if (is_safe) was_safe = TRUE;
+    else if (o) was_safe = FALSE; // Reset if we actually have focus
 
     static DWORD last_log = 0;
     if (GetTickCount() - last_log > 1000) {
@@ -278,17 +269,15 @@ void u_v() {
         if (f) {
             char title_mb[256];
             WideCharToMultiByte(CP_ACP, 0, fg_title, -1, title_mb, 256, NULL, NULL);
-            fprintf(f, "target: %p, t_pid: %lu, fg: %p (%s), fg_pid: %lu, py_pid: %lu, c_pid: %lu, o: %d, m: %d, s_s: %d, v_t: %d\n", 
-                    target_hwnd, t_pid, fg, title_mb, f_p, python_pid, GetCurrentProcessId(), o, m, s_s, (target_hwnd && !m));
+            char cls[256] = "";
+            if (fg) GetClassNameA(fg, cls, 256);
+            fprintf(f, "fg: %p (%s) [%s], o: %d, is_safe: %d, sec_show: %d, main_v: %d, t_m: %d, target: %p, f_p: %lu, t_pid: %lu\n", 
+                    fg, title_mb, cls, o, is_safe, secondary_show, main_visible, t_m, target_hwnd, f_p, t_pid);
             fclose(f);
         }
         last_log = GetTickCount();
     }
 
-    static BOOL last_s_s = -1;
-    if (s_s != last_s_s) {
-        last_s_s = s_s;
-    }
 
     // Use partial matching or class name for more reliable window finding
     char s_cla[32];
@@ -354,8 +343,9 @@ void u_v() {
         // ALWAYS keep main window visible as requested
         if (IsIconic(p_h)) ShowWindow(p_h, SW_RESTORE);
         
-        // FORCED PERSISTENCE for main window - Using SW_SHOW to ensure it doesn't get stuck hidden
-        ShowWindow(p_h, SW_SHOWNA);
+        // FORCED PERSISTENCE for main window - Using SW_SHOWNA to ensure it doesn't get stuck hidden
+        // FIX: Ensure it stays shown during Start -> Game transition
+        if (main_visible) ShowWindow(p_h, SW_SHOWNA);
         
         // Ensure it doesn't stay topmost if we are NOT in topmost mode
         // This fixes the issue where clicking it while on top (of SWG) makes it stay on top (of Start menu)
@@ -366,7 +356,9 @@ void u_v() {
             BringWindowToTop(p_h);
         } else {
             // Remove TOPMOST when focus lost (ALT-TAB / Start Menu) but keep visible
-            SetWindowPos(p_h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+            SetWindowPos(p_h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | (main_visible ? SWP_SHOWWINDOW : 0));
+            // If main window was accidentally hidden or covered, force it to just below the topmost layer
+            if (main_visible) ShowWindow(p_h, SW_SHOWNA);
         }
     }
 
@@ -397,7 +389,7 @@ void u_v() {
         }
         
         if (h) {
-            if (s_s) {
+            if (secondary_show) {
                 if (IsIconic(h)) ShowWindow(h, SW_RESTORE);
                 ShowWindow(h, SW_SHOWNOACTIVATE);
                 if (t_m) SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);

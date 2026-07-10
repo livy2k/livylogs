@@ -418,31 +418,13 @@ int main(int a, char** v) {
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    // Check if livylogs.py exists
-    FILE* f_chk = fopen("livylogs.py", "r");
-    if (f_chk) {
-        fclose(f_chk);
-    } else {
-        FILE* f_err = fopen("engine_debug.txt", "a");
-        if (f_err) {
-            fprintf(f_err, "ERROR: livylogs.py NOT FOUND in current directory!\n");
-            fclose(f_err);
-        }
-    }
-
+    // Removed engine_debug.txt logging to keep environment clean
+    
     // Use absolute path for python for maximum reliability and speed
     char p_abs[256];
     sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" livylogs.py");
 
-    // Click-Box Logic: Ensure main window is topmost if we are in game or safe
-    // (This part will be handled in u_v)
-
     if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-        FILE* f_err = fopen("engine_debug.txt", "a");
-        if (f_err) {
-            fprintf(f_err, "ERROR: Failed to launch Python (cmd: %s), error code: %lu\n", p_abs, GetLastError());
-            fclose(f_err);
-        }
         // Fallback to ShellExecute if absolute path fails
         ShellExecuteA(NULL, "open", "livylogs.py", NULL, NULL, SW_HIDE);
     } else {

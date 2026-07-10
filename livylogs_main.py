@@ -207,7 +207,7 @@ class CombatLogApp:
                         if name and not name.startswith("#"):
                             boss_list.append(name.lower())
         except Exception as e:
-            print(f"DEBUG: Error loading bosses.txt: {e}")
+            pass # Suppress log loading errors for clean UI experience
         return boss_list
 
     def load_filters(self):
@@ -221,7 +221,7 @@ class CombatLogApp:
                         if phrase and not phrase.startswith("#"):
                             filter_list.append(phrase.lower())
         except Exception as e:
-            print(f"DEBUG: Error loading filters.txt: {e}")
+            pass # Suppress for clean UI experience
         return filter_list
 
     def load_class_configs(self):
@@ -251,7 +251,7 @@ class CombatLogApp:
                                         abilities.add(ability.lower())
                         configs[class_name] = {"color": color, "abilities": abilities}
         except Exception as e:
-            print(f"DEBUG: Error loading class configs: {e}")
+            pass # Suppress for clean UI experience
         return configs
 
     def initial_show(self):
@@ -653,7 +653,7 @@ class CombatLogApp:
             # Damage meter is highest priority for real-time feel
             self.damage_meter_win.refresh(force=force)
     
-            # Other windows are lower priority
+            # Alexa window doesn't need to refresh every tick, but keep it in loop for consistency
             if force or (now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.2):
                 self.leaderboard_win.refresh(force=force)
                 self.skimmers_win.refresh(force=force)
@@ -746,9 +746,8 @@ class CombatLogApp:
             self.tray_icon.on_activate = lambda: self.root.after(0, self.toggle_visibility)
             threading.Thread(target=self.tray_icon.run, daemon=True).start()
         except Exception as e:
-            print(f"DEBUG: Failed to setup tray icon: {e}")
-
-
+            pass # Silent setup fail
+            
     def on_exit(self, icon=None, item=None):
         self.running = False
         if hasattr(self, 'tray_icon'):

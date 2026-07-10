@@ -479,33 +479,43 @@ void p_l(HANDLE h, char* l) {
 
 void e_t(void* arg) {
     char* l_p = (char*)arg;
-    char d_pn[128];
-    // Use a unique pipe name per process to avoid conflicts during rapid restarts
-    sprintf(d_pn, "\\\\.\\pipe\\LivyLogsPipe_%lu", GetCurrentProcessId());
+    char* d_pn = "\\\\.\\pipe\\LivyLogsPipe";
     
     char pid_file[256];
     sprintf(pid_file, "engine_pid_%lu.tmp", GetCurrentProcessId());
     
+    // Create signal file IMMEDIATELY to show we are alive
+    char pid_file_path[MAX_PATH];
+    GetModuleFileName(NULL, pid_file_path, MAX_PATH);
+    char* last_slash = strrchr(pid_file_path, '\\');
+    if (last_slash) *last_slash = '\0';
+    char full_tmp_path[MAX_PATH];
+    sprintf(full_tmp_path, "%s\\%s", pid_file_path, pid_file);
+
+    printf("Starting engine PID %lu\n", GetCurrentProcessId());
+    
+    // Create signal file IMMEDIATELY to show we are alive
+    FILE* pf_init = fopen(full_tmp_path, "wb");
+    if (pf_init) {
+        fprintf(pf_init, "%lu", GetCurrentProcessId());
+        fflush(pf_init);
+        fclose(pf_init);
+    }
+
     while (1) {
-        // Broaden permissions: PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE might be too restrictive
-        // if we are restarting quickly. But for a server pipe, OUTBOUND is correct.
         HANDLE hp = CreateNamedPipe(d_pn, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT, 1, 65536, 65536, 0, NULL);
         if (hp == INVALID_HANDLE_VALUE) { 
-            // If pipe exists, maybe wait or try to reuse? Usually we kill old ones first.
             Sleep(250); continue; 
         }
         g_pipe = hp;
 
-        // Create an empty file to signal our PID and pipe name ONLY when pipe is ready
-        // We use "wb" and immediate flush to be as fast as possible
-        FILE* pf = fopen(pid_file, "wb");
-        if (pf) {
-            fprintf(pf, "%lu", GetCurrentProcessId());
-            fflush(pf);
-            fclose(pf);
-        }
-
         if (ConnectNamedPipe(hp, NULL) || GetLastError() == ERROR_PIPE_CONNECTED) {
+            FILE* pf = fopen(full_tmp_path, "wb");
+            if (pf) {
+                fprintf(pf, "%lu", GetCurrentProcessId());
+                fflush(pf);
+                fclose(pf);
+            }
             // Signal connection success for debugging
             // (Optional: write to engine_debug.txt if needed)
             
@@ -566,7 +576,7 @@ void e_t(void* arg) {
         CloseHandle(hp);
         g_pipe = INVALID_HANDLE_VALUE;
         // Remove signal file when pipe is closed so Python doesn't try to connect
-        DeleteFile(pid_file);
+        DeleteFile(full_tmp_path);
         Sleep(500);
     }
 }
@@ -576,87 +586,16 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
     char** v = __argv;
     c_o();
     
-    char p_c[128];
-    strcpy(p_c, (char*)s_python_cmd); d(p_c);
-    
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_HIDE;
-    ZeroMemory(&pi, sizeof(pi));
-
-    // Removed engine_debug.txt logging to keep environment clean
-    
-    // Use absolute path for python for maximum reliability and speed
-    // Use javaw-style behavior (pythonw) to avoid the console window
-    char p_abs[512];
-    sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe\" \"%s\\livylogs.py\"", v[0] ? (strrchr(v[0], '\\') ? (char*)(v[0][strrchr(v[0], '\\')-v[0]]='\0', v[0]) : ".") : ".");
-
-    // However, if we are in a bundle or just want to be simple, let's try to just run pythonw.exe if it's in path
-    // or use the current directory.
-    char cmd[1024];
-    sprintf(cmd, "pythonw.exe livylogs.py");
-
-    if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-        if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-            // Fallback to ShellExecute if absolute path fails
-            ShellExecuteA(NULL, "open", "livylogs.py", NULL, NULL, SW_HIDE);
-        } else {
-            python_pid = pi.dwProcessId;
-            CloseHandle(pi.hProcess);
-            CloseHandle(pi.hThread);
-        }
-    } else {
-        python_pid = pi.dwProcessId;
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-    }
-
     if (a >= 2) {
         _beginthread(e_t, 0, v[1]);
-        
-        // Broadcast the pipe name to a known location or use a standard way
-        // For simplicity, we'll try to use a temporary file or just use the same pipe name
-        // but with the PID. The Python side will need to find the right pipe.
-        // Actually, let's keep it simple: the Python side will look for ANY pipe 
-        // starting with LivyLogsPipe and connect to the newest one.
-    } else {
-        // Fallback for debugging - if no log path provided, try to find one or stay idle
     }
 
-    // Start managing windows
-    DWORD start_time = GetTickCount();
-
-    // Clean up any stale signal files from previous runs of THIS process
-    char my_pid_file[256];
-    sprintf(my_pid_file, "engine_pid_%lu.tmp", GetCurrentProcessId());
-    DeleteFile(my_pid_file);
-
     while (1) {
-        // High frequency loop for visibility (ONLY combat parsing now)
-        // Window management moved back to Python
-        /*
-        if (GetTickCount() - start_time > 1000) {
-            u_v();
-        }
-        */
-        
         // If Python dies, the engine should also eventually exit
-        // and let the next instance take over.
-        if (python_pid > 0) {
-            HANDLE hpro = OpenProcess(SYNCHRONIZE, FALSE, python_pid);
-            if (hpro) {
-                if (WaitForSingleObject(hpro, 0) == WAIT_OBJECT_0) {
-                    CloseHandle(hpro);
-                    exit(0);
-                }
-                CloseHandle(hpro);
-            }
-        }
-
-        Sleep(500); // Reduce CPU usage as we don't manage windows here anymore
+        // We can check if any pythonw.exe is running if we don't have a direct PID
+        // but for now, we just stay alive or check for a specific parent process.
+        // Simplified: the engine will be killed by the Python UI on start anyway.
+        Sleep(1000); 
     }
     return 0;
 }

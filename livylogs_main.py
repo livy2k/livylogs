@@ -361,9 +361,12 @@ class CombatLogApp:
             # Terminate any existing engine processes first
             try:
                 import subprocess
+                # Use absolute path of the script directory
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                
                 # Use taskkill to clean up any orphaned engines
                 # We wrap individual calls to handle Access Denied errors more gracefully
-                for proc_name in ['LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe']:
+                for proc_name in ['LivyLogsEngine_v2.exe', 'parser_v2.exe', 'LivyLogs_Engine_New.exe', 'LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe']:
                     try:
                         subprocess.run(['taskkill', '/F', '/IM', proc_name, '/T'], 
                                        capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -378,16 +381,16 @@ class CombatLogApp:
                 max_wait = 1.0
                 start_wait = time.time()
                 while time.time() - start_wait < max_wait:
-                    res = subprocess.run(['tasklist', '/FI', f'IMAGENAME eq parser.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                    if "parser.exe" not in res.stdout:
+                    res = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq LivyLogsEngine_v2.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                    if "LivyLogsEngine_v2.exe" not in res.stdout:
                         break
                     time.sleep(0.2)
 
-                # Clean up stale tmp files
-                if os.path.exists("."):
-                    for f in os.listdir("."):
+                # Clean up stale tmp files in the script directory
+                if os.path.exists(base_dir):
+                    for f in os.listdir(base_dir):
                         if f.startswith("engine_pid_") and f.endswith(".tmp"):
-                            try: os.remove(os.path.join(".", f))
+                            try: os.remove(os.path.join(base_dir, f))
                             except: pass
             except Exception as e:
                 try:
@@ -399,10 +402,10 @@ class CombatLogApp:
             time.sleep(0.3)
             
             # Try multiple possible engine names to be robust
-            possible_exes = ["LivyLogs_Engine_New.exe", "LivyLogsEngine.exe", "parser.exe", "LL_Engine.exe"]
+            possible_exes = ["LivyLogs_Engine_New.exe", "LivyLogsEngine_v2.exe", "parser_v2.exe", "LivyLogsEngine.exe", "parser.exe", "LL_Engine.exe"]
             exe_path = None
             for name in possible_exes:
-                p = os.path.join(os.getcwd(), name)
+                p = os.path.join(base_dir, name)
                 if os.path.exists(p):
                     exe_path = p
                     break
@@ -411,12 +414,18 @@ class CombatLogApp:
                 try:
                     import subprocess
                     # Start the engine in the background and capture output for debugging
-                    with open("engine_debug.txt", "a") as debug_file:
+                    log_file_path = os.path.join(base_dir, "engine_debug.txt")
+                    with open(log_file_path, "a") as debug_file:
                         debug_file.write(f"--- LAUNCHING ENGINE {datetime.now()} ---\nPath: {exe_path}\nLog: {log_path}\n")
-                        subprocess.Popen([exe_path, log_path], 
-                                         creationflags=subprocess.CREATE_NO_WINDOW,
-                                         stdout=debug_file,
-                                         stderr=debug_file)
+                    
+                    # We use a very simple Popen call without redirecting stdout/stderr to a closed file
+                    proc = subprocess.Popen([exe_path, log_path], 
+                                     cwd=base_dir,
+                                     creationflags=subprocess.CREATE_NO_WINDOW)
+                    
+                    with open(log_file_path, "a") as debug_file:
+                        debug_file.write(f"  Launched PID: {proc.pid}\n")
+                        
                     try:
                         with open("crash_log.txt", "a") as f:
                             f.write(f"--- ENGINE STARTED {datetime.now()} ---\nPath: {exe_path}\nLog: {log_path}\n")
@@ -429,7 +438,7 @@ class CombatLogApp:
             else:
                 try:
                     with open("crash_log.txt", "a") as f:
-                        f.write(f"--- ENGINE MISSING {datetime.now()} --- Tried: {possible_exes}\n")
+                        f.write(f"--- ENGINE MISSING {datetime.now()} --- Tried: {possible_exes} in {base_dir}\n")
                 except: pass
 
         # Run the startup sequence in a thread to avoid blocking UI
@@ -549,53 +558,47 @@ class CombatLogApp:
 
     def start_pipe_listener(self):
         retry_count = 0
-        
-        def find_newest_pipe():
-            import subprocess
-            try:
-                # Use absolute path to project root for discovery
-                project_root = os.getcwd()
-                # 1. Look for the .tmp files we created
-                try:
-                    tmp_files = [f for f in os.listdir(project_root) if f.startswith("engine_pid_") and f.endswith(".tmp")]
-                    if tmp_files:
-                        # Sort by modification time to get the newest one
-                        tmp_files.sort(key=lambda x: os.path.getmtime(os.path.join(project_root, x)))
-                        newest_file = tmp_files[-1]
-                        
-                        # Verify the file is NOT zero bytes (engine writes PID to it)
-                        file_full_path = os.path.join(project_root, newest_file)
-                        if os.path.getsize(file_full_path) == 0:
-                            # It's still being created by the engine, wait a bit
-                            return None
+        pipe_path = r"\\.\pipe\LivyLogsPipe"
 
-                        pid = newest_file.replace("engine_pid_", "").replace(".tmp", "")
-                        pipe_path = f"\\\\.\\pipe\\LivyLogsPipe_{pid}"
-                        # Check if it's there
-                        if kernel32.WaitNamedPipeW(pipe_path, 1):
-                            return pipe_path
+        def find_active_pipe():
+            # 1. Standard name check
+            if kernel32.WaitNamedPipeW(pipe_path, 1):
+                return pipe_path
+
+            # 2. Look for the .tmp files we created
+            try:
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                tmp_files = [f for f in os.listdir(base_dir) if f.startswith("engine_pid_") and f.endswith(".tmp")]
+                if tmp_files:
+                    # Sort by modification time to get the newest one
+                    tmp_files.sort(key=lambda x: os.path.getmtime(os.path.join(base_dir, x)))
+                    for newest_file in reversed(tmp_files):
+                        file_full_path = os.path.join(base_dir, newest_file)
+                        if os.path.getsize(file_full_path) == 0:
+                            continue
+
+                        with open(file_full_path, "r") as f:
+                            pid_str = f.read().strip()
+                        
+                        if not pid_str:
+                            continue
+                            
+                        pid = int(pid_str)
+                        
+                        # Verify the process is still running
+                        import subprocess
+                        check = subprocess.run(['tasklist', '/FI', f'PID eq {pid}'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                        if pid_str in check.stdout:
+                            # If process exists, we wait a bit more for the pipe to appear
+                            if kernel32.WaitNamedPipeW(pipe_path, 100):
+                                return pipe_path
                         else:
-                            # It's stale, try to delete it
                             try: os.remove(file_full_path)
                             except: pass
-                except: pass
-
-                # 2. Fallback to PowerShell discovery
-                cmd = 'powershell -Command "[System.IO.Directory]::GetFiles(\'\\\\.\\pipe\\\', \'LivyLogsPipe_*\')"'
-                result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                raw_pipes = result.stdout.replace('\r\n', '\n').split('\n')
-                pipes = [p.strip() for p in raw_pipes if p.strip()]
-                
-                # Check for the legacy one too
-                all_pipes = pipes + [r'\\.\pipe\LivyLogsPipe']
-                
-                for p in all_pipes:
-                    if kernel32.WaitNamedPipeW(p, 1):
-                        return p
             except Exception as e:
                 try:
                     with open("crash_log.txt", "a") as f:
-                        f.write(f"--- PIPE DISCOVERY ERROR {datetime.now()} ---\n{e}\n")
+                        f.write(f"--- DISCOVERY ERROR {datetime.now()} ---\n{e}\n")
                 except: pass
             return None
 
@@ -603,46 +606,42 @@ class CombatLogApp:
             if hasattr(self, 'lbl_status'):
                 self.lbl_status.config(text="RECONNECTING...", fg="#ffaa00")
             
-            # DEBUG: Log discovery attempts
-            # try:
-            #     with open("pipe_debug.txt", "a") as f:
-            #         f.write(f"DISCOVERY {datetime.now()} starting...\n")
-            # except: pass
-
-            pipe_path = find_newest_pipe()
+            # Use discovery logic
+            current_pipe = find_active_pipe()
             
-            if not pipe_path:
-                retry_count += 1
+            if not current_pipe:
                 if retry_count % 10 == 0:
                     try:
+                        base_dir = os.path.dirname(os.path.abspath(__file__))
                         with open("crash_log.txt", "a") as f:
-                            f.write(f"--- PIPE DISCOVERY ATTEMPT {datetime.now()} (retry {retry_count}) ---\n")
-                            # List .tmp files to see if engine created one
-                            tmps = [tf for tf in os.listdir(".") if tf.startswith("engine_pid_")]
+                            f.write(f"--- PIPE WAIT ATTEMPT {datetime.now()} (retry {retry_count}) ---\n")
+                            # List .tmp files just in case
+                            tmps = [tf for tf in os.listdir(base_dir) if tf.startswith("engine_pid_")]
                             f.write(f"  Existing signals: {tmps}\n")
                     except: pass
                 if retry_count > 1200: # 10 minutes
-                    try:
-                        with open("crash_log.txt", "a") as f:
-                            f.write(f"--- PIPE TIMEOUT EXIT {datetime.now()} ---\n")
-                    except: pass
                     self.root.after(0, self.on_exit)
                     break
                 time.sleep(0.5); continue
             
             retry_count = 0
             
-            # Use a slightly longer wait before CreateFile to avoid "Access Denied" race
-            if not kernel32.WaitNamedPipeW(pipe_path, 2000):
-                time.sleep(0.5); continue
-
-            # Open with GENERIC_READ and share mode to avoid Access Denied if engine is still initializing
-            # 0x80000000 = GENERIC_READ, 0x00000003 = FILE_SHARE_READ | FILE_SHARE_WRITE
             h = kernel32.CreateFileW(pipe_path, 0x80000000, 0x00000003, None, 3, 0, None)
             if h == -1 or h == 0xFFFFFFFF:
                 err = kernel32.GetLastError()
-                # If Access Denied (5), wait and retry
-                if err == 5:
+                # 231 is ERROR_PIPE_BUSY
+                if err == 231:
+                    # Wait for the pipe to become available
+                    if kernel32.WaitNamedPipeW(pipe_path, 2000):
+                        # Retry immediately
+                        continue
+                
+                try:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- PIPE CONNECT ERROR {datetime.now()} --- Error: {err}\n")
+                except: pass
+                
+                if err == 5: # ACCESS_DENIED
                     time.sleep(0.5)
                 else:
                     time.sleep(1)
@@ -678,8 +677,19 @@ class CombatLogApp:
                             line = line.strip()
                             if line:
                                 try:
-                                    data = json.loads(line); data["timestamp"] = datetime.now()
-                                    self.process_external_event(data, is_last=(i == len(lines)-1))
+                                    # Handle cases where multiple JSON objects might be mashed together without newlines
+                                    # (though splitting by \n usually handles this)
+                                    if line.count('}{') > 0:
+                                        line = line.replace('}{', '}\n{')
+                                        sublines = line.split('\n')
+                                        for subline in sublines:
+                                            subline = subline.strip()
+                                            if subline:
+                                                data = json.loads(subline); data["timestamp"] = datetime.now()
+                                                self.process_external_event(data, is_last=(i == len(lines)-1))
+                                    else:
+                                        data = json.loads(line); data["timestamp"] = datetime.now()
+                                        self.process_external_event(data, is_last=(i == len(lines)-1))
                                 except Exception as e:
                                     # Ignore tiny strings that might be remnants of dummy writes
                                     if len(line) > 5:

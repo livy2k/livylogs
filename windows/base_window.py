@@ -66,9 +66,6 @@ class BasePopoutWindow:
             self.window.attributes("-topmost", True)
         
         if not self.fixed_size:
-            self.window.bind("<Button-1>", self.click_window)
-            self.window.bind("<B1-Motion>", self.drag_window)
-            self.window.bind("<ButtonRelease-1>", self.release_window)
             self.window.bind("<Configure>", self.on_configure)
         
         border = tk.Frame(self.window, bg=BORDER_COLOR, padx=1, pady=1)

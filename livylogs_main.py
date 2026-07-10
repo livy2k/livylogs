@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import os
 import sys
 import time
@@ -49,10 +50,9 @@ class CombatLogApp:
         self.font_small_obj = tkfont.Font(family="Segoe UI", size=9)
         self.font_button_obj = tkfont.Font(family="Segoe UI", size=10, weight="bold")
 
-        # self.style = ttk.Style()
-        # self.style.theme_use('clam')
-        # self.style.configure("Vertical.TScrollbar", background=BUTTON_BG, troughcolor=PANEL_BG, bordercolor=BORDER_COLOR, arrowcolor=TEXT_SECONDARY)
-
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        
         self.config = ConfigParser()
         self.config.read("settings.ini")
 
@@ -140,6 +140,7 @@ class CombatLogApp:
         self.time_window_details = 60
         self.inventory_full = False
         self.skimmer_search_mode = False
+        self.skimmer_search_query = tk.StringVar()
         self.always_on_top = True
         self.is_dialog_open = False
         self.target_game_hwnd = None
@@ -158,7 +159,7 @@ class CombatLogApp:
             self.root.after(1000, lambda: self.start_c_engine(initial_log_path))
 
     def load_bosses(self):
-        boss_list = []
+        self.bosses = []
         try:
             path = get_resource_path(os.path.join("filters", "bosses.txt"))
             if os.path.exists(path):
@@ -166,13 +167,12 @@ class CombatLogApp:
                     for line in f:
                         name = line.strip()
                         if name and not name.startswith("#"):
-                            boss_list.append(name.lower())
+                            self.bosses.append(name.lower())
         except Exception as e:
             pass # Suppress log loading errors for clean UI experience
-        return boss_list
 
     def load_filters(self):
-        filter_list = []
+        self.filters = []
         try:
             path = get_resource_path(os.path.join("filters", "filters.txt"))
             if os.path.exists(path):
@@ -180,13 +180,12 @@ class CombatLogApp:
                     for line in f:
                         phrase = line.rstrip("\n").rstrip("\r")
                         if phrase and not phrase.startswith("#"):
-                            filter_list.append(phrase.lower())
+                            self.filters.append(phrase.lower())
         except Exception as e:
             pass # Suppress for clean UI experience
-        return filter_list
 
     def load_class_configs(self):
-        configs = {}
+        self.class_configs = {}
         try:
             filters_dir = get_resource_path("filters")
             if os.path.exists(filters_dir):
@@ -202,6 +201,7 @@ class CombatLogApp:
                                 first_line = lines[0].strip()
                                 if first_line.startswith("#"):
                                     color = first_line.lstrip("#").strip()
+                                    if not color.startswith("#"): color = "#" + color
                                     start_idx = 1
                                 else:
                                     start_idx = 0
@@ -210,10 +210,9 @@ class CombatLogApp:
                                     ability = line.strip()
                                     if ability and not ability.startswith("#"):
                                         abilities.add(ability.lower())
-                        configs[class_name] = {"color": color, "abilities": abilities}
+                        self.class_configs[class_name] = {"color": color, "abilities": abilities}
         except Exception as e:
             pass # Suppress for clean UI experience
-        return configs
 
     def initial_show(self):
         try:
@@ -501,10 +500,23 @@ class CombatLogApp:
         t.start()
 
     def build_layout(self):
-        # style = ttk.Style()
-        # style.theme_use('clam')
-        # style.configure("Vertical.TScrollbar", gripcount=0, background=PANEL_DARK, darkcolor=PANEL_DARK, lightcolor=PANEL_DARK, troughcolor=WINDOW_BG, bordercolor=BORDER_COLOR, arrowcolor=TEXT_SECONDARY)
-        # style.map("Vertical.TScrollbar", background=[('active', ACCENT_BLUE), ('pressed', ACCENT_BLUE)])
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        # Configure the Vertical TScrollbar style to match our theme
+        style.configure("Vertical.TScrollbar", 
+                        gripcount=0, 
+                        background=BUTTON_BG, 
+                        darkcolor=PANEL_DARK, 
+                        lightcolor=PANEL_DARK, 
+                        troughcolor=WINDOW_BG, 
+                        bordercolor=BORDER_COLOR, 
+                        arrowcolor=TEXT_SECONDARY,
+                        width=14)
+        
+        style.map("Vertical.TScrollbar", 
+                  background=[('active', BORDER_HIGHLIGHT), ('pressed', ACCENT_BLUE)],
+                  arrowcolor=[('active', TEXT_PRIMARY)])
 
         self.root_border = tk.Frame(self.root, bg=BORDER_COLOR, padx=1, pady=1)
         self.root_border.pack(fill=tk.BOTH, expand=True)
@@ -778,16 +790,17 @@ class CombatLogApp:
             time.sleep(1) # Wait before reconnecting to avoid tight loop on failure
 
     def process_external_event(self, event, is_last=False):
+        # Normalize "Damage You" to "You" just in case the engine sends it
+        for key in ["name", "source", "target"]:
+            if event.get(key) == "Damage You":
+                event[key] = "You"
+        
         event_type = event.get("type")
         
         if event_type == "stats":
             name = event.get("name")
             if not name: return
             
-            # DEBUG: Log incoming stats
-            # with open("pipe_debug.txt", "a") as f:
-            #     f.write(f"STATS RECEIVED for {name}: {event}\n")
-
             if name not in self.player_data:
                 self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
             
@@ -803,10 +816,9 @@ class CombatLogApp:
             p["lb_mobs"] = event.get("mobs", 0)
             p["lb_xp"] = event.get("xp", 0)
 
-            # Ensure dm_damage/healing are updated from stats if we are in a session
-            if self.app_start_time:
-                p["dm_damage"] = p["damage"]
-                p["dm_healing"] = p["healing"]
+            # Ensure dm_damage/healing are updated from stats
+            p["dm_damage"] = p["damage"]
+            p["dm_healing"] = p["healing"]
 
             self.locally_seen_players[name] = time.time()
 
@@ -816,17 +828,12 @@ class CombatLogApp:
             # Defensive check: trigger refresh
             self.refresh_ui_only(force=True)
 
-            # Update last_combat_time if there is actual activity in these stats
+            # Update last_combat_time and app_start_time
             if p["damage"] > 0 or p["healing"] > 0 or p["dm_taken"] > 0 or p["lb_mobs"] > 0 or p["lb_loot"] > 0 or p["lb_xp"] > 0:
                 self.last_combat_time = time.time()
                 if self.app_start_time is None:
-                    # Look for the earliest event in memory if we have any, 
-                    # otherwise use now.
-                    if self.all_events:
-                        self.app_start_time = self.all_events[0]["timestamp"]
-                    else:
-                        self.app_start_time = datetime.now()
-                self.last_log_sync_time = self.app_start_time # Anchor for duration
+                    self.app_start_time = datetime.now()
+                self.last_log_sync_time = self.app_start_time
             return
 
         now = datetime.now()
@@ -870,6 +877,7 @@ class CombatLogApp:
             self.last_combat_time = time.time()
             if self.app_start_time is None:
                 self.app_start_time = datetime.now()
+            self.last_log_sync_time = self.app_start_time
 
             self.locally_seen_players[source] = time.time()
             self.leaderboard_data[source] = p.get("damage", 0)
@@ -889,6 +897,7 @@ class CombatLogApp:
             self.last_combat_time = time.time()
             if self.app_start_time is None:
                 self.app_start_time = timestamp
+            self.last_log_sync_time = self.app_start_time
 
             self.locally_seen_players[source] = time.time()
             self.leaderboard_data[source] = p.get("damage", 0)
@@ -912,6 +921,7 @@ class CombatLogApp:
             self.last_combat_time = time.time()
             if self.app_start_time is None:
                 self.app_start_time = timestamp
+            self.last_log_sync_time = self.app_start_time
 
             self.leaderboard_data[source] = p.get("damage", 0)
             
@@ -932,7 +942,7 @@ class CombatLogApp:
                     p["looted_items"].pop(0)
             
             if source not in self.loot_data: self.loot_data[source] = []
-            self.loot_data[source].append({"item": item if (credits == 0 or not credits) else f"{credits} credits", "timestamp": timestamp})
+            self.loot_data[source].append({"item": item, "credits": credits, "target": target, "timestamp": timestamp})
             if len(self.loot_data[source]) > 200: self.loot_data[source].pop(0)
 
             self.locally_seen_players[source] = time.time()
@@ -1048,9 +1058,11 @@ class CombatLogApp:
             self.last_combat_time = now_f; self.last_log_sync_time = timestamp
             if self.app_start_time is None: self.app_start_time = timestamp
 
-        if is_last or (now_f - self.last_ui_update_time > 0.02):
+        if is_last or (now_f - self.last_ui_update_time > 0.1):
             if self.running:
                 try:
+                    # force=True only for is_last (end of packet) or if we are really behind
+                    # but we want to avoid flooding the UI thread
                     self.root.after(0, lambda: self.refresh_ui_only(force=is_last))
                     self.last_ui_update_time = now_f
                 except: pass
@@ -1066,20 +1078,25 @@ class CombatLogApp:
             if now_ts - self.last_pulse_time > 0.3:
                 self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
     
-            # Update Managed Windows list first to ensure all windows are processed
-            managed_wins = self._get_managed_windows()
-
             # Damage meter is highest priority for real-time feel
             if hasattr(self, 'damage_meter_win') and self.damage_meter_win:
                 self.damage_meter_win.refresh(force=force)
-    
-            # Alexa window doesn't need to refresh every tick, but keep it in loop for consistency
-            if force or (now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.2):
-                if hasattr(self, 'leaderboard_win') and self.leaderboard_win: self.leaderboard_win.refresh(force=force)
-                if hasattr(self, 'skimmers_win') and self.skimmers_win: self.skimmers_win.refresh(force=force)
-                if hasattr(self, 'details_win') and self.details_win: self.details_win.refresh(force=force)
-                if hasattr(self, 'alexa_win') and self.alexa_win: self.alexa_win.refresh(force=force)
-                if hasattr(self, 'options_win') and self.options_win: self.options_win.refresh(force=force)
+
+            # Heavy windows (Details, Leaderboard, Skimmers)
+            # NEVER force these unless they are empty, as they have their own internal 10s throttle
+            # The 'force' passed here from process_external_event should be ignored for these
+            # to prevent flickering 'many times per second' when large packets arrive.
+            if now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.5:
+                if hasattr(self, 'details_win') and self.details_win: 
+                    self.details_win.refresh(force=False) 
+                if hasattr(self, 'leaderboard_win') and self.leaderboard_win: 
+                    self.leaderboard_win.refresh(force=False)
+                if hasattr(self, 'skimmers_win') and self.skimmers_win: 
+                    self.skimmers_win.refresh(force=False)
+                
+                # Other windows
+                if hasattr(self, 'alexa_win') and self.alexa_win: self.alexa_win.refresh(force=False)
+                if hasattr(self, 'options_win') and self.options_win: self.options_win.refresh(force=False)
                 self.last_heavy_refresh = now_ts
         except: pass
 
@@ -1488,9 +1505,21 @@ class CombatLogApp:
         self.app_start_time = None
         self.last_combat_time = 0
         self.last_log_sync_time = None
-        if hasattr(self, 'details_win'): self.details_win.drill_down_player = None
-        if hasattr(self, 'leaderboard_win'): self.leaderboard_win.drill_down_player = None
-        if hasattr(self, 'skimmers_win'): self.skimmers_win.drill_down_player = None
+        
+        # Clear drill-down states to ensure windows return to primary lists smoothly
+        if hasattr(self, 'details_win'): 
+            self.details_win.is_drilldown = False
+            self.details_win.selected_player = None
+            self._last_list_key = None
+            self._last_players = []
+        if hasattr(self, 'leaderboard_win'): 
+            self.leaderboard_win.is_drilldown = False
+            self.leaderboard_win.selected_player = None
+            self._last_order = []
+        if hasattr(self, 'skimmers_win'): 
+            self.skimmers_win.is_drilldown = False
+            self.skimmers_win.selected_player = None
+            self._last_players = []
 
     def toggle_test_mode(self, active=None):
         if active is not None:

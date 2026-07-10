@@ -87,6 +87,7 @@ PlayerStats* get_player(const char* name) {
     if (!name || !*name) return NULL;
     char n[128];
     strncpy(n, name, 127); n[127] = '\0';
+    if (_stricmp(n, "Damage You") == 0) strcpy(n, "You");
     for(int i=0; i<g_player_count; i++) {
         if(_stricmp(g_players[i].name, n) == 0) return &g_players[i];
     }
@@ -131,8 +132,14 @@ void e_j(const char* s, char* d_p) {
 void s_e(HANDLE h, const char* t, const char* s_c, const char* t_g, double d_m, double h_l, const char* a, const char* i_t, int m_t) {
     char j[BUFFER_SIZE];
     char e_s[256], e_t[256], e_a[256], e_i[256];
-    e_j(s_c, e_s);
-    e_j(t_g, e_t);
+    
+    const char* real_s = s_c;
+    if (_stricmp(real_s, "Damage You") == 0) real_s = "You";
+    const char* real_t = t_g;
+    if (_stricmp(real_t, "Damage You") == 0) real_t = "You";
+
+    e_j(real_s, e_s);
+    e_j(real_t, e_t);
     e_j(a, e_a);
     e_j(i_t, e_i);
 
@@ -149,7 +156,9 @@ void s_s(HANDLE h) {
     for(int i=0; i<g_player_count; i++) {
         char j[BUFFER_SIZE];
         char e_n[256];
-        e_j(g_players[i].name, e_n);
+        char* n = g_players[i].name;
+        if (_stricmp(n, "Damage You") == 0) n = "You";
+        e_j(n, e_n);
         sprintf(j, "{\"type\": \"stats\", \"name\": \"%s\", \"damage\": %.2f, \"healing\": %.2f, \"taken\": %.2f, \"hits\": %d, \"misses\": %d, \"avoided\": %d, \"aoe\": %d, \"loot\": %d, \"mobs\": %d, \"xp\": %.2f}\n",
                 e_n, g_players[i].damage, g_players[i].healing, g_players[i].taken, g_players[i].hits, g_players[i].misses, g_players[i].avoided, g_players[i].aoe_hits, g_players[i].loot_count, g_players[i].mob_count, g_players[i].total_xp);
         DWORD w_b;
@@ -244,6 +253,16 @@ void p_l(HANDLE h, char* l) {
                     strncpy(item, p_loot + i_start, i_len); item[i_len] = '\0';
                     while(strlen(item) > 0 && item[strlen(item)-1] == ' ') item[strlen(item)-1] = '\0';
                     
+                    char target[256] = "Unknown";
+                    char* p_after_from = p_from + 5; // Length of "from "
+                    if (p_after_from < clean + strlen(clean)) {
+                        strncpy(target, p_after_from, 255);
+                        target[255] = '\0';
+                        // Remove trailing period if present
+                        if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
+                        while(strlen(target) > 0 && (target[strlen(target)-1] == ' ' || target[strlen(target)-1] == '!')) target[strlen(target)-1] = '\0';
+                    }
+
                     double credits = 0;
                     char* p_cred = strstr(item, " credits");
                     if (p_cred) {
@@ -251,7 +270,7 @@ void p_l(HANDLE h, char* l) {
                     }
 
                     char j[BUFFER_SIZE];
-                    sprintf(j, "{\"type\": \"loot\", \"source\": \"%s\", \"item\": \"%s\", \"credits\": %.2f}\n", name, item, credits);
+                    sprintf(j, "{\"type\": \"loot\", \"source\": \"%s\", \"item\": \"%s\", \"credits\": %.2f, \"target\": \"%s\"}\n", name, item, credits, target);
                     send_raw_event(h, j);
                     
                     // Also send as a stat update to ensure it shows up in basic counters
@@ -414,6 +433,14 @@ void p_l(HANDLE h, char* l) {
                 // Cleanup target: remove " points of damage" if it's there (shouldn't be with " for " logic but safe)
                 char* p_points = strstr(target, " points");
                 if (p_points) *p_points = '\0';
+
+                // Cleanup names: remove leading "Damage " if it was accidentally captured
+                if (_strnicmp(source, "Damage ", 7) == 0) memmove(source, source + 7, strlen(source) - 6);
+                if (_strnicmp(target, "Damage ", 7) == 0) memmove(target, target + 7, strlen(target) - 6);
+
+                // Second pass to ensure "Damage You" becomes "You"
+                if (_stricmp(source, "Damage You") == 0) strcpy(source, "You");
+                if (_stricmp(target, "Damage You") == 0) strcpy(target, "You");
 
                 while(strlen(source)>0 && source[0]==' ') memmove(source, source+1, strlen(source));
                 while(strlen(target)>0 && target[0]==' ') memmove(target, target+1, strlen(target));

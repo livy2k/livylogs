@@ -25,7 +25,6 @@ from constants import (
     TITLE_GRADIENT_START, TITLE_GRADIENT_END
 )
 from utils import is_window_minimized, apply_snapping, extract_character_id, get_resource_path
-from parser_engine import parse_combat_log, calculate_dps
 from ui_base import ThemedMessagebox
 
 # Popout Windows
@@ -38,13 +37,10 @@ from windows.alexa import AlexaWindow
 
 class CombatLogApp:
     def __init__(self, root):
-        print("DEBUG: Initializing CombatLogApp")
         self.root = root
         self.root.title("Combat Log Analyzer")
         self.root.geometry("260x50")
         self.root.configure(bg=WINDOW_BG)
-        
-        self.target_hwnd = self.find_target_window()
         
         # Font objects
         self.font_stats_obj = tkfont.Font(family="Segoe UI Variable Display", size=20, weight="bold")
@@ -68,14 +64,10 @@ class CombatLogApp:
 
         self.root.geometry(f"{initial_width}x{initial_height}+{initial_x}+{initial_y}")
         self.target_alpha = initial_alpha
-        self.current_alpha = 0.0
-        self.root.attributes("-alpha", 0.0)
+        self.current_alpha = initial_alpha
+        self.root.attributes("-alpha", initial_alpha)
         self.root.overrideredirect(True)
         
-        self._last_topmost_state = False
-        self._minimized_to_tray = False
-        self.fade_speed = 0.05
-        self.fade_after_id = None
         self.file_path_var = tk.StringVar(value=initial_log_path)
         self.disable_warnings = tk.BooleanVar(value=self.config.getboolean("General", "disable_warnings", fallback=False))
         self.show_class_colors = tk.BooleanVar(value=self.config.getboolean("General", "show_class_colors", fallback=True))
@@ -92,7 +84,6 @@ class CombatLogApp:
         self.options_win = OptionsWindow(self)
         self.alexa_win = AlexaWindow(self)
         
-        # Ensure windows are added to the managed list if not already
         self._managed_windows = [
             self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
             self.details_win, self.options_win, self.alexa_win
@@ -101,73 +92,47 @@ class CombatLogApp:
         self.is_interacting = False
         self.last_interaction_time = 0
         
-        # Window-specific data containers
-        self.dm_damage = {}
-        self.dm_taken = {}
-        
         self.actual_app_start_time = datetime.now()
         self.last_reset_time = self.actual_app_start_time
         self.running = True
-        self.engine_process = None
         
-        threading.Thread(target=self.start_pipe_listener, daemon=True).start()
-        threading.Thread(target=self.web_sync_loop, daemon=True).start()
-        
-        self.root.after(300, self.initial_show)
-        self.root.after(800, self.check_target_window)
-        self.root.after(1000, self.start_show)
-        if initial_log_path:
-            self.root.after(1200, lambda: self.start_c_engine(initial_log_path))
-        
+        # Combat State
         self.player_data = {}
-        self.locally_seen_players = {} # name -> last_seen_timestamp
         self.loot_data = {}
+        self.player_classes = {}
+        self.all_events = []
         
-        self.setup_tray_icon()
+        self.load_bosses()
+        self.load_filters()
+        self.load_class_configs()
+        self.build_layout()
+        
+        self.pulse_state = False
+        self.last_pulse_time = 0
+        self.last_ui_update_time = 0
+        self.last_combat_time = 0
+        self.app_start_time = None
+        self.last_log_sync_time = None
+        
         self.last_dm_reset = None
         self.last_lb_reset = None
         self.last_sk_reset = None
         self.last_dt_reset = None
-        self.all_events = []
-        self.sync_data = {} # Data from web API
-        self.last_sync_time = 0
-        self.last_read_offset = 0
-        self.last_processed_file = ""
-        self.app_start_time = None
-        self.last_combat_time = 0
-        self.last_log_sync_time = None
-        self.last_ui_update_time = 0
-        self.ui_update_delay = 0.05
-        self.pulse_state = False
-        self.last_pulse_time = 0
-        self.time_window_details = self.config.getint("General", "time_window_details", fallback=30)
-        self.time_window_leaderboard = self.config.getint("General", "time_window_leaderboard", fallback=30)
+        
+        self.time_window_dm = 5
         self.time_window_skimmers = 60
-        self.time_window_dm = 30
-        self.bosses = self.load_bosses()
-        self.filters = self.load_filters()
-        self.class_configs = self.load_class_configs() # Loaded from filters/*.txt
-        self.player_classes = {} # player_name -> list of class_names
-        self.always_on_top = False
-        self.skimmer_search_query = tk.StringVar()
-        self.skimmer_search_mode = False
-        self.leaderboard_reset_time = None
-        self.current_detail_player = None
-        self.current_skimmer_player = None
+        self.time_window_details = 60
         self.inventory_full = False
-        self.inventory_full_time = None
+        self.skimmer_search_mode = False
+        self.always_on_top = True
+        self.is_dialog_open = False
 
-        self.build_layout()
-
-        # Initialize all reset timers to current time on launch
-        now_dt = datetime.now()
-        self.last_dm_reset = now_dt
-        self.last_lb_reset = now_dt
-        self.last_sk_reset = now_dt
-        self.last_dt_reset = now_dt
-        self.app_start_time = now_dt # Ensure combat sessions also start fresh
-
+        self.initial_show()
+        threading.Thread(target=self.start_pipe_listener, daemon=True).start()
+        threading.Thread(target=self.web_sync_loop, daemon=True).start()
+        self.setup_tray_icon()
         self.start_ticker_loop()
+        self.root.after(500, self.check_target_window)
 
     def load_bosses(self):
         boss_list = []
@@ -229,44 +194,10 @@ class CombatLogApp:
 
     def initial_show(self):
         try:
+            self.current_alpha = 0.0
+            self.root.attributes("-alpha", 0.0)
             self.root.withdraw()
-            hwnd = self.root.winfo_id()
-            user32.SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_HIDEWINDOW)
         except: pass
-
-    def start_c_engine(self, log_path):
-        # C Engine now starts Python, so this method is mostly redundant
-        # but we keep it to maintain compatibility with existing logic if needed
-        print(f"DEBUG: C Engine is managing us. Log path: {log_path}")
-        pass
-
-    def find_target_window(self):
-        target = [None]
-        def cb(hwnd, lp):
-            if user32.IsWindowVisible(hwnd):
-                buf = ctypes.create_unicode_buffer(255)
-                user32.GetWindowTextW(hwnd, buf, 255)
-                if "SwgClient" in buf.value or "Star Wars Galaxies" in buf.value:
-                    target[0] = hwnd; return False
-            return True
-        user32.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)(cb), 0)
-        return target[0]
-
-    def is_foreground_ours(self):
-        try:
-            fg = user32.GetForegroundWindow()
-            if not fg: return False
-            fg_pid = wintypes.DWORD()
-            user32.GetWindowThreadProcessId(fg, ctypes.byref(fg_pid))
-            if fg_pid.value == kernel32.GetCurrentProcessId(): return True
-            if self.target_hwnd and user32.IsWindow(self.target_hwnd):
-                if fg == self.target_hwnd: return True
-                t_pid = wintypes.DWORD()
-                user32.GetWindowThreadProcessId(self.target_hwnd, ctypes.byref(t_pid))
-                if fg_pid.value == t_pid.value: return True
-        except Exception as e:
-            print(f"DEBUG: Error in is_foreground_ours: {e}")
-        return False
 
     def _get_managed_windows(self):
         managed = [self.root]
@@ -275,47 +206,17 @@ class CombatLogApp:
         return managed
 
     def check_target_window(self):
-        try:
-            if not self.target_hwnd or not user32.IsWindow(self.target_hwnd): 
-                self.target_hwnd = self.find_target_window()
-            
-            # If manually minimized to tray, do NOT auto-show
-            if getattr(self, "_minimized_to_tray", False):
-                self.root.after(500, self.check_target_window)
-                return
-
-            fg_ours = self.is_foreground_ours()
-            minimized = is_window_minimized(self.target_hwnd)
-            should_show = (fg_ours or self.always_on_top) and not minimized
-            
-            # If we are showing a modal dialog, temporarily disable topmost to allow interaction
-            is_dialog_open = getattr(self, "is_dialog_open", False)
-
-            if should_show:
-                self.start_show()
-                for win in self._get_managed_windows():
-                    # If it's a dialog, it handles its own topmost via SetWindowPos
-                    # For managed windows, we only set topmost if NO dialog is open
-                    if not is_dialog_open:
-                        win.attributes("-topmost", True)
-                        user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
-                    else:
-                        # If a dialog is open, managed windows should NOT be topmost 
-                        # so they don't cover the dialog (which IS topmost)
-                        win.attributes("-topmost", False)
-                        user32.SetWindowPos(win.winfo_id(), HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
-                self._last_topmost_state = not is_dialog_open
-            else:
-                if not hasattr(self, "_hide_grace_after_id") or self._hide_grace_after_id is None:
-                    self._hide_grace_after_id = self.root.after(1000, self._perform_graceful_hide)
-        except Exception as e:
-            pass
-        self.root.after(250, self.refresh_ui_only) # Changed from check_target_window
-
-    def _perform_graceful_hide(self):
-        self._hide_grace_after_id = None
-        if not self.is_foreground_ours() and not self.always_on_top:
-            self.start_hide()
+        if not self.running: return
+        # Since the C engine now handles focus management, we just need to ensure
+        # the Python side doesn't fight it and stays visible when it should.
+        # If the C engine is running, it will ShowWindow/SetWindowPos on us.
+        # But we still need to handle our own alpha/fading if we want that.
+        
+        # Simplified check: just ensure we are deiconified if we should be visible
+        if self.root.state() == "withdrawn" and not getattr(self, "_minimized_to_tray", False):
+            self.start_show()
+        
+        self.root.after(500, self.check_target_window)
 
     def start_show(self):
         if self.root.state() == "withdrawn":
@@ -326,38 +227,32 @@ class CombatLogApp:
                 win.deiconify()
                 win.lift()
         
-        # Ensure alpha is updated immediately if it was 0
-        if self.current_alpha < 0.1:
-            self.current_alpha = 0.1
-            for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
-            
-        if self.current_alpha < self.target_alpha: self.fade_in()
+        if self.current_alpha < self.target_alpha:
+            self.fade_in()
 
     def fade_in(self):
         if self.current_alpha < self.target_alpha:
             self.current_alpha = min(self.target_alpha, self.current_alpha + 0.1)
             for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
-            self.fade_after_id = self.root.after(20, self.fade_in)
+            self.root.after(20, self.fade_in)
 
     def start_hide(self, minimize=True):
-        if self.current_alpha > 0:
-            self.fade_out(minimize=minimize)
-        elif minimize:
-            if self.root.state() != "withdrawn":
-                self.root.withdraw()
+        self.fade_out(minimize=minimize)
 
     def fade_out(self, minimize=True):
         if self.current_alpha > 0:
             self.current_alpha = max(0, self.current_alpha - 0.1)
             for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
-            self.fade_after_id = self.root.after(20, lambda: self.fade_out(minimize=minimize))
+            self.root.after(20, lambda: self.fade_out(minimize=minimize))
         else:
             if minimize:
-                if self.root.state() != "withdrawn":
-                    self.root.withdraw()
-            for win in self._get_managed_windows(): 
-                if win.state() != "withdrawn":
-                    win.withdraw()
+                for win in self._get_managed_windows():
+                    if win.state() != "withdrawn":
+                        win.withdraw()
+
+    def start_c_engine(self, log_path):
+        # C Engine now starts Python
+        pass
 
     def build_layout(self):
         style = ttk.Style()
@@ -496,8 +391,25 @@ class CombatLogApp:
             print("DEBUG: Pipe closed, retrying...")
 
     def process_external_event(self, event, is_last=False):
-        # Implementation of event processing
         event_type = event.get("type")
+        
+        if event_type == "stats":
+            name = event.get("name")
+            if not name: return
+            if name not in self.player_data:
+                self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+            
+            p = self.player_data[name]
+            p["damage"] = event.get("damage", 0)
+            p["healing"] = event.get("healing", 0)
+            p["dm_taken"] = event.get("taken", 0)
+            p["dm_hits"] = event.get("hits", 0)
+            p["dm_misses"] = event.get("misses", 0)
+            p["dm_avoided"] = event.get("avoided", 0)
+            p["aoe_hits"] = event.get("aoe", 0)
+            p["lb_loot"] = event.get("loot", 0)
+            return
+
         source = event.get("source", "Unknown")
         damage = event.get("damage", 0)
         healing = event.get("healing", 0)
@@ -566,7 +478,6 @@ class CombatLogApp:
                 if "dm_taken" in self.player_data[p]: self.player_data[p]["dm_taken"] = 0
             
             self.all_events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= history_limit]
-            self.process_events_for_ui(self.all_events)
 
         if is_damage:
             self.last_combat_time = now; self.last_log_sync_time = timestamp
@@ -579,80 +490,20 @@ class CombatLogApp:
                     self.last_ui_update_time = now
                 except: pass
 
-    def analyze_log(self, manual=False):
-        if manual: 
-            self.all_events = []; self.last_read_offset = -1; self.app_start_time = None; 
-            self.last_combat_time = 0; self.player_data = {}; self.locally_seen_players = {}; self.loot_data = {}
-            self.last_log_mtime = 0; self.last_log_size = 0
-            # Reset all manual window timers to now to ensure a clean slate
-            now_dt = datetime.now()
-            self.last_dm_reset = now_dt
-            self.last_lb_reset = now_dt
-            self.last_sk_reset = now_dt
-            self.last_dt_reset = now_dt
-            # Return windows to top level
-            self.damage_meter_win.drill_down_player = None
-            self.leaderboard_win.drill_down_player = None
-            self.skimmers_win.drill_down_player = None
-            self.details_win.drill_down_player = None
-            print("DEBUG: Manual reset triggered")
-        path = self.file_path_var.get().strip()
-        if not path or not os.path.exists(path): return
-        
-        try:
-            st = os.stat(path); mtime, size = st.st_mtime, st.st_size
-            if not manual and hasattr(self, 'last_log_mtime') and mtime <= self.last_log_mtime and size <= self.last_log_size:
-                if time.time() - getattr(self, 'last_forced_read_time', 0) < 0.2: return
-            self.last_log_mtime, self.last_log_size = mtime, size
-            self.last_forced_read_time = time.time()
-        except: pass
-
-        if os.path.isdir(path):
-            files = [os.path.join(path, f) for f in os.listdir(path) if f.lower().endswith(('.txt', '.log'))]
-            if not files: return
-            path = max(files, key=os.path.getmtime)
-
-        if path != self.last_processed_file:
-            self.last_read_offset = -1 if not self.last_processed_file or manual else 0
-            self.all_events = []; self.last_processed_file = path; self.app_start_time = None; self.last_combat_time = 0
-
-        new_events, new_offset = parse_combat_log(path, self.last_read_offset)
-        if new_events:
-            existing = set((e.get("timestamp"), e.get("type"), e.get("source"), e.get("target"), e.get("damage")) for e in self.all_events[-1000:])
-            self.all_events.extend([e for e in new_events if (e.get("timestamp"), e.get("type"), e.get("source"), e.get("target"), e.get("damage")) not in existing])
-        self.last_read_offset = new_offset
-        
-        self.process_events_for_ui(self.all_events, manual=manual)
-        self.refresh_ui_only(force=True)
-
     def start_ticker_loop(self):
         if self.running:
-            self.analyze_log()
-            # ticker updates are never forced to maintain high FPS performance
             self.refresh_ui_only(force=False)
             self.root.after(100, self.start_ticker_loop)
 
     def refresh_ui_only(self, force=False):
-        # Pause UI refreshes during interaction to prevent flickering
-        if self.is_interacting and not force:
-            if time.time() - self.last_interaction_time < 2.0: # 2s safety timeout
-                return
-            else:
-                self.is_interacting = False
-        
         now_ts = time.time()
         if now_ts - self.last_pulse_time > 0.3:
             self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
-
-        # Smooth ticker update for main window components if any existed
-        # Currently main window is just navigation hub, but we keep the logic clean
 
         # Damage meter is highest priority for real-time feel
         self.damage_meter_win.refresh(force=force)
 
         # Other windows are lower priority
-        # We ensure they refresh at least once every 100ms if force is True (e.g. from log parsing)
-        # but otherwise they are throttled by the damage meter's own internal logic or this loop
         if force or (now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.2):
             self.leaderboard_win.refresh(force=force)
             self.skimmers_win.refresh(force=force)
@@ -664,196 +515,7 @@ class CombatLogApp:
             self.options_win.refresh(force=True)
 
     def process_events_for_ui(self, all_events, manual=False):
-        from utils import clean_npc_name
-        now_dt = datetime.now()
-        sk_limit = now_dt - timedelta(minutes=self.time_window_skimmers)
-        dt_limit = now_dt - timedelta(minutes=self.time_window_details)
-        
-        # We'll use local dictionaries to build the state and then assign them
-        # This prevents flickering if the loop is interrupted
-        new_player_data = {}
-        new_loot_data = {}
-        new_inventory_full = False
-        
-        active_ids = set(id(e) for e in all_events if self.app_start_time and e["timestamp"] and e["timestamp"] >= self.app_start_time)
-
-        # Group events by second and player to detect area attacks
-        time_player_counts = {}
-        for e in all_events:
-            if not e["timestamp"]: continue
-            # Only care about damage dealt
-            if e["type"] != "dealt" or e["damage"] <= 0: continue
-            
-            ts_sec = e["timestamp"].replace(microsecond=0)
-            src = e["source"].capitalize(); src = "You" if src.lower() == "you" else src
-            
-            key = (ts_sec, src)
-            time_player_counts[key] = time_player_counts.get(key, 0) + 1
-
-        for e in all_events:
-            ts = e["timestamp"]
-            if not ts: continue
-            
-            src_raw = e["source"].capitalize(); src_raw = "You" if src_raw.lower() == "you" else src_raw
-            tgt_raw = e["target"].capitalize(); tgt_raw = "You" if tgt_raw.lower() == "you" else tgt_raw
-            
-            is_src_npc = False
-            is_tgt_npc = False
-            
-            # Check general filters
-            is_src_filtered = any(phrase in src_raw.lower() for phrase in self.filters)
-            is_tgt_filtered = any(phrase in tgt_raw.lower() for phrase in self.filters)
-
-            if is_src_filtered: is_src_npc = True
-            if is_tgt_filtered: is_tgt_npc = True
-
-            # Aggregate NPC names
-            src = clean_npc_name(src_raw) if is_src_npc or " (" in src_raw else src_raw
-            tgt = clean_npc_name(tgt_raw) if is_tgt_npc or " (" in tgt_raw else tgt_raw
-
-            # Normalize for internal tracking (Players/Bosses)
-            # Only capitalize if it's NOT an NPC, as cleaning might have already normalized it
-            # and we want to preserve boss list matches.
-            if not is_src_npc:
-                src = src.capitalize() if src.lower() != "you" else "You"
-            if not is_tgt_npc:
-                tgt = tgt.capitalize() if tgt.lower() != "you" else "You"
-            
-            # Override NPC status if in boss list
-            is_src_boss = src.lower() in self.bosses
-            is_tgt_boss = tgt.lower() in self.bosses
-            
-            if is_src_boss: 
-                is_src_npc = False
-                src = src.title() # Ensure "Hutt Crime Lord" for UI
-            if is_tgt_boss: 
-                is_tgt_npc = False
-                tgt = tgt.title()
-            
-            # Determine if this event is relevant for ANY window
-            # If it's too old for everything, skip processing it into player_data
-            is_skimmer_relevant = ts >= sk_limit and (not self.last_sk_reset or ts >= self.last_sk_reset)
-            is_details_relevant = ts >= dt_limit and (not self.last_dt_reset or ts >= self.last_dt_reset)
-            is_dm_relevant = id(e) in active_ids and (not self.last_dm_reset or ts >= self.last_dm_reset)
-            is_lb_relevant = (not self.last_lb_reset or ts >= self.last_lb_reset)
-
-            if not (is_skimmer_relevant or is_details_relevant or is_dm_relevant or is_lb_relevant):
-                continue
-
-            # Area attack multiplier detection
-            mult = 1
-            if e["type"] == "dealt" and e["damage"] > 0:
-                ts_sec = ts.replace(microsecond=0)
-                hit_count = time_player_counts.get((ts_sec, src_raw), 0)
-                if hit_count > 1:
-                    # Mark as AOE hit if multiple hits in same second
-                    if not is_src_npc:
-                        if src not in new_player_data: new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-                        new_player_data[src]["aoe_hits"] += 1
-        
-            if e["type"] == "loot":
-                # Check skimmer reset
-                if is_skimmer_relevant:
-                    if src not in new_loot_data: new_loot_data[src] = []
-                    new_loot_data[src].append({"item": e["item"], "target": e["target"], "timestamp": ts})
-            
-                # Also track for leaderboard if not reset there
-                if is_lb_relevant and not is_src_npc:
-                    if src not in new_player_data: 
-                        new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-                    new_player_data[src]["lb_loot"] += 1
-                continue
-            
-            # Identify player classes based on ability
-            if not is_src_npc and e.get("ability"):
-                ability_lower = e["ability"].lower()
-                for class_name, config in self.class_configs.items():
-                    if ability_lower in config["abilities"]:
-                        if src not in self.player_classes:
-                            self.player_classes[src] = []
-                        if class_name not in self.player_classes[src]:
-                            self.player_classes[src].append(class_name)
-                        break
-        
-            if e["type"] == "inventory_full":
-                if is_skimmer_relevant: 
-                    new_inventory_full = True
-                continue
-
-            # Filtering for Player Data (Damage/Healing)
-            # DM uses app_start_time (current combat) + dm_reset
-            # DT uses dt_limit + dt_reset
-            # LB uses all data (potentially filtered by lb_reset)
-        
-            # For simplicity, we populate a unified player_data but we'll filter it inside windows if needed,
-            # OR we populate it with everything relevant to ANY window.
-        
-            if not is_src_npc:
-                # Track as locally seen
-                self.locally_seen_players[src] = ts
-                self.locally_seen_players[tgt] = ts
-            
-                if src not in new_player_data: 
-                    new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-                
-                # Global/Details log
-                if is_details_relevant:
-                    if e["damage"] > 0:
-                        ts_str = ts.strftime("%H:%M:%S")
-                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Dealt {e['damage']:.0f} to {tgt}", "timestamp": ts})
-                        # Track target damage
-                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
-                        new_player_data[src]["targets"][tgt]["damage"] += e["damage"]
-                    elif e["healing"] > 0:
-                        ts_str = ts.strftime("%H:%M:%S")
-                        new_player_data[src]["logs"].append({"text": f"[{ts_str}] Healed {e['healing']:.0f} on {tgt}", "timestamp": ts})
-                        # Track target healing
-                        if tgt not in new_player_data[src]["targets"]: new_player_data[src]["targets"][tgt] = {"damage": 0, "healing": 0}
-                        new_player_data[src]["targets"][tgt]["healing"] += e["healing"]
-
-                # Damage Meter stats
-                if is_dm_relevant:
-                    new_player_data[src]["dm_damage"] += e["damage"]
-                    new_player_data[src]["dm_healing"] += e["healing"]
-                    if e["type"] == "dealt":
-                        if e.get("is_mitigated"):
-                            new_player_data[src]["dm_misses"] = new_player_data[src].get("dm_misses", 0) + 1
-                        elif e["damage"] > 0:
-                            new_player_data[src]["dm_hits"] = new_player_data[src].get("dm_hits", 0) + 1
-                
-                # Leaderboard stats (Damage/Healing)
-                if is_lb_relevant:
-                    new_player_data[src]["damage"] += e["damage"]
-                    new_player_data[src]["healing"] += e["healing"]
-                
-            tgt = tgt_raw
-            if e["damage"] > 0 or e.get("is_mitigated"):
-                # Always track 'You' for damage taken, regardless of is_tgt_npc
-                if tgt == "You" or not is_tgt_npc:
-                    if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-                    if is_details_relevant:
-                        ts_str = ts.strftime("%H:%M:%S")
-                        new_player_data[tgt]["logs"].append({"text": f"[{ts_str}] Taken {e['damage']:.0f} from {src}", "timestamp": ts})
-                    
-                    # Track taken for Damage Meter
-                    if is_dm_relevant:
-                        new_player_data[tgt]["dm_taken"] = new_player_data[tgt].get("dm_taken", 0) + e["damage"]
-                        if e.get("is_mitigated"):
-                            new_player_data[tgt]["dm_avoided"] = new_player_data[tgt].get("dm_avoided", 0) + 1
-                        elif e["damage"] > 0:
-                            new_player_data[tgt]["dm_taken_hits"] = new_player_data[tgt].get("dm_taken_hits", 0) + 1
-                elif is_lb_relevant and not is_tgt_npc:
-                    # Still add NPCs to player_data so they show up in leaderboard if attacked
-                    # but we don't need to track full details for them unless they are 'You'
-                    if tgt not in new_player_data: new_player_data[tgt] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-
-        self.player_data = new_player_data
-        self.loot_data = new_loot_data
-        self.inventory_full = new_inventory_full
-        
-        # Cleanup locally_seen_players occasionally (older than 10 mins)
-        seen_limit = now_dt - timedelta(minutes=10)
-        self.locally_seen_players = {name: t for name, t in self.locally_seen_players.items() if t >= seen_limit}
+        pass
 
     def toggle_always_on_top(self):
         self.always_on_top = not self.always_on_top
@@ -1082,7 +744,6 @@ class CombatLogApp:
                 
                 self.save_config()
                 self.start_c_engine(p)
-                self.analyze_log(manual=True)
                 self.options_win.refresh(force=True)
 
             if skip_prompt:
@@ -1102,30 +763,22 @@ class CombatLogApp:
 
     def reset_damage_meter_manual(self):
         self.last_dm_reset = datetime.now()
-        # Reprocess current events to update UI immediately
-        self.process_events_for_ui(self.all_events)
         self.refresh_ui_only(force=True)
 
     def reset_leaderboard_manual(self):
         self.last_lb_reset = datetime.now()
         self.leaderboard_win.drill_down_player = None
-        if hasattr(self.leaderboard_win, 'back_btn'): self.leaderboard_win.back_btn.pack_forget()
-        self.process_events_for_ui(self.all_events)
         self.refresh_ui_only(force=True)
 
     def reset_skimmers_manual(self):
         self.last_sk_reset = datetime.now()
         self.inventory_full = False
         self.skimmers_win.drill_down_player = None
-        if hasattr(self.skimmers_win, 'back_btn'): self.skimmers_win.back_btn.pack_forget()
-        self.process_events_for_ui(self.all_events)
         self.refresh_ui_only(force=True)
 
     def reset_details_manual(self):
         self.last_dt_reset = datetime.now()
         self.details_win.drill_down_player = None
-        if hasattr(self.details_win, 'back_btn'): self.details_win.back_btn.pack_forget()
-        self.process_events_for_ui(self.all_events)
         self.refresh_ui_only(force=True)
 
     def toggle_skimmer_search(self):

@@ -48,25 +48,6 @@ def extract_character_id(file_path):
         return match.group("id")
     return ""
 
-def clean_npc_name(name):
-    """Aggregates NPC names by removing parenthetical descriptions and unique prefixes."""
-    import re
-    if not name: return ""
-    # Example: "Thelowe (a visionary of Lord Nyax)" -> "Thelowe"
-    # Example: "a Gundark" -> "Gundark"
-    
-    # 1. Remove parenthetical info
-    name = re.sub(r"\s*\(.*?\)", "", name)
-    
-    # 2. Remove "a " or "an " or "the " prefix, or leading '('
-    name = re.sub(r"^(a|an|the)\s+", "", name, flags=re.IGNORECASE)
-    name = name.lstrip("(")
-
-    # 3. Remove "corpse of " prefix
-    name = re.sub(r"^corpse\s+of\s+", "", name, flags=re.IGNORECASE)
-    
-    return name.strip()
-
 def create_rainbow_name(parent, app, name, base_color, font, bg):
     """Creates a gradient name inside the parent frame if multiple classes exist."""
     import tkinter as tk

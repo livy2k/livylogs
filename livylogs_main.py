@@ -88,6 +88,7 @@ class CombatLogApp:
         self.enable_sync = tk.BooleanVar(value=self.config.getboolean("General", "enable_sync", fallback=False))
         self.test_mode = tk.BooleanVar(value=False)
         self.test_thread = None
+        self._last_test_toggle = 0
 
         self.skimmers_win = SkimmersWindow(self)
         self.damage_meter_win = DamageMeterWindow(self)
@@ -366,13 +367,16 @@ class CombatLogApp:
                 
                 # Additional check to ensure processes are GONE
                 import time
-                max_wait = 1.5
+                max_wait = 2.0
                 start_wait = time.time()
                 while time.time() - start_wait < max_wait:
                     res = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq LivyLogsEngine.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
                     if "LivyLogsEngine.exe" not in res.stdout:
-                        break
-                    time.sleep(0.2)
+                        # Double check other variants
+                        res2 = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq parser.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                        if "parser.exe" not in res2.stdout:
+                            break
+                    time.sleep(0.3)
 
                 # Clean up stale tmp files
                 if os.path.exists("."):
@@ -585,10 +589,13 @@ class CombatLogApp:
             
             if not pipe_path:
                 retry_count += 1
-                if retry_count % 20 == 0:
+                if retry_count % 10 == 0:
                     try:
                         with open("crash_log.txt", "a") as f:
-                            f.write(f"--- PIPE DISCOVERY FAILED {datetime.now()} (retry {retry_count}) ---\n")
+                            f.write(f"--- PIPE DISCOVERY ATTEMPT {datetime.now()} (retry {retry_count}) ---\n")
+                            # List .tmp files to see if engine created one
+                            tmps = [tf for tf in os.listdir(".") if tf.startswith("engine_pid_")]
+                            f.write(f"  Existing signals: {tmps}\n")
                     except: pass
                 if retry_count > 1200: # 10 minutes
                     try:
@@ -1187,7 +1194,7 @@ class CombatLogApp:
             
         # Debounce/Lock
         now = time.time()
-        if hasattr(self, '_last_test_toggle') and now - self._last_test_toggle < 0.5:
+        if now - self._last_test_toggle < 0.5:
             return
         self._last_test_toggle = now
 

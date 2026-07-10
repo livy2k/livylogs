@@ -492,14 +492,16 @@ void e_t(void* arg) {
         HANDLE hp = CreateNamedPipe(d_pn, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT, 1, 65536, 65536, 0, NULL);
         if (hp == INVALID_HANDLE_VALUE) { 
             // If pipe exists, maybe wait or try to reuse? Usually we kill old ones first.
-            Sleep(500); continue; 
+            Sleep(250); continue; 
         }
         g_pipe = hp;
 
         // Create an empty file to signal our PID and pipe name ONLY when pipe is ready
-        FILE* pf = fopen(pid_file, "w");
+        // We use "wb" and immediate flush to be as fast as possible
+        FILE* pf = fopen(pid_file, "wb");
         if (pf) {
             fprintf(pf, "%lu", GetCurrentProcessId());
+            fflush(pf);
             fclose(pf);
         }
 

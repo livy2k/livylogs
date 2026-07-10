@@ -1,0 +1,131 @@
+[Spatial]  00:00:00 [GROUP] System: Welcome to the test log.
+[Spatial]  01:35:47 [GROUP] Eliemau hits Fikiosa for 247 points of damage.
+[Spatial]  01:35:49 [GROUP] Rehote hits Turd for 495 points of damage.
+[Spatial]  01:35:50 [GROUP] Rehote hits Fikiosa for 73 points of damage.
+[Spatial]  01:35:52 [GROUP] Leloglo looted A Damaged Datapad from a fallen foe.
+[Spatial]  01:35:54 [GROUP] You receive 959 points of General experience.
+[Spatial]  01:35:55 [GROUP] Leloglo hits Rehote for 354 points of damage.
+[Spatial]  01:35:56 [GROUP] Turd has defeated a SpecForce marine.
+[Spatial]  01:35:57 [GROUP] You receive 359 points of General experience.
+[Spatial]  01:35:59 [GROUP] Rehote hits Ma-o for 335 points of damage.
+[Spatial]  01:36:01 [GROUP] Ma-o has defeated a SpecForce marine.
+[Spatial]  01:36:02 [GROUP] Leloglo looted 99 credits from a fallen foe.
+[Spatial]  01:36:04 [GROUP] Fikiosa looted A Damaged Datapad from a fallen foe.
+[Spatial]  01:36:06 [GROUP] Eliemau hits Fikiosa for 303 points of damage.
+[Spatial]  01:36:08 [GROUP] You receive 550 points of General experience.
+[Spatial]  01:36:09 [GROUP] Ma-o has defeated a SpecForce marine.
+[Spatial]  01:36:11 [GROUP] You has defeated a SpecForce marine.
+[Spatial]  01:36:12 [GROUP] Rehote hits Eliemau for 241 points of damage.
+[Spatial]  01:36:13 [GROUP] You hits Leloglo for 100 points of damage.
+[Spatial]  01:36:15 [GROUP] Eliemau hits Ma-o for 449 points of damage.
+[Spatial]  01:36:17 [GROUP] Turd looted A Damaged Datapad from a fallen foe.
+[Spatial]  01:36:18 [GROUP] You hits Ma-o for 287 points of damage.
+[Spatial]  01:36:19 [GROUP] Ma-o hits Rehote for 180 points of damage.
+[Spatial]  01:36:20 [GROUP] Ma-o hits Rehote for 490 points of damage.
+[Spatial]  01:36:21 [GROUP] Rehote hits Eliemau for 347 points of damage.
+[Spatial]  01:36:23 [GROUP] You hits Rehote for 496 points of damage.
+[Spatial]  01:36:25 [GROUP] You hits Rehote for 351 points of damage.
+[Spatial]  01:36:26 [GROUP] Turd hits Fikiosa for 72 points of damage.
+[Spatial]  01:36:28 [GROUP] You hits Ma-o for 313 points of damage.
+[Spatial]  01:36:30 [GROUP] You receive 135 points of Weapon experience.
+[Spatial]  01:36:30 [GROUP] Fikiosa hits Leloglo for 237 points of damage.
+[Spatial]  01:36:33 [GROUP] Leloglo hits Rehote for 168 points of damage.
+[Spatial]  01:36:34 [GROUP] Fikiosa has defeated a SpecForce marine.
+[Spatial]  01:36:34 [GROUP] You looted 133 credits from a fallen foe.
+[Spatial]  01:36:35 [GROUP] Ma-o hits Fikiosa for 160 points of damage.
+[Spatial]  01:36:36 [GROUP] Leloglo hits Turd for 53 points of damage.
+[Spatial]  01:36:37 [GROUP] Turd hits Fikiosa for 287 points of damage.
+[Spatial]  01:36:38 [GROUP] Fikiosa hits Turd for 203 points of damage.
+[Spatial]  01:36:39 [GROUP] Leloglo hits Ma-o for 351 points of damage.
+[Spatial]  01:36:41 [GROUP] Eliemau has defeated a SpecForce marine.
+[Spatial]  01:36:42 [GROUP] Fikiosa hits Turd for 332 points of damage.
+[Spatial]  01:36:43 [GROUP] Ma-o hits Turd for 320 points of damage.
+[Spatial]  01:36:45 [GROUP] Leloglo hits Ma-o for 203 points of damage.
+[Spatial]  01:36:47 [GROUP] Eliemau hits Ma-o for 486 points of damage.
+[Spatial]  01:36:48 [GROUP] You hits Fikiosa for 78 points of damage.
+[Spatial]  01:36:49 [GROUP] Turd hits Ma-o for 414 points of damage.
+[Spatial]  01:36:50 [GROUP] Turd hits Leloglo for 319 points of damage.
+[Spatial]  01:36:52 [GROUP] You receive 789 points of Combat experience.
+[Spatial]  01:36:53 [GROUP] Rehote has defeated a SpecForce marine.
+[Spatial]  01:36:54 [GROUP] Leloglo hits Eliemau for 405 points of damage.
+[Spatial]  01:36:55 [GROUP] Eliemau hits Leloglo for 209 points of damage.
+[Spatial]  01:36:57 [GROUP] You receive 184 points of General experience.
+[Spatial]  01:36:58 [GROUP] Fikiosa looted 136 credits from a fallen foe.
+[Spatial]  01:37:00 [GROUP] Ma-o hits Rehote for 324 points of damage.
+[Spatial]  01:37:02 [GROUP] Eliemau hits You for 425 points of damage.
+[Spatial]  01:37:04 [GROUP] Rehote hits You for 420 points of damage.
+[Spatial]  01:37:04 [GROUP] Rehote has defeated a SpecForce marine.
+[Spatial]  01:37:05 [GROUP] Eliemau looted 94 credits from a fallen foe.
+[Spatial]  01:37:06 [GROUP] Turd looted 143 credits from a fallen foe.
+[Spatial]  01:37:08 [GROUP] Fikiosa looted Broken Electrobinoculars from a fallen foe.
+[Spatial]  01:37:10 [GROUP] Fikiosa hits Leloglo for 451 points of damage.
+[Spatial]  01:37:11 [GROUP] Turd hits Eliemau for 305 points of damage.
+[Spatial]  01:37:12 [GROUP] Fikiosa looted A Damaged Datapad from a fallen foe.
+[Spatial]  01:37:14 [GROUP] Eliemau hits Fikiosa for 290 points of damage.
+[Spatial]  01:37:15 [GROUP] You receive 661 points of Medicine experience.
+[Spatial]  01:37:15 [GROUP] Rehote hits Fikiosa for 365 points of damage.
+[Spatial]  01:37:17 [GROUP] Rehote looted 121 credits from a fallen foe.
+[Spatial]  01:37:18 [GROUP] Eliemau looted 89 credits from a fallen foe.
+[Spatial]  01:37:20 [GROUP] Turd hits Fikiosa for 161 points of damage.
+[Spatial]  01:37:21 [GROUP] Rehote looted 115 credits from a fallen foe.
+[Spatial]  01:37:23 [GROUP] Rehote hits Eliemau for 323 points of damage.
+[Spatial]  01:37:23 [GROUP] Eliemau has defeated a SpecForce marine.
+[Spatial]  01:37:24 [GROUP] Leloglo hits Fikiosa for 145 points of damage.
+[Spatial]  01:37:25 [GROUP] You hits Fikiosa for 318 points of damage.
+[Spatial]  01:37:27 [GROUP] You receive 874 points of Medicine experience.
+[Spatial]  01:37:29 [GROUP] Rehote hits Eliemau for 413 points of damage.
+[Spatial]  01:37:30 [GROUP] Fikiosa hits Eliemau for 208 points of damage.
+[Spatial]  01:37:31 [GROUP] Eliemau hits Turd for 195 points of damage.
+[Spatial]  01:37:32 [GROUP] Turd hits Fikiosa for 190 points of damage.
+[Spatial]  01:37:34 [GROUP] Ma-o has defeated a SpecForce marine.
+[Spatial]  01:37:34 [GROUP] You looted CDEF Pistol from a fallen foe.
+[Spatial]  01:37:36 [GROUP] Ma-o hits Rehote for 344 points of damage.
+[Spatial]  01:37:37 [GROUP] Ma-o hits Fikiosa for 81 points of damage.
+[Spatial]  01:37:39 [GROUP] Fikiosa hits Leloglo for 183 points of damage.
+[Spatial]  01:37:40 [GROUP] Leloglo hits Eliemau for 462 points of damage.
+[Spatial]  01:37:41 [GROUP] Leloglo hits Ma-o for 353 points of damage.
+[Spatial]  01:37:42 [GROUP] Eliemau hits Fikiosa for 247 points of damage.
+[Spatial]  01:37:43 [GROUP] You has defeated a SpecForce marine.
+[Spatial]  01:37:44 [GROUP] Ma-o hits Leloglo for 378 points of damage.
+[Spatial]  01:37:46 [GROUP] Rehote hits Ma-o for 196 points of damage.
+[Spatial]  01:37:47 [GROUP] Eliemau hits You for 245 points of damage.
+[Spatial]  01:37:49 [GROUP] You receive 777 points of General experience.
+[Spatial]  01:37:50 [GROUP] You looted A Damaged Datapad from a fallen foe.
+[Spatial]  01:37:51 [GROUP] Fikiosa hits Eliemau for 448 points of damage.
+[Spatial]  01:37:53 [GROUP] Fikiosa hits Rehote for 285 points of damage.
+[Spatial]  01:37:54 [GROUP] Fikiosa hits Leloglo for 259 points of damage.
+[Spatial]  01:37:55 [GROUP] You looted 105 credits from a fallen foe.
+[Spatial]  01:37:56 [GROUP] You has defeated a SpecForce marine.
+[Spatial]  01:37:57 [GROUP] Turd looted 81 credits from a fallen foe.
+[Spatial]  01:37:58 [GROUP] You hits Rehote for 131 points of damage.
+[Spatial]  01:37:59 [GROUP] You hits Fikiosa for 258 points of damage.
+[Spatial]  01:38:00 [GROUP] Turd hits Rehote for 210 points of damage.
+[Spatial]  01:38:02 [GROUP] You receive 822 points of General experience.
+[Spatial]  01:38:03 [GROUP] Turd has defeated a SpecForce marine.
+[Spatial]  01:38:05 [GROUP] You hits Fikiosa for 143 points of damage.
+[Spatial]  01:38:06 [GROUP] Rehote hits Leloglo for 178 points of damage.
+[Spatial]  01:38:07 [GROUP] Ma-o looted Stun Baton from a fallen foe.
+[Spatial]  01:38:09 [GROUP] You has defeated a SpecForce marine.
+[Spatial]  01:38:10 [GROUP] Fikiosa looted CDEF Pistol from a fallen foe.
+[Spatial]  01:38:10 [GROUP] Rehote hits Leloglo for 103 points of damage.
+[Spatial]  01:38:11 [GROUP] Ma-o hits You for 438 points of damage.
+[Spatial]  01:38:12 [GROUP] You hits Rehote for 345 points of damage.
+[Spatial]  01:38:13 [GROUP] Leloglo hits Turd for 204 points of damage.
+[Spatial]  01:38:14 [GROUP] Rehote hits Eliemau for 126 points of damage.
+[Spatial]  01:38:16 [GROUP] Ma-o hits You for 408 points of damage.
+[Spatial]  01:38:16 [GROUP] Fikiosa hits Leloglo for 194 points of damage.
+[Spatial]  01:38:17 [GROUP] Eliemau hits Leloglo for 269 points of damage.
+[Spatial]  01:38:18 [GROUP] Leloglo looted 81 credits from a fallen foe.
+[Spatial]  01:38:19 [GROUP] You looted Broken Electrobinoculars from a fallen foe.
+[Spatial]  01:38:21 [GROUP] Eliemau has defeated a SpecForce marine.
+[Spatial]  01:38:23 [GROUP] Leloglo has defeated a SpecForce marine.
+[Spatial]  01:38:24 [GROUP] You receive 429 points of Medicine experience.
+[Spatial]  01:38:37 [GROUP] You looted 84 credits from a fallen foe.
+[Spatial]  01:38:38 [GROUP] Fikiosa hits Ma-o for 444 points of damage.
+[Spatial]  01:38:40 [GROUP] You hits Ma-o for 286 points of damage.
+[Spatial]  01:38:42 [GROUP] Ma-o has defeated a SpecForce marine.
+[Spatial]  01:38:43 [GROUP] Fikiosa hits Rehote for 317 points of damage.
+[Spatial]  01:38:44 [GROUP] Rehote looted 81 credits from a fallen foe.
+[Spatial]  01:38:45 [GROUP] Turd hits Rehote for 282 points of damage.
+[Spatial]  01:38:47 [GROUP] Eliemau hits Fikiosa for 64 points of damage.
+[Spatial]  01:38:48 [GROUP] Leloglo has defeated a SpecForce marine.

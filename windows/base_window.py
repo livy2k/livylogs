@@ -55,6 +55,14 @@ class BasePopoutWindow:
         self.window.geometry(f"{w}x{h}+{x}+{y}")
         self.window.configure(bg=WINDOW_BG)
         self.window.overrideredirect(True)
+        # Ensure it doesn't show in taskbar by setting it as a tool window
+        try:
+            GWL_EXSTYLE = -20
+            WS_EX_TOOLWINDOW = 0x00000080
+            hwnd = __import__("ctypes").windll.user32.GetParent(self.window.winfo_id())
+            style = __import__("ctypes").windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            __import__("ctypes").windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
+        except: pass
         self.window.attributes("-alpha", self.app.current_alpha)
         
         if not self.fixed_size:

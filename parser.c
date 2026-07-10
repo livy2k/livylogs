@@ -545,7 +545,9 @@ void e_t(void* arg) {
     CloseHandle(hp);
 }
 
-int main(int a, char** v) {
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
+    int a = __argc;
+    char** v = __argv;
     c_o();
     
     char p_c[128];
@@ -555,6 +557,8 @@ int main(int a, char** v) {
     PROCESS_INFORMATION pi;
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
     ZeroMemory(&pi, sizeof(pi));
 
     // Removed engine_debug.txt logging to keep environment clean
@@ -569,8 +573,8 @@ int main(int a, char** v) {
     char cmd[1024];
     sprintf(cmd, "pythonw.exe livylogs.py");
 
-    if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-        if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+    if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
             // Fallback to ShellExecute if absolute path fails
             ShellExecuteA(NULL, "open", "livylogs.py", NULL, NULL, SW_HIDE);
         } else {

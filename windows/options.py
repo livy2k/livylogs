@@ -112,7 +112,33 @@ class OptionsWindow(BasePopoutWindow):
 
         add_btn("SELECT LOG (MATCHING CHAR)", self.app.select_log_filtered)
         add_btn("BROWSE ALL LOGS", self.app.change_log_path)
-        add_btn("RESET ALL DATA", lambda: self.app.analyze_log(manual=True))
+        add_btn("RESET ALL DATA", self.app.reset_all_data_manual)
+
+        # Test Mode Section
+        tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
+        tk.Label(self.content_container, text="TESTING", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(0, 5))
+        
+        test_btn = tk.Label(self.content_container, text="HOLD TO GENERATE TEST DATA", bg=BUTTON_BG, fg=TEXT_PRIMARY, 
+                           font=("Segoe UI", 9, "bold"), pady=12, cursor="hand2")
+        test_btn.pack(fill=tk.X, pady=4)
+
+        def on_press(e):
+            test_btn.config(bg=ACCENT_BLUE)
+            self.app.toggle_test_mode(True)
+            self.refresh()
+
+        def on_release(e):
+            test_btn.config(bg=BUTTON_BG)
+            self.app.toggle_test_mode(False)
+            self.refresh()
+
+        test_btn.bind("<Button-1>", on_press)
+        test_btn.bind("<ButtonRelease-1>", on_release)
+        test_btn.bind("<Enter>", lambda e: test_btn.config(bg=BUTTON_HOVER) if not self.app.test_mode.get() else None)
+        test_btn.bind("<Leave>", lambda e: test_btn.config(bg=BUTTON_BG) if not self.app.test_mode.get() else None)
+        
+        tk.Label(self.content_container, text="Hold this button to temporarily switch to test log and simulate activity.", 
+                 bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7), wraplength=250, justify="left").pack(anchor="w", pady=(2, 5))
 
     def close(self):
         super().close()

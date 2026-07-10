@@ -171,7 +171,7 @@ class ThemedMessagebox(tk.Toplevel):
         def wrapped_on_close(res):
             if on_close: on_close(res)
         
-        box = ThemedMessagebox(parent, title, message, "warning", on_close=on_close)
+        box = ThemedMessagebox(parent, title, message, "warning", on_close=wrapped_on_close)
         # Re-configure for Yes/No
         for child in box.winfo_children(): # Find the border
             for inner in child.winfo_children(): # Find the inner frame

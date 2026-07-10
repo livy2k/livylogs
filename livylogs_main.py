@@ -69,6 +69,14 @@ class CombatLogApp:
         self.current_alpha = initial_alpha
         self.root.attributes("-alpha", initial_alpha)
         self.root.overrideredirect(True)
+        # Ensure it doesn't show in taskbar by setting it as a tool window
+        try:
+            GWL_EXSTYLE = -20
+            WS_EX_TOOLWINDOW = 0x00000080
+            hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
+        except: pass
         
         self.file_path_var = tk.StringVar(value=initial_log_path)
         self.disable_warnings = tk.BooleanVar(value=self.config.getboolean("General", "disable_warnings", fallback=False))
@@ -78,6 +86,8 @@ class CombatLogApp:
             self.char_name.set(extract_character_id(initial_log_path))
         self.api_url = tk.StringVar(value=self.config.get("General", "api_url", fallback="https://livy.logs/sync"))
         self.enable_sync = tk.BooleanVar(value=self.config.getboolean("General", "enable_sync", fallback=False))
+        self.test_mode = tk.BooleanVar(value=False)
+        self.test_thread = None
 
         self.skimmers_win = SkimmersWindow(self)
         self.damage_meter_win = DamageMeterWindow(self)
@@ -346,8 +356,23 @@ class CombatLogApp:
                         win.withdraw()
 
     def start_c_engine(self, log_path):
-        # C Engine now starts Python
-        pass
+        # Terminate any existing engine processes first
+        try:
+            os.system('taskkill /F /IM LivyLogsEngine.exe /IM parser.exe /IM LL_Engine.exe /T 2>nul')
+        except: pass
+        
+        # C Engine now starts Python, but we can also restart it if needed
+        # We use the 'LivyLogsEngine.exe' as the primary one
+        exe_path = os.path.join(os.getcwd(), "LivyLogsEngine.exe")
+        if os.path.exists(exe_path):
+            try:
+                # Use subprocess to start it detached
+                import subprocess
+                # We pass the log path as an argument. 
+                # parser.c expects argv[1] to be the log path if argc >= 2
+                subprocess.Popen([exe_path, log_path], creationflags=subprocess.CREATE_NO_WINDOW)
+            except Exception as e:
+                print(f"Error starting engine: {e}")
 
     def build_layout(self):
         # style = ttk.Style()
@@ -436,7 +461,12 @@ class CombatLogApp:
         self.lbl_det = btn("DETAILS", self.details_win.show)
         self.lbl_skm = btn("SKIMMERS", self.skimmers_win.show)
         self.lbl_ldb = btn("LEADERBOARD", self.leaderboard_win.show)
-        self.lbl_version = tk.Label(nav, text="1.0", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8)).pack(side=tk.RIGHT)
+        
+        self.lbl_status = tk.Label(nav, text="DISCONNECTED", bg=PANEL_DARK, fg="#ff4444", font=("Segoe UI", 7, "bold"))
+        self.lbl_status.pack(side=tk.RIGHT, padx=5)
+        
+        self.lbl_version = tk.Label(nav, text="1.0", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8))
+        self.lbl_version.pack(side=tk.RIGHT)
 
         # Spacer to keep minimal height
         tk.Frame(outer, bg=WINDOW_BG, height=2).pack()
@@ -460,6 +490,9 @@ class CombatLogApp:
         retry_count = 0
         
         while self.running:
+            if hasattr(self, 'lbl_status'):
+                self.lbl_status.config(text="RECONNECTING...", fg="#ffaa00")
+            
             if not kernel32.WaitNamedPipeW(pipe_path, 1000):
                 retry_count += 1
                 if retry_count > 300: # 5 minutes total retry
@@ -488,6 +521,10 @@ class CombatLogApp:
             h = kernel32.CreateFileW(pipe_path, 0x80000000, 0, None, 3, 0x80, None)
             if h == -1:
                 time.sleep(1); continue
+            
+            if hasattr(self, 'lbl_status'):
+                self.lbl_status.config(text="CONNECTED", fg="#00ff88")
+            
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
                 if kernel32.ReadFile(h, buf, 65536, ctypes.byref(bytes_read), None) and bytes_read.value > 0:
@@ -978,7 +1015,10 @@ class CombatLogApp:
         new_char_id = extract_character_id(p)
         
         def finalize(accepted=True):
-            if not accepted: return
+            if not accepted:
+                # User clicked NO - return to opening log selection
+                self.root.after(100, self.change_log_path)
+                return
             
             self.file_path_var.set(p)
             detected_name = extract_character_id(p)
@@ -991,7 +1031,10 @@ class CombatLogApp:
                 
                 self.save_config()
                 self.start_c_engine(p)
-                self.options_win.refresh(force=True)
+                # User clicked YES and finished - close options window
+                if hasattr(self, 'options_win') and self.options_win and self.options_win.window and self.options_win.window.winfo_exists():
+                    self.options_win.close()
+                self.refresh_ui_only(force=True)
 
             if skip_prompt:
                 apply_settings(None)
@@ -1007,6 +1050,92 @@ class CombatLogApp:
                                       on_close=finalize)
         else:
             finalize(True)
+
+    def reset_all_data_manual(self):
+        self.reset_damage_meter_manual()
+        self.reset_leaderboard_manual()
+        self.reset_skimmers_manual()
+        self.reset_details_manual()
+        self.refresh_ui_only(force=True)
+
+    def toggle_test_mode(self, active=None):
+        if active is not None:
+            self.test_mode.set(active)
+            
+        if self.test_mode.get():
+            # Auto-select test log
+            self.original_log_path = self.file_path_var.get()
+            test_log = os.path.join(os.getcwd(), "test_chatlog.txt")
+            if not os.path.exists(test_log):
+                with open(test_log, "w") as f:
+                    f.write("[Spatial]  00:00:00 [GROUP] System: Welcome to the test log.\n")
+            
+            self.file_path_var.set(test_log)
+            self.start_c_engine(test_log)
+            
+            if not self.test_thread or not self.test_thread.is_alive():
+                self.test_thread = threading.Thread(target=self.test_data_generator_loop, daemon=True)
+                self.test_thread.start()
+            
+            # Immediate refresh to show connection status
+            self.refresh_ui_only(force=True)
+        else:
+            # Restore original log if it existed
+            if hasattr(self, 'original_log_path') and self.original_log_path:
+                self.file_path_var.set(self.original_log_path)
+                if os.path.exists(self.original_log_path):
+                    self.start_c_engine(self.original_log_path)
+            
+            # Immediate refresh to show connection status
+            self.refresh_ui_only(force=True)
+
+    def test_data_generator_loop(self):
+        import random
+        import time
+        
+        players = ["You", "Turd", "Leloglo", "Rehote", "Ma-o", "Fikiosa", "Eliemau"]
+        items = ["Work light", "Broken Electrobinoculars", "A Damaged Datapad", "CDEF Pistol", "Stun Baton"]
+        xp_types = ["Combat", "Weapon", "General", "Medicine"]
+        
+        while self.running and self.test_mode.get():
+            log_path = os.path.join(os.getcwd(), "test_chatlog.txt")
+            try:
+                with open(log_path, "a") as f:
+                    ts = datetime.now().strftime("%H:%M:%S")
+                    event_type = random.random()
+                    
+                    if event_type < 0.6: # Damage/Combat
+                        p1 = random.choice(players)
+                        p2 = random.choice(players)
+                        while p1 == p2: p2 = random.choice(players)
+                        dmg = random.randint(50, 500)
+                        line = f"[Spatial]  {ts} [GROUP] {p1} hits {p2} for {dmg} points of damage.\n"
+                        f.write(line)
+                    elif event_type < 0.7: # Loot credits
+                        p = random.choice(players)
+                        credits = random.randint(80, 150)
+                        line = f"[Spatial]  {ts} [GROUP] {p} looted {credits} credits from a fallen foe.\n"
+                        f.write(line)
+                    elif event_type < 0.8: # Loot item
+                        p = random.choice(players)
+                        item = random.choice(items)
+                        line = f"[Spatial]  {ts} [GROUP] {p} looted {item} from a fallen foe.\n"
+                        f.write(line)
+                    elif event_type < 0.9: # Mobs
+                        p = random.choice(players)
+                        line = f"[Spatial]  {ts} [GROUP] {p} has defeated a SpecForce marine.\n"
+                        f.write(line)
+                    else: # XP
+                        xp = random.randint(100, 1000)
+                        xt = random.choice(xp_types)
+                        line = f"[Spatial]  {ts} [GROUP] You receive {xp} points of {xt} experience.\n"
+                        f.write(line)
+                    
+                    f.flush()
+            except Exception as e:
+                print(f"Test Generator Error: {e}")
+            
+            time.sleep(random.uniform(0.5, 2.0))
 
     def reset_damage_meter_manual(self):
         self.last_dm_reset = datetime.now()

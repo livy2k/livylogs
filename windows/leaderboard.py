@@ -153,26 +153,29 @@ class LeaderboardWindow(BasePopoutWindow):
 
         if self.drill_down_player:
             p_data = self.app.player_data.get(self.drill_down_player, {})
-            targets = p_data.get("targets", {})
             cat = getattr(self.app, 'leaderboard_cat', 'damage')
             
-            drill_list = []
-            for t_name, t_vals in targets.items():
-                val = t_vals.get(cat, 0)
-                if val > 0: drill_list.append((t_name, val))
-            
-            sorted_drill = sorted(drill_list, key=lambda x: x[1], reverse=True)
-            
-            if not sorted_drill:
-                tk.Label(self.list_container, text=f"No {cat} breakdown for {self.drill_down_player}", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+            if cat == "loot":
+                # Special view for loot: show total credits and then items
+                credits = p_data.get("total_credits", 0)
+                if credits > 0:
+                    f = tk.Frame(self.list_container, bg=self.window["bg"]); f.pack(fill=tk.X, pady=(5, 10))
+                    tk.Label(f, text="TOTAL CREDITS", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(side=tk.LEFT, padx=5)
+                    tk.Label(f, text=f"{credits:,.0f}cr", bg=self.window["bg"], fg=ACCENT_BLUE, font=("Segoe UI", 12, "bold")).pack(side=tk.RIGHT, padx=5)
+                
+                items = p_data.get("looted_items", [])
+                if items:
+                    tk.Label(self.list_container, text="RECENT ITEMS", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=5, pady=(5, 2))
+                    # Show items in reverse order (most recent first)
+                    for item in reversed(items):
+                        f = tk.Frame(self.list_container, bg=self.window["bg"]); f.pack(fill=tk.X, pady=1)
+                        tk.Label(f, text=item, bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=15)
+                
+                if not credits and not items:
+                    tk.Label(self.list_container, text="No detailed loot data", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
                 return
 
-            for name, val in sorted_drill:
-                f = tk.Frame(self.list_container, bg=self.window["bg"]); f.pack(fill=tk.X, pady=2)
-                tk.Label(f, text=name, bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=5)
-                val_str = f"{val:,.0f}"
-                tk.Label(f, text=val_str, bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 9)).pack(side=tk.RIGHT, padx=5)
-            return
+            targets = p_data.get("targets", {})
 
         # Regular Leaderboard View
         cat = getattr(self.app, 'leaderboard_cat', 'damage')
@@ -183,8 +186,13 @@ class LeaderboardWindow(BasePopoutWindow):
                 if val > 0: data_list.append((name, val))
         elif cat == "loot":
             for name, data in self.app.player_data.items():
-                val = data.get("lb_loot", 0)
+                val = data.get("total_credits", 0)
                 if val > 0: data_list.append((name, val))
+            # If no credits yet, fall back to loot count to show something
+            if not data_list:
+                for name, data in self.app.player_data.items():
+                    val = data.get("lb_loot", 0)
+                    if val > 0: data_list.append((name, val))
 
         sorted_list = sorted(data_list, key=lambda x: x[1], reverse=True)
         
@@ -234,7 +242,11 @@ class LeaderboardWindow(BasePopoutWindow):
             if is_boss:
                 tk.Label(f, text="☠", bg=self.window["bg"], fg="#ff4444", font=("Segoe UI", 11)).pack(side=tk.LEFT)
 
-            val_str = f"{val:,.0f}" if isinstance(val, (int, float)) else str(val)
+            if cat == "loot" and "total_credits" in self.app.player_data.get(name, {}):
+                val_str = f"{val:,.0f}cr"
+            else:
+                val_str = f"{val:,.0f}" if isinstance(val, (int, float)) else str(val)
+            
             v_lbl = tk.Label(f, text=val_str, bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 9))
             v_lbl.pack(side=tk.RIGHT, padx=5)
             v_lbl.bind("<Button-1>", lambda e, n=name: self.drill_down(n))

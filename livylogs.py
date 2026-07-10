@@ -23,9 +23,8 @@ def main():
         import traceback
         import os
         import datetime
-        error_msg = f"--- {datetime.datetime.now()} ---\n" + traceback.format_exc()
+        error_msg = f"--- UI CRASH {datetime.datetime.now()} ---\n" + traceback.format_exc()
         print(f"CRITICAL ERROR: {e}")
-        print(error_msg)
         try:
             with open("crash_log.txt", "a") as f:
                 f.write(error_msg + "\n")
@@ -35,6 +34,11 @@ def main():
         except: pass
     finally:
         if mutex: kernel32.CloseHandle(mutex)
+        try:
+            with open("crash_log.txt", "a") as f:
+                import datetime
+                f.write(f"--- APP EXIT {datetime.datetime.now()} ---\n")
+        except: pass
 
 if __name__ == "__main__":
     main()

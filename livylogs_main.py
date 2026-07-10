@@ -35,73 +35,6 @@ from windows.details import DetailsWindow
 from windows.options import OptionsWindow
 from windows.alexa import AlexaWindow
 
-class ClickCatcher:
-    def __init__(self, app):
-        self.app = app
-        self.window = None
-        self.active = False
-
-    def show(self):
-        if self.window and self.window.winfo_exists():
-            self.window.deiconify()
-            self.window.lift()
-            self.active = True
-            # Safety: Hide it after 5 seconds if no click was caught
-            self.app.root.after(5000, self.hide_if_active)
-            return
-
-        self.window = tk.Toplevel(self.app.root)
-        self.window.overrideredirect(True)
-        # 0.002 might be TOO invisible for some graphics drivers to capture the click
-        self.window.attributes("-alpha", 0.005) 
-        self.window.attributes("-topmost", True)
-        self.window.configure(bg="red") # Using a visible but faint color for testing
-        
-        # Cover entire primary screen
-        sw = self.window.winfo_screenwidth()
-        sh = self.window.winfo_screenheight()
-        self.window.geometry(f"{sw}x{sh}+0+0")
-        
-        # Transparent color hack for Windows to make it truly invisible but clickable
-        # (Though alpha 0.002 is usually enough)
-        # self.window.attributes("-transparentcolor", "black") 
-        
-        self.window.bind("<Button-1>", self.on_click)
-        self.window.bind("<Button-2>", self.on_click)
-        self.window.bind("<Button-3>", self.on_click)
-        
-        self.active = True
-        # Safety: Hide it after 5 seconds if no click was caught
-        self.app.root.after(5000, self.hide_if_active)
-
-    def hide_if_active(self):
-        if self.active:
-            self.hide()
-
-    def hide(self):
-        if self.window and self.window.winfo_exists():
-            self.window.withdraw()
-        self.active = False
-
-    def on_click(self, event=None):
-        # print("DEBUG: ClickCatcher clicked")
-        self.hide()
-        # Bring main app and all windows to front
-        self.app.root.deiconify()
-        self.app.root.attributes("-topmost", True)
-        self.app.root.lift()
-        # Ensure alpha is maintained
-        if self.app.root.attributes("-alpha") != self.app.current_alpha:
-            self.app.root.attributes("-alpha", self.app.current_alpha)
-        # Also force a re-pin via engine if possible, but for now just lift
-        for win in self.app._get_managed_windows():
-            if win.winfo_exists() and win.state() != "withdrawn":
-                if not win.attributes("-topmost"):
-                    win.attributes("-topmost", True)
-                if win.attributes("-alpha") != self.app.current_alpha:
-                    win.attributes("-alpha", self.app.current_alpha)
-                win.lift()
-        self.app.refresh_ui_only(force=True)
 
 class CombatLogApp:
     def __init__(self, root):
@@ -152,7 +85,6 @@ class CombatLogApp:
         self.details_win = DetailsWindow(self)
         self.options_win = OptionsWindow(self)
         self.alexa_win = AlexaWindow(self)
-        self.click_catcher = ClickCatcher(self)
         
         self._managed_windows = [
             self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
@@ -171,6 +103,7 @@ class CombatLogApp:
         self.loot_data = {}
         self.player_classes = {}
         self.all_events = []
+        self.locally_seen_players = {}
         
         self.load_bosses()
         self.load_filters()
@@ -525,16 +458,30 @@ class CombatLogApp:
     def start_pipe_listener(self):
         pipe_path = r'\\.\pipe\LivyLogsPipe'
         retry_count = 0
-        max_retries = 10 # Allow some time for engine to start/restart
         
         while self.running:
             if not kernel32.WaitNamedPipeW(pipe_path, 1000):
                 retry_count += 1
-                if retry_count > 60: # 60 seconds total retry
-                    # If engine is gone for 60+ seconds, exit UI
-                    print("DEBUG: Engine pipe lost, exiting UI...")
+                if retry_count > 300: # 5 minutes total retry
+                    # If engine is gone for 5 minutes, exit UI
+                    msg = f"DEBUG: Engine pipe lost for 5 mins at {datetime.now()}, exiting UI..."
+                    print(msg)
+                    try:
+                        with open("crash_log.txt", "a") as f:
+                            f.write(f"--- PIPE LOSS EXIT {datetime.now()} ---\n{msg}\n")
+                    except: pass
                     self.root.after(0, self.on_exit)
                     break
+                
+                # Check if parser.exe is still alive
+                if retry_count % 10 == 0:
+                    try:
+                        # We don't have a direct way to know the parent pid easily in cross-process way 
+                        # without more complexity, but we can check if ANY parser.exe is running.
+                        # If not, we might want to exit sooner or try to restart.
+                        pass
+                    except: pass
+                
                 time.sleep(1); continue
             
             retry_count = 0 # Reset on successful wait
@@ -544,14 +491,25 @@ class CombatLogApp:
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
                 if kernel32.ReadFile(h, buf, 65536, ctypes.byref(bytes_read), None) and bytes_read.value > 0:
-                    lines = (leftover + buf.raw[:bytes_read.value].decode('utf-8', 'ignore')).split('\n')
-                    leftover = lines.pop()
-                    for i, line in enumerate(lines):
-                        if line.strip():
-                            try:
-                                data = json.loads(line); data["timestamp"] = datetime.now()
-                                self.process_external_event(data, is_last=(i == len(lines)-1))
-                            except: pass
+                    try:
+                        decoded = buf.raw[:bytes_read.value].decode('utf-8', 'ignore')
+                        lines = (leftover + decoded).split('\n')
+                        leftover = lines.pop()
+                        for i, line in enumerate(lines):
+                            if line.strip():
+                                try:
+                                    data = json.loads(line); data["timestamp"] = datetime.now()
+                                    self.process_external_event(data, is_last=(i == len(lines)-1))
+                                except Exception as e:
+                                    try:
+                                        with open("crash_log.txt", "a") as f:
+                                            f.write(f"--- JSON ERROR {datetime.now()} ---\nLine: {line}\nError: {e}\n")
+                                    except: pass
+                    except Exception as e:
+                        try:
+                            with open("crash_log.txt", "a") as f:
+                                f.write(f"--- READ ERROR {datetime.now()} ---\n{e}\n")
+                        except: pass
                 else:
                     # ReadFile failed or 0 bytes - pipe closed
                     break
@@ -562,14 +520,6 @@ class CombatLogApp:
     def process_external_event(self, event, is_last=False):
         event_type = event.get("type")
         
-        if event_type == "catcher":
-            action = event.get("action")
-            if action == "show":
-                self.root.after(0, self.click_catcher.show)
-            else:
-                self.root.after(0, self.click_catcher.hide)
-            return
-
         if event_type == "stats":
             name = event.get("name")
             if not name: return
@@ -585,6 +535,8 @@ class CombatLogApp:
             p["dm_avoided"] = event.get("avoided", 0)
             p["aoe_hits"] = event.get("aoe", 0)
             p["lb_loot"] = event.get("loot", 0)
+
+            self.locally_seen_players[name] = time.time()
 
             # Map total stats to real-time dm_ stats if combat just started
             if self.app_start_time and (time.time() - self.last_combat_time) <= self.time_window_dm:
@@ -623,12 +575,29 @@ class CombatLogApp:
                         break
             return
 
-        if event_type == "loot":
+        if (event_type == "loot"):
             if source not in self.player_data:
                 self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-            self.player_data[source]["lb_loot"] += 1
-            # Also keep track of what was looted in a separate list if needed, 
-            # but for now lb_loot is what the Leaderboard uses.
+            
+            p = self.player_data[source]
+            p["lb_loot"] = p.get("lb_loot", 0) + 1
+            
+            # New loot fields
+            if "total_credits" not in p: p["total_credits"] = 0
+            if "looted_items" not in p: p["looted_items"] = []
+            
+            credits = event.get("credits", 0)
+            item = event.get("item", "Unknown")
+            
+            if credits > 0:
+                p["total_credits"] += credits
+            elif item and item != "Unknown":
+                p["looted_items"].append(item)
+                if len(p["looted_items"]) > 100: # Limit history
+                    p["looted_items"].pop(0)
+            
+            self.locally_seen_players[source] = time.time()
+            return
             
         is_damage = damage > 0 or event_type in ["dealt", "taken", "other_dealt"]
         is_healing = healing > 0 or event_type == "healing"
@@ -777,7 +746,10 @@ class CombatLogApp:
                             self.last_sync_time = time.time()
                 
             except Exception as e:
-                pass # Silent fail for now to avoid spamming
+                try:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- SYNC ERROR {datetime.now()} ---\n{e}\n")
+                except: pass
             
             time.sleep(10) # Sync every 10 seconds
 
@@ -804,21 +776,37 @@ class CombatLogApp:
             self.tray_icon.on_activate = lambda: self.root.after(0, self.toggle_visibility)
             threading.Thread(target=self.tray_icon.run, daemon=True).start()
         except Exception as e:
-            pass # Silent setup fail
+            try:
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"--- TRAY ERROR {datetime.now()} ---\n{e}\n")
+            except: pass
             
     def on_exit(self, icon=None, item=None):
+        if not self.running: return
         self.running = False
+        
+        # Add a watchdog timer to force exit if cleanup hangs
+        def force_kill():
+            time.sleep(2)
+            try:
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"--- WATCHDOG FORCE EXIT {datetime.now()} ---\n")
+            except: pass
+            os._exit(1)
+        threading.Thread(target=force_kill, daemon=True).start()
+
+        try:
+            with open("crash_log.txt", "a") as f:
+                f.write(f"--- ON_EXIT CALLED {datetime.now()} ---\n")
+        except: pass
         if hasattr(self, 'tray_icon'):
             try:
                 self.tray_icon.stop()
             except: pass
         
         # Kill any engine processes that might be running
-        if self.engine_process: 
-            try:
-                os.system(f"taskkill /F /T /PID {self.engine_process.pid}")
-            except: pass
-
+        # We use a broad kill only if we are the ones who started it 
+        # or if we are shutting down completely.
         os.system("taskkill /F /IM LL_Engine.exe /T")
         os.system("taskkill /F /IM LivyLogsEngine.exe /T")
         os.system("taskkill /F /IM parser.exe /T")

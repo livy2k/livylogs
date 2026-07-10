@@ -74,7 +74,9 @@ HANDLE g_pipe = INVALID_HANDLE_VALUE;
 void send_raw_event(HANDLE h, const char* msg) {
     if (h == INVALID_HANDLE_VALUE) return;
     DWORD b_w;
-    WriteFile(h, msg, strlen(msg), &b_w, NULL);
+    if (!WriteFile(h, msg, strlen(msg), &b_w, NULL)) {
+        // Pipe might be broken
+    }
     WriteFile(h, "\n", 1, &b_w, NULL);
 }
 
@@ -168,7 +170,9 @@ void s_e(HANDLE h, const char* t, const char* s_c, const char* t_g, double d_m, 
             t, e_s, e_t, d_m, h_l, e_a, e_i, m_t ? "true" : "false");
     
     DWORD w_b;
-    WriteFile(h, j, (DWORD)strlen(j), &w_b, NULL);
+    if (!WriteFile(h, j, (DWORD)strlen(j), &w_b, NULL)) {
+        // Handle error
+    }
 }
 
 void s_s(HANDLE h) {
@@ -179,7 +183,9 @@ void s_s(HANDLE h) {
         sprintf(j, "{\"type\": \"stats\", \"name\": \"%s\", \"damage\": %.2f, \"healing\": %.2f, \"taken\": %.2f, \"hits\": %d, \"misses\": %d, \"avoided\": %d, \"aoe\": %d, \"loot\": %d}\n",
                 e_n, g_players[i].damage, g_players[i].healing, g_players[i].taken, g_players[i].hits, g_players[i].misses, g_players[i].avoided, g_players[i].aoe_hits, g_players[i].loot_count);
         DWORD w_b;
-        WriteFile(h, j, (DWORD)strlen(j), &w_b, NULL);
+        if (!WriteFile(h, j, (DWORD)strlen(j), &w_b, NULL)) {
+            // Handle error
+        }
     }
 }
 
@@ -240,17 +246,39 @@ void p_l(HANDLE h, char* l) {
             int n_len = p_loot - clean;
             if (n_len > 127) n_len = 127;
             strncpy(name, clean, n_len); name[n_len] = '\0';
+            while(strlen(name) > 0 && name[strlen(name)-1] == ' ') name[strlen(name)-1] = '\0';
+
             strcpy(s_fr, (char*)s_from); d(s_fr);
             char* p_from = s_i_s(p_loot, s_fr);
             if (p_from) {
-                int i_len = p_from - (p_loot + 7);
+                int i_start = 7; // Length of "looted "
+                int i_len = p_from - (p_loot + i_start);
                 if (i_len > 255) i_len = 255;
                 if (i_len > 0) {
-                    strncpy(item, p_loot + 7, i_len); item[i_len] = '\0';
-                    strcpy(s_l_key, (char*)s_loot); d(s_l_key);
-                    s_e(h, s_l_key, name, "Unknown", 0, 0, "", item, 0);
+                    strncpy(item, p_loot + i_start, i_len); item[i_len] = '\0';
+                    while(strlen(item) > 0 && item[strlen(item)-1] == ' ') item[strlen(item)-1] = '\0';
+                    
+                    double credits = 0;
+                    char* p_cred = strstr(item, " credits");
+                    if (p_cred) {
+                        sscanf(item, "%lf", &credits);
+                    }
+
+                    char j[BUFFER_SIZE];
+                    sprintf(j, "{\"type\": \"loot\", \"source\": \"%s\", \"item\": \"%s\", \"credits\": %.2f}\n", name, item, credits);
+                    send_raw_event(h, j);
+                    
+                    // Also send as a stat update to ensure it shows up in basic counters
                     PlayerStats* ps = get_player(name);
-                    if(ps) ps->loot_count++;
+                    if(ps) {
+                        ps->loot_count++;
+                        char sj[BUFFER_SIZE];
+                        char e_n[256];
+                        e_j(ps->name, e_n);
+                        sprintf(sj, "{\"type\": \"stats\", \"name\": \"%s\", \"damage\": %.2f, \"healing\": %.2f, \"taken\": %.2f, \"hits\": %d, \"misses\": %d, \"avoided\": %d, \"aoe\": %d, \"loot\": %d}\n",
+                                e_n, ps->damage, ps->healing, ps->taken, ps->hits, ps->misses, ps->avoided, ps->aoe_hits, ps->loot_count);
+                        send_raw_event(h, sj);
+                    }
                     return;
                 }
             }
@@ -396,6 +424,12 @@ void e_t(void* arg) {
     while (1) {
         if (ReadFile(hf, b_buf, BUFFER_SIZE - 2, &r_b, NULL) && r_b > 0) {
             b_buf[r_b] = '\0';
+            
+            // Check for buffer overflow risk
+            if (strlen(l_o) + r_b >= BUFFER_SIZE * 2) {
+                l_o[0] = '\0'; // Clear leftover if it's too big (should not happen normally)
+            }
+
             char t_buf[BUFFER_SIZE * 2];
             strcpy(t_buf, l_o);
             strcat(t_buf, b_buf);
@@ -408,7 +442,12 @@ void e_t(void* arg) {
                 p_l(hp, line);
                 line = next + 1;
             }
-            strcpy(l_o, line);
+            // Copy remaining data to l_o safely
+            if (strlen(line) < BUFFER_SIZE) {
+                strcpy(l_o, line);
+            } else {
+                l_o[0] = '\0';
+            }
         } else {
             Sleep(100);
         }
@@ -478,6 +517,20 @@ int main(int a, char** v) {
             u_v();
         }
         */
+        
+        // If Python dies, the engine should also eventually exit
+        // and let the next instance take over.
+        if (python_pid > 0) {
+            HANDLE hp = OpenProcess(SYNCHRONIZE, FALSE, python_pid);
+            if (hp) {
+                if (WaitForSingleObject(hp, 0) == WAIT_OBJECT_0) {
+                    CloseHandle(hp);
+                    exit(0);
+                }
+                CloseHandle(hp);
+            }
+        }
+
         Sleep(500); // Reduce CPU usage as we don't manage windows here anymore
     }
     return 0;

@@ -1,6 +1,5 @@
 import tkinter as tk
 import time
-from tkinter import ttk
 from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY,
     ACCENT_BLUE, BUTTON_BG, BUTTON_HOVER, TEXT_ACCENT, BORDER_COLOR, COLOR_DEFAULT_CLASS,
@@ -13,19 +12,24 @@ class SkimmersWindow(BasePopoutWindow):
     def __init__(self, app):
         super().__init__(app, "Skimmers", "SkimmersWindow", 350, 400)
         self.drill_down_player = None
+        self.search_btn = None
+        self.back_btn = None
 
     def show(self, force_open=False):
         super().show(force_open)
         if not self.window: return
 
-        self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
-        self.back_btn.bind("<Button-1>", lambda e: self.go_back())
+        if not hasattr(self, 'back_btn'):
+            self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
+            self.back_btn.bind("<Button-1>", lambda e: self.go_back())
         
-        self.search_btn = tk.Label(self.title_bar, text="🔍", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 10), cursor="hand2", padx=5)
-        self.search_btn.bind("<Button-1>", lambda e: [self.app.toggle_skimmer_search(), self.refresh(force=True)])
+        if not hasattr(self, 'search_btn'):
+            self.search_btn = tk.Label(self.title_bar, text="🔍", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 10), cursor="hand2", padx=5)
+            self.search_btn.bind("<Button-1>", lambda e: [self.app.toggle_skimmer_search(), self.refresh(force=True)])
         
         # Initial search button placement (will be managed by refresh)
-        self.title_bar.create_window(self.default_w - 35, 16, window=self.search_btn, anchor="e", tags="search_btn")
+        if not self.title_bar.find_withtag("search_btn"):
+            self.title_bar.create_window(self.default_w - 35, 16, window=self.search_btn, anchor="e", tags="search_btn")
 
     def go_back(self):
         self.drill_down_player = None
@@ -42,28 +46,54 @@ class SkimmersWindow(BasePopoutWindow):
         self.refresh(force=True)
 
     def refresh(self, force=False):
-        if not self.window or self.window.state() == "withdrawn": return
+        if not self.window or not self.window.winfo_exists() or self.window.state() == "withdrawn": return
         
+        # Ensure title bar exists
+        if not hasattr(self, 'title_bar') or not self.title_bar.winfo_exists(): return
+
+        # Ensure buttons exist
+        if not self.search_btn or not self.search_btn.winfo_exists():
+            self.search_btn = tk.Label(self.title_bar, text="🔍", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 10), cursor="hand2", padx=5)
+            self.search_btn.bind("<Button-1>", lambda e: [self.app.toggle_skimmer_search(), self.refresh(force=True)])
+        
+        if not self.back_btn or not self.back_btn.winfo_exists():
+            self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
+            self.back_btn.bind("<Button-1>", lambda e: self.go_back())
+
         # Ensure back button state
         if not self.drill_down_player:
-            self.title_bar.delete("back_btn")
+            try: self.title_bar.delete("back_btn")
+            except: pass
             # Restore title label position
-            if hasattr(self, 'title_label'):
-                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+            if hasattr(self, 'title_label') and self.title_label.winfo_exists():
+                try:
+                    self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+                except: pass
             # Show search button
             if not self.title_bar.find_withtag("search_btn"):
-                self.title_bar.create_window(self.window.winfo_width() - 35, 16, window=self.search_btn, anchor="e", tags="search_btn")
+                try: self.title_bar.create_window(self.window.winfo_width() - 35, 16, window=self.search_btn, anchor="e", tags="search_btn")
+                except: pass
             else:
-                self.title_bar.coords("search_btn", self.window.winfo_width() - 35, 16)
+                try: self.title_bar.coords("search_btn", self.window.winfo_width() - 35, 16)
+                except: pass
             
-            if self.app.skimmer_search_mode: self.search_btn.config(fg=ACCENT_BLUE)
-            else: self.search_btn.config(fg=TEXT_SECONDARY)
+            if self.app.skimmer_search_mode:
+                try: self.search_btn.config(fg=ACCENT_BLUE)
+                except: pass
+            else:
+                try: self.search_btn.config(fg=TEXT_SECONDARY)
+                except: pass
         else:
             if not self.title_bar.find_withtag("back_btn"):
-                self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
-                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
+                try: self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
+                except: pass
+                if hasattr(self, 'title_label') and self.title_label.winfo_exists():
+                    try:
+                        self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
+                    except: pass
             # Hide search button during drill down
-            self.title_bar.delete("search_btn")
+            try: self.title_bar.delete("search_btn")
+            except: pass
         
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
@@ -99,7 +129,8 @@ class SkimmersWindow(BasePopoutWindow):
 
             # Scrollable area
             canvas = tk.Canvas(self.content_container, bg=WINDOW_BG, highlightthickness=0)
-            scrollbar = ttk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview)
+            # scrollbar = ttk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview)
+            scrollbar = tk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview, bg=PANEL_DARK, troughcolor=WINDOW_BG, bd=0, highlightthickness=0)
             self.scrollable_frame = tk.Frame(canvas, bg=WINDOW_BG)
 
             self.scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
@@ -131,18 +162,24 @@ class SkimmersWindow(BasePopoutWindow):
         # Visibility logic for tabs during drill down
         if self.drill_down_player:
             # Back button handled above
-            self.t_frame.pack_forget()
-            if hasattr(self, 'search_frame'): self.search_frame.pack_forget()
+            if hasattr(self, 't_frame') and self.t_frame.winfo_exists():
+                self.t_frame.pack_forget()
+            if hasattr(self, 'search_frame') and self.search_frame.winfo_exists():
+                self.search_frame.pack_forget()
         else:
             # Back button hidden above
-            self.t_frame.pack(fill=tk.X, pady=(0, 5)) 
-            if hasattr(self, 'search_frame'): self.search_frame.pack(fill=tk.X, pady=(0, 5)) 
+            if hasattr(self, 't_frame') and self.t_frame.winfo_exists():
+                self.t_frame.pack(fill=tk.X, pady=(0, 5)) 
+            if hasattr(self, 'search_frame') and self.search_frame.winfo_exists():
+                self.search_frame.pack(fill=tk.X, pady=(0, 5)) 
             
             # Update Tab Buttons
             tab = getattr(self.app, 'skimmer_tab', 'loot')
-            for v, btn in self.tab_btns.items():
-                active = (v == tab)
-                btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+            if hasattr(self, 'tab_btns'):
+                for v, btn in self.tab_btns.items():
+                    if btn.winfo_exists():
+                        active = (v == tab)
+                        btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
 
         # Update Inventory Alert
         if self.app.inventory_full:

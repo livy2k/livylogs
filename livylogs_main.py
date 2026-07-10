@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from configparser import ConfigParser
 from pathlib import Path
 from tkinter import font as tkfont
-from tkinter import ttk, messagebox, filedialog
+from tkinter import messagebox, filedialog
 import ctypes
 from ctypes import wintypes
 
@@ -48,9 +48,9 @@ class CombatLogApp:
         self.font_small_obj = tkfont.Font(family="Segoe UI", size=9)
         self.font_button_obj = tkfont.Font(family="Segoe UI", size=10, weight="bold")
 
-        self.style = ttk.Style()
-        self.style.theme_use('clam')
-        self.style.configure("Vertical.TScrollbar", background=BUTTON_BG, troughcolor=PANEL_BG, bordercolor=BORDER_COLOR, arrowcolor=TEXT_SECONDARY)
+        # self.style = ttk.Style()
+        # self.style.theme_use('clam')
+        # self.style.configure("Vertical.TScrollbar", background=BUTTON_BG, troughcolor=PANEL_BG, bordercolor=BORDER_COLOR, arrowcolor=TEXT_SECONDARY)
 
         self.config = ConfigParser()
         self.config.read("settings.ini")
@@ -194,8 +194,9 @@ class CombatLogApp:
 
     def initial_show(self):
         try:
-            self.current_alpha = 0.0
-            self.root.attributes("-alpha", 0.0)
+            # self.current_alpha = 0.0
+            # self.root.attributes("-alpha", 0.0)
+            self.root.overrideredirect(True)
             self.root.withdraw()
         except: pass
 
@@ -207,12 +208,8 @@ class CombatLogApp:
 
     def check_target_window(self):
         if not self.running: return
-        # Since the C engine now handles focus management, we just need to ensure
-        # the Python side doesn't fight it and stays visible when it should.
-        # If the C engine is running, it will ShowWindow/SetWindowPos on us.
-        # But we still need to handle our own alpha/fading if we want that.
-        
-        # Simplified check: just ensure we are deiconified if we should be visible
+        # Since we want the main window to stay visible always, we restore
+        # this loop to ensure it stays deiconified if it's not in the tray.
         if self.root.state() == "withdrawn" and not getattr(self, "_minimized_to_tray", False):
             self.start_show()
         
@@ -221,7 +218,9 @@ class CombatLogApp:
     def start_show(self):
         if self.root.state() == "withdrawn":
             self.root.deiconify()
+            self.root.attributes("-topmost", True)
             self.root.lift()
+        
         for win in self._get_managed_windows():
             if win.state() == "withdrawn":
                 win.deiconify()
@@ -255,10 +254,10 @@ class CombatLogApp:
         pass
 
     def build_layout(self):
-        style = ttk.Style()
-        style.theme_use('clam')
-        style.configure("Vertical.TScrollbar", gripcount=0, background=PANEL_DARK, darkcolor=PANEL_DARK, lightcolor=PANEL_DARK, troughcolor=WINDOW_BG, bordercolor=BORDER_COLOR, arrowcolor=TEXT_SECONDARY)
-        style.map("Vertical.TScrollbar", background=[('active', ACCENT_BLUE), ('pressed', ACCENT_BLUE)])
+        # style = ttk.Style()
+        # style.theme_use('clam')
+        # style.configure("Vertical.TScrollbar", gripcount=0, background=PANEL_DARK, darkcolor=PANEL_DARK, lightcolor=PANEL_DARK, troughcolor=WINDOW_BG, bordercolor=BORDER_COLOR, arrowcolor=TEXT_SECONDARY)
+        # style.map("Vertical.TScrollbar", background=[('active', ACCENT_BLUE), ('pressed', ACCENT_BLUE)])
 
         self.root_border = tk.Frame(self.root, bg=BORDER_COLOR, padx=1, pady=1)
         self.root_border.pack(fill=tk.BOTH, expand=True)

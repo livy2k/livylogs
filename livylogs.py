@@ -9,10 +9,6 @@ def main():
     mutex_name = "LivyLogs_SingleInstance_Mutex"
     mutex = kernel32.CreateMutexW(None, False, mutex_name)
     if kernel32.GetLastError() == 183:
-        temp_root = tk.Tk()
-        temp_root.withdraw()
-        messagebox.showwarning("LivyLogs", "Another instance of LivyLogs is already running.")
-        temp_root.destroy()
         sys.exit(0)
 
     try:

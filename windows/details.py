@@ -1,6 +1,5 @@
 import tkinter as tk
 import time
-from tkinter import ttk
 from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, TEXT_ACCENT, COLOR_DEFAULT_CLASS,
     TITLE_GRADIENT_START
@@ -12,6 +11,7 @@ class DetailsWindow(BasePopoutWindow):
     def __init__(self, app):
         super().__init__(app, "Details", "DetailsWindow", 400, 500)
         self.drill_down_player = None
+        self.back_btn = None
 
     def show(self, force_open=False):
         super().show(force_open)
@@ -35,18 +35,33 @@ class DetailsWindow(BasePopoutWindow):
         self.refresh(force=True)
 
     def refresh(self, force=False):
-        if not self.window or self.window.state() == "withdrawn": return
+        if not self.window or not self.window.winfo_exists() or self.window.state() == "withdrawn": return
         
+        # Ensure title bar exists
+        if not hasattr(self, 'title_bar') or not self.title_bar.winfo_exists(): return
+
+        # Ensure back button exists
+        if not self.back_btn or not self.back_btn.winfo_exists():
+            self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
+            self.back_btn.bind("<Button-1>", lambda e: self.go_back())
+
         # Ensure back button state
         if not self.drill_down_player:
-            self.title_bar.delete("back_btn")
+            try: self.title_bar.delete("back_btn")
+            except: pass
             # Restore title label position
-            if hasattr(self, 'title_label'):
-                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+            if hasattr(self, 'title_label') and self.title_label.winfo_exists():
+                try:
+                    self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+                except: pass
         else:
             if not self.title_bar.find_withtag("back_btn"):
-                self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
-                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
+                try: self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
+                except: pass
+                if hasattr(self, 'title_label') and self.title_label.winfo_exists():
+                    try:
+                        self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
+                    except: pass
         
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
@@ -61,7 +76,8 @@ class DetailsWindow(BasePopoutWindow):
             
             # Scrollable area for top-level player list
             self.scroll_canvas = tk.Canvas(self.top_view, bg=WINDOW_BG, highlightthickness=0)
-            scrollbar = ttk.Scrollbar(self.top_view, orient="vertical", command=self.scroll_canvas.yview)
+            # scrollbar = ttk.Scrollbar(self.top_view, orient="vertical", command=self.scroll_canvas.yview)
+            scrollbar = tk.Scrollbar(self.top_view, orient="vertical", command=self.scroll_canvas.yview, bg=PANEL_DARK, troughcolor=WINDOW_BG, bd=0, highlightthickness=0)
             self.player_list_frame = tk.Frame(self.scroll_canvas, bg=WINDOW_BG)
             self.player_list_frame.bind("<Configure>", lambda e: self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox("all")))
             self.scroll_canvas.create_window((0, 0), window=self.player_list_frame, anchor="nw")
@@ -99,7 +115,8 @@ class DetailsWindow(BasePopoutWindow):
             log_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             
             self.txt = tk.Text(log_frame, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Consolas", 9), relief=tk.FLAT, borderwidth=0, padx=5, pady=5)
-            sb_txt = ttk.Scrollbar(log_frame, orient="vertical", command=self.txt.yview)
+            # sb_txt = ttk.Scrollbar(log_frame, orient="vertical", command=self.txt.yview)
+            sb_txt = tk.Scrollbar(log_frame, orient="vertical", command=self.txt.yview, bg=PANEL_DARK, troughcolor=WINDOW_BG, bd=0, highlightthickness=0)
             self.txt.configure(yscrollcommand=sb_txt.set)
             sb_txt.pack(side=tk.RIGHT, fill=tk.Y)
             self.txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -107,12 +124,16 @@ class DetailsWindow(BasePopoutWindow):
 
         if self.drill_down_player:
             # Back button handled above
-            self.top_view.pack_forget()
-            self.detail_view.pack(fill=tk.BOTH, expand=True)
+            if hasattr(self, 'top_view') and self.top_view.winfo_exists():
+                self.top_view.pack_forget()
+            if hasattr(self, 'detail_view') and self.detail_view.winfo_exists():
+                self.detail_view.pack(fill=tk.BOTH, expand=True)
         else:
             # Back button hidden above
-            self.detail_view.pack_forget()
-            self.top_view.pack(fill=tk.BOTH, expand=True)
+            if hasattr(self, 'detail_view') and self.detail_view.winfo_exists():
+                self.detail_view.pack_forget()
+            if hasattr(self, 'top_view') and self.top_view.winfo_exists():
+                self.top_view.pack(fill=tk.BOTH, expand=True)
 
         if not do_full: return
         self.last_full_refresh = now
@@ -161,8 +182,10 @@ class DetailsWindow(BasePopoutWindow):
         # Update Stats
         dmg = stats.get('damage', 0)
         heal = stats.get('healing', 0)
-        self.lbl_det_dmg.config(text=f"DAMAGE: {dmg:,.0f}")
-        self.lbl_det_heal.config(text=f"HEALING: {heal:,.0f}")
+        if hasattr(self, 'lbl_det_dmg') and self.lbl_det_dmg.winfo_exists():
+            self.lbl_det_dmg.config(text=f"DAMAGE: {dmg:,.0f}")
+        if hasattr(self, 'lbl_det_heal') and self.lbl_det_heal.winfo_exists():
+            self.lbl_det_heal.config(text=f"HEALING: {heal:,.0f}")
 
         # Update Logs
         logs = stats.get("logs", [])

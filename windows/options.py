@@ -1,7 +1,6 @@
 import tkinter as tk
 import os
 import time
-from tkinter import ttk
 from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, 
     BUTTON_BG, BUTTON_HOVER, BORDER_COLOR

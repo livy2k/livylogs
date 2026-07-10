@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 import ctypes
 import os
 from ctypes import wintypes
@@ -226,7 +225,8 @@ class ThemedListDialog(tk.Toplevel):
         list_frame.pack(fill=tk.BOTH, expand=True)
 
         canvas = tk.Canvas(list_frame, bg=WINDOW_BG, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=canvas.yview)
+        # scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=canvas.yview)
+        scrollbar = tk.Scrollbar(list_frame, orient="vertical", command=canvas.yview, bg=PANEL_DARK, troughcolor=WINDOW_BG, bd=0, highlightthickness=0)
         scrollable_frame = tk.Frame(canvas, bg=WINDOW_BG)
 
         scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))

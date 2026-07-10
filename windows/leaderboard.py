@@ -12,6 +12,7 @@ class LeaderboardWindow(BasePopoutWindow):
     def __init__(self, app):
         super().__init__(app, "Leaderboard", "LeaderboardWindow", 300, 400)
         self.drill_down_player = None
+        self.back_btn = None
 
     def show(self, force_open=False):
         super().show(force_open)
@@ -36,18 +37,33 @@ class LeaderboardWindow(BasePopoutWindow):
         self.refresh(force=True)
 
     def refresh(self, force=False):
-        if not self.window or self.window.state() == "withdrawn": return
+        if not self.window or not self.window.winfo_exists() or self.window.state() == "withdrawn": return
         
+        # Ensure title bar exists
+        if not hasattr(self, 'title_bar') or not self.title_bar.winfo_exists(): return
+
+        # Ensure back button exists
+        if not self.back_btn or not self.back_btn.winfo_exists():
+            self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
+            self.back_btn.bind("<Button-1>", lambda e: self.go_back())
+
         # Ensure back button state
         if not self.drill_down_player:
-            self.title_bar.delete("back_btn")
+            try: self.title_bar.delete("back_btn")
+            except: pass
             # Restore title label position
-            if hasattr(self, 'title_label'):
-                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+            if hasattr(self, 'title_label') and self.title_label.winfo_exists():
+                try:
+                    self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+                except: pass
         else:
             if not self.title_bar.find_withtag("back_btn"):
-                self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
-                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
+                try: self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
+                except: pass
+                if hasattr(self, 'title_label') and self.title_label.winfo_exists():
+                    try:
+                        self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
+                    except: pass
         
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
@@ -82,9 +98,9 @@ class LeaderboardWindow(BasePopoutWindow):
             self.lbl_cat_head.pack(side=tk.RIGHT, padx=25) # Extra pad for scrollbar
         
             # Scrollable area
-            from tkinter import ttk
             canvas = tk.Canvas(self.content_container, bg=WINDOW_BG, highlightthickness=0)
-            scrollbar = ttk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview)
+            # scrollbar = ttk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview)
+            scrollbar = tk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview, bg=PANEL_DARK, troughcolor=WINDOW_BG, bd=0, highlightthickness=0)
             self.list_container = tk.Frame(canvas, bg=WINDOW_BG)
 
             self.list_container.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
@@ -100,22 +116,32 @@ class LeaderboardWindow(BasePopoutWindow):
 
         if self.drill_down_player:
             # Back button handled above
-            self.c_frame.pack_forget()
-            self.lbl_rank.config(text="TARGET")
-            self.lbl_player.pack_forget()
-            self.lbl_cat_head.config(text="AMOUNT")
+            if hasattr(self, 'c_frame') and self.c_frame.winfo_exists():
+                self.c_frame.pack_forget()
+            if hasattr(self, 'lbl_rank') and self.lbl_rank.winfo_exists():
+                self.lbl_rank.config(text="TARGET")
+            if hasattr(self, 'lbl_player') and self.lbl_player.winfo_exists():
+                self.lbl_player.pack_forget()
+            if hasattr(self, 'lbl_cat_head') and self.lbl_cat_head.winfo_exists():
+                self.lbl_cat_head.config(text="AMOUNT")
         else:
             # Back button hidden above
-            self.c_frame.pack(fill=tk.X, pady=(0, 5), before=self.h_frame)
-            self.lbl_rank.config(text="RANK")
-            self.lbl_player.pack(side=tk.LEFT, padx=20, before=self.lbl_cat_head)
+            if hasattr(self, 'c_frame') and self.c_frame.winfo_exists():
+                self.c_frame.pack(fill=tk.X, pady=(0, 5), before=self.h_frame)
+            if hasattr(self, 'lbl_rank') and self.lbl_rank.winfo_exists():
+                self.lbl_rank.config(text="RANK")
+            if hasattr(self, 'lbl_player') and self.lbl_player.winfo_exists():
+                self.lbl_player.pack(side=tk.LEFT, padx=20, before=self.lbl_cat_head)
             
             # Update Category Buttons
             cat = getattr(self.app, 'leaderboard_cat', 'damage')
-            for v, btn in self.cat_btns.items():
-                active = (v == cat)
-                btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
-            self.lbl_cat_head.config(text=cat.upper())
+            if hasattr(self, 'cat_btns'):
+                for v, btn in self.cat_btns.items():
+                    if btn.winfo_exists():
+                        active = (v == cat)
+                        btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+            if hasattr(self, 'lbl_cat_head') and self.lbl_cat_head.winfo_exists():
+                self.lbl_cat_head.config(text=cat.upper())
 
         if not do_full: return
         self.last_full_refresh = now

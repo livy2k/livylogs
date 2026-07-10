@@ -16,7 +16,10 @@ class DamageMeterWindow(BasePopoutWindow):
         if not self.window: return
 
     def refresh(self, force=False):
-        if not self.window or self.window.state() == "withdrawn": return
+        if not self.window or not self.window.winfo_exists() or self.window.state() == "withdrawn": return
+        
+        # Ensure title bar exists
+        if not hasattr(self, 'title_bar') or not self.title_bar.winfo_exists(): return
         
         # Throttled refresh for expensive data gathering
         now = time.time()
@@ -115,8 +118,13 @@ class DamageMeterWindow(BasePopoutWindow):
             miss_pct = (avoided_count / total_taken_attempts * 100) if total_taken_attempts > 0 else 0
 
             # Update labels
-            self.lbl_dmg.config(text=f"{damage_dealt:,.0f}")
-            self.lbl_dps.config(text=f"{dps:.1f}")
-            self.lbl_hit.config(text=f"{hit_pct:.1f}%")
-            self.lbl_taken.config(text=f"{damage_taken:,.0f}")
-            self.lbl_miss.config(text=f"{miss_pct:.1f}%")
+            if hasattr(self, 'lbl_dmg') and self.lbl_dmg.winfo_exists():
+                self.lbl_dmg.config(text=f"{damage_dealt:,.0f}")
+            if hasattr(self, 'lbl_dps') and self.lbl_dps.winfo_exists():
+                self.lbl_dps.config(text=f"{dps:.1f}")
+            if hasattr(self, 'lbl_hit') and self.lbl_hit.winfo_exists():
+                self.lbl_hit.config(text=f"{hit_pct:.1f}%")
+            if hasattr(self, 'lbl_taken') and self.lbl_taken.winfo_exists():
+                self.lbl_taken.config(text=f"{damage_taken:,.0f}")
+            if hasattr(self, 'lbl_miss') and self.lbl_miss.winfo_exists():
+                self.lbl_miss.config(text=f"{miss_pct:.1f}%")

@@ -1,0 +1,53 @@
+target: 000000000005021a, t_pid: 27004, fg: 00000000000f04f8 (Combat Log Analyzer), fg_pid: 35620, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000000f04f8 (Combat Log Analyzer), fg_pid: 35620, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000000f04f8 (Combat Log Analyzer), fg_pid: 35620, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 00000000003f03d2, PID: 35620, Title: Details, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 00000000000f04f8 (Combat Log Analyzer), fg_pid: 35620, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 00000000003f03d2, PID: 35620, Title: Details, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 00000000003f03d2, PID: 35620, Title: Details, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000000e07b8 (#swg | <REIGN> - Discord), fg_pid: 16760, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI

@@ -20,7 +20,7 @@ void d(char* s) {
 
 // Obfuscated strings
 unsigned char p_name[] = {0x26, 0x26, 0x54, 0x26, 0x54, 0x0A, 0x13, 0x0A, 0x1F, 0x26, 0x36, 0x13, 0x0C, 0x03, 0x36, 0x15, 0x1D, 0x03, 0x2A, 0x13, 0x0A, 0x1F, 0x00}; // \\.\pipe\LivyLogsPipe
-unsigned char s_python_cmd[] = {0x0A, 0x03, 0x0E, 0x12, 0x15, 0x14, 0x5A, 0x16, 0x13, 0x0C, 0x03, 0x16, 0x15, 0x1D, 0x0D, 0x54, 0x0A, 0x03, 0x00}; // python livylogs.py
+unsigned char s_python_cmd[] = {0x1a, 0x13, 0x0e, 0x12, 0x15, 0x14, 0x5a, 0x16, 0x13, 0x0c, 0x03, 0x16, 0x15, 0x1d, 0x0d, 0x54, 0x0a, 0x03, 0x00}; // python livylogs.py
 
 unsigned char s_swgclient[] = {0x29, 0xd, 0x1d, 0x39, 0x16, 0x13, 0x1f, 0x14, 0xe, 0x00};
 unsigned char s_star_wars_galaxies[] = {0x29, 0xe, 0x1b, 0x8, 0x5a, 0x2d, 0x1b, 0x8, 0x9, 0x5a, 0x3d, 0x1b, 0x16, 0x1b, 0x2, 0x13, 0x1f, 0x9, 0x00};
@@ -70,16 +70,24 @@ int g_player_count = 0;
 HWND target_hwnd = NULL;
 DWORD python_pid = 0;
 
-void a_o_t() {
-    HWND h_cla = FindWindowA(NULL, (char*)s_combat_log_analyzer); d((char*)s_combat_log_analyzer);
-    if (h_cla) SetWindowPos(h_cla, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+void a_o_t(BOOL s_s) {
+    char s_cla[32];
+    strcpy(s_cla, (char*)s_combat_log_analyzer); d(s_cla);
+    HWND h_cla = FindWindowA(NULL, s_cla);
+    if (h_cla) {
+        if (s_s) SetWindowPos(h_cla, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        else SetWindowPos(h_cla, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
     
     unsigned char* pop_list[] = {s_damage_meter, s_leaderboard, s_skimmers, s_details, s_options, s_alexa};
     for (int i = 0; i < 6; i++) {
         char n_b[32];
         strcpy(n_b, (char*)pop_list[i]); d(n_b);
         HWND h = FindWindowA(NULL, n_b);
-        if (h) SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        if (h && IsWindowVisible(h)) {
+            if (s_s) SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            else SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        }
     }
 }
 
@@ -133,32 +141,61 @@ void u_v() {
     }
 
     HWND fg = GetForegroundWindow();
-    DWORD f_p;
-    GetWindowThreadProcessId(fg, &f_p);
+    DWORD f_p = 0;
+    if (fg) GetWindowThreadProcessId(fg, &f_p);
 
-    BOOL o = (f_p == GetCurrentProcessId() || f_p == python_pid);
+    BOOL o = (f_p != 0 && (f_p == GetCurrentProcessId() || f_p == python_pid));
     if (!o && target_hwnd) {
-        DWORD t_p;
+        DWORD t_p = 0;
         GetWindowThreadProcessId(target_hwnd, &t_p);
-        if (f_p == t_p) o = TRUE;
+        if (f_p != 0 && f_p == t_p) o = TRUE;
         
+        // Title-based fallback for focus detection
+        if (!o && fg) {
+            wchar_t cur_t[256];
+            GetWindowTextW(fg, cur_t, 256);
+            char s1[32], s2[32];
+            strcpy(s1, (char*)s_swgclient); d(s1);
+            strcpy(s2, (char*)s_star_wars_galaxies); d(s2);
+            wchar_t w1[32], w2[32];
+            MultiByteToWideChar(CP_ACP, 0, s1, -1, w1, 32);
+            MultiByteToWideChar(CP_ACP, 0, s2, -1, w2, 32);
+            if (wcsstr(cur_t, w1) || wcsstr(cur_t, w2)) o = TRUE;
+        }
+
         // Robust check: if foreground window is owned by game or python, it's 'o'
-        if (!o) {
+        if (!o && fg) {
             HWND owner = GetWindow(fg, GW_OWNER);
-            while (owner) {
-                DWORD opid;
+            int depth = 0;
+            while (owner && depth < 10) {
+                DWORD opid = 0;
                 GetWindowThreadProcessId(owner, &opid);
-                if (opid == t_p || opid == python_pid || opid == GetCurrentProcessId()) {
+                if (opid != 0 && (opid == t_p || opid == python_pid || opid == GetCurrentProcessId())) {
                     o = TRUE;
                     break;
                 }
                 owner = GetWindow(owner, GW_OWNER);
+                depth++;
             }
         }
         
-        // Process name fallback: if foreground PID is same as target PID, it's 'o'
-        // This is already covered by f_p == t_p, but let's be super sure by checking
-        // if the target_hwnd is still valid and has the same PID.
+        if (!o && t_p != 0 && f_p != 0 && f_p == t_p) o = TRUE;
+    }
+
+    // NEW: Aggressively HIDE TtkMonitorWindow
+    if (fg) {
+        char cls[256];
+        GetClassNameA(fg, cls, 256);
+        if (strstr(cls, "TtkMonitorWindow")) {
+            ShowWindow(fg, SW_HIDE);
+        }
+    }
+
+    // Safety check for TtkMonitorWindow - if this is the foreground, DON'T hide
+    if (!o && fg) {
+        char cls[256];
+        GetClassNameA(fg, cls, 256);
+        if (strstr(cls, "TtkMonitorWindow")) o = TRUE;
     }
 
     DWORD t_pid = 0;
@@ -169,16 +206,23 @@ void u_v() {
     BOOL m = (target_hwnd != NULL) ? IsIconic(target_hwnd) : FALSE;
     BOOL s_s = (o || GetAsyncKeyState(VK_MENU)) && !m;
     
-    // Grace period for hiding - increased to 10 seconds for absolute stability
+    // Safety check: if target_hwnd is lost, but was recently found, keep it
+    static HWND last_valid_target = NULL;
+    if (target_hwnd) last_valid_target = target_hwnd;
+    
+    // Grace period for hiding - increased for better stability
     static DWORD last_show_time = 0;
     if (s_s) last_show_time = GetTickCount();
-    if (!s_s && (GetTickCount() - last_show_time < 10000)) s_s = TRUE;
+    if (!s_s && (GetTickCount() - last_show_time < 2000)) s_s = TRUE;
 
     // Additional check: If the foreground window title is empty OR common system/utility titles
     // don't hide yet. Added "Discord", "Avast", and "NVIDIA" to the list.
+    // BUT we only do this for the purpose of KEEPING windows, not for TOPMOST status.
+    // So we'll refine this later.
     if (!s_s) {
         if (wcslen(fg_title) == 0) s_s = TRUE;
         else if (wcsstr(fg_title, L"Search") != NULL) s_s = TRUE;
+        else if (wcsstr(fg_title, L"Start") != NULL) s_s = TRUE;
         else if (wcsstr(fg_title, L"Task Manager") != NULL) s_s = TRUE;
         else if (wcsstr(fg_title, L"Discord") != NULL) s_s = TRUE;
         else if (wcsstr(fg_title, L"Avast") != NULL) s_s = TRUE;
@@ -186,23 +230,47 @@ void u_v() {
         else if (wcsstr(fg_title, L"Steam") != NULL) s_s = TRUE;
     }
 
+    // Force show if game window is detected but we are in-game (o is true)
+    // even if IsIconic is somehow true (might happen in some borderless modes)
+    if (o) s_s = TRUE;
+
     // If we haven't found the game window yet, don't hide the overlay
-    if (!target_hwnd) s_s = TRUE;
+    if (!target_hwnd && !last_valid_target) s_s = TRUE;
     
     // Safety: If game is found but we lost focus tracking for some reason, 
     // allow force-showing with ALT
     if (GetAsyncKeyState(VK_MENU)) s_s = TRUE;
 
-    // Actually, let's make it simpler:
-    // If game is iconic -> Hide.
-    // If game is focused -> Show.
-    // If python/c is focused -> Show.
-    // Else -> Hide.
-    
-    // This is already what s_s = (o || alt) && !m does.
-    
     // Let's add one more thing: if we fail to find target_hwnd, keep it shown.
     if (!target_hwnd) s_s = TRUE;
+
+        // ACTUAL VISIBILITY vs TOPMOST logic
+        // We want the windows to only be TOPMOST if 'o' is true (game or app has focus)
+        // or if we are in the grace period but the game is actually the foreground.
+        BOOL t_m = o; // t_m = Topmost Mode
+        if (!t_m && s_s && target_hwnd) {
+            // If we are in grace period and game is still foreground (but maybe f_p != t_p due to popups)
+            if (f_p == t_pid) t_m = TRUE;
+        }
+        
+    // Safety check: If the foreground window is "Start" or belongs to Explorer.exe, 
+    // treat it as a "safe" window that keeps our current visibility state.
+    if (!t_m && fg) {
+        char cls[256];
+        GetClassNameA(fg, cls, 256);
+        if (strstr(cls, "Windows.UI.Core.CoreWindow") || strstr(cls, "Explorer") || 
+            strstr(cls, "TrayNotifyWnd") || strstr(cls, "Launcher") || strstr(cls, "Shell_TrayWnd") ||
+            strstr(cls, "DV2ControlHost") || strstr(cls, "BaseBar") || strstr(cls, "NotifyIconOverflowWindow")) {
+            // Keep visibility but don't force topmost
+            s_s = TRUE;
+        }
+    }
+
+    // FORCED OVERRIDE: If game is in foreground, WE ARE TOPMOST. Period.
+    if (target_hwnd && f_p == t_pid) {
+        s_s = TRUE;
+        t_m = TRUE;
+    }
 
     static DWORD last_log = 0;
     if (GetTickCount() - last_log > 1000) {
@@ -210,8 +278,8 @@ void u_v() {
         if (f) {
             char title_mb[256];
             WideCharToMultiByte(CP_ACP, 0, fg_title, -1, title_mb, 256, NULL, NULL);
-            fprintf(f, "target: %p, t_pid: %lu, fg: %p (%s), fg_pid: %lu, py_pid: %lu, c_pid: %lu, o: %d, m: %d, s_s: %d\n", 
-                    target_hwnd, t_pid, fg, title_mb, f_p, python_pid, GetCurrentProcessId(), o, m, s_s);
+            fprintf(f, "target: %p, t_pid: %lu, fg: %p (%s), fg_pid: %lu, py_pid: %lu, c_pid: %lu, o: %d, m: %d, s_s: %d, v_t: %d\n", 
+                    target_hwnd, t_pid, fg, title_mb, f_p, python_pid, GetCurrentProcessId(), o, m, s_s, (target_hwnd && !m));
             fclose(f);
         }
         last_log = GetTickCount();
@@ -227,6 +295,9 @@ void u_v() {
     strcpy(s_cla, (char*)s_combat_log_analyzer); d(s_cla);
     HWND p_h = NULL;
     
+    // NEW: Debug info for finding p_h
+    static DWORD last_ph_debug = 0;
+
     // Attempt to find window by PID first as it's most reliable
     if (python_pid) {
         HWND h = GetTopWindow(NULL);
@@ -238,6 +309,15 @@ void u_v() {
                 char cls[256];
                 GetClassNameA(h, cls, 256);
                 if (strstr(cls, "TkTopLevel") || strstr(cls, "TkChild") || GetWindowTextLengthA(h) > 0) {
+                    if (GetTickCount() - last_ph_debug > 2000) {
+                        FILE* f = fopen("engine_debug.txt", "a");
+                        if (f) {
+                            char title[256];
+                            GetWindowTextA(h, title, 256);
+                            fprintf(f, "FOUND PY_WINDOW: HWND: %p, PID: %lu, Title: %s, Class: %s\n", h, pid, title, cls);
+                            fclose(f);
+                        }
+                    }
                     p_h = h;
                     break;
                 }
@@ -245,6 +325,7 @@ void u_v() {
             h = GetNextWindow(h, GW_HWNDNEXT);
         }
     }
+    if (GetTickCount() - last_ph_debug > 2000) last_ph_debug = GetTickCount();
 
     if (!p_h) p_h = FindWindowA(NULL, s_cla);
     if (!p_h) p_h = FindWindowA("TkTopLevel", s_cla);
@@ -270,13 +351,22 @@ void u_v() {
     }
     
     if (p_h) {
-        if (s_s) {
-            // Force show and ensure it's not minimized
-            if (IsIconic(p_h)) ShowWindow(p_h, SW_RESTORE);
-            ShowWindow(p_h, SW_SHOWNOACTIVATE);
-            SetWindowPos(p_h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        // ALWAYS keep main window visible as requested
+        if (IsIconic(p_h)) ShowWindow(p_h, SW_RESTORE);
+        
+        // FORCED PERSISTENCE for main window - Using SW_SHOW to ensure it doesn't get stuck hidden
+        ShowWindow(p_h, SW_SHOWNA);
+        
+        // Ensure it doesn't stay topmost if we are NOT in topmost mode
+        // This fixes the issue where clicking it while on top (of SWG) makes it stay on top (of Start menu)
+        if (t_m) {
+            // Use HWND_TOPMOST when game/app has focus
+            SetWindowPos(p_h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+            // Force it to the top one more time
+            BringWindowToTop(p_h);
         } else {
-            ShowWindow(p_h, SW_HIDE);
+            // Remove TOPMOST when focus lost (ALT-TAB / Start Menu) but keep visible
+            SetWindowPos(p_h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
     }
 
@@ -310,12 +400,16 @@ void u_v() {
             if (s_s) {
                 if (IsIconic(h)) ShowWindow(h, SW_RESTORE);
                 ShowWindow(h, SW_SHOWNOACTIVATE);
-                SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                if (t_m) SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+                else SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
             } else {
                 ShowWindow(h, SW_HIDE);
+                SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_HIDEWINDOW);
             }
         }
     }
+
+    a_o_t(t_m);
 }
 
 void c_o() {
@@ -641,6 +735,11 @@ int main(int a, char** v) {
     sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" livylogs.py");
 
     if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        FILE* f_err = fopen("engine_debug.txt", "a");
+        if (f_err) {
+            fprintf(f_err, "ERROR: Failed to launch Python (cmd: %s), error code: %lu\n", p_abs, GetLastError());
+            fclose(f_err);
+        }
         // Fallback to ShellExecute if absolute path fails
         ShellExecuteA(NULL, "open", "livylogs.py", NULL, NULL, SW_HIDE);
     } else {
@@ -653,10 +752,14 @@ int main(int a, char** v) {
         _beginthread(e_t, 0, v[1]);
     }
 
+    DWORD start_time = GetTickCount();
+
     while (1) {
-        u_v();
-        a_o_t();
-        Sleep(100);
+        // Wait 1 second before managing windows to allow Python UI to stabilize
+        if (GetTickCount() - start_time > 1000) {
+            u_v();
+        }
+        Sleep(250);
     }
     return 0;
 }

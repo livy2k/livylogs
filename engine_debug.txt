@@ -51,3 +51,1340 @@ FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: 
 target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
 target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
 FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002c0390 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 14008, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000150d6c, PID: 35620, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002c0390 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 14008, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007de (PythonProject3 - File Explorer), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007de (PythonProject3 - File Explorer), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 31728, c_pid: 6100, o: 1, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 31728, c_pid: 6100, o: 1, m: 0, s_s: 1, v_t: 1
+
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 31728, c_pid: 6100, o: 1, m: 0, s_s: 1, v_t: 1
+
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 31728, c_pid: 6100, o: 1, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000320070, PID: 31728, Title: Leaderboard, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 31728, c_pid: 6100, o: 1, m: 0, s_s: 1, v_t: 1
+
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000240e5c, PID: 31728, Title: Details, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000240e5c, PID: 31728, Title: Details, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000000240e5c, PID: 31728, Title: Details, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000005021a (SwgClient), fg_pid: 27004, py_pid: 35620, c_pid: 27592, o: 1, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 31728, c_pid: 6100, o: 1, m: 0, s_s: 1, v_t: 1
+
+FOUND PY_WINDOW: HWND: 0000000000240e5c, PID: 31728, Title: Details, Class: TkTopLevel
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 31728, c_pid: 6100, o: 1, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000003d0514 (Combat Log Analyzer), fg_pid: 31728, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010212 (Search), fg_pid: 13748, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002e0c76 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 9952, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002e0c76 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 9952, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002e0c76 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 9952, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002e0c76 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 9952, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002007d4 (PythonProject3 – livylogs.py), fg_pid: 7720, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 00000000002e0c76 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 9952, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 0, v_t: 1
+FOUND PY_WINDOW: HWND: 0000000001d20dd8, PID: 31728, Title: MSCTFIME UI, Class: MSCTFIME UI
+target: 000000000005021a, t_pid: 27004, fg: 00000000002e0c76 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe), fg_pid: 9952, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 0, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 0000000000010138 (), fg_pid: 6492, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 31728, c_pid: 6100, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+target: 000000000005021a, t_pid: 27004, fg: 000000000036051c (Task Manager), fg_pid: 32876, py_pid: 35620, c_pid: 27592, o: 0, m: 0, s_s: 1, v_t: 1
+fg: 0000000000090eb6 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+fg: 0000000000090eb6 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000090eb6 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 000000000029059c, PID: 17784, Title: Details, Class: TkTopLevel
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000aa0436 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, sec_show: 0, t_m: 0
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 000000000029059c, PID: 17784, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000090eb6 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007de (PythonProject3 - File Explorer) [CabinetWClass], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007de (PythonProject3 - File Explorer) [CabinetWClass], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 0000000001d207cc, PID: 17784, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000aa0436 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, sec_show: 0, t_m: 0
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, sec_show: 1, t_m: 0
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, sec_show: 1, t_m: 0
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, sec_show: 1, t_m: 0
+fg: 0000000000000000 () [], o: 0, sec_show: 1, t_m: 0
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001d0880 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000001d0880 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+fg: 00000000001d0880 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000001d0880 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002607d8, PID: 19016, Title: Details, Class: TkTopLevel
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000001c305a4 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, sec_show: 0, t_m: 0
+fg: 0000000001c305a4 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001e03b0, PID: 19016, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010138 () [Shell_TrayWnd], o: 1, sec_show: 1, t_m: 1
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 1, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 1, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 1, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0
+fg: 00000000001f0110 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000001f0110 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000001a03a0, PID: 2280, Title: Details, Class: TkTopLevel
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000001a03a0, PID: 2280, Title: Details, Class: TkTopLevel
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 0, t_m: 0
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000001a03a0, PID: 2280, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1
+FOUND PY_WINDOW: HWND: 00000000001a03a0, PID: 2280, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 1, sec_show: 1, t_m: 1
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000001a03a0, PID: 2280, Title: Details, Class: TkTopLevel
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 1, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 1, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000550254 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, sec_show: 0, t_m: 0
+fg: 0000000000550254 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, sec_show: 0, t_m: 0
+FOUND PY_WINDOW: HWND: 00000000002707d8, PID: 2280, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010138 () [Shell_TrayWnd], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010138 () [Shell_TrayWnd], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010138 () [Shell_TrayWnd], o: 1, sec_show: 1, t_m: 1
+fg: 0000000000010138 () [Shell_TrayWnd], o: 1, sec_show: 1, t_m: 1
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 1, t_m: 0
+fg: 00000000001f0880 (Combat Log Analyzer) [TkTopLevel], o: 1, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27140, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000001a0320 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 10120, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000b0d06, PID: 27140, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000270e5c, PID: 12448, Title: Details, Class: TkTopLevel
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002103b0 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 36268, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000270e5c, PID: 12448, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000270e5c, PID: 12448, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000270e5c, PID: 12448, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 12448, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000270e5c, PID: 12448, Title: Details, Class: TkTopLevel
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000210d3c, PID: 12448, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007de (PythonProject3 - File Explorer) [CabinetWClass], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 00000000002007de (PythonProject3 - File Explorer) [CabinetWClass], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 12448, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000002b0cbc (Combat Log Analyzer) [TkTopLevel], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 12448, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000000d0d06 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 34920, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000d0d06 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 34920, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000000d0d06 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 34920, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000d0d06 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 34920, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000490dcc (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 36672, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000000f0cc2, PID: 34920, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 0000000000770134 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 35964, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110d88, PID: 35964, Title: MSCTFIME UI, Class: MSCTFIME UI
+FORCING MAIN SHOW (was hidden)
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000770134 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 35964, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000001b0de6, PID: 35964, Title: Damage Meter, Class: TkTopLevel
+fg: 0000000000770134 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 35964, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000070f72, PID: 35964, Title: Details, Class: TkTopLevel
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110d88, PID: 35964, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000070f72, PID: 35964, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110d88, PID: 35964, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110d88, PID: 35964, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000005c01ee (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 36416, t_pid: 27004
+fg: 00000000005c01ee (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 36416, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110d88, PID: 35964, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 00000000002007de (PythonProject3 - File Explorer) [CabinetWClass], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 0000000001000c82 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 31508, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+FORCING MAIN PERSISTENCE (h:1, t_m:1)
+fg: 0000000001000c82 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 31508, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000001000c82 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 31508, t_pid: 27004
+FOUND PY_WINDOW: HWND: 000000000020052e, PID: 31508, Title: Details, Class: TkTopLevel
+fg: 0000000001000c82 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 31508, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+FORCING MAIN PERSISTENCE (h:0, t_m:1)
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1)
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 000000000020052e, PID: 31508, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000001000c82 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 31508, t_pid: 27004
+FOUND PY_WINDOW: HWND: 000000000020052e, PID: 31508, Title: Details, Class: TkTopLevel
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+FOUND PY_WINDOW: HWND: 00000000004f0cea, PID: 31508, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000002007d4 (PythonProject3 – livylogs.py) [SunAwtFrame], o: 0, is_safe: 0, sec_show: 0, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 7720, t_pid: 27004
+fg: 0000000000240c68 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 12776, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110efa, PID: 12776, Title: MSCTFIME UI, Class: MSCTFIME UI
+FORCING MAIN PERSISTENCE (h:1, t_m:1, topmost:0)
+fg: 0000000000240c68 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 12776, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110efa, PID: 12776, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000240c68 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 12776, t_pid: 27004
+FOUND PY_WINDOW: HWND: 000000000021061e, PID: 12776, Title: Details, Class: TkTopLevel
+fg: 0000000000240c68 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 12776, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110efa, PID: 12776, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110efa, PID: 12776, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000e07b8 (#swg | <REIGN> - Discord) [Chrome_WidgetWin_1], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 16760, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110efa, PID: 12776, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000000000 () [], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 0, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+FOUND PY_WINDOW: HWND: 000000000021061e, PID: 12776, Title: Details, Class: TkTopLevel
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000110efa, PID: 12776, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000001300cb8 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 14520, t_pid: 27004
+fg: 0000000001300cb8 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 14520, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 00000000014f03bc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 5772, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000250c68, PID: 5772, Title: MSCTFIME UI, Class: MSCTFIME UI
+FORCING MAIN PERSISTENCE (h:1, t_m:1, topmost:0)
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+FOUND PY_WINDOW: HWND: 0000000000250c68, PID: 5772, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000250c68, PID: 5772, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+fg: 00000000014f03bc (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 5772, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000250c68, PID: 5772, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000250c68, PID: 5772, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+FOUND PY_WINDOW: HWND: 0000000000250c68, PID: 5772, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000000250c68, PID: 5772, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000000d0e72 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6064, t_pid: 27004
+fg: 00000000000d0e72 (C:\Users\LivyC\AppData\Local\Programs\Python\Python312\python.exe) [CASCADIA_HOSTING_WINDOW_CLASS], o: 0, is_safe: 0, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6064, t_pid: 27004
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 0000000000010138 () [Shell_TrayWnd], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 6492, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+fg: 0000000000610dc0 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 37188, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000001030e28, PID: 37188, Title: MSCTFIME UI, Class: MSCTFIME UI
+FORCING MAIN PERSISTENCE (h:1, t_m:1, topmost:0)
+fg: 0000000000610dc0 (Combat Log Analyzer) [TkTopLevel], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 37188, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+FOUND PY_WINDOW: HWND: 0000000001030e28, PID: 37188, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000001030e28, PID: 37188, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+FORCING MAIN PERSISTENCE (h:0, t_m:1, topmost:0)
+FOUND PY_WINDOW: HWND: 0000000001030e28, PID: 37188, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+fg: 000000000005021a (SwgClient) [SwgClient], o: 1, is_safe: 0, sec_show: 1, main_v: 1, t_m: 1, target: 000000000005021a, f_p: 27004, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000001030e28, PID: 37188, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000001030e28, PID: 37188, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 0000000000010212 (Search) [Windows.UI.Core.CoreWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 13748, t_pid: 27004
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004
+FOUND PY_WINDOW: HWND: 0000000001030e28, PID: 37188, Title: MSCTFIME UI, Class: MSCTFIME UI
+fg: 00000000001402a6 (Task Manager) [TaskManagerWindow], o: 0, is_safe: 1, sec_show: 1, main_v: 1, t_m: 0, target: 000000000005021a, f_p: 19592, t_pid: 27004

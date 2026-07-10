@@ -69,26 +69,13 @@ int g_player_count = 0;
 
 HWND target_hwnd = NULL;
 DWORD python_pid = 0;
+HANDLE g_pipe = INVALID_HANDLE_VALUE;
 
-void a_o_t(BOOL s_s) {
-    char s_cla[32];
-    strcpy(s_cla, (char*)s_combat_log_analyzer); d(s_cla);
-    HWND h_cla = FindWindowA(NULL, s_cla);
-    if (h_cla) {
-        if (s_s) SetWindowPos(h_cla, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        else SetWindowPos(h_cla, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-    }
-    
-    unsigned char* pop_list[] = {s_damage_meter, s_leaderboard, s_skimmers, s_details, s_options, s_alexa};
-    for (int i = 0; i < 6; i++) {
-        char n_b[32];
-        strcpy(n_b, (char*)pop_list[i]); d(n_b);
-        HWND h = FindWindowA(NULL, n_b);
-        if (h && IsWindowVisible(h)) {
-            if (s_s) SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-            else SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        }
-    }
+void send_raw_event(HANDLE h, const char* msg) {
+    if (h == INVALID_HANDLE_VALUE) return;
+    DWORD b_w;
+    WriteFile(h, msg, strlen(msg), &b_w, NULL);
+    WriteFile(h, "\n", 1, &b_w, NULL);
 }
 
 // Internal helpers
@@ -115,293 +102,12 @@ PlayerStats* get_player(const char* name) {
     return NULL;
 }
 
-BOOL CALLBACK e_w_p(HWND h, LPARAM l) {
-    if (IsWindowVisible(h)) {
-        wchar_t b[256];
-        GetWindowTextW(h, b, 256);
-        char s1[32], s2[32];
-        strcpy(s1, (char*)s_swgclient); d(s1);
-        strcpy(s2, (char*)s_star_wars_galaxies); d(s2);
-        
-        wchar_t w1[32], w2[32];
-        MultiByteToWideChar(CP_ACP, 0, s1, -1, w1, 32);
-        MultiByteToWideChar(CP_ACP, 0, s2, -1, w2, 32);
-
-        if (wcsstr(b, w1) || wcsstr(b, w2)) {
-            target_hwnd = h;
-            return FALSE;
-        }
-    }
-    return TRUE;
+void a_o_t(BOOL s_s) {
+    // Moved to Python
 }
 
 void u_v() {
-    if (!target_hwnd || !IsWindow(target_hwnd)) {
-        EnumWindows(e_w_p, 0);
-    }
-
-    HWND fg = GetForegroundWindow();
-    DWORD f_p = 0;
-    if (fg) GetWindowThreadProcessId(fg, &f_p);
-
-    BOOL o = (f_p != 0 && (f_p == GetCurrentProcessId() || f_p == python_pid));
-    if (!o && target_hwnd) {
-        DWORD t_p = 0;
-        GetWindowThreadProcessId(target_hwnd, &t_p);
-        if (f_p != 0 && f_p == t_p) o = TRUE;
-        
-        // Title-based fallback for focus detection
-        if (!o && fg) {
-            wchar_t cur_t[256];
-            GetWindowTextW(fg, cur_t, 256);
-            char s1[32], s2[32];
-            strcpy(s1, (char*)s_swgclient); d(s1);
-            strcpy(s2, (char*)s_star_wars_galaxies); d(s2);
-            wchar_t w1[32], w2[32];
-            MultiByteToWideChar(CP_ACP, 0, s1, -1, w1, 32);
-            MultiByteToWideChar(CP_ACP, 0, s2, -1, w2, 32);
-            if (wcsstr(cur_t, w1) || wcsstr(cur_t, w2)) o = TRUE;
-        }
-
-        // Robust check: if foreground window is owned by game or python, it's 'o'
-        if (!o && fg) {
-            HWND owner = GetWindow(fg, GW_OWNER);
-            int depth = 0;
-            while (owner && depth < 10) {
-                DWORD opid = 0;
-                GetWindowThreadProcessId(owner, &opid);
-                if (opid != 0 && (opid == t_p || opid == python_pid || opid == GetCurrentProcessId())) {
-                    o = TRUE;
-                    break;
-                }
-                owner = GetWindow(owner, GW_OWNER);
-                depth++;
-            }
-        }
-        
-        if (!o && t_p != 0 && f_p != 0 && f_p == t_p) o = TRUE;
-    }
-
-    // NEW: Aggressively HIDE TtkMonitorWindow
-    if (fg) {
-        char cls[256];
-        GetClassNameA(fg, cls, 256);
-        if (strstr(cls, "TtkMonitorWindow")) {
-            ShowWindow(fg, SW_HIDE);
-        }
-    }
-
-    // Safety check for TtkMonitorWindow and Start menu - if this is the foreground, DON'T hide
-    if (!o && fg) {
-        char cls[256];
-        GetClassNameA(fg, cls, 256);
-        if (strstr(cls, "TtkMonitorWindow") || strstr(cls, "Windows.UI.Core.CoreWindow") || 
-            strstr(cls, "Immersive") || strstr(cls, "Shell_TrayWnd") || strstr(cls, "DV2ControlHost") ||
-            strstr(cls, "Discord") || strstr(cls, "Explorer") || strstr(cls, "Launcher")) {
-            // This flag indicates the foreground is a "safe" window
-            // We'll use a separate flag to avoid confusing 'o' (active focus)
-        }
-    }
-
-    DWORD t_pid = 0;
-    wchar_t fg_title[256] = L"";
-    if (target_hwnd) GetWindowThreadProcessId(target_hwnd, &t_pid);
-    if (fg) GetWindowTextW(fg, fg_title, 256);
-
-    // Main window state
-    BOOL m = (target_hwnd != NULL) ? IsIconic(target_hwnd) : FALSE;
-
-    // Determine if we are in a "Safe Zone" (Start Menu, Taskbar, Discord, etc.)
-    BOOL is_safe = FALSE;
-    if (fg) {
-        char cls[256] = "";
-        GetClassNameA(fg, cls, 256);
-        if (strstr(cls, "Windows.UI.Core.CoreWindow") || strstr(cls, "Explorer") || 
-            strstr(cls, "Shell_TrayWnd") || strstr(cls, "DV2ControlHost") || strstr(cls, "BaseBar") ||
-            strstr(cls, "Immersive") || strstr(cls, "Launcher") || strstr(cls, "NotifyIconOverflowWindow") ||
-            strstr(cls, "Discord") || strstr(cls, "TtkMonitorWindow") || strstr(cls, "Task View") ||
-            strstr(cls, "Windows.UI.Input.InputSite.WindowClass") || strstr(cls, "PopUp") || strstr(cls, "TrayNotifyWnd")) {
-            is_safe = TRUE;
-        }
-        if (!is_safe) {
-            if (wcslen(fg_title) == 0) is_safe = TRUE;
-            else if (wcsstr(fg_title, L"Search") != NULL || wcsstr(fg_title, L"Start") != NULL || 
-                     wcsstr(fg_title, L"Cortana") != NULL || wcsstr(fg_title, L"Task Manager") != NULL) is_safe = TRUE;
-        }
-    }
-
-    // Secondary windows visibility state
-    // Show if: (Active Focus OR Alt key OR Safe Zone) AND Game not minimized
-    BOOL secondary_show = (o || GetAsyncKeyState(VK_MENU) || is_safe) && !m;
-    
-    // Grace period for hiding secondaries - 3.0 seconds for stability
-    static DWORD last_sec_show_time = 0;
-    if (secondary_show) last_sec_show_time = GetTickCount();
-    if (!secondary_show && (GetTickCount() - last_sec_show_time < 3000)) secondary_show = TRUE;
-
-    // t_m = Topmost Mode (Game or App has active focus)
-    // We ONLY want to be topmost if the user is actually in the game/app.
-    // If they are in a "Safe Zone" (like Start menu), we stay visible but NOT topmost.
-    BOOL t_m = o;
-    if (!t_m && secondary_show && target_hwnd && f_p == t_pid) t_m = TRUE;
-
-    // FIX: Transition from Start Menu directly into Game
-    if (t_m && !o) {
-        // This means we are topmost because of PID match but 'o' is false (maybe focus pending)
-        // Force 'o' to TRUE to stabilize
-        o = TRUE;
-    }
-
-    // NEW: Persistent Main Window Visibility Failsafe
-    // We want the main window to be ALWAYS visible unless explicitly minimized,
-    // regardless of whether we are in a safe zone or the game.
-    BOOL main_visible = !m; // If game is not minimized, main window should be visible
-
-    // FIX: Click from Start Menu directly into Game hiding main window.
-    // If we transition from is_safe to game focus, we need to ensure visibility is sticky.
-    static BOOL was_safe = FALSE;
-    if (is_safe) was_safe = TRUE;
-    else if (o) was_safe = FALSE; // Reset if we actually have focus
-
-    static DWORD last_log = 0;
-    if (GetTickCount() - last_log > 1000) {
-        FILE* f = fopen("engine_debug.txt", "a");
-        if (f) {
-            char title_mb[256];
-            WideCharToMultiByte(CP_ACP, 0, fg_title, -1, title_mb, 256, NULL, NULL);
-            char cls[256] = "";
-            if (fg) GetClassNameA(fg, cls, 256);
-            fprintf(f, "fg: %p (%s) [%s], o: %d, is_safe: %d, sec_show: %d, main_v: %d, t_m: %d, target: %p, f_p: %lu, t_pid: %lu\n", 
-                    fg, title_mb, cls, o, is_safe, secondary_show, main_visible, t_m, target_hwnd, f_p, t_pid);
-            fclose(f);
-        }
-        last_log = GetTickCount();
-    }
-
-
-    // Use partial matching or class name for more reliable window finding
-    char s_cla[32];
-    strcpy(s_cla, (char*)s_combat_log_analyzer); d(s_cla);
-    HWND p_h = NULL;
-    
-    // NEW: Debug info for finding p_h
-    static DWORD last_ph_debug = 0;
-
-    // Attempt to find window by PID first as it's most reliable
-    if (python_pid) {
-        HWND h = GetTopWindow(NULL);
-        while (h) {
-            DWORD pid;
-            GetWindowThreadProcessId(h, &pid);
-            if (pid == python_pid) {
-                // Check if it's a real window (has title or common class)
-                char cls[256];
-                GetClassNameA(h, cls, 256);
-                if (strstr(cls, "TkTopLevel") || strstr(cls, "TkChild") || GetWindowTextLengthA(h) > 0) {
-                    if (GetTickCount() - last_ph_debug > 2000) {
-                        FILE* f = fopen("engine_debug.txt", "a");
-                        if (f) {
-                            char title[256];
-                            GetWindowTextA(h, title, 256);
-                            fprintf(f, "FOUND PY_WINDOW: HWND: %p, PID: %lu, Title: %s, Class: %s\n", h, pid, title, cls);
-                            fclose(f);
-                        }
-                    }
-                    p_h = h;
-                    break;
-                }
-            }
-            h = GetNextWindow(h, GW_HWNDNEXT);
-        }
-    }
-    if (GetTickCount() - last_ph_debug > 2000) last_ph_debug = GetTickCount();
-
-    if (!p_h) p_h = FindWindowA(NULL, s_cla);
-    if (!p_h) p_h = FindWindowA("TkTopLevel", s_cla);
-    if (!p_h) p_h = FindWindowA("TkChild", s_cla);
-    if (!p_h) p_h = FindWindowA("TkTopLevel", "Combat Log Analyzer");
-    
-    // Robust search: if still not found, search windows belonging to the python process
-    if (!p_h && python_pid) {
-        HWND h = GetTopWindow(NULL);
-        while (h) {
-            DWORD pid;
-            GetWindowThreadProcessId(h, &pid);
-            if (pid == python_pid) {
-                char title[256];
-                GetWindowTextA(h, title, 256);
-                if (strstr(title, s_cla) || strstr(title, "Combat Log Analyzer") || strstr(title, "LivyLogs")) {
-                    p_h = h;
-                    break;
-                }
-            }
-            h = GetNextWindow(h, GW_HWNDNEXT);
-        }
-    }
-    
-    if (p_h) {
-        // ALWAYS keep main window visible as requested
-        if (IsIconic(p_h)) ShowWindow(p_h, SW_RESTORE);
-        
-        // FORCED PERSISTENCE for main window - Using SW_SHOWNA to ensure it doesn't get stuck hidden
-        // FIX: Ensure it stays shown during Start -> Game transition
-        if (main_visible) ShowWindow(p_h, SW_SHOWNA);
-        
-        // Ensure it doesn't stay topmost if we are NOT in topmost mode
-        // This fixes the issue where clicking it while on top (of SWG) makes it stay on top (of Start menu)
-        if (t_m) {
-            // Use HWND_TOPMOST when game/app has focus
-            SetWindowPos(p_h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-            // Force it to the top one more time
-            BringWindowToTop(p_h);
-        } else {
-            // Remove TOPMOST when focus lost (ALT-TAB / Start Menu) but keep visible
-            SetWindowPos(p_h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | (main_visible ? SWP_SHOWWINDOW : 0));
-            // If main window was accidentally hidden or covered, force it to just below the topmost layer
-            if (main_visible) ShowWindow(p_h, SW_SHOWNA);
-        }
-    }
-
-    unsigned char* p_l_v[] = {s_damage_meter, s_leaderboard, s_skimmers, s_details, s_options, s_alexa};
-    for (int i = 0; i < 6; i++) {
-        char n_b[32];
-        strcpy(n_b, (char*)p_l_v[i]); d(n_b);
-        HWND h = FindWindowA(NULL, n_b);
-        if (!h) h = FindWindowA("TkTopLevel", n_b);
-        if (!h) h = FindWindowA("TkChild", n_b);
-        
-        // Robust search for popouts
-        if (!h && python_pid) {
-            HWND h2 = GetTopWindow(NULL);
-            while (h2) {
-                DWORD pid;
-                GetWindowThreadProcessId(h2, &pid);
-                if (pid == python_pid) {
-                    char title[256];
-                    GetWindowTextA(h2, title, 256);
-                    if (strstr(title, n_b)) {
-                        h = h2;
-                        break;
-                    }
-                }
-                h2 = GetNextWindow(h2, GW_HWNDNEXT);
-            }
-        }
-        
-        if (h) {
-            if (secondary_show) {
-                if (IsIconic(h)) ShowWindow(h, SW_RESTORE);
-                ShowWindow(h, SW_SHOWNOACTIVATE);
-                if (t_m) SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-                else SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-            } else {
-                ShowWindow(h, SW_HIDE);
-                SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_HIDEWINDOW);
-            }
-        }
-    }
-
-    a_o_t(t_m);
+    // Moved to Python
 }
 
 void c_o() {
@@ -655,6 +361,7 @@ void e_t(void* arg) {
 
     HANDLE hp = CreateNamedPipe(d_pn, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT, 1, 0, 0, 0, NULL);
     if (hp == INVALID_HANDLE_VALUE) return;
+    g_pipe = hp;
 
     ConnectNamedPipe(hp, NULL);
 
@@ -694,6 +401,7 @@ void e_t(void* arg) {
             last_sync = now;
         }
     }
+    g_pipe = INVALID_HANDLE_VALUE;
     CloseHandle(hf);
     CloseHandle(hp);
 }
@@ -726,6 +434,9 @@ int main(int a, char** v) {
     char p_abs[256];
     sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" livylogs.py");
 
+    // Click-Box Logic: Ensure main window is topmost if we are in game or safe
+    // (This part will be handled in u_v)
+
     if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
         FILE* f_err = fopen("engine_debug.txt", "a");
         if (f_err) {
@@ -744,14 +455,18 @@ int main(int a, char** v) {
         _beginthread(e_t, 0, v[1]);
     }
 
+    // Start managing windows
     DWORD start_time = GetTickCount();
 
     while (1) {
-        // Wait 1 second before managing windows to allow Python UI to stabilize
+        // High frequency loop for visibility (ONLY combat parsing now)
+        // Window management moved back to Python
+        /*
         if (GetTickCount() - start_time > 1000) {
             u_v();
         }
-        Sleep(250);
+        */
+        Sleep(500); // Reduce CPU usage as we don't manage windows here anymore
     }
     return 0;
 }

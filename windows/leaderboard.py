@@ -137,9 +137,11 @@ class LeaderboardWindow(BasePopoutWindow):
             cat = getattr(self.app, 'leaderboard_cat', 'damage')
             if hasattr(self, 'cat_btns'):
                 for v, btn in self.cat_btns.items():
-                    if btn.winfo_exists():
-                        active = (v == cat)
-                        btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+                    try:
+                        if btn.winfo_exists():
+                            active = (v == cat)
+                            btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+                    except: pass
             if hasattr(self, 'lbl_cat_head') and self.lbl_cat_head.winfo_exists():
                 self.lbl_cat_head.config(text=cat.upper())
 

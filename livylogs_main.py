@@ -35,6 +35,67 @@ from windows.details import DetailsWindow
 from windows.options import OptionsWindow
 from windows.alexa import AlexaWindow
 
+class ClickCatcher:
+    def __init__(self, app):
+        self.app = app
+        self.window = None
+        self.active = False
+
+    def show(self):
+        if self.window and self.window.winfo_exists():
+            self.window.deiconify()
+            self.window.lift()
+            self.active = True
+            return
+
+        self.window = tk.Toplevel(self.app.root)
+        self.window.overrideredirect(True)
+        # 0.002 might be TOO invisible for some graphics drivers to capture the click
+        self.window.attributes("-alpha", 0.005) 
+        self.window.attributes("-topmost", True)
+        self.window.configure(bg="red") # Using a visible but faint color for testing
+        
+        # Cover entire primary screen
+        sw = self.window.winfo_screenwidth()
+        sh = self.window.winfo_screenheight()
+        self.window.geometry(f"{sw}x{sh}+0+0")
+        
+        # Transparent color hack for Windows to make it truly invisible but clickable
+        # (Though alpha 0.002 is usually enough)
+        # self.window.attributes("-transparentcolor", "black") 
+        
+        self.window.bind("<Button-1>", self.on_click)
+        self.window.bind("<Button-2>", self.on_click)
+        self.window.bind("<Button-3>", self.on_click)
+        # Also bind movement to hide it if user tries to move mouse while it's up?
+        # No, we want it to catch the click.
+        
+        self.active = True
+        # print("DEBUG: ClickCatcher shown") # Remove debug prints for final build
+
+    def hide(self):
+        if self.window and self.window.winfo_exists():
+            self.window.withdraw()
+        self.active = False
+
+    def on_click(self, event=None):
+        # print("DEBUG: ClickCatcher clicked")
+        self.hide()
+        # Bring main app and all windows to front
+        self.app.root.deiconify()
+        self.app.root.attributes("-topmost", True)
+        self.app.root.lift()
+        # Ensure alpha is 1.0
+        self.app.root.attributes("-alpha", 1.0)
+        # Also force a re-pin via engine if possible, but for now just lift
+        for win in self.app._get_managed_windows():
+            if win.winfo_exists() and win.state() != "withdrawn":
+                win.deiconify()
+                win.attributes("-alpha", 1.0)
+                win.lift()
+                win.attributes("-topmost", True)
+        self.app.refresh_ui_only(force=True)
+
 class CombatLogApp:
     def __init__(self, root):
         self.root = root
@@ -83,6 +144,7 @@ class CombatLogApp:
         self.details_win = DetailsWindow(self)
         self.options_win = OptionsWindow(self)
         self.alexa_win = AlexaWindow(self)
+        self.click_catcher = ClickCatcher(self)
         
         self._managed_windows = [
             self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
@@ -208,11 +270,95 @@ class CombatLogApp:
 
     def check_target_window(self):
         if not self.running: return
-        # Since we want the main window to stay visible always, we restore
-        # this loop to ensure it stays deiconified if it's not in the tray.
-        if self.root.state() == "withdrawn" and not getattr(self, "_minimized_to_tray", False):
-            self.start_show()
         
+        # 1. Ensure main window is always visible
+        if self.root.state() == "withdrawn" and not getattr(self, "_minimized_to_tray", False):
+            self.root.deiconify()
+            self.root.attributes("-alpha", 1.0)
+            
+        # 2. Window Management Logic (Reverted from C)
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            
+            fg_hwnd = user32.GetForegroundWindow()
+            if fg_hwnd:
+                # Get Foreground Title
+                length = user32.GetWindowTextLengthW(fg_hwnd)
+                buff = ctypes.create_unicode_buffer(length + 1)
+                user32.GetWindowTextW(fg_hwnd, buff, length + 1)
+                fg_title = buff.value.lower()
+                
+                # Get Foreground Class
+                class_buff = ctypes.create_unicode_buffer(256)
+                user32.GetClassNameW(fg_hwnd, class_buff, 256)
+                fg_class = class_buff.value
+                
+                # Detect Game Window
+                is_game = any(s in fg_title for s in ["swgclient", "star wars galaxies"])
+                
+                # Detect Safe Zone (Start Menu, Explorer, Discord, etc.)
+                safe_classes = ["Shell_TrayWnd", "DV2ControlHost", "BaseBar", "Immersive", "Launcher", "NotifyIconOverflowWindow", "CabinetWClass", "TaskManagerWindow"]
+                is_safe = any(sc in fg_class for sc in safe_classes) or fg_title == "" or "discord" in fg_title or "search" in fg_title
+                
+                # Track state to avoid redundant calls (flashing)
+                target_state = "game" if is_game else ("safe" if is_safe else "hidden")
+                current_state = getattr(self, "_last_win_state", None)
+                
+                # Check for focus on the app itself
+                my_pid = os.getpid()
+                fg_pid = ctypes.wintypes.DWORD()
+                user32.GetWindowThreadProcessId(fg_hwnd, ctypes.byref(fg_pid))
+                if fg_pid.value == my_pid:
+                    target_state = "game" # Treat focus on app like focus on game
+
+                if target_state != current_state:
+                    self._last_win_state = target_state
+                    
+                    if target_state == "game":
+                        self.root.attributes("-topmost", True)
+                        for win in self._get_managed_windows():
+                            if win != self.root:
+                                if win.state() == "withdrawn":
+                                    win.deiconify()
+                                    win.lift()
+                                win.attributes("-topmost", True)
+                                win.attributes("-alpha", 1.0)
+                    elif target_state == "safe":
+                        self.root.attributes("-topmost", False)
+                        for win in self._get_managed_windows():
+                            if win != self.root:
+                                if win.state() == "withdrawn":
+                                    win.deiconify()
+                                    win.lift()
+                                win.attributes("-topmost", False)
+                                win.attributes("-alpha", 1.0)
+                    else:
+                        self.root.attributes("-topmost", False)
+                        for win in self._get_managed_windows():
+                            if win != self.root:
+                                if win.state() != "withdrawn":
+                                    win.withdraw()
+                else:
+                    # Even if state is same, ensure topmost is maintained if in game
+                    if target_state == "game":
+                        # Be less aggressive to prevent flashing
+                        try:
+                            if not self.root.attributes("-topmost"):
+                                self.root.attributes("-topmost", True)
+                        except: pass
+                        
+                        for win in self._get_managed_windows():
+                            if win != self.root:
+                                try:
+                                    # ONLY re-apply topmost if it somehow lost it
+                                    if not win.attributes("-topmost"):
+                                        win.attributes("-topmost", True)
+                                except: pass
+            
+        except Exception as e:
+            pass
+            
         self.root.after(500, self.check_target_window)
 
     def start_show(self):
@@ -361,16 +507,12 @@ class CombatLogApp:
 
     def start_pipe_listener(self):
         pipe_path = r'\\.\pipe\LivyLogsPipe'
-        print(f"DEBUG: Starting Pipe Listener on {pipe_path}")
         while self.running:
             if not kernel32.WaitNamedPipeW(pipe_path, 1000):
                 time.sleep(1); continue
-            print("DEBUG: Pipe available, connecting...")
             h = kernel32.CreateFileW(pipe_path, 0x80000000, 0, None, 3, 0x80, None)
             if h == -1:
-                print(f"DEBUG: Pipe connection failed: {kernel32.GetLastError()}")
                 time.sleep(1); continue
-            print("DEBUG: Connected to C Engine Pipe")
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
                 if kernel32.ReadFile(h, buf, 65536, ctypes.byref(bytes_read), None) and bytes_read.value > 0:
@@ -381,17 +523,22 @@ class CombatLogApp:
                             try:
                                 data = json.loads(line); data["timestamp"] = datetime.now()
                                 self.process_external_event(data, is_last=(i == len(lines)-1))
-                            except Exception as e:
-                                print(f"DEBUG: JSON parse error: {e}")
+                            except: pass
                 else:
-                    print(f"DEBUG: Pipe read failed or closed. Last error: {kernel32.GetLastError()}")
                     break
             kernel32.CloseHandle(h)
-            print("DEBUG: Pipe closed, retrying...")
 
     def process_external_event(self, event, is_last=False):
         event_type = event.get("type")
         
+        if event_type == "catcher":
+            action = event.get("action")
+            if action == "show":
+                self.root.after(0, self.click_catcher.show)
+            else:
+                self.root.after(0, self.click_catcher.hide)
+            return
+
         if event_type == "stats":
             name = event.get("name")
             if not name: return
@@ -495,23 +642,29 @@ class CombatLogApp:
             self.root.after(100, self.start_ticker_loop)
 
     def refresh_ui_only(self, force=False):
-        now_ts = time.time()
-        if now_ts - self.last_pulse_time > 0.3:
-            self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
+        try:
+            now_ts = time.time()
+            if now_ts - self.last_pulse_time > 0.3:
+                self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
+    
+            # Update Managed Windows list first to ensure all windows are processed
+            managed_wins = self._get_managed_windows()
 
-        # Damage meter is highest priority for real-time feel
-        self.damage_meter_win.refresh(force=force)
-
-        # Other windows are lower priority
-        if force or (now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.2):
-            self.leaderboard_win.refresh(force=force)
-            self.skimmers_win.refresh(force=force)
-            self.details_win.refresh(force=force)
-            self.last_heavy_refresh = now_ts
-        
-        # Options window doesn't need to refresh every tick, only when forced
-        if force:
-            self.options_win.refresh(force=True)
+            # Damage meter is highest priority for real-time feel
+            self.damage_meter_win.refresh(force=force)
+    
+            # Other windows are lower priority
+            if force or (now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.2):
+                self.leaderboard_win.refresh(force=force)
+                self.skimmers_win.refresh(force=force)
+                self.details_win.refresh(force=force)
+                self.alexa_win.refresh(force=force)
+                self.last_heavy_refresh = now_ts
+            
+            # Options window doesn't need to refresh every tick, only when forced
+            if force:
+                self.options_win.refresh(force=True)
+        except: pass
 
     def process_events_for_ui(self, all_events, manual=False):
         pass

@@ -176,8 +176,11 @@ class DetailsWindow(BasePopoutWindow):
         # Update Tab Buttons
         tab = getattr(self.app, 'details_tab', 'all')
         for v, btn in self.tab_btns.items():
-            active = (v == tab)
-            btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+            try:
+                if btn.winfo_exists():
+                    active = (v == tab)
+                    btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+            except: pass
 
         # Update Stats
         dmg = stats.get('damage', 0)

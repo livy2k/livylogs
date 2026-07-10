@@ -177,9 +177,11 @@ class SkimmersWindow(BasePopoutWindow):
             tab = getattr(self.app, 'skimmer_tab', 'loot')
             if hasattr(self, 'tab_btns'):
                 for v, btn in self.tab_btns.items():
-                    if btn.winfo_exists():
-                        active = (v == tab)
-                        btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+                    try:
+                        if btn.winfo_exists():
+                            active = (v == tab)
+                            btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+                    except: pass
 
         # Update Inventory Alert
         if self.app.inventory_full:

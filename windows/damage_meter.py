@@ -84,7 +84,10 @@ class DamageMeterWindow(BasePopoutWindow):
                 dur = (combat_end - start_ts).total_seconds()
         
         dur = max(0, dur)
-        self.lbl_dur.config(text=f"{dur:.0f}s")
+        try:
+            if hasattr(self, 'lbl_dur') and self.lbl_dur.winfo_exists():
+                self.lbl_dur.config(text=f"{dur:.0f}s")
+        except: pass
 
         if do_full:
             self.last_full_refresh = now

@@ -69,7 +69,7 @@ class LeaderboardWindow(BasePopoutWindow):
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
         
         # Determine if we should do a full data calculation
-        do_full = force or (now - self.last_full_refresh >= 5.0)
+        do_full = force or (now - self.last_full_refresh >= 1.0)
 
         # Use an update strategy that minimizes widget recreation
         if not hasattr(self, 'list_container'):

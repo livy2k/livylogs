@@ -214,10 +214,26 @@ void p_l(HANDLE h, char* l) {
     if (l[0] == '[') {
         char* end_bracket = strchr(l, ']');
         if (end_bracket) clean = end_bracket + 1;
+        // Check for double bracket format [Spatial] [00:00:00] [GROUP]
+        if (clean[0] == ' ' && clean[1] == '[') {
+            char* second_bracket = strchr(clean + 1, ']');
+            if (second_bracket) clean = second_bracket + 1;
+            if (clean[0] == ' ' && clean[1] == '[') {
+                char* third_bracket = strchr(clean + 1, ']');
+                if (third_bracket) clean = third_bracket + 1;
+            }
+        }
     }
     while(*clean == ' ') clean++;
+    // SWG logs often have a timestamp like 03:20:00 without brackets
     if (isdigit(clean[0]) && isdigit(clean[1]) && clean[2] == ':') {
         clean += 9;
+    }
+    while(*clean == ' ') clean++;
+    // Check for [GROUP] after timestamp if not caught by bracket logic
+    if (clean[0] == '[') {
+        char* group_bracket = strchr(clean, ']');
+        if (group_bracket) clean = group_bracket + 1;
     }
     while(*clean == ' ') clean++;
 
@@ -404,34 +420,38 @@ void p_l(HANDLE h, char* l) {
             strcpy(s_f, (char*)s_for); d(s_f);
             char* p_for = s_i_s(p_act, s_f);
             if (p_for) {
-                if (sscanf(p_for + 4, "%lf", &amount) == 1) {
-                    strcpy(s_o, (char*)s_on); d(s_o);
-                    strcpy(s_t, (char*)s_to); d(s_t);
-                    char* p_on = s_i_s(p_act, s_o);
-                    if (!p_on) p_on = s_i_s(p_act, s_t);
-                    
-                    if (p_on && p_on < p_for) {
-                        int a_len = p_on - (p_act + strlen(actions[i]));
-                        if (a_len > 0) {
-                            if (a_len > 127) a_len = 127;
-                            strncpy(ability, p_act + strlen(actions[i]), a_len); ability[a_len] = '\0';
-                        }
-                        int t_len = p_for - (p_on + 3);
-                        if (t_len > 0) {
-                            if (t_len > 127) t_len = 127;
-                            strncpy(target, p_on + 3, t_len); target[t_len] = '\0';
-                        }
-                    } else {
-                        int t_len = p_for - (p_act + strlen(actions[i]));
-                        if (t_len > 0) {
-                            if (t_len > 127) t_len = 127;
-                            strncpy(target, p_act + strlen(actions[i]), t_len); target[t_len] = '\0';
-                        }
+            if (sscanf(p_for + 4, "%lf", &amount) == 1) {
+                strcpy(s_o, (char*)s_on); d(s_o);
+                strcpy(s_t, (char*)s_to); d(s_t);
+                char* p_on = s_i_s(p_act, s_o);
+                if (!p_on) p_on = s_i_s(p_act, s_t);
+            
+                if (p_on && p_on < p_for) {
+                    int a_len = p_on - (p_act + strlen(actions[i]));
+                    if (a_len > 0) {
+                        if (a_len > 127) a_len = 127;
+                        strncpy(ability, p_act + strlen(actions[i]), a_len); ability[a_len] = '\0';
                     }
+                    int t_len = p_for - (p_on + 4); 
+                    if (t_len > 0) {
+                        if (t_len > 127) t_len = 127;
+                        strncpy(target, p_on + 4, t_len); target[t_len] = '\0';
+                    }
+                } else {
+                    int t_len = p_for - (p_act + strlen(actions[i]));
+                    if (t_len > 0) {
+                        if (t_len > 127) t_len = 127;
+                        strncpy(target, p_act + strlen(actions[i]), t_len); target[t_len] = '\0';
+                    }
+                }
 
-                    while(strlen(source)>0 && source[0]==' ') memmove(source, source+1, strlen(source));
-                    while(strlen(target)>0 && target[0]==' ') memmove(target, target+1, strlen(target));
-                    while(strlen(ability)>0 && ability[0]==' ') memmove(ability, ability+1, strlen(ability));
+                // Cleanup target: remove " points of damage" if it's there (shouldn't be with " for " logic but safe)
+                char* p_points = strstr(target, " points");
+                if (p_points) *p_points = '\0';
+
+                while(strlen(source)>0 && source[0]==' ') memmove(source, source+1, strlen(source));
+                while(strlen(target)>0 && target[0]==' ') memmove(target, target+1, strlen(target));
+                while(strlen(ability)>0 && ability[0]==' ') memmove(ability, ability+1, strlen(ability));
                     char* end;
                     end = source + strlen(source) - 1; while(end >= source && isspace(*end)) *end-- = '\0';
                     end = target + strlen(target) - 1; while(end >= target && (isspace(*end) || *end == '!')) *end-- = '\0';

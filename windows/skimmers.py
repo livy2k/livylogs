@@ -98,8 +98,8 @@ class SkimmersWindow(BasePopoutWindow):
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
         
-        # User requested 5s for skimmers, but we should refresh if search is active
-        throttle = 1.0 if self.app.skimmer_search_mode else 5.0
+        # User requested 1s for skimmers, but we should refresh if search is active
+        throttle = 1.0
         do_full = force or (now - self.last_full_refresh >= throttle)
 
         # Use persistent container for search and tabs to reduce flicker

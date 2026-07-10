@@ -83,14 +83,12 @@ class DamageMeterWindow(BasePopoutWindow):
             # Check if combat is active or paused
             is_active = (time.time() - self.app.last_combat_time) <= self.app.time_window_dm
             if is_active:
-                # If active, project from last sync anchor to current moment
-                anchor = self.app.last_log_sync_time if self.app.last_log_sync_time else self.app.app_start_time
-                elapsed_since_hit = time.time() - self.app.last_combat_time
-                dur = (anchor + timedelta(seconds=elapsed_since_hit) - start_ts).total_seconds()
+                # If active, project from app_start_time to current moment
+                dur = (datetime.now() - self.app.app_start_time).total_seconds()
             else:
                 # If paused, duration is fixed at the last combat hit time
                 combat_end = datetime.fromtimestamp(self.app.last_combat_time) if self.app.last_combat_time > 0 else now_dt
-                dur = (combat_end - start_ts).total_seconds()
+                dur = (combat_end - self.app.app_start_time).total_seconds()
         
         dur = max(0, dur)
         try:

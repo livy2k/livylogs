@@ -43,10 +43,7 @@ def main():
         # in case we are exiting due to an error or manual close
         try:
             import subprocess
-            engine_exes = [
-                'LivyLogs_Engine_New.exe', 'LivyLogsEngine_v2.exe', 'parser_v2.exe', 
-                'LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe', 'p_final.exe'
-            ]
+            engine_exes = ['parser.exe']
             for proc_name in engine_exes:
                 subprocess.run(['taskkill', '/F', '/IM', proc_name, '/T'], 
                                capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)

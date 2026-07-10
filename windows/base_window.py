@@ -24,11 +24,9 @@ class BasePopoutWindow:
                 if self.window.attributes("-alpha") != self.app.current_alpha:
                     self.window.attributes("-alpha", self.app.current_alpha)
                 self.window.lift()
-                self.refresh(force=True) # Immediate update on show
                 return
             if force_open:
                 self.window.lift()
-                self.refresh(force=True) # Immediate update on show
                 return
             self.close()
             return
@@ -64,6 +62,8 @@ class BasePopoutWindow:
             __import__("ctypes").windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
         except: pass
         self.window.attributes("-alpha", self.app.current_alpha)
+        if self.app.always_on_top:
+            self.window.attributes("-topmost", True)
         
         if not self.fixed_size:
             self.window.bind("<Button-1>", self.click_window)

@@ -117,41 +117,7 @@ void u_v() {
 }
 
 void c_o() {
-    HANDLE h_s = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (h_s == INVALID_HANDLE_VALUE) return;
-    PROCESSENTRY32 p_e;
-    p_e.dwSize = sizeof(PROCESSENTRY32);
-    DWORD m_p = GetCurrentProcessId();
-    
-    char e1[32], e2[32], e3[32], e4[32];
-    strcpy(e1, (char*)s_livylogs_exe); d(e1);
-    strcpy(e2, (char*)s_parser_exe); d(e2);
-    strcpy(e3, "LivyLogsEngine.exe");
-    strcpy(e4, "LL_Engine.exe");
-
-    if (Process32First(h_s, &p_e)) {
-        do {
-            if ((_stricmp(p_e.szExeFile, e1) == 0 || 
-                 _stricmp(p_e.szExeFile, e2) == 0 ||
-                 _stricmp(p_e.szExeFile, e3) == 0 ||
-                 _stricmp(p_e.szExeFile, e4) == 0) && p_e.th32ProcessID != m_p) {
-                HANDLE h_p = OpenProcess(PROCESS_TERMINATE, FALSE, p_e.th32ProcessID);
-                if (h_p) {
-                    TerminateProcess(h_p, 0);
-                    CloseHandle(h_p);
-                }
-            }
-            
-            // Also kill any pythonw.exe processes that might be running our script
-            if (_stricmp(p_e.szExeFile, "pythonw.exe") == 0 || _stricmp(p_e.szExeFile, "python.exe") == 0) {
-                // We could check command line, but to be safe and simple, 
-                // we'll just kill them if they are in our tree or if we want to be aggressive.
-                // For now, let's stick to the engines to avoid killing unrelated python apps.
-            }
-
-        } while (Process32Next(h_s, &p_e));
-    }
-    CloseHandle(h_s);
+    // Process cleanup is now primarily handled by the Python UI
 }
 
 void e_j(const char* s, char* d_p) {
@@ -525,7 +491,9 @@ void e_t(void* arg) {
     while (1) {
         HANDLE hp = CreateNamedPipe(d_pn, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT, 1, 65536, 65536, 0, NULL);
         if (hp == INVALID_HANDLE_VALUE) { 
-            Sleep(250); continue; 
+            // If pipe exists, maybe another instance is running? 
+            // Since we cleared c_o(), this is possible if Python didn't kill it.
+            Sleep(500); continue; 
         }
         g_pipe = hp;
 
@@ -607,7 +575,9 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
     c_o();
     
     if (a >= 2) {
-        _beginthread(e_t, 0, v[1]);
+        printf("[DEBUG] Engine starting pipeline for log: %s\n", v[1]);
+        fflush(stdout);
+        e_t(v[1]);
     }
 
     while (1) {

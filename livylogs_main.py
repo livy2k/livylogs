@@ -142,6 +142,7 @@ class CombatLogApp:
         self.skimmer_search_mode = False
         self.always_on_top = True
         self.is_dialog_open = False
+        self.target_game_hwnd = None
 
         self.initial_show()
         threading.Thread(target=self.start_pipe_listener, daemon=True).start()
@@ -220,6 +221,8 @@ class CombatLogApp:
             # self.root.attributes("-alpha", 0.0)
             self.root.overrideredirect(True)
             self.root.withdraw()
+            if self.always_on_top:
+                self.root.attributes("-topmost", True)
         except: pass
 
     def _get_managed_windows(self):
@@ -256,7 +259,20 @@ class CombatLogApp:
                 fg_class = class_buff.value
                 
                 # Detect Game Window
-                is_game = any(s in fg_title for s in ["swgclient", "star wars galaxies"])
+                is_game_title = any(s in fg_title for s in ["swgclient", "star wars galaxies"])
+                
+                # Lock onto the first opened SWG client
+                if is_game_title:
+                    if self.target_game_hwnd is None:
+                        # First time seeing a game window, lock onto it
+                        self.target_game_hwnd = fg_hwnd
+                    elif self.target_game_hwnd != fg_hwnd:
+                        # Verify if the target window still exists
+                        if not user32.IsWindow(self.target_game_hwnd):
+                            # Target window closed, lock onto this new one
+                            self.target_game_hwnd = fg_hwnd
+                
+                is_game = (is_game_title and self.target_game_hwnd == fg_hwnd)
                 
                 # Detect Safe Zone (Start Menu, Explorer, Discord, etc.)
                 safe_classes = ["Shell_TrayWnd", "DV2ControlHost", "BaseBar", "Immersive", "Launcher", "NotifyIconOverflowWindow", "CabinetWClass", "TaskManagerWindow"]
@@ -272,6 +288,10 @@ class CombatLogApp:
                 user32.GetWindowThreadProcessId(fg_hwnd, ctypes.byref(fg_pid))
                 if fg_pid.value == my_pid:
                     target_state = "game" # Treat focus on app like focus on game
+                
+                # If we are already in game/safe mode, and the current window being checked is part of our app,
+                # we don't want to flip the state to 'hidden' just because it's not the game.
+                # The fg_pid check above handles this globally for the process.
 
                 if target_state != current_state:
                     self._last_win_state = target_state
@@ -301,17 +321,17 @@ class CombatLogApp:
                                 if win.attributes("-alpha") != self.current_alpha:
                                     win.attributes("-alpha", self.current_alpha)
                     else:
-                        self.root.attributes("-topmost", False)
-                        for win in self._get_managed_windows():
-                            if win != self.root:
-                                if win.state() != "withdrawn":
-                                    win.withdraw()
+                        # Only hide if we aren't always_on_top
+                        if not self.always_on_top:
+                            self.root.attributes("-topmost", False)
+                            for win in self._get_managed_windows():
+                                if win != self.root:
+                                    if win.state() != "withdrawn":
+                                        win.withdraw()
                 else:
                     # Even if state is same, ensure topmost is maintained if in game
                     if target_state == "game":
-                        # Be less aggressive to prevent flashing
                         try:
-                            # Only set if NOT topmost, but check if we are actually allowed to (not minimized)
                             if not self.root.attributes("-topmost") and self.root.state() != "withdrawn":
                                 self.root.attributes("-topmost", True)
                         except: pass
@@ -319,7 +339,6 @@ class CombatLogApp:
                         for win in self._get_managed_windows():
                             if win != self.root:
                                 try:
-                                    # ONLY re-apply topmost if it somehow lost it
                                     if not win.attributes("-topmost") and win.state() != "withdrawn":
                                         win.attributes("-topmost", True)
                                 except: pass
@@ -387,7 +406,7 @@ class CombatLogApp:
                 
                 # Use taskkill to clean up any orphaned engines
                 # We wrap individual calls to handle Access Denied errors more gracefully
-                for proc_name in ['LivyLogs_Engine_New.exe', 'LivyLogsEngine_v2.exe', 'parser_v2.exe', 'LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe', 'p_final.exe']:
+                for proc_name in ['parser.exe']:
                     try:
                         subprocess.run(['taskkill', '/F', '/IM', proc_name, '/T'], 
                                        capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -402,8 +421,8 @@ class CombatLogApp:
                 max_wait = 1.0
                 start_wait = time.time()
                 while time.time() - start_wait < max_wait:
-                    res = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq LivyLogsEngine_v2.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                    if "LivyLogsEngine_v2.exe" not in res.stdout:
+                    res = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq parser.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                    if "parser.exe" not in res.stdout:
                         break
                     time.sleep(0.2)
 
@@ -422,9 +441,9 @@ class CombatLogApp:
             # Small delay to ensure OS releases resources
             time.sleep(0.3)
             
-            # Try multiple possible engine names to be robust
+            # Try to start the engine
             # Note: Some versions might show 'Access is denied' if they are being updated or blocked
-            possible_exes = ["LivyLogs_Engine_New.exe", "LivyLogsEngine_v2.exe", "parser_v2.exe", "LivyLogsEngine.exe", "parser.exe", "LL_Engine.exe", "p_final.exe"]
+            possible_exes = ["parser.exe"]
             exe_path = None
             for name in possible_exes:
                 p = os.path.join(base_dir, name)
@@ -442,11 +461,22 @@ class CombatLogApp:
                     with open(log_file_path, "a") as debug_file:
                         debug_file.write(f"--- LAUNCHING ENGINE {datetime.now()} ---\nPath: {exe_path}\nLog: {log_path}\n")
                     
-                    # We use a very simple Popen call without redirecting stdout/stderr to a closed file
+                    # We use a very simple Popen call
+                    # Using CREATE_NO_WINDOW and ensuring we don't redirect to pipes that might clog
+                    # We also add DETACHED_PROCESS to help it live independently of the UI thread if needed
+                    DETACHED_PROCESS = 0x00000008
+                    print(f"[DEBUG] Engine starting: {exe_path}")
+                    print(f"[DEBUG] Target log: {log_path}")
+                    
                     proc = subprocess.Popen([exe_path, log_path], 
                                      cwd=base_dir,
                                      shell=False,
-                                     creationflags=subprocess.CREATE_NO_WINDOW)
+                                     stdin=subprocess.DEVNULL,
+                                     stdout=None, # Allow output to console for PyCharm visibility
+                                     stderr=None,
+                                     creationflags=subprocess.CREATE_NO_WINDOW | DETACHED_PROCESS)
+                    
+                    print(f"[DEBUG] Engine process created. PID: {proc.pid}")
                     
                     with open(log_file_path, "a") as debug_file:
                         debug_file.write(f"  Launched PID: {proc.pid}\n")
@@ -753,6 +783,11 @@ class CombatLogApp:
         if event_type == "stats":
             name = event.get("name")
             if not name: return
+            
+            # DEBUG: Log incoming stats
+            # with open("pipe_debug.txt", "a") as f:
+            #     f.write(f"STATS RECEIVED for {name}: {event}\n")
+
             if name not in self.player_data:
                 self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
             
@@ -777,6 +812,9 @@ class CombatLogApp:
 
             # Ensure secondary windows see this data
             self.leaderboard_data[name] = p["damage"]
+            
+            # Defensive check: trigger refresh
+            self.refresh_ui_only(force=True)
 
             # Update last_combat_time if there is actual activity in these stats
             if p["damage"] > 0 or p["healing"] > 0 or p["dm_taken"] > 0 or p["lb_mobs"] > 0 or p["lb_loot"] > 0 or p["lb_xp"] > 0:
@@ -835,6 +873,8 @@ class CombatLogApp:
 
             self.locally_seen_players[source] = time.time()
             self.leaderboard_data[source] = p.get("damage", 0)
+            
+            # Explicitly refresh Leaderboard if it's on XP tab or if we want to show progress
             self.refresh_ui_only(force=True)
             return
 
@@ -1030,19 +1070,17 @@ class CombatLogApp:
             managed_wins = self._get_managed_windows()
 
             # Damage meter is highest priority for real-time feel
-            self.damage_meter_win.refresh(force=force)
+            if hasattr(self, 'damage_meter_win') and self.damage_meter_win:
+                self.damage_meter_win.refresh(force=force)
     
             # Alexa window doesn't need to refresh every tick, but keep it in loop for consistency
             if force or (now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.2):
-                self.leaderboard_win.refresh(force=force)
-                self.skimmers_win.refresh(force=force)
-                self.details_win.refresh(force=force)
-                self.alexa_win.refresh(force=force)
+                if hasattr(self, 'leaderboard_win') and self.leaderboard_win: self.leaderboard_win.refresh(force=force)
+                if hasattr(self, 'skimmers_win') and self.skimmers_win: self.skimmers_win.refresh(force=force)
+                if hasattr(self, 'details_win') and self.details_win: self.details_win.refresh(force=force)
+                if hasattr(self, 'alexa_win') and self.alexa_win: self.alexa_win.refresh(force=force)
+                if hasattr(self, 'options_win') and self.options_win: self.options_win.refresh(force=force)
                 self.last_heavy_refresh = now_ts
-            
-            # Options window doesn't need to refresh every tick, only when forced
-            if force:
-                self.options_win.refresh(force=True)
         except: pass
 
     def process_events_for_ui(self, all_events, manual=False):

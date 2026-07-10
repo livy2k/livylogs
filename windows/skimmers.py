@@ -98,9 +98,16 @@ class SkimmersWindow(BasePopoutWindow):
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
         
-        # User requested 1s for skimmers, but we should refresh if search is active
+        # User requested 1s for skimmers, but we should refresh if search is active or empty
+        is_empty = True
+        if hasattr(self, 'scrollable_frame'):
+            for w in self.scrollable_frame.winfo_children():
+                if not isinstance(w, tk.Label) or "No " not in w.cget("text"):
+                    is_empty = False
+                    break
+
         throttle = 1.0
-        do_full = force or (now - self.last_full_refresh >= throttle)
+        do_full = force or is_empty or (now - self.last_full_refresh >= throttle)
 
         # Use persistent container for search and tabs to reduce flicker
         if not hasattr(self, 'scrollable_frame'):

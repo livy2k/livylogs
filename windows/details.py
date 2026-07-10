@@ -66,7 +66,15 @@ class DetailsWindow(BasePopoutWindow):
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
         
-        do_full = force or (now - self.last_full_refresh >= 1.0)
+        # Determine if we should do a full data calculation
+        is_empty = True
+        if hasattr(self, 'player_list_frame'):
+            for w in self.player_list_frame.winfo_children():
+                if not isinstance(w, tk.Label) or "No " not in w.cget("text"):
+                    is_empty = False
+                    break
+        
+        do_full = force or is_empty or (now - self.last_full_refresh >= 1.0)
 
         # Use persistent container to reduce flicker
         if not hasattr(self, 'scroll_canvas'):
@@ -143,7 +151,7 @@ class DetailsWindow(BasePopoutWindow):
             for widget in self.player_list_frame.winfo_children(): widget.destroy()
             players = sorted(list(self.app.player_data.keys()))
             if not players:
-                tk.Label(self.player_list_frame, text="No combat data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+                tk.Label(self.player_list_frame, text="No combat data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20, padx=20)
             else:
                 for p in players:
                     f = tk.Frame(self.player_list_frame, bg=WINDOW_BG, pady=4, cursor="hand2"); f.pack(fill=tk.X)

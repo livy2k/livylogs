@@ -74,6 +74,15 @@ class ThemedMessagebox(tk.Toplevel):
         self.check_target_window()
 
     def find_target_window(self):
+        # Prefer the main app's locked target if available
+        parent = self.master
+        if hasattr(parent, "app") and parent.app.target_game_hwnd:
+            if user32.IsWindow(parent.app.target_game_hwnd):
+                return parent.app.target_game_hwnd
+        elif hasattr(parent, "target_game_hwnd") and parent.target_game_hwnd:
+             if user32.IsWindow(parent.target_game_hwnd):
+                return parent.target_game_hwnd
+
         target_hwnd = [None]
         def enum_windows_callback(hwnd, lparam):
             buf = ctypes.create_unicode_buffer(255)
@@ -385,6 +394,15 @@ class ThemedInputDialog(tk.Toplevel):
         self.destroy()
 
     def find_target_window(self):
+        # Prefer the main app's locked target if available
+        parent = self.master
+        if hasattr(parent, "app") and parent.app.target_game_hwnd:
+            if user32.IsWindow(parent.app.target_game_hwnd):
+                return parent.app.target_game_hwnd
+        elif hasattr(parent, "target_game_hwnd") and parent.target_game_hwnd:
+             if user32.IsWindow(parent.target_game_hwnd):
+                return parent.target_game_hwnd
+
         target_hwnd = [None]
         def enum_windows_callback(hwnd, lparam):
             buf = ctypes.create_unicode_buffer(255)

@@ -69,7 +69,16 @@ class LeaderboardWindow(BasePopoutWindow):
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
         
         # Determine if we should do a full data calculation
-        do_full = force or (now - self.last_full_refresh >= 1.0)
+        # If we currently have a "No data" message or list is empty, force a full refresh
+        is_empty = True
+        if hasattr(self, 'list_container'):
+            # Check if we have any widgets that aren't the "No data" label
+            for w in self.list_container.winfo_children():
+                if not isinstance(w, tk.Label) or "No " not in w.cget("text"):
+                    is_empty = False
+                    break
+        
+        do_full = force or is_empty or (now - self.last_full_refresh >= 1.0)
 
         # Use an update strategy that minimizes widget recreation
         if not hasattr(self, 'list_container'):
@@ -174,41 +183,48 @@ class LeaderboardWindow(BasePopoutWindow):
                 return
 
             targets = p_data.get("targets", {})
+            final_list = sorted(targets.items(), key=lambda x: x[1], reverse=True)
+            
+            if not final_list:
+                tk.Label(self.list_container, text="No detailed data for this player", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+                return
 
-        # Regular Leaderboard View
-        cat = getattr(self.app, 'leaderboard_cat', 'damage')
-        data_list = []
-        if cat in ["damage", "healing"]:
-            for name, data in self.app.player_data.items():
-                val = data.get(cat, 0)
-                if val > 0: data_list.append((name, val))
-        elif cat == "loot":
-            for name, data in self.app.player_data.items():
-                val = data.get("total_credits", 0)
-                if val > 0: data_list.append((name, val))
-            # If no credits yet, fall back to loot count to show something
-            if not data_list:
+        else:
+            # Regular Leaderboard View
+            data_list = []
+            if cat in ["damage", "healing"]:
                 for name, data in self.app.player_data.items():
-                    val = data.get("lb_loot", 0)
+                    val = data.get(cat, 0)
                     if val > 0: data_list.append((name, val))
+            elif cat == "loot":
+                for name, data in self.app.player_data.items():
+                    val = data.get("total_credits", 0)
+                    if val > 0: data_list.append((name, val))
+                # If no credits yet, fall back to loot count to show something
+                if not data_list:
+                    for name, data in self.app.player_data.items():
+                        val = data.get("lb_loot", 0)
+                        if val > 0: data_list.append((name, val))
 
-        sorted_list = sorted(data_list, key=lambda x: x[1], reverse=True)
-        
-        # Merge web data if available
-        merged_data = {name: val for name, val in sorted_list}
-        if self.app.enable_sync.get() and self.app.sync_data:
-            remote_data = self.app.sync_data.get("data", {}).get(cat, {})
-            seen_recently = set(self.app.locally_seen_players.keys())
-            for remote_name, remote_val in remote_data.items():
-                if remote_name == self.app.char_name.get(): continue
-                if cat in ["damage", "healing"] and remote_name not in seen_recently: continue
-                if cat == "loot":
-                    count = len(remote_val) if isinstance(remote_val, list) else remote_val
-                    merged_data[remote_name] = max(merged_data.get(remote_name, 0), count)
-                else:
-                    merged_data[remote_name] = max(merged_data.get(remote_name, 0), remote_val)
+            sorted_list = sorted(data_list, key=lambda x: x[1], reverse=True)
+            
+            # Merge web data if available
+            merged_data = {name: val for name, val in sorted_list}
+            if self.app.enable_sync.get() and self.app.sync_data:
+                remote_data = self.app.sync_data.get("data", {}).get(cat, {})
+                seen_recently = set(self.app.locally_seen_players.keys())
+                for remote_name, remote_val in remote_data.items():
+                    if remote_name == self.app.char_name.get(): continue
+                    # Relaxed filtering: if we have local data for them, always show them. 
+                    # If they are remote-only, they must have been seen recently.
+                    if cat in ["damage", "healing"] and remote_name not in seen_recently and remote_name not in merged_data: continue
+                    if cat == "loot":
+                        count = len(remote_val) if isinstance(remote_val, list) else remote_val
+                        merged_data[remote_name] = max(merged_data.get(remote_name, 0), count)
+                    else:
+                        merged_data[remote_name] = max(merged_data.get(remote_name, 0), remote_val)
 
-        final_list = sorted(merged_data.items(), key=lambda x: x[1], reverse=True)
+            final_list = sorted(merged_data.items(), key=lambda x: x[1], reverse=True)
 
         if not final_list:
             tk.Label(self.list_container, text=f"No {cat} data", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)

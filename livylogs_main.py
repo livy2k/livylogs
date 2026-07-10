@@ -785,9 +785,17 @@ class CombatLogApp:
         if not self.running: return
         self.running = False
         
+        # Immediate UI hiding to make it feel responsive
+        try:
+            self.root.withdraw()
+            for win in self._get_managed_windows():
+                try: win.withdraw()
+                except: pass
+        except: pass
+
         # Add a watchdog timer to force exit if cleanup hangs
         def force_kill():
-            time.sleep(2)
+            time.sleep(3)
             try:
                 with open("crash_log.txt", "a") as f:
                     f.write(f"--- WATCHDOG FORCE EXIT {datetime.now()} ---\n")
@@ -795,32 +803,33 @@ class CombatLogApp:
             os._exit(1)
         threading.Thread(target=force_kill, daemon=True).start()
 
-        try:
-            with open("crash_log.txt", "a") as f:
-                f.write(f"--- ON_EXIT CALLED {datetime.now()} ---\n")
-        except: pass
-        if hasattr(self, 'tray_icon'):
+        def background_cleanup():
             try:
-                self.tray_icon.stop()
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"--- ON_EXIT CALLED {datetime.now()} ---\n")
             except: pass
-        
-        # Kill any engine processes that might be running
-        # We use a broad kill only if we are the ones who started it 
-        # or if we are shutting down completely.
-        os.system("taskkill /F /IM LL_Engine.exe /T")
-        os.system("taskkill /F /IM LivyLogsEngine.exe /T")
-        os.system("taskkill /F /IM parser.exe /T")
 
-        try:
-            self.save_config()
-        except: pass
+            if hasattr(self, 'tray_icon'):
+                try:
+                    self.tray_icon.stop()
+                except: pass
+            
+            # Kill any engine processes that might be running
+            # Use /F to force and /T for tree kill. 
+            # Combining into one command might be slightly faster, or running in background
+            os.system("taskkill /F /IM LL_Engine.exe /IM LivyLogsEngine.exe /IM parser.exe /T >nul 2>&1")
 
-        try:
-            self.root.destroy()
-        except: pass
-        
-        # Force exit to ensure the process actually terminates
-        os._exit(0)
+            try:
+                self.save_config()
+            except: pass
+
+            # Force exit to ensure the process actually terminates
+            os._exit(0)
+
+        # Run cleanup in a separate thread so we can (theoretically) let the main thread 
+        # finish if needed, but since we use os._exit(0) it will kill everything anyway.
+        # The key is to withdraw() the window first.
+        threading.Thread(target=background_cleanup, daemon=True).start()
 
     def save_config(self):
         if "General" not in self.config: self.config["General"] = {}

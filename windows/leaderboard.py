@@ -2,8 +2,10 @@ import tkinter as tk
 import time
 from datetime import datetime
 from constants import (
-    PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, WINDOW_BG
+    PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, WINDOW_BG, COLOR_DEFAULT_CLASS,
+    TITLE_GRADIENT_START
 )
+from utils import create_rainbow_name
 from windows.base_window import BasePopoutWindow
 
 class LeaderboardWindow(BasePopoutWindow):
@@ -15,27 +17,37 @@ class LeaderboardWindow(BasePopoutWindow):
         super().show(force_open)
         if not self.window: return
 
-        self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
-        self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+        self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
         self.back_btn.bind("<Button-1>", lambda e: self.go_back())
-        self.back_btn.pack_forget()
-
-        reset_btn = tk.Label(self.title_bar, text="RESET", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2", padx=10)
-        reset_btn.pack(side=tk.RIGHT)
-        reset_btn.bind("<Button-1>", lambda e: self.app.reset_leaderboard_manual())
+        # The back button will be placed by the refresh logic or drill_down
 
     def go_back(self):
         self.drill_down_player = None
-        if hasattr(self, 'back_btn'): self.back_btn.pack_forget()
+        if hasattr(self, 'back_btn'): self.title_bar.delete("back_btn")
         self.refresh(force=True)
 
     def drill_down(self, player):
         self.drill_down_player = player
-        if hasattr(self, 'back_btn'): self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+        if hasattr(self, 'back_btn'):
+            self.title_bar.delete("back_btn")
+            self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
+            # Shift title label to the right
+            self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
         self.refresh(force=True)
 
     def refresh(self, force=False):
         if not self.window or self.window.state() == "withdrawn": return
+        
+        # Ensure back button state
+        if not self.drill_down_player:
+            self.title_bar.delete("back_btn")
+            # Restore title label position
+            if hasattr(self, 'title_label'):
+                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+        else:
+            if not self.title_bar.find_withtag("back_btn"):
+                self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
+                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
         
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
@@ -87,13 +99,13 @@ class LeaderboardWindow(BasePopoutWindow):
             do_full = True
 
         if self.drill_down_player:
-            if hasattr(self, 'back_btn'): self.back_btn.pack(side=tk.LEFT, before=self.title_label)
+            # Back button handled above
             self.c_frame.pack_forget()
             self.lbl_rank.config(text="TARGET")
             self.lbl_player.pack_forget()
             self.lbl_cat_head.config(text="AMOUNT")
         else:
-            if hasattr(self, 'back_btn'): self.back_btn.pack_forget()
+            # Back button hidden above
             self.c_frame.pack(fill=tk.X, pady=(0, 5), before=self.h_frame)
             self.lbl_rank.config(text="RANK")
             self.lbl_player.pack(side=tk.LEFT, padx=20, before=self.lbl_cat_head)
@@ -176,14 +188,20 @@ class LeaderboardWindow(BasePopoutWindow):
             is_boss = name.lower() in self.app.bosses
             
             color = ACCENT_BLUE if name == "You" or name == self.app.char_name.get() else TEXT_PRIMARY
-            if is_boss:
-                color = "#ff4444"
             
             tk.Label(f, text=f"#{i+1}", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=5)
             
-            p_lbl = tk.Label(f, text=name, bg=self.window["bg"], fg=color, font=("Segoe UI", 9, "bold"))
-            p_lbl.pack(side=tk.LEFT, padx=10)
-            p_lbl.bind("<Button-1>", lambda e, n=name: self.drill_down(n))
+            if is_boss:
+                p_lbl = tk.Label(f, text=name, bg=self.window["bg"], fg="#ff4444", font=("Segoe UI", 9, "bold"))
+                p_lbl.pack(side=tk.LEFT, padx=10)
+                p_lbl.bind("<Button-1>", lambda e, n=name: self.drill_down(n))
+            else:
+                name_container = tk.Frame(f, bg=self.window["bg"])
+                name_container.pack(side=tk.LEFT, padx=10)
+                labels = create_rainbow_name(name_container, self.app, name, color, ("Segoe UI", 9, "bold"), self.window["bg"])
+                for l in labels:
+                    l.bind("<Button-1>", lambda e, n=name: self.drill_down(n))
+                name_container.bind("<Button-1>", lambda e, n=name: self.drill_down(n))
             
             if is_boss:
                 tk.Label(f, text="☠", bg=self.window["bg"], fg="#ff4444", font=("Segoe UI", 11)).pack(side=tk.LEFT)

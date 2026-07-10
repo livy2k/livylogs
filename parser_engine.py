@@ -44,11 +44,13 @@ def parse_combat_log(file_path, start_offset=0):
     act_kws = ["is", "has", "does", "goes", "starts", "stops", "completes", "stands", "kneels", "performs", "sits", "says", "shouts", "whispers", "tells", "emotes", "tosses", "nods", "waves", "smiles", "laughs", "cheers", "misses", "evade", "dodge", "parr", "block", "counterattack", "attack", "use", "hit"]
     death_kws = ["has died"]
     loot_kws = ["looted", "you cannot loot that item"]
+    cmd_kws = ["log"]
 
     prevented_pattern = re.compile(r"armor prevented (?P<amount>\d+(?:\.\d+)?)\s*(?:damage|dmg|points)", re.IGNORECASE)
 
     activity_patterns = [
         (re.compile(r'(?:\[PvPBroadcasts\]\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?\[PvPBroadcasts\]\s+:\s+(?P<winner>.+?)\s+has bested\s+(?P<loser>.+?)\s+in GCW combat\.', re.IGNORECASE), pvp_kws),
+        (re.compile(r'(?:\[Spatial\]\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?(?P<name>.+?)\s+says,\s+"(?P<command>log\d+)"', re.IGNORECASE), cmd_kws),
         (re.compile(r'".+",\s+(?P<name>.+?)\s+(?P<action>says|shouts|whispers|tells|emotes|performs|is|has|does|goes|starts|stops|completes)\b', re.IGNORECASE), msg_kws),
         (re.compile(r'(?:(?:\[\w+\]|\[None\])\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?(?P<name>you|.+?)\s+(?P<action>is|has|does|goes|starts|stops|completes|stands|kneels|performs|sits|says|shouts|whispers|tells|emotes|tosses|nods|waves|smiles|laughs|cheers|misses|evades|evaded|dodges|parries|blocks|counterattacks|attacks|uses|hit|hits)\b', re.IGNORECASE), act_kws),
         (re.compile(r'(?:(?:\[\w+\]|\[None\])\s+)?(?:\d{2}:\d{2}:\d{2}\s+)?(?:\[GROUP\]\s+)?(?P<name>.+?) has died\.', re.IGNORECASE), death_kws),
@@ -131,6 +133,7 @@ def parse_combat_log(file_path, start_offset=0):
                 if swg_match:
                     source_name = swg_match.group("source").strip()
                     action = swg_match.group("action").lower()
+                    ability = swg_match.group("ability").strip() if swg_match.group("ability") else ""
                     target_name = swg_match.group("target").strip().rstrip("!")
                     amount = float(swg_match.group("amount"))
                     
@@ -164,6 +167,7 @@ def parse_combat_log(file_path, start_offset=0):
                 miss_match = re.search(r"(?P<source>.+?)(?:'s\s+(?P<ability>.+?))?\s+(?P<action>misses|evades|evaded|dodges|parries|counterattacks|blocks it)\b(?:\s+(?P<target>.+))?", content, re.IGNORECASE)
                 if miss_match:
                     source_name = miss_match.group("source").strip()
+                    ability = miss_match.group("ability").strip() if miss_match.group("ability") else ""
                     target_name = miss_match.group("target").strip().rstrip(".!") if miss_match.group("target") else "Unknown"
                     
                     if source_name.lower().startswith("corpse of "): source_name = source_name[10:]
@@ -190,6 +194,9 @@ def parse_combat_log(file_path, start_offset=0):
                                 if item:
                                     event_type = "loot"
                                     target_name = target
+                                if "command" in gd:
+                                    event_type = "command"
+                                    item = gd["command"]
                                 break
 
             if event_type:
@@ -197,7 +204,7 @@ def parse_combat_log(file_path, start_offset=0):
                     "line_number": line_number, "damage": damage, "healing": healing,
                     "type": event_type, "source": source_name, "target": target_name,
                     "timestamp": timestamp, "raw": original_line, "is_mitigated": is_mitigated,
-                    "item": item
+                    "item": item, "ability": ability if 'ability' in locals() else ""
                 }
                 events.append(event)
                 if event_type == "taken" and damage > 0: last_taken_event = event

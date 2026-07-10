@@ -1,0 +1,3 @@
+WeaponA 10
+WeaponB 20
+WeaponC 30

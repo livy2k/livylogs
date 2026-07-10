@@ -21,7 +21,8 @@ from constants import (
     ACCENT_BLUE, BORDER_COLOR, BORDER_HIGHLIGHT, BUTTON_BG, BUTTON_HOVER,
     MIN_WIDTH, MIN_HEIGHT, SNAP_THRESHOLD, user32, kernel32, winmm,
     HWND_TOPMOST, HWND_NOTOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE,
-    SWP_SHOWWINDOW, SWP_HIDEWINDOW, ENTRY_BG, WINDOWPLACEMENT
+    SWP_SHOWWINDOW, SWP_HIDEWINDOW, ENTRY_BG, WINDOWPLACEMENT,
+    TITLE_GRADIENT_START, TITLE_GRADIENT_END
 )
 from utils import is_window_minimized, apply_snapping, extract_character_id, get_resource_path
 from parser_engine import parse_combat_log, calculate_dps
@@ -33,6 +34,7 @@ from windows.damage_meter import DamageMeterWindow
 from windows.leaderboard import LeaderboardWindow
 from windows.details import DetailsWindow
 from windows.options import OptionsWindow
+from windows.alexa import AlexaWindow
 
 class CombatLogApp:
     def __init__(self, root):
@@ -71,10 +73,12 @@ class CombatLogApp:
         self.root.overrideredirect(True)
         
         self._last_topmost_state = False
+        self._minimized_to_tray = False
         self.fade_speed = 0.05
         self.fade_after_id = None
         self.file_path_var = tk.StringVar(value=initial_log_path)
         self.disable_warnings = tk.BooleanVar(value=self.config.getboolean("General", "disable_warnings", fallback=False))
+        self.show_class_colors = tk.BooleanVar(value=self.config.getboolean("General", "show_class_colors", fallback=True))
         self.char_name = tk.StringVar(value=self.config.get("General", "character_name", fallback=""))
         if not self.char_name.get() and initial_log_path:
             self.char_name.set(extract_character_id(initial_log_path))
@@ -86,6 +90,13 @@ class CombatLogApp:
         self.leaderboard_win = LeaderboardWindow(self)
         self.details_win = DetailsWindow(self)
         self.options_win = OptionsWindow(self)
+        self.alexa_win = AlexaWindow(self)
+        
+        # Ensure windows are added to the managed list if not already
+        self._managed_windows = [
+            self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
+            self.details_win, self.options_win, self.alexa_win
+        ]
         
         self.is_interacting = False
         self.last_interaction_time = 0
@@ -135,6 +146,8 @@ class CombatLogApp:
         self.time_window_dm = 30
         self.bosses = self.load_bosses()
         self.filters = self.load_filters()
+        self.class_configs = self.load_class_configs() # Loaded from filters/*.txt
+        self.player_classes = {} # player_name -> list of class_names
         self.always_on_top = False
         self.skimmer_search_query = tk.StringVar()
         self.skimmer_search_mode = False
@@ -159,7 +172,7 @@ class CombatLogApp:
     def load_bosses(self):
         boss_list = []
         try:
-            path = get_resource_path("bosses.txt")
+            path = get_resource_path(os.path.join("filters", "bosses.txt"))
             if os.path.exists(path):
                 with open(path, "r") as f:
                     for line in f:
@@ -173,16 +186,46 @@ class CombatLogApp:
     def load_filters(self):
         filter_list = []
         try:
-            path = get_resource_path("filters.txt")
+            path = get_resource_path(os.path.join("filters", "filters.txt"))
             if os.path.exists(path):
                 with open(path, "r") as f:
                     for line in f:
-                        phrase = line.strip()
+                        phrase = line.rstrip("\n").rstrip("\r")
                         if phrase and not phrase.startswith("#"):
                             filter_list.append(phrase.lower())
         except Exception as e:
             print(f"DEBUG: Error loading filters.txt: {e}")
         return filter_list
+
+    def load_class_configs(self):
+        configs = {}
+        try:
+            filters_dir = get_resource_path("filters")
+            if os.path.exists(filters_dir):
+                for filename in os.listdir(filters_dir):
+                    if filename.endswith(".txt") and filename not in ["bosses.txt", "filters.txt"]:
+                        class_name = filename[:-4]
+                        path = os.path.join(filters_dir, filename)
+                        color = "#00a2ff" # Default
+                        abilities = set()
+                        with open(path, "r", encoding="utf-8-sig") as f:
+                            lines = f.readlines()
+                            if lines:
+                                first_line = lines[0].strip()
+                                if first_line.startswith("#"):
+                                    color = first_line.lstrip("#").strip()
+                                    start_idx = 1
+                                else:
+                                    start_idx = 0
+                                
+                                for line in lines[start_idx:]:
+                                    ability = line.strip()
+                                    if ability and not ability.startswith("#"):
+                                        abilities.add(ability.lower())
+                        configs[class_name] = {"color": color, "abilities": abilities}
+        except Exception as e:
+            print(f"DEBUG: Error loading class configs: {e}")
+        return configs
 
     def initial_show(self):
         try:
@@ -192,19 +235,10 @@ class CombatLogApp:
         except: pass
 
     def start_c_engine(self, log_path):
-        print(f"DEBUG: Attempting to start C Engine for: {log_path}")
-        try:
-            subprocess.run(["taskkill", "/F", "/IM", "parser.exe", "/T"], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            if self.engine_process: self.engine_process.terminate()
-            base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
-            engine_exe = get_resource_path("parser.exe")
-            if os.path.exists(engine_exe):
-                print(f"DEBUG: Launching Parser: {engine_exe}")
-                self.engine_process = subprocess.Popen([engine_exe, log_path], creationflags=subprocess.CREATE_NO_WINDOW)
-            else:
-                print(f"DEBUG: parser.exe not found at {engine_exe}")
-        except Exception as e:
-            print(f"DEBUG: Error starting C Engine: {e}")
+        # C Engine now starts Python, so this method is mostly redundant
+        # but we keep it to maintain compatibility with existing logic if needed
+        print(f"DEBUG: C Engine is managing us. Log path: {log_path}")
+        pass
 
     def find_target_window(self):
         target = [None]
@@ -219,28 +253,40 @@ class CombatLogApp:
         return target[0]
 
     def is_foreground_ours(self):
-        fg = user32.GetForegroundWindow()
-        if not fg: return False
-        fg_pid = wintypes.DWORD()
-        user32.GetWindowThreadProcessId(fg, ctypes.byref(fg_pid))
-        if fg_pid.value == kernel32.GetCurrentProcessId(): return True
-        if self.target_hwnd and user32.IsWindow(self.target_hwnd):
-            if fg == self.target_hwnd: return True
-            t_pid = wintypes.DWORD()
-            user32.GetWindowThreadProcessId(self.target_hwnd, ctypes.byref(t_pid))
-            if fg_pid.value == t_pid.value: return True
+        try:
+            fg = user32.GetForegroundWindow()
+            if not fg: return False
+            fg_pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(fg, ctypes.byref(fg_pid))
+            if fg_pid.value == kernel32.GetCurrentProcessId(): return True
+            if self.target_hwnd and user32.IsWindow(self.target_hwnd):
+                if fg == self.target_hwnd: return True
+                t_pid = wintypes.DWORD()
+                user32.GetWindowThreadProcessId(self.target_hwnd, ctypes.byref(t_pid))
+                if fg_pid.value == t_pid.value: return True
+        except Exception as e:
+            print(f"DEBUG: Error in is_foreground_ours: {e}")
         return False
 
     def _get_managed_windows(self):
         managed = [self.root]
-        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win]:
+        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win]:
             if w.window and w.window.winfo_exists(): managed.append(w.window)
         return managed
 
     def check_target_window(self):
         try:
-            if not self.target_hwnd or not user32.IsWindow(self.target_hwnd): self.target_hwnd = self.find_target_window()
-            should_show = (self.is_foreground_ours() or self.always_on_top) and not is_window_minimized(self.target_hwnd)
+            if not self.target_hwnd or not user32.IsWindow(self.target_hwnd): 
+                self.target_hwnd = self.find_target_window()
+            
+            # If manually minimized to tray, do NOT auto-show
+            if getattr(self, "_minimized_to_tray", False):
+                self.root.after(500, self.check_target_window)
+                return
+
+            fg_ours = self.is_foreground_ours()
+            minimized = is_window_minimized(self.target_hwnd)
+            should_show = (fg_ours or self.always_on_top) and not minimized
             
             # If we are showing a modal dialog, temporarily disable topmost to allow interaction
             is_dialog_open = getattr(self, "is_dialog_open", False)
@@ -260,10 +306,11 @@ class CombatLogApp:
                         user32.SetWindowPos(win.winfo_id(), HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
                 self._last_topmost_state = not is_dialog_open
             else:
-                if not hasattr(self, '_hide_grace_after_id') or self._hide_grace_after_id is None:
+                if not hasattr(self, "_hide_grace_after_id") or self._hide_grace_after_id is None:
                     self._hide_grace_after_id = self.root.after(1000, self._perform_graceful_hide)
-        except: pass
-        self.root.after(250, self.check_target_window)
+        except Exception as e:
+            pass
+        self.root.after(250, self.refresh_ui_only) # Changed from check_target_window
 
     def _perform_graceful_hide(self):
         self._hide_grace_after_id = None
@@ -271,9 +318,19 @@ class CombatLogApp:
             self.start_hide()
 
     def start_show(self):
-        if self.root.state() == "withdrawn": self.root.deiconify()
+        if self.root.state() == "withdrawn":
+            self.root.deiconify()
+            self.root.lift()
         for win in self._get_managed_windows():
-            if win.state() == "withdrawn": win.deiconify()
+            if win.state() == "withdrawn":
+                win.deiconify()
+                win.lift()
+        
+        # Ensure alpha is updated immediately if it was 0
+        if self.current_alpha < 0.1:
+            self.current_alpha = 0.1
+            for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
+            
         if self.current_alpha < self.target_alpha: self.fade_in()
 
     def fade_in(self):
@@ -286,7 +343,8 @@ class CombatLogApp:
         if self.current_alpha > 0:
             self.fade_out(minimize=minimize)
         elif minimize:
-            self.root.withdraw()
+            if self.root.state() != "withdrawn":
+                self.root.withdraw()
 
     def fade_out(self, minimize=True):
         if self.current_alpha > 0:
@@ -295,8 +353,11 @@ class CombatLogApp:
             self.fade_after_id = self.root.after(20, lambda: self.fade_out(minimize=minimize))
         else:
             if minimize:
-                self.root.withdraw()
-            for win in self._get_managed_windows(): win.withdraw()
+                if self.root.state() != "withdrawn":
+                    self.root.withdraw()
+            for win in self._get_managed_windows(): 
+                if win.state() != "withdrawn":
+                    win.withdraw()
 
     def build_layout(self):
         style = ttk.Style()
@@ -313,34 +374,66 @@ class CombatLogApp:
         outer.bind("<ButtonRelease-1>", self.release_window)
         self.root.bind("<Configure>", self.on_configure)
 
-        header = tk.Frame(outer, bg=PANEL_DARK, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        header = tk.Frame(outer, bg=WINDOW_BG)
         header.pack(fill=tk.X)
-        header.bind("<Button-1>", self.click_window)
-        header.bind("<B1-Motion>", self.drag_window)
-        header.bind("<ButtonRelease-1>", self.release_window)
-
-        title_bar = tk.Frame(header, bg=PANEL_DARK, height=25); title_bar.pack(fill=tk.X)
-        title_bar.bind("<Button-1>", self.click_window)
-        title_bar.bind("<B1-Motion>", self.drag_window)
-        title_bar.bind("<ButtonRelease-1>", self.release_window)
         
-        exit_btn = tk.Label(title_bar, text=" ✕ ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
-        exit_btn.pack(side=tk.RIGHT)
-        exit_btn.bind("<Button-1>", lambda e: self.start_hide(minimize=True))
+        # Sophisticated Main Title Bar
+        self.main_title_bar = tk.Canvas(header, bg=TITLE_GRADIENT_END, height=35, highlightthickness=0)
+        self.main_title_bar.pack(fill=tk.X)
+        self.main_title_bar.bind("<Button-1>", self.click_window)
+        self.main_title_bar.bind("<B1-Motion>", self.drag_window)
+        self.main_title_bar.bind("<ButtonRelease-1>", self.release_window)
+        
+        def draw_main_gradient(e=None):
+            w = self.main_title_bar.winfo_width()
+            h = self.main_title_bar.winfo_height()
+            self.main_title_bar.delete("gradient")
+            for i in range(h):
+                r1, g1, b1 = self.root.winfo_rgb(TITLE_GRADIENT_START)
+                r2, g2, b2 = self.root.winfo_rgb(TITLE_GRADIENT_END)
+                r = int(r1 + (r2 - r1) * (i / h)) // 256
+                g = int(g1 + (g2 - g1) * (i / h)) // 256
+                b = int(b1 + (b2 - b1) * (i / h)) // 256
+                color = f"#{r:02x}{g:02x}{b:02x}"
+                self.main_title_bar.create_line(0, i, w, i, fill=color, tags="gradient")
+            self.main_title_bar.tag_lower("gradient")
+            self.main_title_bar.coords("exit_btn", w - 5, h // 2)
+            self.main_title_bar.coords("alexa_btn", w - 35, h // 2)
+            self.main_title_bar.coords("menu_btn", w - 100, h // 2)
+            title_lbl.config(bg=TITLE_GRADIENT_START)
 
-        menu_btn = tk.Label(title_bar, text=" SETTINGS ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2")
-        menu_btn.pack(side=tk.RIGHT)
+        self.main_title_bar.bind("<Configure>", draw_main_gradient)
+        
+        exit_btn = tk.Label(self.main_title_bar, text=" ✕ ", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
+        self.main_title_bar.create_window(300, 17, window=exit_btn, anchor="e", tags="exit_btn")
+        exit_btn.bind("<Button-1>", lambda e: self.start_hide(minimize=True))
+        exit_btn.bind("<Enter>", lambda e: exit_btn.config(fg="#ff4444"))
+        exit_btn.bind("<Leave>", lambda e: exit_btn.config(fg=TEXT_SECONDARY))
+
+        alexa_btn = tk.Label(self.main_title_bar, text=" ALEXA ", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2")
+        self.main_title_bar.create_window(270, 17, window=alexa_btn, anchor="e", tags="alexa_btn")
+        alexa_btn.bind("<Button-1>", lambda e: self.alexa_win.show())
+        alexa_btn.bind("<Enter>", lambda e: alexa_btn.config(fg=TEXT_ACCENT))
+        alexa_btn.bind("<Leave>", lambda e: alexa_btn.config(fg=TEXT_SECONDARY))
+
+        menu_btn = tk.Label(self.main_title_bar, text=" SETTINGS ", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2")
+        self.main_title_bar.create_window(200, 17, window=menu_btn, anchor="e", tags="menu_btn")
         menu_btn.bind("<Button-1>", lambda e: self.toggle_menu())
-        self.ontop_btn = tk.Label(title_bar, text="ONTOP: OFF", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2"); self.ontop_btn.pack(side=tk.LEFT)
+        menu_btn.bind("<Enter>", lambda e: menu_btn.config(fg=TEXT_ACCENT))
+        menu_btn.bind("<Leave>", lambda e: menu_btn.config(fg=TEXT_SECONDARY))
+
+        self.ontop_btn = tk.Label(self.main_title_bar, text="ONTOP: OFF", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2")
+        self.main_title_bar.create_window(10, 17, window=self.ontop_btn, anchor="w")
         self.ontop_btn.bind("<Button-1>", lambda e: self.toggle_always_on_top())
 
-        title_lbl = tk.Label(title_bar, text="LIVYLOGS", bg=PANEL_DARK, fg=TEXT_ACCENT, font=self.font_title_obj)
-        title_lbl.pack(side=tk.LEFT, padx=5)
+        title_lbl = tk.Label(self.main_title_bar, text="LIVYLOGS", bg=TITLE_GRADIENT_START, fg=TEXT_ACCENT, font=self.font_title_obj)
+        self.main_title_bar.create_window(85, 17, window=title_lbl, anchor="w")
         title_lbl.bind("<Button-1>", self.click_window)
         title_lbl.bind("<B1-Motion>", self.drag_window)
         title_lbl.bind("<ButtonRelease-1>", self.release_window)
 
-        nav = tk.Frame(header, bg=PANEL_DARK); nav.pack(fill=tk.X, padx=10, pady=(0, 5))
+        nav = tk.Frame(header, bg=PANEL_DARK, pady=2)
+        nav.pack(fill=tk.X)
         nav.bind("<Button-1>", self.click_window)
         nav.bind("<B1-Motion>", self.drag_window)
         nav.bind("<ButtonRelease-1>", self.release_window)
@@ -404,15 +497,40 @@ class CombatLogApp:
 
     def process_external_event(self, event, is_last=False):
         # Implementation of event processing
-        event_type = event.get("type"); source = event.get("source", "Unknown"); damage = event.get("damage", 0)
-        item = event.get("item", ""); timestamp = event.get("timestamp"); target = event.get("target", "Target")
+        event_type = event.get("type")
+        source = event.get("source", "Unknown")
+        damage = event.get("damage", 0)
+        healing = event.get("healing", 0)
+        item = event.get("item", "")
+        timestamp = event.get("timestamp")
+        target = event.get("target", "Unknown")
+        ability = event.get("ability", "")
+        is_mitigated = event.get("is_mitigated", False)
         
-        if source.lower() == "you": event_type = "dealt"
-        elif target.lower() == "you": event_type = "taken"
-        elif event_type == "damage": event_type = "dealt"
+        # Handle armor reduction
+        if event_type == "armor_reduction":
+            if self.all_events:
+                # Look back for the last 'taken' event to apply reduction
+                for e in reversed(self.all_events):
+                    if e["type"] == "taken" and e["damage"] > 0:
+                        e["damage"] = max(0, e["damage"] - damage)
+                        break
+            return
+
+        is_damage = damage > 0 or event_type in ["dealt", "taken", "other_dealt"]
+        is_healing = healing > 0 or event_type == "healing"
         
-        is_damage = damage > 0 or event_type in ["dealt", "taken", "damage"]
-        internal_event = {"timestamp": timestamp, "type": event_type, "source": source, "target": target, "damage": damage, "healing": 0, "item": item}
+        internal_event = {
+            "timestamp": timestamp, 
+            "type": event_type, 
+            "source": source, 
+            "target": target, 
+            "damage": damage, 
+            "healing": healing, 
+            "item": item,
+            "ability": ability,
+            "is_mitigated": is_mitigated
+        }
 
         if self.app_start_time is None and is_damage:
             self.app_start_time = timestamp; self.last_log_sync_time = timestamp; self.last_combat_time = time.time()
@@ -421,6 +539,19 @@ class CombatLogApp:
 
         self.all_events.append(internal_event)
         if len(self.all_events) > 5000: self.all_events = self.all_events[-5000:]
+
+        if event_type == "command" and item.startswith("log"):
+            try:
+                mins = int(item[3:])
+                if 1 <= mins <= 60:
+                    from utils import save_log_segment
+                    path = self.file_path_var.get().strip()
+                    if path:
+                        saved_to = save_log_segment(path, mins)
+                        if saved_to:
+                            print(f"DEBUG: Saved {mins} minutes of log to {saved_to}")
+            except Exception as e:
+                print(f"DEBUG: Failed to process log command: {e}")
 
         now = time.time()
         # Ensure we keep some history for windows that need it (skimmers/details usually 5-60 mins)
@@ -566,9 +697,16 @@ class CombatLogApp:
             src_raw = e["source"].capitalize(); src_raw = "You" if src_raw.lower() == "you" else src_raw
             tgt_raw = e["target"].capitalize(); tgt_raw = "You" if tgt_raw.lower() == "you" else tgt_raw
             
-            is_src_npc = src_raw.lower().startswith(("a ", "an ", "the ", "your target", "level ", "(")) or src_raw.lower() == "target"
-            is_tgt_npc = tgt_raw.lower().startswith(("a ", "an ", "the ", "your target", "level ", "(")) or tgt_raw.lower() == "target"
+            is_src_npc = False
+            is_tgt_npc = False
             
+            # Check general filters
+            is_src_filtered = any(phrase in src_raw.lower() for phrase in self.filters)
+            is_tgt_filtered = any(phrase in tgt_raw.lower() for phrase in self.filters)
+
+            if is_src_filtered: is_src_npc = True
+            if is_tgt_filtered: is_tgt_npc = True
+
             # Aggregate NPC names
             src = clean_npc_name(src_raw) if is_src_npc or " (" in src_raw else src_raw
             tgt = clean_npc_name(tgt_raw) if is_tgt_npc or " (" in tgt_raw else tgt_raw
@@ -591,13 +729,6 @@ class CombatLogApp:
             if is_tgt_boss: 
                 is_tgt_npc = False
                 tgt = tgt.title()
-
-            # Check general filters
-            is_src_filtered = any(phrase in src.lower() for phrase in self.filters)
-            is_tgt_filtered = any(phrase in tgt.lower() for phrase in self.filters)
-
-            if is_src_filtered: is_src_npc = True
-            if is_tgt_filtered: is_tgt_npc = True
             
             # Determine if this event is relevant for ANY window
             # If it's too old for everything, skip processing it into player_data
@@ -632,6 +763,17 @@ class CombatLogApp:
                         new_player_data[src] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
                     new_player_data[src]["lb_loot"] += 1
                 continue
+            
+            # Identify player classes based on ability
+            if not is_src_npc and e.get("ability"):
+                ability_lower = e["ability"].lower()
+                for class_name, config in self.class_configs.items():
+                    if ability_lower in config["abilities"]:
+                        if src not in self.player_classes:
+                            self.player_classes[src] = []
+                        if class_name not in self.player_classes[src]:
+                            self.player_classes[src].append(class_name)
+                        break
         
             if e["type"] == "inventory_full":
                 if is_skimmer_relevant: 
@@ -780,10 +922,14 @@ class CombatLogApp:
             
             import webbrowser
             menu = (
+                item('Show/Hide', self.toggle_visibility),
                 item('About', lambda: webbrowser.open("https://github.com/livy2k/livylogs#readme")),
                 item('Exit', self.on_exit)
             )
             self.tray_icon = pystray.Icon("LivyLogs", image, "LivyLogs", menu)
+            self.tray_icon.visible = True
+            # Double click tray icon to show/hide
+            self.tray_icon.on_activate = lambda: self.root.after(0, self.toggle_visibility)
             threading.Thread(target=self.tray_icon.run, daemon=True).start()
         except Exception as e:
             print(f"DEBUG: Failed to setup tray icon: {e}")
@@ -807,7 +953,8 @@ class CombatLogApp:
             "height": str(self.root.winfo_height()),
             "x": str(self.root.winfo_x()),
             "y": str(self.root.winfo_y()),
-            "disable_warnings": str(self.disable_warnings.get())
+            "disable_warnings": str(self.disable_warnings.get()),
+            "show_class_colors": str(self.show_class_colors.get())
         })
         
         # Save popout positions/sizes
@@ -844,6 +991,15 @@ class CombatLogApp:
     def on_configure(self, event):
         if hasattr(self, "is_interacting") and self.is_interacting:
             self.last_interaction_time = time.time()
+
+    def toggle_visibility(self, icon=None, item=None):
+        if self.root.state() == "withdrawn":
+            self._minimized_to_tray = False
+            self.root.after(0, self.start_show)
+        else:
+            self._minimized_to_tray = True
+            self.root.after(0, lambda: self.start_hide(minimize=True))
+
 
     def toggle_menu(self):
         self.is_dialog_open = True

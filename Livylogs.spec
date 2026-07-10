@@ -5,7 +5,7 @@ a = Analysis(
     ['livylogs.py'],
     pathex=[],
     binaries=[],
-    datas=[('parser.exe', '.'), ('notice.mp3', '.'), ('livylogs.ico', '.'), ('livylogs.png', '.'), ('bosses.txt', '.'), ('filters.txt', '.')],
+    datas=[('parser.exe', '.'), ('notice.mp3', '.'), ('livylogs.ico', '.'), ('livylogs.png', '.'), ('filters/*', 'filters')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

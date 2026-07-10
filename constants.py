@@ -36,6 +36,13 @@ TEXT_ACCENT = "#00a2ff"
 BUTTON_BG = "#1f242d"
 BUTTON_HOVER = "#2a2e35"
 ENTRY_BG = "#090a0c"
+COLOR_DEFAULT_CLASS = "#00a2ff" # Default blue for unidentified classes
+
+# New Sophisticated Graphics Constants
+TITLE_GRADIENT_START = "#1a1d23"
+TITLE_GRADIENT_END = "#0d0f12"
+CORNER_RADIUS = 10
+WINDOW_SHADOW_COLOR = "#000000"
 
 # Layout Constants
 MIN_WIDTH = 260

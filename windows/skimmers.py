@@ -3,8 +3,10 @@ import time
 from tkinter import ttk
 from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY,
-    ACCENT_BLUE, BUTTON_BG, BUTTON_HOVER, TEXT_ACCENT, BORDER_COLOR
+    ACCENT_BLUE, BUTTON_BG, BUTTON_HOVER, TEXT_ACCENT, BORDER_COLOR, COLOR_DEFAULT_CLASS,
+    TITLE_GRADIENT_START
 )
+from utils import create_rainbow_name
 from windows.base_window import BasePopoutWindow
 
 class SkimmersWindow(BasePopoutWindow):
@@ -16,33 +18,52 @@ class SkimmersWindow(BasePopoutWindow):
         super().show(force_open)
         if not self.window: return
 
-        self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
-        self.back_btn.pack(side=tk.LEFT)
+        self.back_btn = tk.Label(self.title_bar, text=" ← ", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2")
         self.back_btn.bind("<Button-1>", lambda e: self.go_back())
-        self.back_btn.pack_forget()
-
-        # Additional title bar buttons for Skimmers
-        reset_btn = tk.Label(self.title_bar, text="RESET", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2", padx=10)
-        reset_btn.pack(side=tk.RIGHT)
-        reset_btn.bind("<Button-1>", lambda e: self.app.reset_skimmers_manual())
-
-        search_btn = tk.Label(self.title_bar, text="🔍", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 10), cursor="hand2", padx=5)
-        search_btn.pack(side=tk.LEFT)
-        search_btn.bind("<Button-1>", lambda e: self.app.toggle_skimmer_search())
-        if self.app.skimmer_search_mode: search_btn.config(fg=ACCENT_BLUE)
+        
+        self.search_btn = tk.Label(self.title_bar, text="🔍", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 10), cursor="hand2", padx=5)
+        self.search_btn.bind("<Button-1>", lambda e: [self.app.toggle_skimmer_search(), self.refresh(force=True)])
+        
+        # Initial search button placement (will be managed by refresh)
+        self.title_bar.create_window(self.default_w - 35, 16, window=self.search_btn, anchor="e", tags="search_btn")
 
     def go_back(self):
         self.drill_down_player = None
-        self.back_btn.pack_forget()
+        if hasattr(self, 'back_btn'): self.title_bar.delete("back_btn")
         self.refresh(force=True)
 
     def drill_down(self, player):
         self.drill_down_player = player
-        self.back_btn.pack(side=tk.LEFT)
+        if hasattr(self, 'back_btn'):
+            self.title_bar.delete("back_btn")
+            self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
+            # Shift title label to the right
+            self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
         self.refresh(force=True)
 
     def refresh(self, force=False):
         if not self.window or self.window.state() == "withdrawn": return
+        
+        # Ensure back button state
+        if not self.drill_down_player:
+            self.title_bar.delete("back_btn")
+            # Restore title label position
+            if hasattr(self, 'title_label'):
+                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 10, 16)
+            # Show search button
+            if not self.title_bar.find_withtag("search_btn"):
+                self.title_bar.create_window(self.window.winfo_width() - 35, 16, window=self.search_btn, anchor="e", tags="search_btn")
+            else:
+                self.title_bar.coords("search_btn", self.window.winfo_width() - 35, 16)
+            
+            if self.app.skimmer_search_mode: self.search_btn.config(fg=ACCENT_BLUE)
+            else: self.search_btn.config(fg=TEXT_SECONDARY)
+        else:
+            if not self.title_bar.find_withtag("back_btn"):
+                self.title_bar.create_window(10, 16, window=self.back_btn, anchor="w", tags="back_btn")
+                self.title_bar.coords(self.title_bar.find_withtag(self.title_label), 35, 16)
+            # Hide search button during drill down
+            self.title_bar.delete("search_btn")
         
         now = time.time()
         if not hasattr(self, 'last_full_refresh'): self.last_full_refresh = 0
@@ -58,13 +79,13 @@ class SkimmersWindow(BasePopoutWindow):
             self.header_area = tk.Frame(self.content_container, bg=self.window["bg"])
             self.header_area.pack(fill=tk.X)
             
-            # Filter Tabs (Loot, Combat, System)
+            # Filter Tabs (Loot)
             self.t_frame = tk.Frame(self.header_area, bg=PANEL_DARK); self.t_frame.pack(fill=tk.X, pady=(0, 5))
             self.tab_btns = {}
             
             def make_tab_cmd(v): return lambda e: [setattr(self.app, 'skimmer_tab', v), setattr(self, 'last_full_refresh', 0), self.refresh()]
 
-            for text, val in [("LOOT", "loot"), ("SYSTEM", "system")]:
+            for text, val in [("LOOT", "loot")]:
                 btn = tk.Label(self.t_frame, text=text, bg=PANEL_DARK, fg=TEXT_SECONDARY, 
                               font=("Segoe UI", 8, "bold"), padx=10, pady=5, cursor="hand2")
                 btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
@@ -109,13 +130,13 @@ class SkimmersWindow(BasePopoutWindow):
 
         # Visibility logic for tabs during drill down
         if self.drill_down_player:
-            if hasattr(self, 'back_btn'): self.back_btn.pack(side=tk.LEFT)
+            # Back button handled above
             self.t_frame.pack_forget()
             if hasattr(self, 'search_frame'): self.search_frame.pack_forget()
         else:
-            if hasattr(self, 'back_btn'): self.back_btn.pack_forget()
-            self.t_frame.pack(fill=tk.X, pady=(0, 5)) # Removed before=self.inventory_alert
-            if hasattr(self, 'search_frame'): self.search_frame.pack(fill=tk.X, pady=(0, 5)) # Removed before=self.inventory_alert
+            # Back button hidden above
+            self.t_frame.pack(fill=tk.X, pady=(0, 5)) 
+            if hasattr(self, 'search_frame'): self.search_frame.pack(fill=tk.X, pady=(0, 5)) 
             
             # Update Tab Buttons
             tab = getattr(self.app, 'skimmer_tab', 'loot')
@@ -134,7 +155,9 @@ class SkimmersWindow(BasePopoutWindow):
 
         # Update List
         for widget in self.scrollable_frame.winfo_children(): widget.destroy()
-        
+
+        tab = getattr(self.app, 'skimmer_tab', 'loot')
+
         if self.drill_down_player:
             # Show only loot for this specific player
             p_loot = self.app.loot_data.get(self.drill_down_player, [])
@@ -153,7 +176,7 @@ class SkimmersWindow(BasePopoutWindow):
                     all_p_loot.append({"item": ri["item"], "timestamp": ts})
 
             if not all_p_loot:
-                tk.Label(self.scrollable_frame, text=f"No loot recorded for {self.drill_down_player}", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+                tk.Label(self.scrollable_frame, text=f"No {tab} recorded for {self.drill_down_player}", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
                 return
             
             all_p_loot.sort(key=lambda x: x["timestamp"] if x["timestamp"] else datetime.min, reverse=True)
@@ -161,18 +184,22 @@ class SkimmersWindow(BasePopoutWindow):
                 ts = item["timestamp"].strftime("%H:%M:%S") if item["timestamp"] else "??:??:??"
                 f = tk.Frame(self.scrollable_frame, bg=WINDOW_BG, pady=2); f.pack(fill=tk.X)
                 tk.Label(f, text=f"[{ts}]", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Consolas", 8)).pack(side=tk.LEFT)
-                tk.Label(f, text=f" {item['item']}", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9)).pack(side=tk.LEFT)
+                
+                display_text = f" {item['item']}"
+
+                tk.Label(f, text=display_text, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9)).pack(side=tk.LEFT)
             return
 
         # Top-level View: List players who have loot
         query = self.app.skimmer_search_query.get().lower() if self.app.skimmer_search_mode else ""
+        
         players_with_loot = set(self.app.loot_data.keys())
         if self.app.enable_sync.get() and self.app.sync_data:
             players_with_loot.update(self.app.sync_data.get("data", {}).get("loot", {}).keys())
 
         final_players = sorted(list(players_with_loot))
         if not final_players:
-            tk.Label(self.scrollable_frame, text="No loot recorded", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+            tk.Label(self.scrollable_frame, text=f"No {tab} recorded", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
         else:
             for p in final_players:
                 if query and query not in p.lower(): continue
@@ -180,9 +207,13 @@ class SkimmersWindow(BasePopoutWindow):
                 f.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
                 
                 color = ACCENT_BLUE if (p == "You" or p == self.app.char_name.get()) else TEXT_ACCENT
-                lbl = tk.Label(f, text=p, bg=WINDOW_BG, fg=color, font=("Segoe UI", 10, "bold"))
-                lbl.pack(side=tk.LEFT, padx=10)
-                lbl.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
+                
+                name_container = tk.Frame(f, bg=WINDOW_BG)
+                name_container.pack(side=tk.LEFT, padx=10)
+                labels = create_rainbow_name(name_container, self.app, p, color, ("Segoe UI", 10, "bold"), WINDOW_BG)
+                for l in labels:
+                    l.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
+                name_container.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
                 
                 count = len(self.app.loot_data.get(p, []))
                 tk.Label(f, text=f"({count} items)", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9)).pack(side=tk.RIGHT, padx=10)

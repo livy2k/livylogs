@@ -1,7 +1,8 @@
 import tkinter as tk
 from constants import (
     WINDOW_BG, BORDER_COLOR, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY,
-    ACCENT_BLUE, BUTTON_BG, BUTTON_HOVER, TEXT_ACCENT
+    ACCENT_BLUE, BUTTON_BG, BUTTON_HOVER, TEXT_ACCENT,
+    TITLE_GRADIENT_START, TITLE_GRADIENT_END
 )
 from utils import apply_snapping
 
@@ -66,20 +67,31 @@ class BasePopoutWindow:
         self.inner = tk.Frame(border, bg=WINDOW_BG)
         self.inner.pack(fill=tk.BOTH, expand=True)
 
-        self.title_bar = tk.Frame(self.inner, bg=PANEL_DARK, height=30)
+        # Gradient Title Bar
+        self.title_bar = tk.Canvas(self.inner, bg=TITLE_GRADIENT_END, height=32, highlightthickness=0)
         self.title_bar.pack(fill=tk.X)
-        if not self.fixed_size:
-            self.title_bar.bind("<Button-1>", self.click_window)
-            self.title_bar.bind("<B1-Motion>", self.drag_window)
+        self.title_bar.bind("<Button-1>", self.click_window)
+        self.title_bar.bind("<B1-Motion>", self.drag_window)
+        self.title_bar.bind("<ButtonRelease-1>", self.release_window)
         
-        self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9))
-        self.title_label.pack(side=tk.LEFT, padx=10)
+        # Draw subtle gradient
+        self.title_bar.bind("<Configure>", self._draw_title_gradient)
         
-        close_btn = tk.Label(self.title_bar, text="✕", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2", padx=10)
-        close_btn.pack(side=tk.RIGHT)
+        self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=TITLE_GRADIENT_START, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold"))
+        # We'll place the label after the gradient is drawn or use transparent-like placement
+        self.title_bar.create_window(10, 16, window=self.title_label, anchor="w")
+        
+        self.title_label.bind("<Button-1>", self.click_window)
+        self.title_label.bind("<B1-Motion>", self.drag_window)
+        self.title_label.bind("<ButtonRelease-1>", self.release_window)
+        
+        close_btn = tk.Label(self.title_bar, text="✕", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 11), cursor="hand2", padx=10)
+        self.title_bar.create_window(self.default_w - 5, 16, window=close_btn, anchor="e", tags="close_btn")
         close_btn.bind("<Button-1>", lambda e: self.close())
+        close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#ff4444"))
+        close_btn.bind("<Leave>", lambda e: close_btn.config(fg=TEXT_SECONDARY))
         
-        self.content_container = tk.Frame(self.inner, bg=WINDOW_BG, padx=5, pady=5)
+        self.content_container = tk.Frame(self.inner, bg=WINDOW_BG, padx=8, pady=8)
         self.content_container.pack(fill=tk.BOTH, expand=True)
 
         if not self.fixed_size:
@@ -140,3 +152,27 @@ class BasePopoutWindow:
 
     def refresh(self, force=False):
         pass
+
+    def _draw_title_gradient(self, event=None):
+        if not self.title_bar: return
+        w = self.title_bar.winfo_width()
+        h = self.title_bar.winfo_height()
+        self.title_bar.delete("gradient")
+        
+        # Simple vertical gradient
+        for i in range(h):
+            # Calculate color interpolation
+            r1, g1, b1 = self.app.root.winfo_rgb(TITLE_GRADIENT_START)
+            r2, g2, b2 = self.app.root.winfo_rgb(TITLE_GRADIENT_END)
+            r = int(r1 + (r2 - r1) * (i / h)) // 256
+            g = int(g1 + (g2 - g1) * (i / h)) // 256
+            b = int(b1 + (b2 - b1) * (i / h)) // 256
+            color = f"#{r:02x}{g:02x}{b:02x}"
+            self.title_bar.create_line(0, i, w, i, fill=color, tags="gradient")
+        
+        self.title_bar.tag_lower("gradient")
+        
+        # Reposition close button
+        self.title_bar.coords("close_btn", w - 5, h // 2)
+        # Update label background to match gradient start
+        self.title_label.config(bg=TITLE_GRADIENT_START)

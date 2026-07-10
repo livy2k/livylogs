@@ -55,6 +55,7 @@ class OptionsWindow(BasePopoutWindow):
             cb.pack(anchor="w", pady=2)
 
         add_check("DISABLE WARNINGS", self.app.disable_warnings, self.app.save_config)
+        add_check("CLASS COLORS", self.app.show_class_colors, lambda: [self.app.save_config(), self.app.refresh_ui_only(force=True)])
         
         # Web Sync Section
         tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)

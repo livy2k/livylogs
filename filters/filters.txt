@@ -11,3 +11,9 @@ You use
 [galaxychat]
 [groupchat]
 tells you
+a 
+an 
+the 
+your target
+level 
+( 

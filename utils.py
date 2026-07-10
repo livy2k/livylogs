@@ -66,3 +66,171 @@ def clean_npc_name(name):
     name = re.sub(r"^corpse\s+of\s+", "", name, flags=re.IGNORECASE)
     
     return name.strip()
+
+def create_rainbow_name(parent, app, name, base_color, font, bg):
+    """Creates a gradient name inside the parent frame if multiple classes exist."""
+    import tkinter as tk
+    from constants import COLOR_DEFAULT_CLASS
+    
+    classes = app.player_classes.get(name, [])
+    if len(classes) <= 1:
+        color = base_color
+        if classes:
+            color = app.class_configs.get(classes[0], {}).get("color", COLOR_DEFAULT_CLASS)
+        
+        lbl = tk.Label(parent, text=name, bg=bg, fg=color, font=font)
+        lbl.pack(side=tk.LEFT)
+        return [lbl]
+
+    # Helper to interpolate between two hex colors
+    def interpolate_color(c1_name, c2_name, factor):
+        try:
+            # Convert names/hex to RGB
+            rgb1 = parent.winfo_rgb(c1_name)
+            rgb2 = parent.winfo_rgb(c2_name)
+            
+            r = int(rgb1[0] + (rgb2[0] - rgb1[0]) * factor) >> 8
+            g = int(rgb1[1] + (rgb2[1] - rgb1[1]) * factor) >> 8
+            b = int(rgb1[2] + (rgb2[2] - rgb1[2]) * factor) >> 8
+            
+            return f"#{r:02x}{g:02x}{b:02x}"
+        except:
+            return c1_name
+
+    # Multiple classes - gradient mode
+    labels = []
+    # Check if we should show class colors
+    if not getattr(app, "show_class_colors", tk.BooleanVar(value=True)).get():
+        lbl = tk.Label(parent, text=name, bg=bg, fg=base_color, font=font)
+        lbl.pack(side=tk.LEFT)
+        return [lbl]
+
+    # Get colors for all classes
+    colors = [app.class_configs.get(cls_name, {}).get("color", COLOR_DEFAULT_CLASS) for cls_name in classes]
+    
+    # Reorder colors per user clarification:
+    # 1st color -> leftmost
+    # 2nd color -> rightmost
+    # Further colors (3rd, 4th, ...) push the 2nd color towards the left
+    # Final order should be: [Color1, Color3, Color4, ..., Color2]
+    if len(colors) > 2:
+        reordered = [colors[0]] + colors[2:] + [colors[1]]
+        colors = reordered
+    
+    if len(name) <= 1:
+        lbl = tk.Label(parent, text=name, bg=bg, fg=colors[0], font=font)
+        lbl.pack(side=tk.LEFT)
+        return [lbl]
+
+    for i, char in enumerate(name):
+        num_colors = len(colors)
+        if num_colors > 1:
+            pos = i / (len(name) - 1)
+            
+            # "Fade in" effect for secondary colors:
+            # We use a non-linear power function to keep the first color longer
+            # and make the transition to secondary colors happen more towards the end.
+            # pos_weighted = pos ** 1.5 
+            # Actually, the user says "secondary or later colors should fade in to not be distracting"
+            # Maybe they mean the colors themselves should be faded?
+            # Or they mean the transition should be smooth.
+            # Let's try pos_weighted = pos ** 2.0 to give more weight to the first color.
+            pos_weighted = pos ** 1.5
+            
+            segment_float = pos_weighted * (num_colors - 1)
+            idx = int(segment_float)
+            if idx >= num_colors - 1:
+                idx = num_colors - 2
+                factor = 1.0
+            else:
+                factor = segment_float - idx
+            
+            char_color = interpolate_color(colors[idx], colors[idx+1], factor)
+        else:
+            char_color = colors[0]
+
+        lbl = tk.Label(parent, text=char, bg=bg, fg=char_color, font=font)
+        lbl.pack(side=tk.LEFT)
+        labels.append(lbl)
+    
+    return labels
+
+def save_log_segment(original_log_path, duration_minutes):
+    """Saves the last duration_minutes of combat log to a new file in a 'saved_logs' directory."""
+    import os
+    import re
+    from datetime import datetime, timedelta
+    
+    if not original_log_path or not os.path.exists(original_log_path):
+        return None
+        
+    # Create saved_logs directory in the executable's directory
+    exe_dir = os.path.dirname(os.path.abspath(original_log_path)) # Fallback if we can't get better
+    try:
+        import sys
+        if getattr(sys, 'frozen', False):
+            exe_dir = os.path.dirname(sys.executable)
+        else:
+            exe_dir = os.path.abspath(".")
+    except: pass
+    
+    save_dir = os.path.join(exe_dir, "saved_logs")
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+        
+    # Determine filename: parse1, parse2, etc.
+    i = 1
+    while os.path.exists(os.path.join(save_dir, f"parse{i}.txt")):
+        i += 1
+    save_path = os.path.join(save_dir, f"parse{i}.txt")
+    
+    # Calculate time limit
+    limit = datetime.now() - timedelta(minutes=duration_minutes)
+    
+    timestamp_pattern = re.compile(r"\[?(\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2})\]?")
+    
+    lines_to_save = []
+    earliest_ts = None
+    
+    try:
+        with open(original_log_path, "r", encoding="utf-8", errors="replace") as f:
+            # We want the LAST duration_minutes. 
+            # A simple way is to read all lines and filter, but files can be large.
+            # However, for 60 mins of combat, it's usually manageable.
+            all_lines = f.readlines()
+            
+            for line in all_lines:
+                ts_match = timestamp_pattern.search(line)
+                if ts_match:
+                    ts_str = ts_match.group(2)
+                    try:
+                        ts = datetime.strptime(ts_str, "%H:%M:%S")
+                        now = datetime.now()
+                        ts = ts.replace(year=now.year, month=now.month, day=now.day)
+                        if ts > now + timedelta(minutes=5):
+                            ts -= timedelta(days=1)
+                        
+                        if ts >= limit:
+                            lines_to_save.append(line)
+                            if earliest_ts is None:
+                                earliest_ts = ts
+                    except:
+                        if lines_to_save: # Keep lines that don't have TS but follow a good TS
+                            lines_to_save.append(line)
+                elif lines_to_save:
+                    lines_to_save.append(line)
+                    
+        if lines_to_save:
+            # User wants the earlier timestamp captured in the log in the file or filename?
+            # "with the earlier timestamp captured in that 60minute log time"
+            # I'll add a header to the file with the start time.
+            with open(save_path, "w", encoding="utf-8") as f:
+                if earliest_ts:
+                    f.write(f"--- LOG SAVED AT {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+                    f.write(f"--- START TIMESTAMP: {earliest_ts.strftime('%H:%M:%S')} ---\n")
+                f.writelines(lines_to_save)
+            return save_path
+    except Exception as e:
+        print(f"Error saving log segment: {e}")
+        
+    return None

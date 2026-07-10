@@ -31,8 +31,9 @@ A lightweight, real-time combat log parser for Star Wars Galaxies (SWG). This ap
    ```
 3. Run the application:
    ```bash
-   python livylogs.py
+   parser.exe
    ```
+   *Note: Previously, you would run `python livylogs.py`, but now the C engine (`parser.exe`) is the main entry point and manages the UI windows.*
 
 ## 🛠 Usage
 
@@ -46,6 +47,11 @@ To package this as a standalone `.exe` for Windows, use PyInstaller:
 ```bash
 pyinstaller Livylogs.spec
 ```
+
+## 📄 Development & Architecture
+For details on the latest architectural changes (Flow Inversion), build instructions using CLion/MinGW, and internal logic, see:
+- [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md)
+- [BUILD_ENGINE.md](BUILD_ENGINE.md)
 
 ## 📄 License
 This project is for personal use and educational purposes.

@@ -421,8 +421,9 @@ int main(int a, char** v) {
     // Removed engine_debug.txt logging to keep environment clean
     
     // Use absolute path for python for maximum reliability and speed
+    // Use javaw-style behavior (pythonw) to avoid the console window
     char p_abs[256];
-    sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" livylogs.py");
+    sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe\" livylogs.py");
 
     if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
         // Fallback to ShellExecute if absolute path fails

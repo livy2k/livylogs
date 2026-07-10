@@ -85,15 +85,17 @@ class ClickCatcher:
         self.app.root.deiconify()
         self.app.root.attributes("-topmost", True)
         self.app.root.lift()
-        # Ensure alpha is 1.0
-        self.app.root.attributes("-alpha", 1.0)
+        # Ensure alpha is maintained
+        if self.app.root.attributes("-alpha") != self.app.current_alpha:
+            self.app.root.attributes("-alpha", self.app.current_alpha)
         # Also force a re-pin via engine if possible, but for now just lift
         for win in self.app._get_managed_windows():
             if win.winfo_exists() and win.state() != "withdrawn":
-                win.deiconify()
-                win.attributes("-alpha", 1.0)
+                if not win.attributes("-topmost"):
+                    win.attributes("-topmost", True)
+                if win.attributes("-alpha") != self.app.current_alpha:
+                    win.attributes("-alpha", self.app.current_alpha)
                 win.lift()
-                win.attributes("-topmost", True)
         self.app.refresh_ui_only(force=True)
 
 class CombatLogApp:
@@ -124,6 +126,7 @@ class CombatLogApp:
         initial_y = self.config.get("General", "y", fallback="50")
 
         self.root.geometry(f"{initial_width}x{initial_height}+{initial_x}+{initial_y}")
+        if initial_alpha < 0.01: initial_alpha = 1.0
         self.target_alpha = initial_alpha
         self.current_alpha = initial_alpha
         self.root.attributes("-alpha", initial_alpha)
@@ -181,6 +184,7 @@ class CombatLogApp:
         self.last_sk_reset = None
         self.last_dt_reset = None
         
+        self.engine_process = None
         self.time_window_dm = 5
         self.time_window_skimmers = 60
         self.time_window_details = 60
@@ -274,7 +278,8 @@ class CombatLogApp:
         # 1. Ensure main window is always visible
         if self.root.state() == "withdrawn" and not getattr(self, "_minimized_to_tray", False):
             self.root.deiconify()
-            self.root.attributes("-alpha", 1.0)
+            if self.root.attributes("-alpha") != self.current_alpha:
+                self.root.attributes("-alpha", self.current_alpha)
             
         # 2. Window Management Logic (Reverted from C)
         try:
@@ -316,23 +321,29 @@ class CombatLogApp:
                     self._last_win_state = target_state
                     
                     if target_state == "game":
-                        self.root.attributes("-topmost", True)
+                        if not self.root.attributes("-topmost"):
+                            self.root.attributes("-topmost", True)
                         for win in self._get_managed_windows():
                             if win != self.root:
                                 if win.state() == "withdrawn":
                                     win.deiconify()
                                     win.lift()
-                                win.attributes("-topmost", True)
-                                win.attributes("-alpha", 1.0)
+                                if not win.attributes("-topmost"):
+                                    win.attributes("-topmost", True)
+                                if win.attributes("-alpha") != self.current_alpha:
+                                    win.attributes("-alpha", self.current_alpha)
                     elif target_state == "safe":
-                        self.root.attributes("-topmost", False)
+                        if self.root.attributes("-topmost"):
+                            self.root.attributes("-topmost", False)
                         for win in self._get_managed_windows():
                             if win != self.root:
                                 if win.state() == "withdrawn":
                                     win.deiconify()
                                     win.lift()
-                                win.attributes("-topmost", False)
-                                win.attributes("-alpha", 1.0)
+                                if win.attributes("-topmost"):
+                                    win.attributes("-topmost", False)
+                                if win.attributes("-alpha") != self.current_alpha:
+                                    win.attributes("-alpha", self.current_alpha)
                     else:
                         self.root.attributes("-topmost", False)
                         for win in self._get_managed_windows():
@@ -344,7 +355,8 @@ class CombatLogApp:
                     if target_state == "game":
                         # Be less aggressive to prevent flashing
                         try:
-                            if not self.root.attributes("-topmost"):
+                            # Only set if NOT topmost, but check if we are actually allowed to (not minimized)
+                            if not self.root.attributes("-topmost") and self.root.state() != "withdrawn":
                                 self.root.attributes("-topmost", True)
                         except: pass
                         
@@ -352,7 +364,7 @@ class CombatLogApp:
                             if win != self.root:
                                 try:
                                     # ONLY re-apply topmost if it somehow lost it
-                                    if not win.attributes("-topmost"):
+                                    if not win.attributes("-topmost") and win.state() != "withdrawn":
                                         win.attributes("-topmost", True)
                                 except: pass
             
@@ -377,18 +389,18 @@ class CombatLogApp:
 
     def fade_in(self):
         if self.current_alpha < self.target_alpha:
-            self.current_alpha = min(self.target_alpha, self.current_alpha + 0.1)
+            self.current_alpha = min(self.target_alpha, self.current_alpha + 0.05)
             for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
-            self.root.after(20, self.fade_in)
+            self.root.after(5, self.fade_in)
 
     def start_hide(self, minimize=True):
         self.fade_out(minimize=minimize)
 
     def fade_out(self, minimize=True):
         if self.current_alpha > 0:
-            self.current_alpha = max(0, self.current_alpha - 0.1)
+            self.current_alpha = max(0, self.current_alpha - 0.05)
             for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
-            self.root.after(20, lambda: self.fade_out(minimize=minimize))
+            self.root.after(5, lambda: self.fade_out(minimize=minimize))
         else:
             if minimize:
                 for win in self._get_managed_windows():
@@ -446,7 +458,7 @@ class CombatLogApp:
         
         exit_btn = tk.Label(self.main_title_bar, text=" ✕ ", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
         self.main_title_bar.create_window(300, 17, window=exit_btn, anchor="e", tags="exit_btn")
-        exit_btn.bind("<Button-1>", lambda e: self.start_hide(minimize=True))
+        exit_btn.bind("<Button-1>", lambda e: self.on_exit())
         exit_btn.bind("<Enter>", lambda e: exit_btn.config(fg="#ff4444"))
         exit_btn.bind("<Leave>", lambda e: exit_btn.config(fg=TEXT_SECONDARY))
 
@@ -507,9 +519,20 @@ class CombatLogApp:
 
     def start_pipe_listener(self):
         pipe_path = r'\\.\pipe\LivyLogsPipe'
+        retry_count = 0
+        max_retries = 10 # Allow some time for engine to start/restart
+        
         while self.running:
             if not kernel32.WaitNamedPipeW(pipe_path, 1000):
+                retry_count += 1
+                if retry_count > max_retries:
+                    # If engine is gone for 10+ seconds, exit UI
+                    print("DEBUG: Engine pipe lost, exiting UI...")
+                    self.root.after(0, self.on_exit)
+                    break
                 time.sleep(1); continue
+            
+            retry_count = 0 # Reset on successful wait
             h = kernel32.CreateFileW(pipe_path, 0x80000000, 0, None, 3, 0x80, None)
             if h == -1:
                 time.sleep(1); continue
@@ -525,8 +548,11 @@ class CombatLogApp:
                                 self.process_external_event(data, is_last=(i == len(lines)-1))
                             except: pass
                 else:
+                    # ReadFile failed or 0 bytes - pipe closed
                     break
             kernel32.CloseHandle(h)
+            # Short sleep before trying to reconnect
+            time.sleep(0.5)
 
     def process_external_event(self, event, is_last=False):
         event_type = event.get("type")

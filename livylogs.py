@@ -9,11 +9,15 @@ def main():
     mutex_name = "LivyLogs_SingleInstance_Mutex"
     mutex = kernel32.CreateMutexW(None, False, mutex_name)
     if kernel32.GetLastError() == 183:
+        # Instead of just exiting, let's try to notify the user or just stay silent
+        # Since the C engine now kills old processes, if we hit this, it means 
+        # another instance started VERY recently or we are being launched manually.
         sys.exit(0)
 
     try:
         root = tk.Tk()
         app = CombatLogApp(root)
+        root.protocol("WM_DELETE_WINDOW", app.on_exit)
         root.mainloop()
     except Exception as e:
         import traceback

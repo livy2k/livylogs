@@ -21,7 +21,8 @@ class BasePopoutWindow:
         if self.window and self.window.winfo_exists():
             if self.window.state() == "withdrawn":
                 self.window.deiconify()
-                self.window.attributes("-alpha", self.app.current_alpha)
+                if self.window.attributes("-alpha") != self.app.current_alpha:
+                    self.window.attributes("-alpha", self.app.current_alpha)
                 self.window.lift()
                 self.refresh(force=True) # Immediate update on show
                 return

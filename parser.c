@@ -382,6 +382,11 @@ void e_t(void* arg) {
     if (hf == INVALID_HANDLE_VALUE) { CloseHandle(hp); return; }
 
     SetFilePointer(hf, 0, NULL, FILE_END);
+    
+    // Safety check: if file is large, we might want to read the last 10KB 
+    // to catch up on very recent events if we just started.
+    // For now, seeking to end is safest to avoid "double counting" 
+    // when engine restarts.
 
     char b_buf[BUFFER_SIZE];
     DWORD r_b;
@@ -435,12 +440,23 @@ int main(int a, char** v) {
     
     // Use absolute path for python for maximum reliability and speed
     // Use javaw-style behavior (pythonw) to avoid the console window
-    char p_abs[256];
-    sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe\" livylogs.py");
+    char p_abs[512];
+    sprintf(p_abs, "\"C:\\Users\\LivyC\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe\" \"%s\\livylogs.py\"", v[0] ? (strrchr(v[0], '\\') ? (char*)(v[0][strrchr(v[0], '\\')-v[0]]='\0', v[0]) : ".") : ".");
 
-    if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-        // Fallback to ShellExecute if absolute path fails
-        ShellExecuteA(NULL, "open", "livylogs.py", NULL, NULL, SW_HIDE);
+    // However, if we are in a bundle or just want to be simple, let's try to just run pythonw.exe if it's in path
+    // or use the current directory.
+    char cmd[1024];
+    sprintf(cmd, "pythonw.exe livylogs.py");
+
+    if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        if (!CreateProcess(NULL, p_abs, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+            // Fallback to ShellExecute if absolute path fails
+            ShellExecuteA(NULL, "open", "livylogs.py", NULL, NULL, SW_HIDE);
+        } else {
+            python_pid = pi.dwProcessId;
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+        }
     } else {
         python_pid = pi.dwProcessId;
         CloseHandle(pi.hProcess);

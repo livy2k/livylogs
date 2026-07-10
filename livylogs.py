@@ -22,12 +22,13 @@ def main():
     except Exception as e:
         import traceback
         import os
-        error_msg = traceback.format_exc()
+        import datetime
+        error_msg = f"--- {datetime.datetime.now()} ---\n" + traceback.format_exc()
         print(f"CRITICAL ERROR: {e}")
         print(error_msg)
         try:
-            with open("crash_log.txt", "w") as f:
-                f.write(error_msg)
+            with open("crash_log.txt", "a") as f:
+                f.write(error_msg + "\n")
         except: pass
         try:
             messagebox.showerror("LivyLogs Critical Error", f"The application encountered a critical error:\n{e}\n\nSee crash_log.txt for details.")

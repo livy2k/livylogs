@@ -46,6 +46,8 @@ class ClickCatcher:
             self.window.deiconify()
             self.window.lift()
             self.active = True
+            # Safety: Hide it after 5 seconds if no click was caught
+            self.app.root.after(5000, self.hide_if_active)
             return
 
         self.window = tk.Toplevel(self.app.root)
@@ -67,11 +69,14 @@ class ClickCatcher:
         self.window.bind("<Button-1>", self.on_click)
         self.window.bind("<Button-2>", self.on_click)
         self.window.bind("<Button-3>", self.on_click)
-        # Also bind movement to hide it if user tries to move mouse while it's up?
-        # No, we want it to catch the click.
         
         self.active = True
-        # print("DEBUG: ClickCatcher shown") # Remove debug prints for final build
+        # Safety: Hide it after 5 seconds if no click was caught
+        self.app.root.after(5000, self.hide_if_active)
+
+    def hide_if_active(self):
+        if self.active:
+            self.hide()
 
     def hide(self):
         if self.window and self.window.winfo_exists():
@@ -525,8 +530,8 @@ class CombatLogApp:
         while self.running:
             if not kernel32.WaitNamedPipeW(pipe_path, 1000):
                 retry_count += 1
-                if retry_count > max_retries:
-                    # If engine is gone for 10+ seconds, exit UI
+                if retry_count > 60: # 60 seconds total retry
+                    # If engine is gone for 60+ seconds, exit UI
                     print("DEBUG: Engine pipe lost, exiting UI...")
                     self.root.after(0, self.on_exit)
                     break
@@ -580,6 +585,23 @@ class CombatLogApp:
             p["dm_avoided"] = event.get("avoided", 0)
             p["aoe_hits"] = event.get("aoe", 0)
             p["lb_loot"] = event.get("loot", 0)
+
+            # Map total stats to real-time dm_ stats if combat just started
+            if self.app_start_time and (time.time() - self.last_combat_time) <= self.time_window_dm:
+                if p.get("dm_damage", 0) == 0: p["dm_damage"] = p["damage"]
+                if p.get("dm_healing", 0) == 0: p["dm_healing"] = p["healing"]
+                if p.get("dm_taken", 0) == 0: p["dm_taken"] = p["dm_taken"] # Already mapped above, but for clarity
+
+            # Update last_combat_time if there is actual activity in these stats
+            if p["damage"] > 0 or p["healing"] > 0 or p["dm_taken"] > 0:
+                self.last_combat_time = time.time()
+                if self.app_start_time is None:
+                    # Look for the earliest event in memory if we have any, 
+                    # otherwise use now.
+                    if self.all_events:
+                        self.app_start_time = self.all_events[0]["timestamp"]
+                    else:
+                        self.app_start_time = datetime.now()
             return
 
         source = event.get("source", "Unknown")
@@ -601,6 +623,13 @@ class CombatLogApp:
                         break
             return
 
+        if event_type == "loot":
+            if source not in self.player_data:
+                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+            self.player_data[source]["lb_loot"] += 1
+            # Also keep track of what was looted in a separate list if needed, 
+            # but for now lb_loot is what the Leaderboard uses.
+            
         is_damage = damage > 0 or event_type in ["dealt", "taken", "other_dealt"]
         is_healing = healing > 0 or event_type == "healing"
         
@@ -641,13 +670,16 @@ class CombatLogApp:
         # Ensure we keep some history for windows that need it (skimmers/details usually 5-60 mins)
         history_limit = datetime.now() - timedelta(hours=1)
         if self.app_start_time and (now - self.last_combat_time > self.time_window_dm):
-            self.app_start_time = None; self.last_log_sync_time = None; self.leaderboard_data = {}; 
-            # We don't want to completely clear player_data here because Leaderboard might need it
-            # But we reset the DM relevant stats for 'You' and others
+            # If we were in combat but it timed out, only reset real-time DM stats
+            self.last_log_sync_time = None; self.leaderboard_data = {}; 
             for p in self.player_data:
                 self.player_data[p]["dm_damage"] = 0
                 self.player_data[p]["dm_healing"] = 0
                 if "dm_taken" in self.player_data[p]: self.player_data[p]["dm_taken"] = 0
+            
+            # Reset app_start_time if we've been idle for too long, but be less aggressive
+            if now - self.last_combat_time > 1800: # 30 minutes absolute idle
+                self.app_start_time = None
             
             self.all_events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= history_limit]
 
@@ -777,11 +809,30 @@ class CombatLogApp:
     def on_exit(self, icon=None, item=None):
         self.running = False
         if hasattr(self, 'tray_icon'):
-            self.tray_icon.stop()
+            try:
+                self.tray_icon.stop()
+            except: pass
+        
+        # Kill any engine processes that might be running
         if self.engine_process: 
-            self.engine_process.terminate()
-        self.save_config()
-        self.root.after(0, self.root.destroy)
+            try:
+                os.system(f"taskkill /F /T /PID {self.engine_process.pid}")
+            except: pass
+
+        os.system("taskkill /F /IM LL_Engine.exe /T")
+        os.system("taskkill /F /IM LivyLogsEngine.exe /T")
+        os.system("taskkill /F /IM parser.exe /T")
+
+        try:
+            self.save_config()
+        except: pass
+
+        try:
+            self.root.destroy()
+        except: pass
+        
+        # Force exit to ensure the process actually terminates
+        os._exit(0)
 
     def save_config(self):
         if "General" not in self.config: self.config["General"] = {}

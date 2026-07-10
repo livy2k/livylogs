@@ -148,6 +148,8 @@ class CombatLogApp:
         self.setup_tray_icon()
         self.start_ticker_loop()
         self.root.after(500, self.check_target_window)
+        if initial_log_path:
+            self.root.after(1000, lambda: self.start_c_engine(initial_log_path))
 
     def load_bosses(self):
         boss_list = []
@@ -610,6 +612,11 @@ class CombatLogApp:
             current_pipe = find_active_pipe()
             
             if not current_pipe:
+                # Wait longer for the pipe to appear
+                if kernel32.WaitNamedPipeW(pipe_path, 10000):
+                    current_pipe = pipe_path
+            
+            if not current_pipe:
                 if retry_count % 10 == 0:
                     try:
                         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -632,7 +639,7 @@ class CombatLogApp:
                 # 231 is ERROR_PIPE_BUSY
                 if err == 231:
                     # Wait for the pipe to become available
-                    if kernel32.WaitNamedPipeW(pipe_path, 2000):
+                    if kernel32.WaitNamedPipeW(pipe_path, 10000):
                         # Retry immediately
                         continue
                 

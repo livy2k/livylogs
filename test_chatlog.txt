@@ -134,3 +134,8 @@
 [Spatial]  02:09:06 [GROUP] Ma-o looted 106 credits from a fallen foe.
 [Spatial]  02:10:40 [GROUP] You receive 370 points of Weapon experience.
 [Spatial]  02:11:44 [GROUP] You receive 289 points of Weapon experience.
+[Spatial]  02:41:59 [GROUP] You receive 996 points of General experience.
+[Spatial]  02:42:01 [GROUP] Turd hits Eliemau for 383 points of damage.
+[Spatial]  02:42:02 [GROUP] Eliemau hits Fikiosa for 213 points of damage.
+[Spatial]  02:42:07 [GROUP] Turd looted CDEF Pistol from a fallen foe.
+[Spatial]  02:42:14 [GROUP] Fikiosa hits You for 284 points of damage.

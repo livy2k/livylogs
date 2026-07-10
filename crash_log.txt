@@ -184,3 +184,255 @@ DEBUG: Engine pipe lost for 5 mins at 2026-07-10 01:26:40.579781, exiting UI...
 --- PIPE DISCOVERY ATTEMPT 2026-07-10 02:38:36.471046 (retry 20) ---
   Existing signals: []
 --- APP EXIT 2026-07-10 02:39:25.977500 ---
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:40:29.493046 (retry 10) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:40:36.554583 (retry 20) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:40:43.663757 (retry 30) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:40:50.837366 (retry 40) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:40:57.968272 (retry 50) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:41:05.141876 (retry 60) ---
+  Existing signals: []
+--- PIPE DISCONNECT 2026-07-10 02:41:12.491824 (Error: 109) ---
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:41:20.183899 (retry 10) ---
+  Existing signals: []
+--- ENGINE STARTED 2026-07-10 02:41:53.643427 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:41:54.930553 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:00.048052 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:05.190508 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:07.720387 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:10.260526 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:12.161398 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:12.788155 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:14.683525 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:42:16.575292 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3\test_chatlog.txt
+--- PIPE DISCONNECT 2026-07-10 02:42:20.041916 (Error: 109) ---
+--- APP EXIT 2026-07-10 02:42:20.354492 ---
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:44:41.820025 (retry 10) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:44:48.845821 (retry 20) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:44:55.891631 (retry 30) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:02.933689 (retry 40) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:09.999164 (retry 50) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:17.045398 (retry 60) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:45:23.629036 ---
+[WinError 5] Access is denied
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:24.157005 (retry 70) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:31.235596 (retry 80) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:45:33.198798 ---
+[WinError 5] Access is denied
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:38.345420 (retry 90) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:45:41.696007 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:45:42.331408 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:45:42.802597 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:45:43.596647 ---
+[WinError 5] Access is denied
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:45.595055 (retry 100) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:45:52.715451 (retry 110) ---
+  Base directory: C:\Users\LivyC\PycharmProjects\PythonProject3
+  Existing signals: []
+--- APP EXIT 2026-07-10 02:45:55.715758 ---
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:13.167644 (retry 10) ---
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:51:17.150139 ---
+[WinError 5] Access is denied
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:18.181636 (retry 20) ---
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:51:18.430747 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:51:23.059764 ---
+[WinError 5] Access is denied
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:23.189036 (retry 30) ---
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:51:23.801901 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:51:24.541748 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:51:25.213434 ---
+[WinError 5] Access is denied
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:28.194198 (retry 40) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:33.199797 (retry 50) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:38.204929 (retry 60) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:43.210363 (retry 70) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:48.214922 (retry 80) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:53.221552 (retry 90) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:51:58.228189 (retry 100) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:03.233108 (retry 110) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:08.238964 (retry 120) ---
+  Existing signals: []
+--- PIPE DISCONNECT 2026-07-10 02:52:13.234505 (Error: 109) ---
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:18.740476 (retry 10) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:23.746981 (retry 20) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:28.752855 (retry 30) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:33.758458 (retry 40) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:38.766043 (retry 50) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:43.771818 (retry 60) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- PIPE WAIT ATTEMPT 2026-07-10 02:52:48.778771 (retry 70) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- PIPE WAIT ATTEMPT 2026-07-10 02:54:37.513023 (retry 10) ---
+  Existing signals: ['engine_pid_69668.tmp']
+--- ENGINE START ERROR 2026-07-10 02:54:42.091313 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:54:42.340272 ---
+[WinError 5] Access is denied
+--- PIPE WAIT ATTEMPT 2026-07-10 02:54:42.532480 (retry 20) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:54:47.538714 (retry 30) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:54:52.545141 (retry 40) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:54:57.551571 (retry 50) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:55:02.557791 (retry 60) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:55:07.563647 (retry 70) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:27.821812 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:28.323573 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:28.824837 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:29.326352 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:29.826869 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:30.328378 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:30.829390 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:31.330404 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:31.831552 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:32.333156 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:32.833810 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:33.335567 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:33.836734 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:34.337977 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:34.839200 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:35.340142 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:35.842057 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:36.343174 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 02:57:36.843939 (retry 0) ---
+  Existing signals: []
+--- ENGINE STARTED 2026-07-10 02:57:36.913518 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 02:57:38.023362 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3/test_chatlog.txt
+--- APP EXIT 2026-07-10 02:57:53.462128 ---
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:23.146337 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:23.648008 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:24.148951 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:24.649888 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:25.151146 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:25.652862 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:26.154444 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:26.655636 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:27.157028 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:27.659145 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:28.161715 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:28.663666 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:29.164912 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:29.665963 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:30.167078 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:30.668164 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:31.169358 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:31.671316 (retry 0) ---
+  Existing signals: []
+--- PIPE WAIT ATTEMPT 2026-07-10 03:00:32.171926 (retry 0) ---
+  Existing signals: []
+--- ENGINE STARTED 2026-07-10 03:00:32.610972 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\test_chatlog.txt
+--- ENGINE STARTED 2026-07-10 03:00:33.493383 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3/test_chatlog.txt
+--- APP EXIT 2026-07-10 03:00:46.708346 ---

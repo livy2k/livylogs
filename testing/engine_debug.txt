@@ -273,3 +273,87 @@ Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
 Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
 Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
   Launched PID: 72528
+--- LAUNCHING ENGINE 2026-07-10 12:00:07.104597 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:/Users/LivyC/PycharmProjects/PythonProject3/test_chatlog.txt
+--- LAUNCHING ENGINE 2026-07-10 12:01:04.499535 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+--- LAUNCHING ENGINE 2026-07-10 12:01:12.152023 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+--- LAUNCHING ENGINE 2026-07-10 12:01:12.344952 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+--- LAUNCHING ENGINE 2026-07-10 12:04:32.788232 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 87244
+--- LAUNCHING ENGINE 2026-07-10 12:11:12.260557 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 22496
+--- LAUNCHING ENGINE 2026-07-10 12:11:16.160300 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 88636
+--- LAUNCHING ENGINE 2026-07-10 12:11:21.895764 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 90672
+--- LAUNCHING ENGINE 2026-07-10 12:11:22.615359 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 89272
+--- LAUNCHING ENGINE 2026-07-10 12:11:24.158741 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 14240
+--- LAUNCHING ENGINE 2026-07-10 12:11:26.925316 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 84868
+--- LAUNCHING ENGINE 2026-07-10 12:11:27.765316 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 21624
+--- LAUNCHING ENGINE 2026-07-10 12:11:39.509493 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 90456
+--- LAUNCHING ENGINE 2026-07-10 12:11:41.997218 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 18476
+--- LAUNCHING ENGINE 2026-07-10 12:15:13.868597 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 77484
+--- LAUNCHING ENGINE 2026-07-10 12:15:19.324736 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 18516
+--- LAUNCHING ENGINE 2026-07-10 12:15:19.931523 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 84796
+--- LAUNCHING ENGINE 2026-07-10 12:15:23.230266 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 84192
+--- LAUNCHING ENGINE 2026-07-10 12:15:24.202017 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 90728
+--- LAUNCHING ENGINE 2026-07-10 12:17:15.289022 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 19672
+--- LAUNCHING ENGINE 2026-07-10 12:18:20.322165 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 29868
+--- LAUNCHING ENGINE 2026-07-10 12:19:49.246345 ---
+Path: C:\Users\LivyC\PycharmProjects\PythonProject3\LivyLogs_Engine_New.exe
+Log: C:\Users\LivyC\PycharmProjects\PythonProject3\testing\test_chatlog.txt
+  Launched PID: 85048

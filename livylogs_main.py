@@ -362,43 +362,64 @@ class CombatLogApp:
             try:
                 import subprocess
                 # Use taskkill to clean up any orphaned engines
-                subprocess.run(['taskkill', '/F', '/IM', 'LivyLogsEngine.exe', '/IM', 'parser.exe', '/IM', 'LL_Engine.exe', '/T'], 
-                               capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                # We wrap individual calls to handle Access Denied errors more gracefully
+                for proc_name in ['LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe']:
+                    try:
+                        subprocess.run(['taskkill', '/F', '/IM', proc_name, '/T'], 
+                                       capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                    except Exception as e:
+                        try:
+                            with open("crash_log.txt", "a") as f:
+                                f.write(f"--- CLEANUP WARNING {datetime.now()} --- Could not kill {proc_name}: {e}\n")
+                        except: pass
                 
                 # Additional check to ensure processes are GONE
                 import time
-                max_wait = 2.0
+                max_wait = 1.0
                 start_wait = time.time()
                 while time.time() - start_wait < max_wait:
-                    res = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq LivyLogsEngine.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                    if "LivyLogsEngine.exe" not in res.stdout:
-                        # Double check other variants
-                        res2 = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq parser.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                        if "parser.exe" not in res2.stdout:
-                            break
-                    time.sleep(0.3)
+                    res = subprocess.run(['tasklist', '/FI', f'IMAGENAME eq parser.exe'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                    if "parser.exe" not in res.stdout:
+                        break
+                    time.sleep(0.2)
 
                 # Clean up stale tmp files
                 if os.path.exists("."):
                     for f in os.listdir("."):
                         if f.startswith("engine_pid_") and f.endswith(".tmp"):
-                            try: os.remove(f)
+                            try: os.remove(os.path.join(".", f))
                             except: pass
-            except: pass
+            except Exception as e:
+                try:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- CLEANUP ERROR {datetime.now()} ---\n{e}\n")
+                except: pass
             
             # Small delay to ensure OS releases resources
             time.sleep(0.3)
             
-            # We use the 'LivyLogsEngine.exe' as the primary one
-            exe_path = os.path.join(os.getcwd(), "LivyLogsEngine.exe")
-            if os.path.exists(exe_path):
+            # Try multiple possible engine names to be robust
+            possible_exes = ["LivyLogs_Engine_New.exe", "LivyLogsEngine.exe", "parser.exe", "LL_Engine.exe"]
+            exe_path = None
+            for name in possible_exes:
+                p = os.path.join(os.getcwd(), name)
+                if os.path.exists(p):
+                    exe_path = p
+                    break
+
+            if exe_path:
                 try:
                     import subprocess
-                    # Start the engine in the background
-                    subprocess.Popen([exe_path, log_path], creationflags=subprocess.CREATE_NO_WINDOW)
+                    # Start the engine in the background and capture output for debugging
+                    with open("engine_debug.txt", "a") as debug_file:
+                        debug_file.write(f"--- LAUNCHING ENGINE {datetime.now()} ---\nPath: {exe_path}\nLog: {log_path}\n")
+                        subprocess.Popen([exe_path, log_path], 
+                                         creationflags=subprocess.CREATE_NO_WINDOW,
+                                         stdout=debug_file,
+                                         stderr=debug_file)
                     try:
                         with open("crash_log.txt", "a") as f:
-                            f.write(f"--- ENGINE STARTED {datetime.now()} ---\nLog: {log_path}\n")
+                            f.write(f"--- ENGINE STARTED {datetime.now()} ---\nPath: {exe_path}\nLog: {log_path}\n")
                     except: pass
                 except Exception as e:
                     try:
@@ -408,7 +429,7 @@ class CombatLogApp:
             else:
                 try:
                     with open("crash_log.txt", "a") as f:
-                        f.write(f"--- ENGINE MISSING {datetime.now()} ---\nPath: {exe_path}\n")
+                        f.write(f"--- ENGINE MISSING {datetime.now()} --- Tried: {possible_exes}\n")
                 except: pass
 
         # Run the startup sequence in a thread to avoid blocking UI
@@ -532,16 +553,19 @@ class CombatLogApp:
         def find_newest_pipe():
             import subprocess
             try:
+                # Use absolute path to project root for discovery
+                project_root = os.getcwd()
                 # 1. Look for the .tmp files we created
                 try:
-                    tmp_files = [f for f in os.listdir(".") if f.startswith("engine_pid_") and f.endswith(".tmp")]
+                    tmp_files = [f for f in os.listdir(project_root) if f.startswith("engine_pid_") and f.endswith(".tmp")]
                     if tmp_files:
                         # Sort by modification time to get the newest one
-                        tmp_files.sort(key=lambda x: os.path.getmtime(os.path.join(".", x)))
+                        tmp_files.sort(key=lambda x: os.path.getmtime(os.path.join(project_root, x)))
                         newest_file = tmp_files[-1]
                         
                         # Verify the file is NOT zero bytes (engine writes PID to it)
-                        if os.path.getsize(os.path.join(".", newest_file)) == 0:
+                        file_full_path = os.path.join(project_root, newest_file)
+                        if os.path.getsize(file_full_path) == 0:
                             # It's still being created by the engine, wait a bit
                             return None
 
@@ -552,7 +576,7 @@ class CombatLogApp:
                             return pipe_path
                         else:
                             # It's stale, try to delete it
-                            try: os.remove(os.path.join(".", newest_file))
+                            try: os.remove(file_full_path)
                             except: pass
                 except: pass
 

@@ -32,3 +32,155 @@ DEBUG: Engine pipe lost for 5 mins at 2026-07-10 01:26:40.579781, exiting UI...
 --- ON_EXIT CALLED 2026-07-10 02:08:54.430845 ---
 --- PIPE DISCOVERY FAILED 2026-07-10 02:21:34.694530 (retry 20) ---
 --- PIPE DISCOVERY FAILED 2026-07-10 02:21:48.743843 (retry 40) ---
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:24:47.470344 (retry 10) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:24:54.547172 (retry 20) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:01.642441 (retry 30) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:08.644075 (retry 40) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:15.677124 (retry 50) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:22.738289 (retry 60) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:29.822594 (retry 70) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:36.881974 (retry 80) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:43.921996 (retry 90) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:50.961851 (retry 100) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:25:57.993008 (retry 110) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:05.139427 (retry 120) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:12.263001 (retry 130) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:19.363879 (retry 140) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:26.431548 (retry 150) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:33.482251 (retry 160) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:40.550286 (retry 170) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:47.706335 (retry 180) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:26:54.834243 (retry 190) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:01.935622 (retry 200) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:09.030355 (retry 210) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:16.140297 (retry 220) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:23.246180 (retry 230) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:30.432040 (retry 240) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:37.611880 (retry 250) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:44.815571 (retry 260) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:51.963308 (retry 270) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:27:59.126025 (retry 280) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:28:06.174067 (retry 290) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:28:13.204314 (retry 300) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:28:20.255594 (retry 310) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:29:16.148236 (retry 10) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:29:23.206634 (retry 20) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:29:30.236117 (retry 30) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:29:37.263080 (retry 40) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:29:44.302328 (retry 50) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:29:51.322420 (retry 60) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:29:58.373830 (retry 70) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:05.409705 (retry 80) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:12.429325 (retry 90) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:19.493224 (retry 100) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:26.528093 (retry 110) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:33.598848 (retry 120) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:40.775330 (retry 130) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:47.868075 (retry 140) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:30:54.905468 (retry 150) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:31:02.020641 (retry 160) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:31:09.108502 (retry 170) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:32:59.987825 (retry 10) ---
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:33:06.012317 ---
+[WinError 5] Access is denied
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:06.983384 (retry 20) ---
+  Existing signals: []
+--- ENGINE START ERROR 2026-07-10 02:33:07.532075 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:33:10.498874 ---
+[WinError 5] Access is denied
+--- ENGINE START ERROR 2026-07-10 02:33:11.986624 ---
+[WinError 5] Access is denied
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:14.002349 (retry 30) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:21.020047 (retry 40) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:28.039782 (retry 50) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:35.112282 (retry 60) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:42.205221 (retry 70) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:49.323614 (retry 80) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:33:56.629490 (retry 90) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:35:41.205715 (retry 10) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:35:48.307455 (retry 20) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:35:55.325688 (retry 30) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:02.355268 (retry 40) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:09.424357 (retry 50) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:16.432246 (retry 60) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:23.472419 (retry 70) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:30.533492 (retry 80) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:37.578344 (retry 90) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:44.599676 (retry 100) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:51.601502 (retry 110) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:36:58.610495 (retry 120) ---
+  Existing signals: []
+--- APP EXIT 2026-07-10 02:37:04.011251 ---
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:38:29.355903 (retry 10) ---
+  Existing signals: []
+--- PIPE DISCOVERY ATTEMPT 2026-07-10 02:38:36.471046 (retry 20) ---
+  Existing signals: []
+--- APP EXIT 2026-07-10 02:39:25.977500 ---

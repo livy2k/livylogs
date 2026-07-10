@@ -15,6 +15,12 @@ def main():
         sys.exit(0)
 
     try:
+        with open("crash_log.txt", "a") as f:
+            import datetime
+            f.write(f"--- MAIN SCRIPT START {datetime.datetime.now()} ---\n")
+    except: pass
+
+    try:
         root = tk.Tk()
         app = CombatLogApp(root)
         root.protocol("WM_DELETE_WINDOW", app.on_exit)
@@ -33,6 +39,19 @@ def main():
             messagebox.showerror("LivyLogs Critical Error", f"The application encountered a critical error:\n{e}\n\nSee crash_log.txt for details.")
         except: pass
     finally:
+        # Before closing the mutex, try to clean up background processes 
+        # in case we are exiting due to an error or manual close
+        try:
+            import subprocess
+            engine_exes = [
+                'LivyLogs_Engine_New.exe', 'LivyLogsEngine_v2.exe', 'parser_v2.exe', 
+                'LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe', 'p_final.exe'
+            ]
+            for proc_name in engine_exes:
+                subprocess.run(['taskkill', '/F', '/IM', proc_name, '/T'], 
+                               capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        except: pass
+
         if mutex: kernel32.CloseHandle(mutex)
         try:
             with open("crash_log.txt", "a") as f:

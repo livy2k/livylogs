@@ -115,6 +115,7 @@ class CombatLogApp:
         self.player_classes = {}
         self.all_events = []
         self.locally_seen_players = {}
+        self.leaderboard_data = {}
         
         self.load_bosses()
         self.load_filters()
@@ -329,15 +330,19 @@ class CombatLogApp:
         self.root.after(500, self.check_target_window)
 
     def start_show(self):
+        self._minimized_to_tray = False
         if self.root.state() == "withdrawn":
             self.root.deiconify()
             self.root.attributes("-topmost", True)
             self.root.lift()
         
         for win in self._get_managed_windows():
-            if win.state() == "withdrawn":
-                win.deiconify()
-                win.lift()
+            try:
+                if win.state() == "withdrawn":
+                    win.deiconify()
+                    win.lift()
+                win.attributes("-topmost", True)
+            except: pass
         
         if self.current_alpha < self.target_alpha:
             self.fade_in()
@@ -350,17 +355,27 @@ class CombatLogApp:
 
     def start_hide(self, minimize=True):
         self.fade_out(minimize=minimize)
+        if minimize:
+            self._minimized_to_tray = True
+            # When we hide, we also hide managed windows
+            for win in self._get_managed_windows():
+                try: win.withdraw()
+                except: pass
 
     def fade_out(self, minimize=True):
         if self.current_alpha > 0:
             self.current_alpha = max(0, self.current_alpha - 0.05)
-            for win in self._get_managed_windows(): win.attributes("-alpha", self.current_alpha)
+            for win in self._get_managed_windows(): 
+                try: win.attributes("-alpha", self.current_alpha)
+                except: pass
             self.root.after(5, lambda: self.fade_out(minimize=minimize))
         else:
             if minimize:
                 for win in self._get_managed_windows():
-                    if win.state() != "withdrawn":
-                        win.withdraw()
+                    try:
+                        if win.state() != "withdrawn":
+                            win.withdraw()
+                    except: pass
 
     def start_c_engine(self, log_path):
         def _bg_start():
@@ -372,7 +387,7 @@ class CombatLogApp:
                 
                 # Use taskkill to clean up any orphaned engines
                 # We wrap individual calls to handle Access Denied errors more gracefully
-                for proc_name in ['LivyLogsEngine_v2.exe', 'parser_v2.exe', 'LivyLogs_Engine_New.exe', 'LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe']:
+                for proc_name in ['LivyLogs_Engine_New.exe', 'LivyLogsEngine_v2.exe', 'parser_v2.exe', 'LivyLogsEngine.exe', 'parser.exe', 'LL_Engine.exe', 'p_final.exe']:
                     try:
                         subprocess.run(['taskkill', '/F', '/IM', proc_name, '/T'], 
                                        capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -408,7 +423,8 @@ class CombatLogApp:
             time.sleep(0.3)
             
             # Try multiple possible engine names to be robust
-            possible_exes = ["LivyLogs_Engine_New.exe", "LivyLogsEngine_v2.exe", "parser_v2.exe", "LivyLogsEngine.exe", "parser.exe", "LL_Engine.exe"]
+            # Note: Some versions might show 'Access is denied' if they are being updated or blocked
+            possible_exes = ["LivyLogs_Engine_New.exe", "LivyLogsEngine_v2.exe", "parser_v2.exe", "LivyLogsEngine.exe", "parser.exe", "LL_Engine.exe", "p_final.exe"]
             exe_path = None
             for name in possible_exes:
                 p = os.path.join(base_dir, name)
@@ -429,6 +445,7 @@ class CombatLogApp:
                     # We use a very simple Popen call without redirecting stdout/stderr to a closed file
                     proc = subprocess.Popen([exe_path, log_path], 
                                      cwd=base_dir,
+                                     shell=False,
                                      creationflags=subprocess.CREATE_NO_WINDOW)
                     
                     with open(log_file_path, "a") as debug_file:
@@ -570,7 +587,8 @@ class CombatLogApp:
 
         def find_active_pipe():
             # 1. Standard name check
-            if kernel32.WaitNamedPipeW(pipe_path, 1):
+            # Use a slightly longer timeout for the standard check
+            if kernel32.WaitNamedPipeW(pipe_path, 200):
                 return pipe_path
 
             # 2. Look for the .tmp files we created
@@ -595,10 +613,11 @@ class CombatLogApp:
                         
                         # Verify the process is still running
                         import subprocess
-                        check = subprocess.run(['tasklist', '/FI', f'PID eq {pid}'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                        # Use cmd /c tasklist to avoid PowerShell/subprocess interpretation issues on some systems
+                        check = subprocess.run(['cmd', '/c', 'tasklist /FI ""PID eq ' + pid_str + '""'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
                         if pid_str in check.stdout:
                             # If process exists, we wait a bit more for the pipe to appear
-                            if kernel32.WaitNamedPipeW(pipe_path, 100):
+                            if kernel32.WaitNamedPipeW(pipe_path, 2000):
                                 return pipe_path
                         else:
                             try: os.remove(file_full_path)
@@ -619,7 +638,8 @@ class CombatLogApp:
             
             if not current_pipe:
                 # Wait longer for the pipe to appear
-                if kernel32.WaitNamedPipeW(pipe_path, 10000):
+                # Increase wait time for the initial connection
+                if kernel32.WaitNamedPipeW(pipe_path, 2000):
                     current_pipe = pipe_path
             
             if not current_pipe:
@@ -1087,30 +1107,96 @@ class CombatLogApp:
 
     def setup_tray_icon(self):
         try:
+            with open("crash_log.txt", "a") as f:
+                f.write(f"--- ENTERING SETUP_TRAY_ICON {datetime.now()} ---\n")
+
             png_path = get_resource_path("livylogs.png")
             ico_path = get_resource_path("livylogs.ico")
-            if os.path.exists(png_path):
-                image = Image.open(png_path)
-            elif os.path.exists(ico_path):
-                image = Image.open(ico_path)
-            else:
-                image = Image.new('RGBA', (64, 64), color=(0, 160, 255, 255)) # Brighter blue square
+            
+            with open("crash_log.txt", "a") as f:
+                f.write(f"--- PATHS: png={png_path}, ico={ico_path} ---\n")
+
+            # Always try to create a fresh image to be safe
+            try:
+                if os.path.exists(png_path):
+                    image = Image.open(png_path)
+                    image.load() # Force load
+                elif os.path.exists(ico_path):
+                    image = Image.open(ico_path)
+                    image.load()
+                else:
+                    image = Image.new('RGBA', (64, 64), color=(0, 160, 255, 255))
+            except Exception as img_err:
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"--- IMAGE LOAD ERROR {datetime.now()} ---\n{img_err}\n")
+                image = Image.new('RGBA', (64, 64), color=(0, 160, 255, 255))
             
             import webbrowser
+            import pystray
+            
+            # Explicitly force-reload pystray or ensure it's fresh
+            # Some environments have issues with pystray initialization in threads
+            
+            with open("crash_log.txt", "a") as f:
+                f.write(f"--- CREATING MENU {datetime.now()} ---\n")
+
             menu = (
-                item('Show/Hide', self.toggle_visibility),
+                item('Show/Hide', self.toggle_visibility, default=True),
                 item('About', lambda: webbrowser.open("https://github.com/livy2k/livylogs#readme")),
+                pystray.Menu.SEPARATOR,
                 item('Exit', self.on_exit)
             )
-            self.tray_icon = pystray.Icon("LivyLogs", image, "LivyLogs", menu)
+            
+            with open("crash_log.txt", "a") as f:
+                f.write(f"--- INITIALIZING ICON {datetime.now()} ---\n")
+
+            # Simplify icon creation
+            self.tray_icon = pystray.Icon(
+                "LivyLogs",
+                image,
+                "LivyLogs",
+                menu=menu
+            )
+            
+            # Explicitly set visible before run
+            self.tray_icon.visible = True
+            
+            # Forcing a small delay
+            time.sleep(0.2)
+            
+            # Double click tray icon to show/hide
+            self.tray_icon.on_activate = lambda icon: self.root.after(0, self.toggle_visibility)
+            
+            def run_tray():
+                try:
+                    with open("crash_log.txt", "a") as f:
+                        f.write(f"--- TRAY RUN START {datetime.now()} ---\n")
+                    self.tray_icon.run()
+                except Exception as e:
+                    try:
+                        import traceback
+                        with open("crash_log.txt", "a") as f:
+                            f.write(f"--- TRAY RUN ERROR {datetime.now()} ---\n{traceback.format_exc()}\n")
+                    except: pass
+                finally:
+                    try:
+                        with open("crash_log.txt", "a") as f:
+                            f.write(f"--- TRAY STOPPED {datetime.now()} ---\n")
+                    except: pass
+
             self.tray_icon.visible = True
             # Double click tray icon to show/hide
-            self.tray_icon.on_activate = lambda: self.root.after(0, self.toggle_visibility)
-            threading.Thread(target=self.tray_icon.run, daemon=True).start()
+            self.tray_icon.on_activate = lambda icon: self.root.after(0, self.toggle_visibility)
+            tray_thread = threading.Thread(target=run_tray, daemon=True)
+            tray_thread.start()
+            
+            with open("crash_log.txt", "a") as f:
+                f.write(f"--- TRAY THREAD STARTED {datetime.now()} ---\n")
         except Exception as e:
             try:
+                import traceback
                 with open("crash_log.txt", "a") as f:
-                    f.write(f"--- TRAY ERROR {datetime.now()} ---\n{e}\n")
+                    f.write(f"--- TRAY SETUP ERROR {datetime.now()} ---\n{traceback.format_exc()}\n")
             except: pass
             
     def on_exit(self, icon=None, item=None):
@@ -1151,8 +1237,22 @@ class CombatLogApp:
             # Kill any engine processes that might be running
             try:
                 import subprocess
-                subprocess.run(['taskkill', '/F', '/IM', 'LivyLogsEngine.exe', '/IM', 'parser.exe', '/IM', 'LL_Engine.exe', '/T'], 
-                               capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                # List of all known engine executables to clean up
+                engine_exes = [
+                    'LivyLogs_Engine_New.exe', 
+                    'LivyLogsEngine_v2.exe', 
+                    'parser_v2.exe', 
+                    'LivyLogsEngine.exe', 
+                    'parser.exe', 
+                    'LL_Engine.exe', 
+                    'p_final.exe'
+                ]
+                
+                for proc_name in engine_exes:
+                    try:
+                        subprocess.run(['taskkill', '/F', '/IM', proc_name, '/T'], 
+                                       capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                    except: pass
             except: pass
 
             try:
@@ -1214,12 +1314,18 @@ class CombatLogApp:
             self.last_interaction_time = time.time()
 
     def toggle_visibility(self, icon=None, item=None):
-        if self.root.state() == "withdrawn":
-            self._minimized_to_tray = False
-            self.root.after(0, self.start_show)
-        else:
-            self._minimized_to_tray = True
-            self.root.after(0, lambda: self.start_hide(minimize=True))
+        try:
+            if self.root.state() == "withdrawn" or getattr(self, "_minimized_to_tray", False):
+                self._minimized_to_tray = False
+                self.root.after(0, self.start_show)
+            else:
+                self._minimized_to_tray = True
+                self.root.after(0, lambda: self.start_hide(minimize=True))
+        except Exception as e:
+            try:
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"--- TOGGLE ERROR {datetime.now()} ---\n{e}\n")
+            except: pass
 
 
     def toggle_menu(self):

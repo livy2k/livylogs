@@ -61,6 +61,8 @@ typedef struct {
     int avoided;
     int aoe_hits;
     int loot_count;
+    int mob_count;
+    double total_xp;
     time_t last_hit;
 } PlayerStats;
 
@@ -98,6 +100,8 @@ PlayerStats* get_player(const char* name) {
         g_players[g_player_count].avoided = 0;
         g_players[g_player_count].aoe_hits = 0;
         g_players[g_player_count].loot_count = 0;
+        g_players[g_player_count].mob_count = 0;
+        g_players[g_player_count].total_xp = 0;
         g_players[g_player_count].last_hit = 0;
         return &g_players[g_player_count++];
     }
@@ -180,8 +184,8 @@ void s_s(HANDLE h) {
         char j[BUFFER_SIZE];
         char e_n[256];
         e_j(g_players[i].name, e_n);
-        sprintf(j, "{\"type\": \"stats\", \"name\": \"%s\", \"damage\": %.2f, \"healing\": %.2f, \"taken\": %.2f, \"hits\": %d, \"misses\": %d, \"avoided\": %d, \"aoe\": %d, \"loot\": %d}\n",
-                e_n, g_players[i].damage, g_players[i].healing, g_players[i].taken, g_players[i].hits, g_players[i].misses, g_players[i].avoided, g_players[i].aoe_hits, g_players[i].loot_count);
+        sprintf(j, "{\"type\": \"stats\", \"name\": \"%s\", \"damage\": %.2f, \"healing\": %.2f, \"taken\": %.2f, \"hits\": %d, \"misses\": %d, \"avoided\": %d, \"aoe\": %d, \"loot\": %d, \"mobs\": %d, \"xp\": %.2f}\n",
+                e_n, g_players[i].damage, g_players[i].healing, g_players[i].taken, g_players[i].hits, g_players[i].misses, g_players[i].avoided, g_players[i].aoe_hits, g_players[i].loot_count, g_players[i].mob_count, g_players[i].total_xp);
         DWORD w_b;
         if (!WriteFile(h, j, (DWORD)strlen(j), &w_b, NULL)) {
             // Handle error
@@ -275,12 +279,47 @@ void p_l(HANDLE h, char* l) {
                         char sj[BUFFER_SIZE];
                         char e_n[256];
                         e_j(ps->name, e_n);
-                        sprintf(sj, "{\"type\": \"stats\", \"name\": \"%s\", \"damage\": %.2f, \"healing\": %.2f, \"taken\": %.2f, \"hits\": %d, \"misses\": %d, \"avoided\": %d, \"aoe\": %d, \"loot\": %d}\n",
-                                e_n, ps->damage, ps->healing, ps->taken, ps->hits, ps->misses, ps->avoided, ps->aoe_hits, ps->loot_count);
+                        sprintf(sj, "{\"type\": \"stats\", \"name\": \"%s\", \"damage\": %.2f, \"healing\": %.2f, \"taken\": %.2f, \"hits\": %d, \"misses\": %d, \"avoided\": %d, \"aoe\": %d, \"loot\": %d, \"mobs\": %d, \"xp\": %.2f}\n",
+                                e_n, ps->damage, ps->healing, ps->taken, ps->hits, ps->misses, ps->avoided, ps->aoe_hits, ps->loot_count, ps->mob_count, ps->total_xp);
                         send_raw_event(h, sj);
                     }
                     return;
                 }
+            }
+        }
+    }
+
+    // XP Parsing: "You receive <value> points of <name> experience"
+    if (strstr(lower, "you receive ") && strstr(lower, " experience")) {
+        char* p_xp = strstr(lower, "you receive ");
+        if (p_xp) {
+            double amount = 0;
+            if (sscanf(clean + (p_xp - lower) + 12, "%lf", &amount) == 1) {
+                PlayerStats* ps = get_player("You");
+                if (ps) {
+                    ps->total_xp += amount;
+                    s_s(h); // Send update
+                }
+                
+                // Find experience type name
+                char xp_type[64] = "Unknown";
+                char* p_of = strstr(lower, " points of ");
+                if (p_of) {
+                    int type_start = (p_of - lower) + 11;
+                    char* p_exp = strstr(lower + type_start, " experience");
+                    if (p_exp) {
+                        int type_len = p_exp - (lower + type_start);
+                        if (type_len > 63) type_len = 63;
+                        if (type_len > 0) {
+                            strncpy(xp_type, clean + type_start, type_len);
+                            xp_type[type_len] = '\0';
+                        }
+                    }
+                }
+
+                char j[BUFFER_SIZE];
+                sprintf(j, "{\"type\": \"xp\", \"source\": \"You\", \"amount\": %.2f, \"xp_type\": \"%s\"}\n", amount, xp_type);
+                send_raw_event(h, j);
             }
         }
     }
@@ -294,10 +333,53 @@ void p_l(HANDLE h, char* l) {
             int n_len = p_died - clean;
             if (n_len > 127) n_len = 127;
             strncpy(name, clean, n_len); name[n_len] = '\0';
+            while(strlen(name) > 0 && name[strlen(name)-1] == ' ') name[strlen(name)-1] = '\0';
+            
             strcpy(s_ac, (char*)s_activity); d(s_ac);
             strcpy(s_di, (char*)s_died); d(s_di);
             s_e(h, s_ac, name, "Unknown", 0, 0, "", s_di, 0);
+
+            // If an NPC died, find who hit them last and give them the credit
+            // OR if it's "You have defeated...", source is "You"
+            // For now, let's look for "You have defeated " pattern too.
+            if (_stricmp(name, "You") == 0) {
+                // This usually means the line was "You have defeated [Target]."
+                // But in SWG it's often "[Target] has been defeated."
+            }
+
+            // Simple heuristic for "Mobs" - if a player dies, they aren't a mob usually
+            // but for this app, we just count deaths that aren't "You" or known players?
+            // Actually, the request says "npcs that player killed".
+            // If the line is "You have defeated [NPC]!", then source=You, target=NPC.
             return;
+        }
+    }
+
+    // You have defeated ...
+    if (strstr(lower, "you have defeated ")) {
+        char* p_def = strstr(lower, "you have defeated ");
+        if (p_def) {
+            PlayerStats* ps = get_player("You");
+            if (ps) {
+                ps->mob_count++;
+                s_s(h); // Send update
+            }
+        }
+    }
+    
+    // [Player] has defeated [NPC]!
+    char* p_has_def = strstr(lower, " has defeated ");
+    if (p_has_def) {
+        int n_len = p_has_def - lower;
+        char name[128];
+        if (n_len > 127) n_len = 127;
+        strncpy(name, clean, n_len); name[n_len] = '\0';
+        while(strlen(name) > 0 && name[strlen(name)-1] == ' ') name[strlen(name)-1] = '\0';
+        
+        PlayerStats* ps = get_player(name);
+        if (ps) {
+            ps->mob_count++;
+            s_s(h);
         }
     }
 

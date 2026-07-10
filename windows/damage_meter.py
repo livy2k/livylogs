@@ -60,6 +60,15 @@ class DamageMeterWindow(BasePopoutWindow):
             tk.Label(grid, text="MISS%", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=2, column=2, sticky="w", padx=(30, 0), pady=(5, 0))
             self.lbl_miss = tk.Label(grid, text="0.0%", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
             self.lbl_miss.grid(row=2, column=3, sticky="e", padx=(10, 0), pady=(5, 0))
+
+            # Row 3 (XP)
+            tk.Label(grid, text="XP", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=3, column=0, sticky="w", pady=(5, 0))
+            self.lbl_xp = tk.Label(grid, text="0", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
+            self.lbl_xp.grid(row=3, column=1, sticky="e", padx=(10, 0), pady=(5, 0))
+
+            tk.Label(grid, text="XP/H", bg=self.window["bg"], fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).grid(row=3, column=2, sticky="w", padx=(30, 0), pady=(5, 0))
+            self.lbl_xph = tk.Label(grid, text="0", bg=self.window["bg"], fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
+            self.lbl_xph.grid(row=3, column=3, sticky="e", padx=(10, 0), pady=(5, 0))
             
             do_full = True # Force full on first run
 
@@ -100,6 +109,7 @@ class DamageMeterWindow(BasePopoutWindow):
             miss_count = stats.get("dm_misses", 0)
             taken_hits = stats.get("dm_taken_hits", 0)
             avoided_count = stats.get("dm_avoided", 0)
+            total_xp = stats.get("lb_xp", 0)
 
             # Recalculate from all_events ONLY if player_data is somehow missing 'You'
             # but we have combat active
@@ -120,6 +130,8 @@ class DamageMeterWindow(BasePopoutWindow):
             total_taken_attempts = taken_hits + avoided_count
             miss_pct = (avoided_count / total_taken_attempts * 100) if total_taken_attempts > 0 else 0
 
+            xph = total_xp / (dur / 3600) if dur > 0 else 0
+
             # Update labels
             if hasattr(self, 'lbl_dmg') and self.lbl_dmg.winfo_exists():
                 self.lbl_dmg.config(text=f"{damage_dealt:,.0f}")
@@ -131,3 +143,7 @@ class DamageMeterWindow(BasePopoutWindow):
                 self.lbl_taken.config(text=f"{damage_taken:,.0f}")
             if hasattr(self, 'lbl_miss') and self.lbl_miss.winfo_exists():
                 self.lbl_miss.config(text=f"{miss_pct:.1f}%")
+            if hasattr(self, 'lbl_xp') and self.lbl_xp.winfo_exists():
+                self.lbl_xp.config(text=f"{total_xp:,.0f}")
+            if hasattr(self, 'lbl_xph') and self.lbl_xph.winfo_exists():
+                self.lbl_xph.config(text=f"{xph:,.0f}")

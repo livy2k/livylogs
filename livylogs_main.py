@@ -524,7 +524,7 @@ class CombatLogApp:
             name = event.get("name")
             if not name: return
             if name not in self.player_data:
-                self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+                self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
             
             p = self.player_data[name]
             p["damage"] = event.get("damage", 0)
@@ -535,6 +535,8 @@ class CombatLogApp:
             p["dm_avoided"] = event.get("avoided", 0)
             p["aoe_hits"] = event.get("aoe", 0)
             p["lb_loot"] = event.get("loot", 0)
+            p["lb_mobs"] = event.get("mobs", 0)
+            p["lb_xp"] = event.get("xp", 0)
 
             self.locally_seen_players[name] = time.time()
 
@@ -575,9 +577,29 @@ class CombatLogApp:
                         break
             return
 
+        if (event_type == "xp"):
+            if source not in self.player_data:
+                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+            
+            p = self.player_data[source]
+            amount = event.get("amount", 0)
+            p["lb_xp"] = p.get("lb_xp", 0) + amount
+            
+            if "xp_history" not in p: p["xp_history"] = []
+            p["xp_history"].append({"amount": amount, "type": event.get("xp_type", "Unknown"), "time": time.time()})
+            if len(p["xp_history"]) > 100: p["xp_history"].pop(0)
+
+            # Keep activity alive
+            self.last_combat_time = time.time()
+            if self.app_start_time is None:
+                self.app_start_time = datetime.now()
+
+            self.locally_seen_players[source] = time.time()
+            return
+
         if (event_type == "loot"):
             if source not in self.player_data:
-                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
             
             p = self.player_data[source]
             p["lb_loot"] = p.get("lb_loot", 0) + 1

@@ -116,8 +116,6 @@ class LeaderboardWindow(BasePopoutWindow):
 
         if self.drill_down_player:
             # Back button handled above
-            if hasattr(self, 'c_frame') and self.c_frame.winfo_exists():
-                self.c_frame.pack_forget()
             if hasattr(self, 'lbl_rank') and self.lbl_rank.winfo_exists():
                 self.lbl_rank.config(text="TARGET")
             if hasattr(self, 'lbl_player') and self.lbl_player.winfo_exists():

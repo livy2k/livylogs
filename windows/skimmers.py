@@ -109,13 +109,13 @@ class SkimmersWindow(BasePopoutWindow):
             self.header_area = tk.Frame(self.content_container, bg=self.window["bg"])
             self.header_area.pack(fill=tk.X)
             
-            # Filter Tabs (Loot)
+            # Filter Tabs (Loot, Mobs)
             self.t_frame = tk.Frame(self.header_area, bg=PANEL_DARK); self.t_frame.pack(fill=tk.X, pady=(0, 5))
             self.tab_btns = {}
             
             def make_tab_cmd(v): return lambda e: [setattr(self.app, 'skimmer_tab', v), setattr(self, 'last_full_refresh', 0), self.refresh()]
 
-            for text, val in [("LOOT", "loot")]:
+            for text, val in [("LOOT", "loot"), ("MOBS", "mobs")]:
                 btn = tk.Label(self.t_frame, text=text, bg=PANEL_DARK, fg=TEXT_SECONDARY, 
                               font=("Segoe UI", 8, "bold"), padx=10, pady=5, cursor="hand2")
                 btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
@@ -162,16 +162,14 @@ class SkimmersWindow(BasePopoutWindow):
         # Visibility logic for tabs during drill down
         if self.drill_down_player:
             # Back button handled above
-            if hasattr(self, 't_frame') and self.t_frame.winfo_exists():
-                self.t_frame.pack_forget()
             if hasattr(self, 'search_frame') and self.search_frame.winfo_exists():
                 self.search_frame.pack_forget()
         else:
             # Back button hidden above
             if hasattr(self, 't_frame') and self.t_frame.winfo_exists():
-                self.t_frame.pack(fill=tk.X, pady=(0, 5)) 
+                self.t_frame.pack(fill=tk.X, pady=(0, 5), before=self.inventory_alert) 
             if hasattr(self, 'search_frame') and self.search_frame.winfo_exists():
-                self.search_frame.pack(fill=tk.X, pady=(0, 5)) 
+                self.search_frame.pack(fill=tk.X, pady=(0, 5), before=self.inventory_alert) 
             
             # Update Tab Buttons
             tab = getattr(self.app, 'skimmer_tab', 'loot')
@@ -198,6 +196,10 @@ class SkimmersWindow(BasePopoutWindow):
         tab = getattr(self.app, 'skimmer_tab', 'loot')
 
         if self.drill_down_player:
+            if tab == "mobs":
+                 tk.Label(self.scrollable_frame, text=f"Drill down not available for Mobs", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+                 return
+
             # Show only loot for this specific player
             p_loot = self.app.loot_data.get(self.drill_down_player, [])
             
@@ -229,14 +231,19 @@ class SkimmersWindow(BasePopoutWindow):
                 tk.Label(f, text=display_text, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9)).pack(side=tk.LEFT)
             return
 
-        # Top-level View: List players who have loot
+        # Top-level View: List players who have loot or mobs
         query = self.app.skimmer_search_query.get().lower() if self.app.skimmer_search_mode else ""
         
-        players_with_loot = set(self.app.loot_data.keys())
-        if self.app.enable_sync.get() and self.app.sync_data:
-            players_with_loot.update(self.app.sync_data.get("data", {}).get("loot", {}).keys())
+        tab = getattr(self.app, 'skimmer_tab', 'loot')
+        
+        if tab == "loot":
+            players_with_data = set(self.app.loot_data.keys())
+            if self.app.enable_sync.get() and self.app.sync_data:
+                players_with_data.update(self.app.sync_data.get("data", {}).get("loot", {}).keys())
+        else: # mobs
+            players_with_data = set(name for name, d in self.app.player_data.items() if d.get("lb_mobs", 0) > 0)
 
-        final_players = sorted(list(players_with_loot))
+        final_players = sorted(list(players_with_data))
         if not final_players:
             tk.Label(self.scrollable_frame, text=f"No {tab} recorded", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
         else:
@@ -254,5 +261,10 @@ class SkimmersWindow(BasePopoutWindow):
                     l.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
                 name_container.bind("<Button-1>", lambda e, name=p: self.drill_down(name))
                 
-                count = len(self.app.loot_data.get(p, []))
-                tk.Label(f, text=f"({count} items)", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9)).pack(side=tk.RIGHT, padx=10)
+                if tab == "loot":
+                    count = len(self.app.loot_data.get(p, []))
+                    tk.Label(f, text=f"({count} items)", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9)).pack(side=tk.RIGHT, padx=10)
+                else:
+                    count = self.app.player_data.get(p, {}).get("lb_mobs", 0)
+                    tk.Label(f, text=str(count), bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold")).pack(side=tk.RIGHT, padx=20)
+        return

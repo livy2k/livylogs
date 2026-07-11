@@ -128,6 +128,7 @@ class CombatLogApp:
         self.locally_seen_players = {}
         self.leaderboard_data = {}
         self.known_npcs = set()
+        self.known_players = set()
         self.permanent_drops = {} # { "item_name": ["dropper1", "dropper2"] }
         self.load_permanent_drops()
         
@@ -594,6 +595,7 @@ class CombatLogApp:
             self.main_title_bar.coords("exit_btn", w - 5, h // 2)
             self.main_title_bar.coords("alexa_btn", w - 35, h // 2)
             self.main_title_bar.coords("menu_btn", w - 100, h // 2)
+            self.main_title_bar.coords("clock", w - 180, h // 2)
             title_lbl.config(bg=TITLE_GRADIENT_START)
 
         self.main_title_bar.bind("<Configure>", draw_main_gradient)
@@ -615,6 +617,10 @@ class CombatLogApp:
         menu_btn.bind("<Button-1>", lambda e: self.toggle_menu())
         menu_btn.bind("<Enter>", lambda e: menu_btn.config(fg=TEXT_ACCENT))
         menu_btn.bind("<Leave>", lambda e: menu_btn.config(fg=TEXT_SECONDARY))
+
+        self.clock_lbl = tk.Label(self.main_title_bar, text="00:00:00", bg=TITLE_GRADIENT_END, fg="#00ff00", font=("Consolas", 9, "bold"))
+        self.main_title_bar.create_window(130, 17, window=self.clock_lbl, anchor="e", tags="clock")
+        self.update_clock()
 
         self.ontop_btn = tk.Label(self.main_title_bar, text="ONTOP: OFF", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2")
         self.main_title_bar.create_window(10, 17, window=self.ontop_btn, anchor="w")
@@ -835,7 +841,13 @@ class CombatLogApp:
         for key in ["name", "source", "target"]:
             val = event.get(key)
             if val:
-                event[key] = normalize_name(val)
+                # SPECIAL CASE: Recognize and strip [group] prefix for looters
+                if key == "source" and val.lower().startswith("[group] "):
+                    val = val[8:].strip()
+                    self.known_players.add(normalize_name(val).lower())
+                    event[key] = val
+                
+                event[key] = normalize_name(event.get(key, ""))
         
         event_type = event.get("type")
         
@@ -853,6 +865,10 @@ class CombatLogApp:
                 self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
             
             p = self.player_data[name]
+            
+            # If they did something, mark them as definitely a player locally (to bypass NPC filters if needed)
+            if event.get("damage", 0) > 0 or event.get("healing", 0) > 0 or event.get("taken", 0) > 0:
+                self.known_players.add(name.lower())
             # Ensure cumulative session stats only increase
             p["damage"] = max(p.get("damage", 0), event.get("damage", 0))
             p["healing"] = max(p.get("healing", 0), event.get("healing", 0))
@@ -870,8 +886,8 @@ class CombatLogApp:
                 # dm_damage is the growth since encounter start
                 encounter_damage = event.get("damage", 0) - self._encounter_start_stats[name]["damage"]
                 encounter_healing = event.get("healing", 0) - self._encounter_start_stats[name]["healing"]
-                p["dm_damage"] = max(p.get("dm_damage", 0), encounter_damage)
-                p["dm_healing"] = max(p.get("dm_healing", 0), encounter_healing)
+                p["dm_damage"] = encounter_damage
+                p["dm_healing"] = encounter_healing
             else:
                 # Outside combat, dm stats stay 0
                 p["dm_damage"] = 0
@@ -896,11 +912,10 @@ class CombatLogApp:
             # self.refresh_ui_only(force=True) -> REMOVED
 
             # Update last_combat_time and app_start_time
-            if p["damage"] > 0 or p["healing"] > 0 or p["dm_taken"] > 0 or p["lb_mobs"] > 0 or p["lb_loot"] > 0 or p["lb_xp"] > 0:
-                now_f = time.time()
-                # Unified session reset logic moved to centralized block at end of function
-                # This ensures consistent app_start_time handling
-                self.last_combat_time = now_f
+            if (p["dm_damage"] > 0 or p["dm_healing"] > 0 or p["dm_taken"] > 0 or 
+                p["dm_hits"] > 0 or p["dm_misses"] > 0 or p["dm_avoided"] > 0 or
+                p["lb_loot"] > 0 or p["lb_mobs"] > 0 or p["lb_xp"] > 0):
+                self.last_combat_time = time.time()
                 if self.app_start_time is None:
                     self.app_start_time = datetime.now()
                 self.last_log_sync_time = self.app_start_time
@@ -1049,12 +1064,19 @@ class CombatLogApp:
             
             p = self.player_data[source_for_logs]
             self.locally_seen_players[source_for_logs] = time.time()
+            
+            # If they did something, mark them as definitely a player locally
+            if damage > 0 or healing > 0 or event_type == "taken":
+                self.known_players.add(source_for_logs.lower())
 
             log_msg = ""
             log_type = "all"
             if event_type == "dealt" or event_type == "other_dealt":
                 p["damage"] = p.get("damage", 0) + damage
-                p["dm_damage"] = p.get("dm_damage", 0) + damage
+                if self.app_start_time:
+                    p["dm_damage"] = p.get("dm_damage", 0) + damage
+                else:
+                    p["dm_damage"] = 0
                 if target not in p["targets"]: p["targets"][target] = 0
                 p["targets"][target] += damage
                 # Simplified format: "damage ability target"
@@ -1069,7 +1091,10 @@ class CombatLogApp:
                     if target not in self.player_data:
                         self.player_data[target] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
                     tp = self.player_data[target]
-                    tp["dm_taken"] = tp.get("dm_taken", 0) + damage
+                    if self.app_start_time:
+                        tp["dm_taken"] = tp.get("dm_taken", 0) + damage
+                    else:
+                        tp["dm_taken"] = 0
                     # Already simplified format for taken
                     norm_source = normalize_name(source)
                     tp["logs"].append({"msg": f"{damage:,.0f} {norm_source}", "time": timestamp, "type": "taken"})
@@ -1079,13 +1104,19 @@ class CombatLogApp:
                         # Throttle will handle this
                         pass
             elif event_type == "taken":
-                p["dm_taken"] = p.get("dm_taken", 0) + damage
+                if self.app_start_time:
+                    p["dm_taken"] = p.get("dm_taken", 0) + damage
+                else:
+                    p["dm_taken"] = 0
                 norm_attacker = normalize_name(attacker)
                 log_msg = f"{damage:,.0f} {norm_attacker}"
                 log_type = "taken"
             elif event_type == "healing":
                 p["healing"] = p.get("healing", 0) + healing
-                p["dm_healing"] = p.get("dm_healing", 0) + healing
+                if self.app_start_time:
+                    p["dm_healing"] = p.get("dm_healing", 0) + healing
+                else:
+                    p["dm_healing"] = 0
                 if target not in p["targets"]: p["targets"][target] = 0
                 p["targets"][target] += healing
                 norm_target = normalize_name(target)
@@ -1120,23 +1151,22 @@ class CombatLogApp:
 
         # --- CENTRALIZED SESSION & COMBAT TIMING ---
         now_f = time.time()
-        is_damage = damage > 0 or event_type in ["dealt", "taken", "other_dealt"]
-        is_healing = healing > 0 or event_type == "healing"
-        is_activity = is_damage or is_healing or event_type in ["xp", "mobs", "loot"]
+        is_damage = (damage > 0 and event_type in ["dealt", "taken", "other_dealt"])
+        is_healing = (healing > 0 and event_type == "healing")
+        is_activity = is_damage or is_healing or event_type in ["mobs", "xp", "loot"]
 
         # 1. COMBAT TIMEOUT & SESSION RESET
         if self.app_start_time and (now_f - self.last_combat_time > self.time_window_dm):
             self.last_log_sync_time = None 
-            for p_name in self.player_data:
-                self.player_data[p_name]["dm_damage"] = 0
-                self.player_data[p_name]["dm_healing"] = 0
-                if "dm_taken" in self.player_data[p_name]: self.player_data[p_name]["dm_taken"] = 0
-                if "dm_hits" in self.player_data[p_name]: self.player_data[p_name]["dm_hits"] = 0
-                if "dm_misses" in self.player_data[p_name]: self.player_data[p_name]["dm_misses"] = 0
-                if "dm_taken_hits" in self.player_data[p_name]: self.player_data[p_name]["dm_taken_hits"] = 0
-                if "dm_avoided" in self.player_data[p_name]: self.player_data[p_name]["dm_avoided"] = 0
             self.app_start_time = None
             if hasattr(self, '_encounter_start_stats'): self._encounter_start_stats = {}
+            for p_name in list(self.player_data.keys()):
+                self.player_data[p_name]["dm_damage"] = 0
+                self.player_data[p_name]["dm_healing"] = 0
+                self.player_data[p_name]["dm_taken"] = 0
+                self.player_data[p_name]["dm_hits"] = 0
+                self.player_data[p_name]["dm_misses"] = 0
+                self.player_data[p_name]["dm_avoided"] = 0
             self.last_ui_update_time = 0 # Force immediate update on timeout
             is_last = True # Force UI refresh on reset
             
@@ -1144,17 +1174,32 @@ class CombatLogApp:
         if is_activity:
             if self.app_start_time is None:
                 self.app_start_time = timestamp
-                if "You" in self.player_data:
-                    self.player_data["You"]["dm_damage"] = 0
-                    self.player_data["You"]["dm_healing"] = 0
-                    self.player_data["You"]["dm_taken"] = 0
-                    self.player_data["You"]["dm_hits"] = 0
-                    self.player_data["You"]["dm_misses"] = 0
-                    self.player_data["You"]["dm_taken_hits"] = 0
-                    self.player_data["You"]["dm_avoided"] = 0
+                # Reset DM baselines for all players when new encounter starts
+                if not hasattr(self, '_encounter_start_stats'):
+                    self._encounter_start_stats = {}
+                else:
+                    self._encounter_start_stats.clear()
+                
+                for p_name in self.player_data:
+                    self.player_data[p_name]["dm_damage"] = 0
+                    self.player_data[p_name]["dm_healing"] = 0
+                    self.player_data[p_name]["dm_taken"] = 0
+                    self.player_data[p_name]["dm_hits"] = 0
+                    self.player_data[p_name]["dm_misses"] = 0
+                    self.player_data[p_name]["dm_avoided"] = 0
             
             self.last_combat_time = now_f
             self.last_log_sync_time = timestamp
+            
+            # If we just started combat, we might need to apply this event to dm_damage immediately
+            # because the activity block is AFTER the damage update.
+            p = self.player_data.get(source_for_logs)
+            if p and p["dm_damage"] == 0 and damage > 0 and (event_type == "dealt" or event_type == "other_dealt"):
+                p["dm_damage"] = damage
+            if p and p["dm_healing"] == 0 and healing > 0 and event_type == "healing":
+                p["dm_healing"] = healing
+            if p and p["dm_taken"] == 0 and damage > 0 and event_type == "taken":
+                p["dm_taken"] = damage
 
         # 3. HISTORY LIMIT (General)
         history_limit = datetime.now() - timedelta(hours=1)
@@ -1173,6 +1218,14 @@ class CombatLogApp:
                         self.root.after(0, do_update)
                         self.last_ui_update_time = now_f
                 except: pass
+
+    def update_clock(self):
+        try:
+            now = datetime.now().strftime("%H:%M:%S")
+            if hasattr(self, 'clock_lbl') and self.clock_lbl.winfo_exists():
+                self.clock_lbl.config(text=now)
+            self.root.after(1000, self.update_clock)
+        except: pass
 
     def start_ticker_loop(self):
         if self.running:
@@ -1573,32 +1626,6 @@ class CombatLogApp:
         # Force a refresh to catch up if we missed any updates while open
         self.refresh_ui_only(force=True)
 
-    def select_log_filtered(self):
-        from ui_base import ThemedListDialog
-        from utils import extract_character_id
-        import os
-        import glob
-        
-        current_path = self.file_path_var.get()
-        char_id = extract_character_id(current_path)
-        
-        # Try to find matching logs automatically
-        if char_id:
-            initial_dir = os.path.dirname(current_path) if current_path and os.path.exists(current_path) else os.getcwd()
-            pattern = os.path.join(initial_dir, f"{char_id}_chatlog.txt")
-            matching_files = glob.glob(pattern)
-            
-            if matching_files:
-                self.is_dialog_open = True
-                def on_file_selected(p):
-                    if p:
-                        self.proceed_with_log(p, skip_prompt=True)
-                
-                ThemedListDialog(self.root, "Select Log File", matching_files, on_select=on_file_selected)
-                return
-
-        # If no char_id or no matching files found, fallback to standard
-        self.change_log_path()
 
     def change_log_path(self):
         from tkinter import filedialog
@@ -1648,7 +1675,7 @@ class CombatLogApp:
                     self.options_win.close()
                 self.refresh_ui_only(force=True)
 
-            if skip_prompt:
+            if skip_prompt or (not self.char_name.get() and self.disable_warnings.get()):
                 apply_settings(None)
             else:
                 self.is_dialog_open = True
@@ -1684,20 +1711,50 @@ class CombatLogApp:
         self.last_combat_time = 0
         self.last_log_sync_time = None
         
-        # Clear drill-down states to ensure windows return to primary lists smoothly
+        # Reset Damage Meter baseline
+        self.last_dm_reset = datetime.now()
+        
+        # Clear drill-down states and internal row-tracking to ensure windows return to primary lists smoothly
         if hasattr(self, 'details_win'): 
             self.details_win.is_drilldown = False
             self.details_win.selected_player = None
-            self._last_list_key = None
-            self._last_players = []
+            self.details_win._row_frames = {}
+            self.details_win._row_widgets = {}
+            self.details_win._last_log_key = None
+            self.details_win._last_list_key = None
+            self.details_win._last_players = []
+            if hasattr(self.details_win, 'list_container'):
+                for w in self.details_win.list_container.winfo_children(): w.destroy()
         if hasattr(self, 'leaderboard_win'): 
             self.leaderboard_win.is_drilldown = False
             self.leaderboard_win.selected_player = None
-            self._last_order = []
+            self.leaderboard_win._row_frames = {}
+            self.leaderboard_win._row_widgets = {}
+            self.leaderboard_win._last_log_key = None
+            self.leaderboard_win._last_order = []
+            if hasattr(self.leaderboard_win, 'list_container'):
+                for w in self.leaderboard_win.list_container.winfo_children(): w.destroy()
         if hasattr(self, 'skimmers_win'): 
             self.skimmers_win.is_drilldown = False
             self.skimmers_win.selected_player = None
-            self._last_players = []
+            self.skimmers_win.drill_down_player = None
+            self.skimmers_win._row_frames = {}
+            self.skimmers_win._row_widgets = {}
+            self.skimmers_win._last_players = []
+            if hasattr(self.skimmers_win, 'list_container'):
+                for w in self.skimmers_win.list_container.winfo_children(): w.destroy()
+        if hasattr(self, 'damage_meter_win'):
+            # Clear Damage Meter labels immediately
+            for lbl in ['lbl_dmg', 'lbl_dps', 'lbl_dur', 'lbl_hit', 'lbl_taken', 'lbl_miss', 'lbl_xp', 'lbl_xph']:
+                if hasattr(self.damage_meter_win, lbl):
+                    try:
+                        widget = getattr(self.damage_meter_win, lbl)
+                        if widget.winfo_exists():
+                            default_val = "0.0%" if "pct" in lbl or "hit" in lbl or "miss" in lbl else "0"
+                            if "dps" in lbl: default_val = "0.0"
+                            if "dur" in lbl: default_val = "0s"
+                            widget.config(text=default_val)
+                    except: pass
 
     def toggle_test_mode(self, active=None):
         if active is not None:

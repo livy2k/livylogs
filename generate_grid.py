@@ -23,8 +23,8 @@ def create_grid(input_path, output_path, step=20):
     # Draw vertical lines
     for x in range(0, width, step):
         draw.line([(x, 0), (x, height)], fill=color, width=1)
-        # Label every 40 pixels for better precision, lines every 20.
-        if x % 40 == 0:
+        # Label every 20 pixels for better precision, lines every 10.
+        if x % 20 == 0:
             text = str(x)
             bbox = draw.textbbox((x + 2, 2), text, font=font)
             draw.rectangle(bbox, fill=bg_color)
@@ -33,7 +33,7 @@ def create_grid(input_path, output_path, step=20):
     # Draw horizontal lines
     for y in range(0, height, step):
         draw.line([(0, y), (width, y)], fill=color, width=1)
-        if y % 40 == 0:
+        if y % 20 == 0:
             text = str(y)
             bbox = draw.textbbox((2, y + 2), text, font=font)
             draw.rectangle(bbox, fill=bg_color)
@@ -43,4 +43,4 @@ def create_grid(input_path, output_path, step=20):
     print(f"Grid image saved to {output_path} ({width}x{height}) with step {step}")
 
 if __name__ == "__main__":
-    create_grid("realradioBASE.jpg", "radiogrid.jpg", step=20)
+    create_grid("realradioBASE.jpg", "radiogrid.jpg", step=10)

@@ -1,5 +1,6 @@
 import ctypes
 from ctypes import wintypes
+from datetime import datetime
 from constants import user32, SNAP_THRESHOLD
 
 def get_resource_path(relative_path):
@@ -135,6 +136,109 @@ def create_rainbow_name(parent, app, name, base_color, font, bg):
         labels.append(lbl)
     
     return labels
+
+def get_time_ago(dt):
+    if not dt: return ""
+    diff = (datetime.now() - dt).total_seconds()
+    if diff < 1: return "just now"
+    
+    parts = []
+    hours = int(diff // 3600)
+    minutes = int((diff % 3600) // 60)
+    seconds = int(diff % 60)
+    
+    if hours > 0: parts.append(f"{hours}h")
+    if minutes > 0: parts.append(f"{minutes}m")
+    if seconds > 0 or not parts: parts.append(f"{seconds}s")
+    
+    return "".join(parts) + " ago"
+
+def normalize_name(name):
+    if not name: return "Unknown"
+    # Remove leading/trailing spaces
+    name = name.strip()
+    
+    # Remove anything in parentheses ( )
+    import re
+    name = re.sub(r"\(.*?\)", "", name).strip()
+    
+    # Remove NPC articles (prefixes) and "unknown" suffixes repeatedly
+    # until no more matching prefixes/suffixes are found
+    while True:
+        original_name = name
+        lower_name = name.lower()
+        
+        # Strip prefixes
+        if lower_name.startswith("a "): name = name[2:]
+        elif lower_name.startswith("an "): name = name[3:]
+        elif lower_name.startswith("the "): name = name[4:]
+        
+        # Strip common accidental suffixes
+        name = name.strip()
+        lower_name = name.lower()
+        suffixes = [" melee", " ranged", " unarmed", " polearm", " 1h", " 2h", " unknown", " unknown", "unknown"]
+        for s in suffixes:
+            if lower_name.endswith(s):
+                name = name[:-len(s)].strip()
+                lower_name = name.lower()
+                break
+        
+        # Additional: if name contains " a ", " an ", " the " in the middle, it might be a messy log entry
+        # like "th Shot II a Krayt Drag"
+        # Let's try to find the LAST occurrence of an article and take everything after it
+        # ONLY if it's an NPC-like name (not a known player/You)
+        articles = [" a ", " an ", " the "]
+        found_article = False
+        for art in articles:
+            idx = lower_name.rfind(art)
+            if idx != -1:
+                # Check if what's before it looks like junk (e.g. "th Shot II")
+                # and what's after it looks like a name
+                name = name[idx + len(art):].strip()
+                lower_name = name.lower()
+                found_article = True
+                break
+        
+        if name == original_name:
+            break
+
+    # Normalize "You" variations
+    if name.lower() in ["you", "damage you"]:
+        return "You"
+    return name
+
+def is_probable_player(name, bosses=None, known_npcs=None):
+    if not name or name == "Unknown": return False
+    
+    # Normalize before checking heuristics
+    name = normalize_name(name)
+    if name == "You": return True
+    
+    # If it's in our bosses or known NPCs list, it's NOT a player
+    lower_name = name.lower()
+    if bosses and lower_name in bosses: return False
+    if known_npcs and lower_name in known_npcs: return False
+    
+    # Specific filter for common NPCs that don't start with articles
+    npc_keywords = ["trooper", "guard", "scout", "officer", "droid"]
+    for kw in npc_keywords:
+        if kw in lower_name:
+            return False
+
+    # Heuristic: NPCs often start with "a " or "an " or "the "
+    if lower_name.startswith("a ") or lower_name.startswith("an ") or lower_name.startswith("the "):
+        return False
+    # Heuristic: Players usually don't have spaces in SWG (unless they have a surname)
+    # but NPCs often have multiple words like "SpecForce marine".
+    # This is tricky because players CAN have surnames.
+    # However, if it's one word and doesn't start with "a/an/the", it's likely a player.
+    # Also if it's two words where both are capitalized, it's likely a player.
+    words = name.split()
+    if len(words) == 1: return True
+    if len(words) == 2:
+        if words[0][0].isupper() and words[1][0].isupper():
+            return True
+    return False
 
 def save_log_segment(original_log_path, duration_minutes):
     """Saves the last duration_minutes of combat log to a new file in a 'saved_logs' directory."""

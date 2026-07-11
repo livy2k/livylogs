@@ -25,7 +25,7 @@ from constants import (
     SWP_SHOWWINDOW, SWP_HIDEWINDOW, ENTRY_BG, WINDOWPLACEMENT,
     TITLE_GRADIENT_START, TITLE_GRADIENT_END
 )
-from utils import is_window_minimized, apply_snapping, extract_character_id, get_resource_path
+from utils import is_window_minimized, apply_snapping, extract_character_id, get_resource_path, normalize_name, is_probable_player
 from ui_base import ThemedMessagebox
 
 # Popout Windows
@@ -69,6 +69,12 @@ class CombatLogApp:
         self.current_alpha = initial_alpha
         self.root.attributes("-alpha", initial_alpha)
         self.root.overrideredirect(True)
+        
+        # Enable basic copy/select all globally for the main window
+        self.root.bind("<Control-c>", self._on_global_copy)
+        self.root.bind("<Control-a>", self._on_global_select_all)
+        self.root.bind("<Button-3>", self.show_context_menu)
+        
         # Ensure it doesn't show in taskbar by setting it as a tool window
         try:
             GWL_EXSTYLE = -20
@@ -97,6 +103,11 @@ class CombatLogApp:
         self.options_win = OptionsWindow(self)
         self.alexa_win = AlexaWindow(self)
         
+        # UI State
+        self.details_tab = "all"
+        self.skimmer_tab = "loot"
+        self.always_on_top = True
+        
         self._managed_windows = [
             self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
             self.details_win, self.options_win, self.alexa_win
@@ -116,6 +127,9 @@ class CombatLogApp:
         self.all_events = []
         self.locally_seen_players = {}
         self.leaderboard_data = {}
+        self.known_npcs = set()
+        self.permanent_drops = {} # { "item_name": ["dropper1", "dropper2"] }
+        self.load_permanent_drops()
         
         self.load_bosses()
         self.load_filters()
@@ -127,6 +141,8 @@ class CombatLogApp:
         self.last_ui_update_time = 0
         self.last_combat_time = 0
         self.app_start_time = None
+        self._encounter_start_stats = {}
+        self.session_start_time = datetime.now()
         self.last_log_sync_time = None
         
         self.last_dm_reset = None
@@ -157,6 +173,31 @@ class CombatLogApp:
             if initial_log_path == "test_chatlog.txt" or initial_log_path == test_path:
                 initial_log_path = test_path
             self.root.after(1000, lambda: self.start_c_engine(initial_log_path))
+
+    def load_permanent_drops(self):
+        try:
+            path = get_resource_path("drops.json")
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    self.permanent_drops = json.load(f)
+        except Exception as e:
+            try:
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"Error loading permanent drops: {e}\n")
+            except: pass
+
+    def save_permanent_drops(self):
+        try:
+            # Sort the data for cleaner JSON
+            sorted_drops = {k: sorted(v) for k, v in sorted(self.permanent_drops.items())}
+            # For simplicity, save to current directory
+            with open("drops.json", "w") as f:
+                json.dump(sorted_drops, f, indent=4)
+        except Exception as e:
+            try:
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"Error saving permanent drops: {e}\n")
+            except: pass
 
     def load_bosses(self):
         self.bosses = []
@@ -790,10 +831,11 @@ class CombatLogApp:
             time.sleep(1) # Wait before reconnecting to avoid tight loop on failure
 
     def process_external_event(self, event, is_last=False):
-        # Normalize "Damage You" to "You" just in case the engine sends it
+        # First-pass normalization for specific keys
         for key in ["name", "source", "target"]:
-            if event.get(key) == "Damage You":
-                event[key] = "You"
+            val = event.get(key)
+            if val:
+                event[key] = normalize_name(val)
         
         event_type = event.get("type")
         
@@ -801,36 +843,64 @@ class CombatLogApp:
             name = event.get("name")
             if not name: return
             
+            # Filter out NPCs from persistent data if they aren't probable players
+            if not is_probable_player(name, self.bosses, self.known_npcs):
+                # We still keep them in locally_seen for a short while, but maybe not in player_data forever
+                pass
+            
+            # p should be keyed by the normalized name
             if name not in self.player_data:
-                self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+                self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
             
             p = self.player_data[name]
-            p["damage"] = event.get("damage", 0)
-            p["healing"] = event.get("healing", 0)
-            p["dm_taken"] = event.get("taken", 0)
-            p["dm_hits"] = event.get("hits", 0)
-            p["dm_misses"] = event.get("misses", 0)
-            p["dm_avoided"] = event.get("avoided", 0)
-            p["aoe_hits"] = event.get("aoe", 0)
-            p["lb_loot"] = event.get("loot", 0)
-            p["lb_mobs"] = event.get("mobs", 0)
-            p["lb_xp"] = event.get("xp", 0)
+            # Ensure cumulative session stats only increase
+            p["damage"] = max(p.get("damage", 0), event.get("damage", 0))
+            p["healing"] = max(p.get("healing", 0), event.get("healing", 0))
+            
+            # DM stats should only be updated if we are in an active combat encounter
+            # and only if the incoming value is higher than what we currently have for this encounter.
+            # If the engine sends session totals, we need to subtract the session total at encounter start.
+            if self.app_start_time:
+                if not hasattr(self, '_encounter_start_stats'): self._encounter_start_stats = {}
+                if name not in self._encounter_start_stats:
+                    # Capture the base session stats when this player first appears in this encounter
+                    # We use event values as the baseline for this encounter
+                    self._encounter_start_stats[name] = {"damage": event.get("damage", 0), "healing": event.get("healing", 0)}
+                
+                # dm_damage is the growth since encounter start
+                encounter_damage = event.get("damage", 0) - self._encounter_start_stats[name]["damage"]
+                encounter_healing = event.get("healing", 0) - self._encounter_start_stats[name]["healing"]
+                p["dm_damage"] = max(p.get("dm_damage", 0), encounter_damage)
+                p["dm_healing"] = max(p.get("dm_healing", 0), encounter_healing)
+            else:
+                # Outside combat, dm stats stay 0
+                p["dm_damage"] = 0
+                p["dm_healing"] = 0
 
-            # Ensure dm_damage/healing are updated from stats
-            p["dm_damage"] = p["damage"]
-            p["dm_healing"] = p["healing"]
+            p["dm_taken"] = max(p.get("dm_taken", 0), event.get("taken", 0))
+            p["dm_hits"] = max(p.get("dm_hits", 0), event.get("hits", 0))
+            p["dm_misses"] = max(p.get("dm_misses", 0), event.get("misses", 0))
+            p["dm_avoided"] = max(p.get("dm_avoided", 0), event.get("avoided", 0))
+            p["aoe_hits"] = max(p.get("aoe_hits", 0), event.get("aoe", 0))
+            
+            p["lb_loot"] = max(p.get("lb_loot", 0), event.get("loot", 0))
+            p["lb_mobs"] = max(p.get("lb_mobs", 0), event.get("mobs", 0))
+            p["lb_xp"] = max(p.get("lb_xp", 0), event.get("xp", 0))
 
             self.locally_seen_players[name] = time.time()
 
             # Ensure secondary windows see this data
             self.leaderboard_data[name] = p["damage"]
             
-            # Defensive check: trigger refresh
-            self.refresh_ui_only(force=True)
+            # Refresh will be handled by centralized timing at the end of process_external_event
+            # self.refresh_ui_only(force=True) -> REMOVED
 
             # Update last_combat_time and app_start_time
             if p["damage"] > 0 or p["healing"] > 0 or p["dm_taken"] > 0 or p["lb_mobs"] > 0 or p["lb_loot"] > 0 or p["lb_xp"] > 0:
-                self.last_combat_time = time.time()
+                now_f = time.time()
+                # Unified session reset logic moved to centralized block at end of function
+                # This ensures consistent app_start_time handling
+                self.last_combat_time = now_f
                 if self.app_start_time is None:
                     self.app_start_time = datetime.now()
                 self.last_log_sync_time = self.app_start_time
@@ -846,6 +916,15 @@ class CombatLogApp:
         target = event.get("target", "Unknown")
         ability = event.get("ability", "")
         is_mitigated = event.get("is_mitigated", False)
+
+        # Re-assign p for correct log attribution
+        # If it's a 'taken' event, the victim is 'target'
+        if event_type == "taken":
+            source_for_logs = target
+            attacker = source
+        else:
+            source_for_logs = source
+            attacker = source_for_logs
         
         # Handle armor reduction
         if event_type == "armor_reduction":
@@ -858,10 +937,10 @@ class CombatLogApp:
             return
 
         if (event_type == "xp"):
-            if source not in self.player_data:
-                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+            if source_for_logs not in self.player_data:
+                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
             
-            p = self.player_data[source]
+            p = self.player_data[source_for_logs]
             amount = event.get("amount", 0)
             p["lb_xp"] = p.get("lb_xp", 0) + amount
             
@@ -870,60 +949,42 @@ class CombatLogApp:
             if len(p["xp_history"]) > 100: p["xp_history"].pop(0)
 
             # Add to logs
-            p["logs"].append({"text": f"[{timestamp.strftime('%H:%M:%S')}] Received {amount:,.0f} {event.get('xp_type', 'Unknown')} XP", "timestamp": timestamp})
+            p["logs"].append({"msg": f"Received {amount:,.0f} {event.get('xp_type', 'Unknown')} XP", "time": timestamp, "type": "xp"})
             if len(p["logs"]) > 200: p["logs"].pop(0)
 
-            # Keep activity alive
-            self.last_combat_time = time.time()
-            if self.app_start_time is None:
-                self.app_start_time = datetime.now()
-            self.last_log_sync_time = self.app_start_time
-
-            self.locally_seen_players[source] = time.time()
-            self.leaderboard_data[source] = p.get("damage", 0)
+            self.locally_seen_players[source_for_logs] = time.time()
+            self.leaderboard_data[source_for_logs] = p.get("damage", 0)
             
-            # Explicitly refresh Leaderboard if it's on XP tab or if we want to show progress
-            self.refresh_ui_only(force=True)
-            return
-
-        if (event_type == "mobs"):
-            if source not in self.player_data:
-                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+            # SESSION START HANDLED IN LATER BLOCK
+            # self.refresh_ui_only(force=True) -> REMOVED
+            # FALL THROUGH to session/combat timing logic at the end of function
+        
+        elif (event_type == "mobs"):
+            if source_for_logs not in self.player_data:
+                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
             
-            p = self.player_data[source]
+            p = self.player_data[source_for_logs]
             p["lb_mobs"] = p.get("lb_mobs", 0) + 1
             
-            # Keep activity alive
-            self.last_combat_time = time.time()
-            if self.app_start_time is None:
-                self.app_start_time = timestamp
-            self.last_log_sync_time = self.app_start_time
-
-            self.locally_seen_players[source] = time.time()
-            self.leaderboard_data[source] = p.get("damage", 0)
+            self.locally_seen_players[source_for_logs] = time.time()
+            self.leaderboard_data[source_for_logs] = p.get("damage", 0)
             
             # Add to logs
-            p["logs"].append({"text": f"[{timestamp.strftime('%H:%M:%S')}] Defeated {target}", "timestamp": timestamp})
+            norm_target = normalize_name(target)
+            p["logs"].append({"msg": f"Defeated {norm_target}", "time": timestamp, "type": "kill"})
             if len(p["logs"]) > 200: p["logs"].pop(0)
             
-            # Update specific Mob Ranking if needed
-            self.refresh_ui_only(force=True)
-            return
-
-        if (event_type == "loot"):
-            if source not in self.player_data:
-                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
+            # self.refresh_ui_only(force=True) -> REMOVED
+            # FALL THROUGH
             
-            p = self.player_data[source]
+        elif (event_type == "loot"):
+            if source_for_logs not in self.player_data:
+                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
+            
+            p = self.player_data[source_for_logs]
             p["lb_loot"] = p.get("lb_loot", 0) + 1
             
-            # Keep activity alive
-            self.last_combat_time = time.time()
-            if self.app_start_time is None:
-                self.app_start_time = timestamp
-            self.last_log_sync_time = self.app_start_time
-
-            self.leaderboard_data[source] = p.get("damage", 0)
+            self.leaderboard_data[source_for_logs] = p.get("damage", 0)
             
             # New loot fields
             if "total_credits" not in p: p["total_credits"] = 0
@@ -934,143 +995,189 @@ class CombatLogApp:
             
             if credits > 0:
                 p["total_credits"] += credits
-                p["logs"].append({"text": f"[{timestamp.strftime('%H:%M:%S')}] Looted {credits:,.0f}cr", "timestamp": timestamp})
+                p["logs"].append({"msg": f"Looted {credits:,.0f}cr", "time": timestamp, "type": "loot"})
             elif item and item != "Unknown":
                 p["looted_items"].append(item)
-                p["logs"].append({"text": f"[{timestamp.strftime('%H:%M:%S')}] Looted {item}", "timestamp": timestamp})
-                if len(p["looted_items"]) > 100: # Limit history
+                p["logs"].append({"msg": f"Looted {item}", "time": timestamp, "type": "loot"})
+                if len(p["looted_items"]) > 10000: # Limit history
                     p["looted_items"].pop(0)
+                
+                # Permanent drops tracking
+                if target and target != "Unknown":
+                    norm_item = item.strip()
+                    norm_target = normalize_name(target)
+                    if norm_item not in self.permanent_drops:
+                        self.permanent_drops[norm_item] = []
+                    if norm_target not in self.permanent_drops[norm_item]:
+                        self.permanent_drops[norm_item].append(norm_target)
             
-            if source not in self.loot_data: self.loot_data[source] = []
-            self.loot_data[source].append({"item": item, "credits": credits, "target": target, "timestamp": timestamp})
-            if len(self.loot_data[source]) > 200: self.loot_data[source].pop(0)
+            if source_for_logs not in self.loot_data: self.loot_data[source_for_logs] = []
+            self.loot_data[source_for_logs].append({"item": item, "credits": credits, "target": target, "timestamp": timestamp})
+            if len(self.loot_data[source_for_logs]) > 10000: self.loot_data[source_for_logs].pop(0)
 
-            self.locally_seen_players[source] = time.time()
-            self.refresh_ui_only(force=True)
-            return
+            # HEURISTIC: If a name has been looted from, it is not a player
+            if target and target != "Unknown":
+                self.known_npcs.add(target.lower())
+
+            self.locally_seen_players[source_for_logs] = time.time()
+            # self.refresh_ui_only(force=True) -> REMOVED
+            # FALL THROUGH
+        
+        else:
+            # ORIGINAL DIRECT DAMAGE/HEALING/TAKEN LOGIC
+            is_damage = damage > 0 or event_type in ["dealt", "taken", "other_dealt"]
+            is_healing = healing > 0 or event_type == "healing"
             
+            internal_event = {
+                "timestamp": timestamp, 
+                "type": event_type, 
+                "source": source, 
+                "target": target, 
+                "damage": damage, 
+                "healing": healing, 
+                "item": item,
+                "ability": ability,
+                "is_mitigated": is_mitigated
+            }
+
+            self.all_events.append(internal_event)
+            if len(self.all_events) > 5000: self.all_events = self.all_events[-5000:]
+
+            # Update per-player breakdown and logs
+            if source_for_logs not in self.player_data:
+                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
+            
+            p = self.player_data[source_for_logs]
+            self.locally_seen_players[source_for_logs] = time.time()
+
+            log_msg = ""
+            log_type = "all"
+            if event_type == "dealt" or event_type == "other_dealt":
+                p["damage"] = p.get("damage", 0) + damage
+                p["dm_damage"] = p.get("dm_damage", 0) + damage
+                if target not in p["targets"]: p["targets"][target] = 0
+                p["targets"][target] += damage
+                # Simplified format: "damage ability target"
+                norm_target = normalize_name(target)
+                log_msg = f"{damage:,.0f} {ability} {norm_target}"
+                log_type = "dealt"
+                
+                if p["damage"] < p["dm_damage"]: p["damage"] = p["dm_damage"]
+                self.leaderboard_data[source] = p["damage"]
+
+                if is_probable_player(target, self.bosses, self.known_npcs):
+                    if target not in self.player_data:
+                        self.player_data[target] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
+                    tp = self.player_data[target]
+                    tp["dm_taken"] = tp.get("dm_taken", 0) + damage
+                    # Already simplified format for taken
+                    norm_source = normalize_name(source)
+                    tp["logs"].append({"msg": f"{damage:,.0f} {norm_source}", "time": timestamp, "type": "taken"})
+                    if len(tp["logs"]) > 200: tp["logs"].pop(0)
+                    
+                    if hasattr(self, 'details_win') and getattr(self.details_win, 'is_drilldown', False) and getattr(self.details_win, 'selected_player', None) == target:
+                        # Throttle will handle this
+                        pass
+            elif event_type == "taken":
+                p["dm_taken"] = p.get("dm_taken", 0) + damage
+                norm_attacker = normalize_name(attacker)
+                log_msg = f"{damage:,.0f} {norm_attacker}"
+                log_type = "taken"
+            elif event_type == "healing":
+                p["healing"] = p.get("healing", 0) + healing
+                p["dm_healing"] = p.get("dm_healing", 0) + healing
+                if target not in p["targets"]: p["targets"][target] = 0
+                p["targets"][target] += healing
+                norm_target = normalize_name(target)
+                log_msg = f"{healing:,.0f} {ability} {norm_target}"
+                log_type = "healing"
+                
+                if p["healing"] < p["dm_healing"]: p["healing"] = p["dm_healing"]
+            
+            if log_msg:
+                p["logs"].append({"msg": log_msg, "time": timestamp, "type": log_type})
+                if len(p["logs"]) > 200: p["logs"].pop(0)
+                
+                if hasattr(self, 'leaderboard_win') and getattr(self.leaderboard_win, 'is_drilldown', False) and getattr(self.leaderboard_win, 'selected_player', None) == source_for_logs:
+                    self.leaderboard_win.last_full_refresh = 0
+                if hasattr(self, 'details_win') and getattr(self.details_win, 'is_drilldown', False) and getattr(self.details_win, 'selected_player', None) == source_for_logs:
+                    self.details_win.last_full_refresh = 0
+                if hasattr(self, 'skimmers_win') and getattr(self.skimmers_win, 'is_drilldown', False) and getattr(self.skimmers_win, 'selected_player', None) == source_for_logs:
+                    self.skimmers_win.last_full_refresh = 0
+
+            if event_type == "command" and item.startswith("log"):
+                try:
+                    mins = int(item[3:])
+                    if 1 <= mins <= 60:
+                        from utils import save_log_segment
+                        path = self.file_path_var.get().strip()
+                        if path:
+                            saved_to = save_log_segment(path, mins)
+                            if saved_to:
+                                print(f"DEBUG: Saved {mins} minutes of log to {saved_to}")
+                except Exception as e:
+                    print(f"DEBUG: Failed to process log command: {e}")
+
+        # --- CENTRALIZED SESSION & COMBAT TIMING ---
+        now_f = time.time()
         is_damage = damage > 0 or event_type in ["dealt", "taken", "other_dealt"]
         is_healing = healing > 0 or event_type == "healing"
-        
-        # Keep activity alive for direct events
-        if is_damage or is_healing:
-            self.last_combat_time = time.time()
-            if self.app_start_time is None:
-                self.app_start_time = timestamp
-            self.last_log_sync_time = timestamp
+        is_activity = is_damage or is_healing or event_type in ["xp", "mobs", "loot"]
 
-        internal_event = {
-            "timestamp": timestamp, 
-            "type": event_type, 
-            "source": source, 
-            "target": target, 
-            "damage": damage, 
-            "healing": healing, 
-            "item": item,
-            "ability": ability,
-            "is_mitigated": is_mitigated
-        }
-
-        if self.app_start_time is None and is_damage:
-            self.app_start_time = timestamp; self.last_log_sync_time = timestamp; self.last_combat_time = time.time()
-            max_hist = 65; history_limit = datetime.now() - timedelta(minutes=max_hist)
-            self.all_events = [e for e in self.all_events if (e["timestamp"] and e["timestamp"] >= self.app_start_time) or (e["timestamp"] and e["timestamp"] >= history_limit)]
-
-        self.all_events.append(internal_event)
-        if len(self.all_events) > 5000: self.all_events = self.all_events[-5000:]
-
-        # Update per-player breakdown and logs
-        if source not in self.player_data:
-            self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0}
-        
-        p = self.player_data[source]
-        self.locally_seen_players[source] = time.time()
-
-        log_msg = ""
-        if event_type == "dealt" or event_type == "other_dealt":
-            p["damage"] = p.get("damage", 0) + damage
-            p["dm_damage"] = p.get("dm_damage", 0) + damage
-            if target not in p["targets"]: p["targets"][target] = 0
-            p["targets"][target] += damage
-            log_msg = f"Dealt {damage:,.0f} {ability} to {target}"
-            
-            # Ensure cumulative stat reflects real-time damage
-            if p["damage"] < p["dm_damage"]: p["damage"] = p["dm_damage"]
-            
-            # For secondary windows, also update cumulative leaderboard data
-            self.leaderboard_data[source] = p["damage"]
-            self.refresh_ui_only(force=True)
-        elif event_type == "taken":
-            p["dm_taken"] = p.get("dm_taken", 0) + damage
-            log_msg = f"Taken {damage:,.0f} from {target}"
-            self.refresh_ui_only(force=True)
-        elif event_type == "healing":
-            p["healing"] = p.get("healing", 0) + healing
-            p["dm_healing"] = p.get("dm_healing", 0) + healing
-            if target not in p["targets"]: p["targets"][target] = 0
-            p["targets"][target] += healing # Store healing in targets as well for breakdown
-            log_msg = f"Healed {target} for {healing:,.0f}"
-            
-            # Ensure cumulative stat reflects real-time healing
-            if p["healing"] < p["dm_healing"]: p["healing"] = p["dm_healing"]
-            
-            self.refresh_ui_only(force=True)
-        
-        if log_msg:
-            p["logs"].append({"text": f"[{timestamp.strftime('%H:%M:%S')}] {log_msg}", "timestamp": timestamp})
-            if len(p["logs"]) > 200: p["logs"].pop(0)
-            
-            # Explicitly trigger Details window refresh if it's the player being viewed
-            if hasattr(self, 'details_win') and self.details_win.drill_down_player == source:
-                self.root.after(0, lambda: self.details_win.refresh(force=True))
-
-        if event_type == "command" and item.startswith("log"):
-            try:
-                mins = int(item[3:])
-                if 1 <= mins <= 60:
-                    from utils import save_log_segment
-                    path = self.file_path_var.get().strip()
-                    if path:
-                        saved_to = save_log_segment(path, mins)
-                        if saved_to:
-                            print(f"DEBUG: Saved {mins} minutes of log to {saved_to}")
-            except Exception as e:
-                print(f"DEBUG: Failed to process log command: {e}")
-
-        now_f = time.time()
-        # Ensure we keep some history for windows that need it (skimmers/details usually 5-60 mins)
-        history_limit = datetime.now() - timedelta(hours=1)
+        # 1. COMBAT TIMEOUT & SESSION RESET
         if self.app_start_time and (now_f - self.last_combat_time > self.time_window_dm):
-            # If we were in combat but it timed out, only reset real-time DM stats
             self.last_log_sync_time = None 
             for p_name in self.player_data:
                 self.player_data[p_name]["dm_damage"] = 0
                 self.player_data[p_name]["dm_healing"] = 0
                 if "dm_taken" in self.player_data[p_name]: self.player_data[p_name]["dm_taken"] = 0
+                if "dm_hits" in self.player_data[p_name]: self.player_data[p_name]["dm_hits"] = 0
+                if "dm_misses" in self.player_data[p_name]: self.player_data[p_name]["dm_misses"] = 0
+                if "dm_taken_hits" in self.player_data[p_name]: self.player_data[p_name]["dm_taken_hits"] = 0
+                if "dm_avoided" in self.player_data[p_name]: self.player_data[p_name]["dm_avoided"] = 0
+            self.app_start_time = None
+            if hasattr(self, '_encounter_start_stats'): self._encounter_start_stats = {}
+            self.last_ui_update_time = 0 # Force immediate update on timeout
+            is_last = True # Force UI refresh on reset
             
-            # Reset app_start_time if we've been idle for too long, but be less aggressive
-            if now_f - self.last_combat_time > 1800: # 30 minutes absolute idle
-                self.app_start_time = None
+        # 2. RE-ENABLE COMBAT START
+        if is_activity:
+            if self.app_start_time is None:
+                self.app_start_time = timestamp
+                if "You" in self.player_data:
+                    self.player_data["You"]["dm_damage"] = 0
+                    self.player_data["You"]["dm_healing"] = 0
+                    self.player_data["You"]["dm_taken"] = 0
+                    self.player_data["You"]["dm_hits"] = 0
+                    self.player_data["You"]["dm_misses"] = 0
+                    self.player_data["You"]["dm_taken_hits"] = 0
+                    self.player_data["You"]["dm_avoided"] = 0
             
-            self.all_events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= history_limit]
+            self.last_combat_time = now_f
+            self.last_log_sync_time = timestamp
 
-        if is_damage:
-            self.last_combat_time = now_f; self.last_log_sync_time = timestamp
-            if self.app_start_time is None: self.app_start_time = timestamp
+        # 3. HISTORY LIMIT (General)
+        history_limit = datetime.now() - timedelta(hours=1)
+        self.all_events = [e for e in self.all_events if e["timestamp"] and e["timestamp"] >= history_limit]
 
-        if is_last or (now_f - self.last_ui_update_time > 0.1):
+        # 4. UI UPDATE THROTTLE
+        if is_last or (now_f - self.last_ui_update_time > 0.3):
             if self.running:
                 try:
-                    # force=True only for is_last (end of packet) or if we are really behind
-                    # but we want to avoid flooding the UI thread
-                    self.root.after(0, lambda: self.refresh_ui_only(force=is_last))
-                    self.last_ui_update_time = now_f
+                    # Use a more robust check for pending updates to avoid flooding the UI thread
+                    if not getattr(self, '_ui_update_pending', False) or is_last:
+                        self._ui_update_pending = True
+                        def do_update(f=is_last):
+                            self._ui_update_pending = False
+                            self.refresh_ui_only(force=f)
+                        self.root.after(0, do_update)
+                        self.last_ui_update_time = now_f
                 except: pass
 
     def start_ticker_loop(self):
         if self.running:
             self.refresh_ui_only(force=False)
-            self.root.after(100, self.start_ticker_loop)
+            self.root.after(200, self.start_ticker_loop)
 
     def refresh_ui_only(self, force=False):
         try:
@@ -1083,21 +1190,31 @@ class CombatLogApp:
                 self.damage_meter_win.refresh(force=force)
 
             # Heavy windows (Details, Leaderboard, Skimmers)
-            # NEVER force these unless they are empty, as they have their own internal 10s throttle
-            # The 'force' passed here from process_external_event should be ignored for these
-            # to prevent flickering 'many times per second' when large packets arrive.
-            if now_ts - getattr(self, 'last_heavy_refresh', 0) >= 0.5:
-                if hasattr(self, 'details_win') and self.details_win: 
-                    self.details_win.refresh(force=False) 
-                if hasattr(self, 'leaderboard_win') and self.leaderboard_win: 
-                    self.leaderboard_win.refresh(force=False)
-                if hasattr(self, 'skimmers_win') and self.skimmers_win: 
-                    self.skimmers_win.refresh(force=False)
-                
-                # Other windows
+            # We refresh them at most once per second, UNLESS they are in drill-down mode,
+            # in which case we want faster updates for the active log.
+            now_heavy = now_ts - getattr(self, 'last_heavy_refresh', 0)
+            if now_heavy >= 1.0 or force:
+                refresh_details = True
+                refresh_lb = True
+                refresh_skimmers = True
+                self.last_heavy_refresh = now_ts
+            else:
+                # Check if we should override for active drill-down
+                refresh_details = hasattr(self, 'details_win') and self.details_win and getattr(self.details_win, 'is_drilldown', False)
+                refresh_lb = hasattr(self, 'leaderboard_win') and self.leaderboard_win and getattr(self.leaderboard_win, 'is_drilldown', False)
+                refresh_skimmers = False # Skimmers doesn't have drill-down
+
+            if refresh_details and hasattr(self, 'details_win') and self.details_win:
+                self.details_win.refresh(force=force)
+            if refresh_lb and hasattr(self, 'leaderboard_win') and self.leaderboard_win:
+                self.leaderboard_win.refresh(force=force)
+            if refresh_skimmers and hasattr(self, 'skimmers_win') and self.skimmers_win:
+                self.skimmers_win.refresh(force=force)
+
+            # Other windows (less frequent)
+            if now_heavy >= 1.0:
                 if hasattr(self, 'alexa_win') and self.alexa_win: self.alexa_win.refresh(force=False)
                 if hasattr(self, 'options_win') and self.options_win: self.options_win.refresh(force=False)
-                self.last_heavy_refresh = now_ts
         except: pass
 
     def process_events_for_ui(self, all_events, manual=False):
@@ -1119,6 +1236,9 @@ class CombatLogApp:
                     local_dmg = {p: d.get("damage", 0) for p, d in self.player_data.items() if d.get("damage", 0) > 0}
                     local_heal = {p: d.get("healing", 0) for p, d in self.player_data.items() if d.get("healing", 0) > 0}
                     local_loot = self.loot_data.copy()
+                    
+                    # Also include logs in payload for sync if needed (though current server might not use it)
+                    local_logs = {p: d.get("logs", []) for p, d in self.player_data.items() if d.get("logs")}
 
                     if "You" in local_dmg:
                         local_dmg[self.char_name.get()] = local_dmg.pop("You")
@@ -1261,6 +1381,7 @@ class CombatLogApp:
         
         # Immediate UI hiding to make it feel responsive
         try:
+            self.save_permanent_drops()
             self.root.withdraw()
             for win in self._get_managed_windows():
                 try: win.withdraw()
@@ -1348,6 +1469,60 @@ class CombatLogApp:
         self.config.set("General", "api_url", self.api_url.get())
         self.config.set("General", "enable_sync", str(self.enable_sync.get()))
         with open("settings.ini", "w") as f: self.config.write(f)
+
+    def _on_global_copy(self, event=None):
+        focused = self.root.focus_get()
+        if isinstance(focused, (tk.Text, tk.Entry)):
+            try:
+                content = ""
+                if isinstance(focused, tk.Text):
+                    if focused.tag_ranges("sel"):
+                        content = focused.get("sel.first", "sel.last")
+                elif isinstance(focused, tk.Entry):
+                    if focused.selection_present():
+                        content = focused.selection_get()
+                
+                if content:
+                    self.root.clipboard_clear()
+                    self.root.clipboard_append(content)
+                    return "break"
+            except: pass
+        return "break"
+
+    def _on_global_select_all(self, event=None):
+        focused = self.root.focus_get()
+        if isinstance(focused, (tk.Text, tk.Entry)):
+            if isinstance(focused, tk.Text):
+                focused.tag_add("sel", "1.0", "end")
+            elif isinstance(focused, tk.Entry):
+                focused.selection_range(0, tk.END)
+            return "break"
+        return "break"
+
+    def show_context_menu(self, event):
+        if not hasattr(self, 'context_menu'):
+            from constants import PANEL_DARK, TEXT_PRIMARY, ACCENT_BLUE
+            self.context_menu = tk.Menu(self.root, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, activebackground=ACCENT_BLUE, borderwidth=1)
+            self.context_menu.add_command(label="Copy", command=self._on_global_copy, accelerator="Ctrl+C")
+            self.context_menu.add_command(label="Select All", command=self._on_global_select_all, accelerator="Ctrl+A")
+        
+        self.context_menu.unpost()
+        self.context_menu.post(event.x_root, event.y_root)
+
+        # Win32 call to force menu to the very top
+        def force_top():
+            try:
+                from constants import HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE, SWP_SHOWWINDOW, user32
+                hwnd = self.context_menu.winfo_id()
+                if hwnd:
+                    user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+            except: pass
+            try:
+                self.context_menu.focus_set()
+            except: pass
+
+        self.root.after(1, force_top)
+        self.root.after(50, force_top)
 
     def drag_window(self, event):
         self.is_interacting = True
@@ -1502,7 +1677,10 @@ class CombatLogApp:
         self.all_events = []
         self.locally_seen_players = {}
         self.leaderboard_data = {}
+        self.known_npcs = set()
         self.app_start_time = None
+        self._encounter_start_stats = {}
+        self.session_start_time = datetime.now()
         self.last_combat_time = 0
         self.last_log_sync_time = None
         

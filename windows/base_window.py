@@ -17,6 +17,12 @@ class BasePopoutWindow:
         self.fixed_size = fixed_size
         self.window = None
 
+    def update_if_changed(self, label, new_value):
+        try:
+            if label.cget("text") != str(new_value):
+                label.config(text=str(new_value))
+        except: pass
+
     def show(self, force_open=False):
         if self.window and self.window.winfo_exists():
             if self.window.state() == "withdrawn":
@@ -67,6 +73,10 @@ class BasePopoutWindow:
         
         if not self.fixed_size:
             self.window.bind("<Configure>", self.on_configure)
+        
+        # Enable basic copy/select all globally for the window
+        self.window.bind("<Control-c>", self._on_global_copy)
+        self.window.bind("<Control-a>", self._on_global_select_all)
         
         border = tk.Frame(self.window, bg=BORDER_COLOR, padx=1, pady=1)
         border.pack(fill=tk.BOTH, expand=True)
@@ -158,6 +168,77 @@ class BasePopoutWindow:
 
     def refresh(self, force=False):
         pass
+
+    def _on_global_copy(self, event=None):
+        # Default behavior: try to copy from focused widget if it's a Text/Entry
+        focused = self.window.focus_get()
+        if isinstance(focused, (tk.Text, tk.Entry)):
+            # Tkinter handles Ctrl-C for these by default, but we can force it
+            try:
+                content = ""
+                if isinstance(focused, tk.Text):
+                    if focused.tag_ranges("sel"):
+                        content = focused.get("sel.first", "sel.last")
+                elif isinstance(focused, tk.Entry):
+                    if focused.selection_present():
+                        content = focused.selection_get()
+                
+                if content:
+                    self.window.clipboard_clear()
+                    self.window.clipboard_append(content)
+                    return "break"
+            except: pass
+        
+        # If nothing specific is focused/selected, call window-specific copy
+        self.copy_to_clipboard()
+        return "break"
+
+    def _on_global_select_all(self, event=None):
+        focused = self.window.focus_get()
+        if isinstance(focused, (tk.Text, tk.Entry)):
+            if isinstance(focused, tk.Text):
+                focused.tag_add("sel", "1.0", "end")
+            elif isinstance(focused, tk.Entry):
+                focused.selection_range(0, tk.END)
+            return "break"
+        return "break"
+
+    def copy_to_clipboard(self):
+        # To be overridden by subclasses
+        pass
+
+    def show_context_menu(self, event):
+        if not hasattr(self, 'context_menu'):
+            self.context_menu = tk.Menu(self.window, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, activebackground=ACCENT_BLUE, borderwidth=1)
+            self.context_menu.add_command(label="Copy", command=self._on_global_copy, accelerator="Ctrl+C")
+            self.context_menu.add_command(label="Select All", command=self._on_global_select_all, accelerator="Ctrl+A")
+        
+        # Unmap previous instances if any
+        self.context_menu.unpost()
+        
+        # Position and post the menu
+        self.context_menu.post(event.x_root, event.y_root)
+        
+        # Win32 call to force menu to the very top. 
+        # Using a slight delay to ensure the menu window is fully created and visible.
+        def force_top():
+            try:
+                from constants import HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE, SWP_SHOWWINDOW, user32
+                # Get the handle of the menu window. 
+                # Note: tk.Menu.winfo_id() might not be the actual window handle on some systems/versions,
+                # but on Windows it usually corresponds to the menu's popup window.
+                hwnd = self.context_menu.winfo_id()
+                if hwnd:
+                    user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+            except: pass
+            
+            # Also ensure focus
+            try:
+                self.context_menu.focus_set()
+            except: pass
+
+        self.window.after(1, force_top)
+        self.window.after(50, force_top) # Second attempt slightly later for insurance
 
     def _draw_title_gradient(self, event=None):
         if not self.title_bar: return

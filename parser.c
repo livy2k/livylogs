@@ -299,7 +299,7 @@ void p_l(HANDLE h, char* l) {
                 PlayerStats* ps = get_player("You");
                 if (ps) {
                     ps->total_xp += amount;
-                    s_s(h); // Send update
+                    // Removed redundant s_s(h) here
                 }
                 
                 // Find experience type name
@@ -363,7 +363,7 @@ void p_l(HANDLE h, char* l) {
             PlayerStats* ps = get_player("You");
             if (ps) {
                 ps->mob_count++;
-                s_s(h); // Send update
+                // Removed redundant s_s(h) here
             }
         }
     }
@@ -380,7 +380,7 @@ void p_l(HANDLE h, char* l) {
         PlayerStats* ps = get_player(name);
         if (ps) {
             ps->mob_count++;
-            s_s(h);
+            // Removed redundant s_s(h) here
         }
     }
 
@@ -567,6 +567,8 @@ void e_t(void* arg) {
                         } else {
                             l_o[0] = '\0';
                         }
+                        // Added a tiny sleep to prevent pipe flooding and high CPU during catch-up
+                        Sleep(1);
                     } else {
                         // Check if pipe is still broken by trying a tiny write
                         DWORD w_b;

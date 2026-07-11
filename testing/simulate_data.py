@@ -75,6 +75,7 @@ def main():
             "amount": 500,
             "xp_type": "Combat"
         })
+        time.sleep(0.5)
 
         # 4. Mobs event
         send_event(h, {
@@ -82,6 +83,7 @@ def main():
             "source": "You",
             "target": "Stormtrooper"
         })
+        time.sleep(0.5)
 
         # 5. Dealt event
         send_event(h, {

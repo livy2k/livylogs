@@ -8,6 +8,18 @@ build/
 dist/
 local_dist/
 *.spec
+dist/
+bin/
+obj/
+
+# CMake and Ninja build artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build.ninja
+.ninja_deps
+.ninja_log
+*.pdb
 
 # IDEs
 .idea/
@@ -18,6 +30,12 @@ local_dist/
 # Configuration and logs
 settings.ini
 *.log
+crash_log.txt
+drops.json
+*.tmp
+engine_pid_*.tmp
+testing/engine_debug.txt
+testing/build_error.txt
 
 # OS generated files
 Thumbs.db
@@ -31,4 +49,6 @@ desktop.ini
 *.md
 !README.md
 !OVERWOLF_MIGRATION.md
+!BUILD_ENGINE.md
+!DEVELOPMENT_LOG.md
 sync_server.py

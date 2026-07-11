@@ -92,6 +92,13 @@ class OptionsWindow(BasePopoutWindow):
             # Force refresh to update any UI elements that depend on character name
             self.refresh(force=True)
 
+        # Bind context menu
+        self.window.bind("<Button-3>", self.show_context_menu)
+        self.content_container.bind("<Button-3>", self.show_context_menu)
+        char_entry.bind("<Button-3>", lambda e: "break") # Let entry handle its own or use ours? Actually entries have default.
+        # But for consistency:
+        char_entry.bind("<Button-3>", self.show_context_menu)
+
         char_entry.bind("<FocusOut>", on_name_change)
         char_entry.bind("<Return>", on_name_change)
 
@@ -150,7 +157,15 @@ class OptionsWindow(BasePopoutWindow):
         status_text = "SELECTED" if path_exists else "NOT SELECTED"
         status_color = ACCENT_BLUE if path_exists else "#FF5555"
         self.status_lbl.config(text=status_text, fg=status_color)
-        
+
+    def copy_to_clipboard(self):
+        # Allow copying the current character name or log path
+        name = self.app.char_name.get()
+        path = self.app.file_path_var.get()
+        text = f"Character: {name}\nLog Path: {path}"
+        self.window.clipboard_clear()
+        self.window.clipboard_append(text)
+
     def on_alpha_change(self, val):
         self.app.target_alpha = float(val)
         self.app.current_alpha = float(val) # Immediate update for better feedback

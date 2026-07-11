@@ -72,7 +72,8 @@ class SkimmersWindow(BasePopoutWindow):
             throttle = 0.2
         else:
             # User requested 3s refresh for secondary windows to help performance
-            throttle = 3.0
+            # Reduced to 1.5s as per request for smoother session updates
+            throttle = 1.5
         
         do_full = force or is_empty or (now - self.last_full_refresh >= throttle)
 
@@ -142,6 +143,11 @@ class SkimmersWindow(BasePopoutWindow):
 
             self.canvas.pack(side="left", fill="both", expand=True)
             scrollbar.pack(side="right", fill="y")
+            
+            # Bind context menus
+            self.window.bind("<Button-3>", self.show_context_menu)
+            self.canvas.bind("<Button-3>", self.show_context_menu)
+            self.scrollable_frame.bind("<Button-3>", self.show_context_menu)
             
             do_full = True
 
@@ -244,54 +250,63 @@ class SkimmersWindow(BasePopoutWindow):
         is_drill = getattr(self, 'is_drilldown', False)
         
         if npc_mode:
-            for widget in self.scrollable_frame.winfo_children(): widget.destroy()
-            
             npc = getattr(self, 'selected_npc', 'Unknown')
             player = getattr(self, 'selected_player', '')
-            tk.Label(self.scrollable_frame, text="NPC LOOT HISTORY", bg=WINDOW_BG, fg=ACCENT_BLUE, font=("Segoe UI", 10, "bold")).pack(pady=(20, 10))
             
+            # Use persistent labels to avoid flicker
+            if not hasattr(self, '_npc_header_lbl'):
+                for widget in self.scrollable_frame.winfo_children(): widget.destroy()
+                self._npc_header_lbl = tk.Label(self.scrollable_frame, text="NPC LOOT HISTORY", bg=WINDOW_BG, fg=ACCENT_BLUE, font=("Segoe UI", 10, "bold"))
+                self._npc_header_lbl.pack(pady=(20, 10))
+                self._npc_sub_header = tk.Label(self.scrollable_frame, text="", bg=WINDOW_BG, font=("Segoe UI", 9, "bold"))
+                self._npc_sub_header.pack(pady=(0, 5))
+                self._npc_name_lbl = tk.Label(self.scrollable_frame, text="", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 11, "bold"), wraplength=self.window.winfo_width()-40)
+                self._npc_name_lbl.pack(pady=5)
+                self._npc_content_frame = tk.Frame(self.scrollable_frame, bg=WINDOW_BG)
+                self._npc_content_frame.pack(fill=tk.BOTH, expand=True)
+
             if player:
                 is_you = player == "You" or player == self.app.char_name.get()
-                tk.Label(self.scrollable_frame, text=f"VIA {player.upper()}", bg=WINDOW_BG, fg="#00ffff" if is_you else TEXT_SECONDARY, font=("Segoe UI", 9, "bold")).pack(pady=(0, 5))
+                self.update_if_changed(self._npc_sub_header, f"VIA {player.upper()}")
+                self._npc_sub_header.config(fg="#00ffff" if is_you else TEXT_SECONDARY)
+            else:
+                self.update_if_changed(self._npc_sub_header, "")
 
-            tk.Label(self.scrollable_frame, text=npc, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 11, "bold"), wraplength=self.window.winfo_width()-40).pack(pady=5)
+            self.update_if_changed(self._npc_name_lbl, npc)
+            
+            # Key check for NPC loot list
+            npc_key = f"npc_loot_{npc}_{player}_{query}"
+            if not force and hasattr(self, '_last_npc_key') and self._last_npc_key == npc_key:
+                return
+            self._last_npc_key = npc_key
+
+            for widget in self._npc_content_frame.winfo_children(): widget.destroy()
             
             # Find all loot from this NPC
             all_loot = []
-            for player, loots in self.app.loot_data.items():
+            for p, loots in self.app.loot_data.items():
                 for entry in loots:
                     if entry.get("target") == npc and not entry.get("credits"):
-                        if not query or query in entry.get("item", "").lower() or query in player.lower():
-                            all_loot.append((player, entry))
+                        if not query or query in entry.get("item", "").lower() or query in p.lower():
+                            all_loot.append((p, entry))
             
             if not all_loot:
-                tk.Label(self.scrollable_frame, text="No items recorded", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+                tk.Label(self._npc_content_frame, text="No items recorded", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
             else:
-                for player, entry in sorted(all_loot, key=lambda x: x[1].get('timestamp', 0), reverse=True):
-                    f = tk.Frame(self.scrollable_frame, bg=WINDOW_BG); f.pack(fill=tk.X, pady=2, padx=5)
+                for p, entry in sorted(all_loot, key=lambda x: x[1].get('timestamp', 0), reverse=True):
+                    f = tk.Frame(self._npc_content_frame, bg=WINDOW_BG); f.pack(fill=tk.X, pady=2, padx=5)
                     item_text = entry.get("item", "Unknown")
-                    
-                    # Item Label
                     tk.Label(f, text=item_text, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9), wraplength=self.window.winfo_width()-150, justify="left").pack(side=tk.LEFT, padx=5)
                     
-                    # Looter Label (Clickable)
                     looter_color = ACCENT_BLUE
-                    display_name = player
-                    if player == "You" or player == self.app.char_name.get():
+                    display_name = p
+                    if p == "You" or p == self.app.char_name.get():
                         looter_color = "#00ffff"
                         display_name = "You"
                     
                     looter_lbl = tk.Label(f, text=display_name, bg=WINDOW_BG, fg=looter_color, font=("Segoe UI", 9, "bold"), cursor="hand2")
                     looter_lbl.pack(side=tk.RIGHT, padx=5)
-                    
-                    def go_to_player(e, p=player):
-                        self.npc_detail_mode = False
-                        self.item_detail_mode = False
-                        self.is_drilldown = True
-                        self.selected_player = p
-                        self.refresh(force=True)
-                    
-                    looter_lbl.bind("<Button-1>", go_to_player)
+                    looter_lbl.bind("<Button-1>", lambda e, p_name=p: [setattr(self, 'npc_detail_mode', False), setattr(self, 'item_detail_mode', False), setattr(self, 'is_drilldown', True), setattr(self, 'selected_player', p_name), self.refresh(force=True)])
             return
 
         if item_mode:
@@ -365,11 +380,20 @@ class SkimmersWindow(BasePopoutWindow):
         
         if is_drill:
             p = getattr(self, 'selected_player', '')
-            for widget in current_widgets: widget.destroy()
             
-            # Show Player Name prominently
+            # Use persistent labels to avoid flicker
+            if not hasattr(self, '_drill_header_lbl'):
+                for widget in self.scrollable_frame.winfo_children(): widget.destroy()
+                self._drill_header_lbl = tk.Label(self.scrollable_frame, text="", bg=WINDOW_BG, font=("Segoe UI", 10, "bold"))
+                self._drill_header_lbl.pack(pady=(10, 5))
+                self._drill_content_frame = tk.Frame(self.scrollable_frame, bg=WINDOW_BG)
+                self._drill_content_frame.pack(fill=tk.BOTH, expand=True)
+
             is_you = p == "You" or p == self.app.char_name.get()
-            tk.Label(self.scrollable_frame, text=f"{tab.upper()} FOR {p.upper()}", bg=WINDOW_BG, fg="#00ffff" if is_you else ACCENT_BLUE, font=("Segoe UI", 10, "bold")).pack(pady=(10, 5))
+            header_text = f"{tab.upper()} FOR {p.upper()}"
+            header_color = "#00ffff" if is_you else ACCENT_BLUE
+            self.update_if_changed(self._drill_header_lbl, header_text)
+            self._drill_header_lbl.config(fg=header_color)
 
             if tab == "loot":
                 raw_items = self.app.loot_data.get(p, [])
@@ -383,11 +407,20 @@ class SkimmersWindow(BasePopoutWindow):
                 if query:
                     items = [entry for entry in items if query in entry.get("item", "").lower() or query in entry.get("target", "").lower()]
                 
+                # For logs/lists in drilldown, we still need to clear/rebuild if they change significantly
+                # but we can use a key check
+                loot_key = f"loot_{p}_{len(items)}_{query}"
+                if not force and hasattr(self, '_last_loot_key') and self._last_loot_key == loot_key:
+                    return
+                self._last_loot_key = loot_key
+                
+                for widget in self._drill_content_frame.winfo_children(): widget.destroy()
+                
                 if not items:
-                    tk.Label(self.scrollable_frame, text="No items looted", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+                    tk.Label(self._drill_content_frame, text="No items looted", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
                 else:
                     for entry in reversed(items[-100:]):
-                        f = tk.Frame(self.scrollable_frame, bg=WINDOW_BG); f.pack(fill=tk.X, pady=1)
+                        f = tk.Frame(self._drill_content_frame, bg=WINDOW_BG); f.pack(fill=tk.X, pady=1)
                         item_text = entry.get("item", "Unknown")
                         
                         lbl = tk.Label(f, text=item_text, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9), wraplength=self.window.winfo_width()-40, justify="left", cursor="hand2")
@@ -401,8 +434,14 @@ class SkimmersWindow(BasePopoutWindow):
                         lbl.bind("<Button-1>", show_detail)
                         f.bind("<Button-1>", show_detail)
             else: # mobs
-                tk.Label(self.scrollable_frame, text=f"MOB KILLS: {self.app.player_data.get(p, {}).get('lb_mobs', 0)}", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold")).pack(pady=20)
-            
+                mob_count = self.app.player_data.get(p, {}).get('lb_mobs', 0)
+                mob_key = f"mobs_{p}_{mob_count}"
+                if not force and hasattr(self, '_last_mob_key') and self._last_mob_key == mob_key:
+                    return
+                self._last_mob_key = mob_key
+                
+                for widget in self._drill_content_frame.winfo_children(): widget.destroy()
+                tk.Label(self._drill_content_frame, text=f"MOB KILLS: {mob_count}", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold")).pack(pady=20)
             return
 
         self.header_area.pack(fill=tk.X)
@@ -411,104 +450,72 @@ class SkimmersWindow(BasePopoutWindow):
         current_players = getattr(self, '_last_players', [])
         
         if not final_players:
-            self._last_players = []
-            self._row_frames = {}
-            self._row_widgets = {}
-            if current_widgets:
-                is_no_data = False
-                if len(current_widgets) == 1 and isinstance(current_widgets[0], tk.Label):
-                    if "No " in current_widgets[0].cget("text"):
-                        is_no_data = True
-                if not is_no_data:
-                    for widget in current_widgets: widget.destroy()
-                    tk.Label(self.scrollable_frame, text=f"No {tab} data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
-            elif not current_widgets:
-                tk.Label(self.scrollable_frame, text=f"No {tab} data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
+            if not hasattr(self, '_no_data_lbl'):
+                for widget in self.scrollable_frame.winfo_children(): widget.destroy()
+                self._no_data_lbl = tk.Label(self.scrollable_frame, text=f"No {tab} data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic"))
+                self._no_data_lbl.pack(pady=20)
+                self._row_frames = {}
+                self._row_widgets = {}
             return
+
+        if hasattr(self, '_no_data_lbl'):
+            self._no_data_lbl.destroy()
+            del self._no_data_lbl
 
         if not hasattr(self, '_row_frames'): self._row_frames = {}
         if not hasattr(self, '_row_widgets'): self._row_widgets = {}
 
-        if len(self._row_frames) != len(final_players) or force:
-            for widget in current_widgets: widget.destroy()
-            self._row_frames = {}
-            self._row_widgets = {}
-            self._last_players = final_players
-            for p in final_players:
-                    f = tk.Frame(self.scrollable_frame, bg=WINDOW_BG); f.pack(fill=tk.X, pady=1)
-                    self._row_frames[p] = f
-                    
-                    is_you = p == "You" or p == self.app.char_name.get()
-                    color = "#00ffff" if is_you else TEXT_PRIMARY
-                    
-                    # Create clickable container for the whole row
-                    row_click_frame = tk.Frame(f, bg=WINDOW_BG, cursor="hand2")
-                    row_click_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
-                    
-                    create_rainbow_name(row_click_frame, self.app, p, color, ("Segoe UI", 9, "bold"), WINDOW_BG)
-                    
-                    # Bind click for drilldown
-                    def drill_down_event(e, player=p):
-                        self.drill_down(player)
-                    
-                    row_click_frame.bind("<Button-1>", drill_down_event)
-                    # We also need to bind to the labels inside if possible, but create_rainbow_name does its own thing.
-                    # Usually we just bind to the frame and hope for the best, or modify create_rainbow_name.
-                    # Since create_rainbow_name is likely simple labels, we can try to bind to children.
-                    for child in row_click_frame.winfo_children():
-                        child.bind("<Button-1>", drill_down_event)
-                        child.config(cursor="hand2")
+        # Reorder and update
+        for p in final_players:
+            if p not in self._row_frames:
+                f = tk.Frame(self.scrollable_frame, bg=WINDOW_BG)
+                self._row_frames[p] = f
+                
+                is_you = p == "You" or p == self.app.char_name.get()
+                color = "#00ffff" if is_you else TEXT_PRIMARY
+                
+                # Create clickable container for the whole row
+                row_click_frame = tk.Frame(f, bg=WINDOW_BG, cursor="hand2")
+                row_click_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                
+                create_rainbow_name(row_click_frame, self.app, p, color, ("Segoe UI", 9, "bold"), WINDOW_BG)
+                
+                # Store row mapping for value updates
+                val_lbl = tk.Label(f, text="0", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8), cursor="hand2")
+                val_lbl.pack(side=tk.RIGHT, padx=5)
+                self._row_widgets[p] = val_lbl
+                
+                def drill_down_event(e, p_name=p):
+                    self.drill_down(p_name)
+                
+                f.bind("<Button-1>", drill_down_event)
+                for child in f.winfo_children():
+                    child.bind("<Button-1>", drill_down_event)
+                    if isinstance(child, tk.Frame):
+                        for subchild in child.winfo_children():
+                            subchild.bind("<Button-1>", drill_down_event)
+            
+            f = self._row_frames[p]
+            f.pack(fill=tk.X, pady=1)
+            
+            if tab == "loot":
+                raw_items = self.app.loot_data.get(p, [])
+                items = [entry for entry in raw_items if not entry.get("credits")]
+                val_str = f"{len(items)} items"
+            else:
+                count = self.app.player_data.get(p, {}).get("lb_mobs", 0)
+                val_str = str(count)
+            
+            self.update_if_changed(self._row_widgets[p], val_str)
 
-                    # Handle Mob Kills click too
-                    def drill_down_mobs(e, player=p):
-                        if tab == "mobs":
-                            self.drill_down(player)
-
-                    # Store row mapping for value updates
-                    self._row_frames[p] = f
-                    
-                    if tab == "loot":
-                        raw_items = self.app.loot_data.get(p, [])
-                        items = [entry for entry in raw_items if not entry.get("credits")]
-                        count = len(items)
-                        val_str = f"{count} items"
-                        val_lbl = tk.Label(f, text=val_str, bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8), cursor="hand2")
-                        val_lbl.pack(side=tk.RIGHT, padx=5)
-                        val_lbl.bind("<Button-1>", drill_down_event)
-                        self._row_widgets[p] = val_lbl
-                    else:
-                        count = self.app.player_data.get(p, {}).get("lb_mobs", 0)
-                        val_str = str(count)
-                        val_lbl = tk.Label(f, text=val_str, bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8), cursor="hand2")
-                        val_lbl.pack(side=tk.RIGHT, padx=5)
-                        val_lbl.bind("<Button-1>", drill_down_mobs)
-                        self._row_widgets[p] = val_lbl
-                    
-                    f.bind("<Button-1>", lambda e, p=p: self.drill_down(p))
-                    for child in f.winfo_children():
-                        child.bind("<Button-1>", lambda e, p=p: self.drill_down(p))
-        else:
-            # Reorder existing frames and update values
-            for p in final_players:
-                if p in self._row_frames:
-                    f = self._row_frames[p]
-                    f.pack_forget()
-                    f.pack(fill=tk.X, pady=1)
-                    
-                    if tab == "loot":
-                        raw_items = self.app.loot_data.get(p, [])
-                        items = [entry for entry in raw_items if not entry.get("credits")]
-                        count = len(items)
-                        val_str = f"{count} items"
-                    else:
-                        count = self.app.player_data.get(p, {}).get("lb_mobs", 0)
-                        val_str = str(count)
-                    
-                    if self._row_widgets[p].cget("text") != val_str:
-                        self._row_widgets[p].config(text=val_str)
-                else:
-                    self.refresh(force=True)
-                    return
+        # Cleanup old rows
+        current_names = set(final_players)
+        to_delete = [name for name in self._row_frames if name not in current_names]
+        for name in to_delete:
+            self._row_frames[name].destroy()
+            del self._row_frames[name]
+            del self._row_widgets[name]
+        return
         return
 
     def drill_down(self, player):
@@ -539,3 +546,62 @@ class SkimmersWindow(BasePopoutWindow):
             self.is_drilldown = False
         self.last_full_refresh = 0
         self.refresh(force=True)
+
+    def copy_to_clipboard(self):
+        # Determine what to copy based on current view
+        tab = getattr(self.app, 'skimmer_tab', 'loot')
+        is_drill = getattr(self, 'is_drilldown', False)
+        
+        if is_drill:
+            # Player-specific drilldown
+            p = getattr(self, 'selected_player', 'PLAYER')
+            if tab == 'loot':
+                items = self.app.player_data.get(p, {}).get("looted_items", [])
+                lines = [f"Loot for {p}:"]
+                for itm in items:
+                    lines.append(f"{itm.get('count', 1)}x {itm.get('name', 'Unknown')}")
+            else:
+                # Mobs
+                mobs = self.app.player_data.get(p, {}).get("mobs", {})
+                lines = [f"Mobs killed by {p}:"]
+                for mob, count in sorted(mobs.items(), key=lambda x: x[1], reverse=True):
+                    lines.append(f"{mob}: {count}")
+        elif getattr(self, 'item_detail_mode', False):
+            # Item detail (who has it)
+            itm_name = getattr(self, 'selected_item', 'Unknown Item')
+            lines = [f"Holders of {itm_name}:"]
+            for p, pdata in self.app.player_data.items():
+                count = sum(i.get('count', 1) for i in pdata.get('looted_items', []) if i.get('name') == itm_name)
+                if count > 0:
+                    lines.append(f"{p}: {count}")
+        elif getattr(self, 'npc_detail_mode', False):
+            # NPC detail (who killed it)
+            npc_name = getattr(self, 'selected_npc', 'Unknown NPC')
+            lines = [f"Killers of {npc_name}:"]
+            for p, pdata in self.app.player_data.items():
+                count = pdata.get('mobs', {}).get(npc_name, 0)
+                if count > 0:
+                    lines.append(f"{p}: {count}")
+        else:
+            # Global view
+            if tab == 'loot':
+                lines = ["GLOBAL LOOT:"]
+                all_items = {}
+                for pdata in self.app.player_data.values():
+                    for itm in pdata.get('looted_items', []):
+                        name = itm.get('name', 'Unknown')
+                        all_items[name] = all_items.get(name, 0) + itm.get('count', 1)
+                for name, count in sorted(all_items.items(), key=lambda x: x[1], reverse=True):
+                    lines.append(f"{count}x {name}")
+            else:
+                lines = ["GLOBAL MOBS:"]
+                all_mobs = {}
+                for pdata in self.app.player_data.values():
+                    for mob, count in pdata.get('mobs', {}).items():
+                        all_mobs[mob] = all_mobs.get(mob, 0) + count
+                for mob, count in sorted(all_mobs.items(), key=lambda x: x[1], reverse=True):
+                    lines.append(f"{mob}: {count}")
+                    
+        if len(lines) > 1:
+            self.window.clipboard_clear()
+            self.window.clipboard_append("\n".join(lines))

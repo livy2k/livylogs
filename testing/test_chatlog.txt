@@ -1423,3 +1423,716 @@
 [Spatial]  16:56:15 [GROUP] an Imperial Stormtrooper parries Rehote's attack!
 [Spatial]  16:56:15 [GROUP] Ma-o looted 426 credits from a Rancor.
 [Spatial]  16:56:16 [GROUP] Eliemau looted 205 credits from a senior SpecForce infiltrator.
+[Spatial]  17:10:27 [GROUP] Leloglo looted Broken Electrobinoculars from a Rancor.
+[Spatial]  17:10:28 [GROUP] Eliemau heals Leloglo for 491 points of damage.
+[Spatial]  17:10:28 [GROUP] You Melee Hit a Krayt Dragon for 919 points of damage.
+[Spatial]  17:10:28 [GROUP] Fikiosa hits a Rancor for 1051 points of damage.
+[Spatial]  17:10:28 [GROUP] Eliemau looted 80 credits from a Krayt Dragon.
+[Spatial]  17:10:29 [GROUP] Ma-o hits an Imperial Stormtrooper for 296 points of damage.
+[Spatial]  17:10:29 [GROUP] Eliemau Scatter Shot a SpecForce marine for 1055 points of damage.
+[Spatial]  17:10:29 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 889 points of damage.
+[Spatial]  17:10:29 [GROUP] Ma-o Bleeding Shot a Krayt Dragon for 1201 points of damage.
+[Spatial]  17:10:30 [GROUP] Rehote hits a Rebel Major General for 241 points of damage.
+[Spatial]  17:10:30 [GROUP] Ma-o Bleeding Shot a SpecForce marine for 1471 points of damage.
+[Spatial]  17:10:30 [GROUP] Leloglo looted 223 credits from a Krayt Dragon.
+[Spatial]  17:10:30 [GROUP] Eliemau has defeated a Krayt Dragon.
+[Spatial]  17:10:31 [GROUP] You hits a Rebel Major General for 1063 points of damage.
+[Spatial]  17:10:31 [GROUP] Fikiosa hits a Rebel Colonel for 207 points of damage.
+[Spatial]  17:10:31 [GROUP] You receive 1102 points of Combat experience.
+[Spatial]  17:10:31 [GROUP] Fikiosa heals Eliemau for 145 points of damage.
+[Spatial]  17:10:32 [GROUP] Fikiosa Health Shot II an Imperial Stormtrooper for 1447 points of damage.
+[Spatial]  17:10:32 [GROUP] Turd looted CDEF Pistol from a Rebel Colonel.
+[Spatial]  17:10:32 [GROUP] Ma-o hits a Krayt Dragon for 459 points of damage.
+[Spatial]  17:10:32 [GROUP] an Imperial Stormtrooper evades Ma-o's attack!
+[Spatial]  17:10:32 [GROUP] Rehote looted Stun Baton from a Rebel Colonel.
+[Spatial]  17:10:33 [GROUP] Eliemau looted 125 credits from a SpecForce marine.
+[Spatial]  17:10:33 [GROUP] Ma-o looted Enhanced DH-17 Carbine from a Krayt Dragon.
+[Spatial]  17:10:33 [GROUP] Fikiosa looted 270 credits from a Rancor.
+[Spatial]  17:10:34 [GROUP] Rehote looted 373 credits from an Imperial Stormtrooper.
+[Spatial]  17:10:34 [GROUP] Ma-o heals You for 494 points of damage.
+[Spatial]  17:10:34 [GROUP] a Krayt Dragon parries Eliemau's attack!
+[Spatial]  17:10:35 [GROUP] You looted 96 credits from a SpecForce marine.
+[Spatial]  17:10:35 [GROUP] Turd heals Turd for 575 points of damage.
+[Spatial]  17:10:35 [GROUP] Leloglo looted CDEF Pistol from a Rancor.
+[Spatial]  17:10:35 [GROUP] You looted Work light from a Rebel Major General.
+[Spatial]  17:10:36 [GROUP] Ma-o Health Shot II a Rebel Colonel for 1458 points of damage.
+[Spatial]  17:10:36 [GROUP] Ma-o hits a Krayt Dragon for 221 points of damage.
+[Spatial]  17:10:36 [GROUP] a Krayt Dragon dodges Ma-o's attack!
+[Spatial]  17:10:37 [GROUP] a Krayt Dragon dodges Fikiosa's attack!
+[Spatial]  17:10:37 [GROUP] Rehote hits a Krayt Dragon for 502 points of damage.
+[Spatial]  17:10:37 [GROUP] Ma-o hits a senior SpecForce infiltrator for 155 points of damage.
+[Spatial]  17:10:38 [GROUP] Ma-o has defeated a senior SpecForce infiltrator.
+[Spatial]  17:10:38 [GROUP] Rehote hits a Rancor for 524 points of damage.
+[Spatial]  17:10:38 [GROUP] Fikiosa hits a Rebel Major General for 1024 points of damage.
+[Spatial]  17:10:38 [GROUP] Turd hits a Rebel Major General for 923 points of damage.
+[Spatial]  17:10:39 [GROUP] Ma-o hits a Rebel Colonel for 803 points of damage.
+[Spatial]  17:10:39 [GROUP] Rehote heals Leloglo for 243 points of damage.
+[Spatial]  17:10:39 [GROUP] Ma-o Health Shot II a senior SpecForce infiltrator for 384 points of damage.
+[Spatial]  17:10:39 [GROUP] Rehote hits an Imperial Stormtrooper for 455 points of damage.
+[Spatial]  17:10:39 [GROUP] Eliemau heals Ma-o for 360 points of damage.
+[Spatial]  17:10:40 [GROUP] Leloglo looted 172 credits from a senior SpecForce infiltrator.
+[Spatial]  17:10:40 [GROUP] Eliemau hits a Rancor for 891 points of damage.
+[Spatial]  17:10:41 [GROUP] Leloglo heals Turd for 722 points of damage.
+[Spatial]  17:11:28 [GROUP] Ma-o heals Ma-o for 340 points of damage.
+[Spatial]  17:11:29 [GROUP] Ma-o looted CDEF Pistol from a senior SpecForce infiltrator.
+[Spatial]  17:11:29 [GROUP] Leloglo Force Choke a senior SpecForce infiltrator for 500 points of damage.
+[Spatial]  17:11:29 [GROUP] Rehote looted Work light from a Rancor.
+[Spatial]  17:11:30 [GROUP] Leloglo has defeated an Imperial Stormtrooper.
+[Spatial]  17:11:30 [GROUP] Ma-o looted 486 credits from a senior SpecForce infiltrator.
+[Spatial]  17:11:30 [GROUP] Turd hits a senior SpecForce infiltrator for 1144 points of damage.
+[Spatial]  17:11:31 [GROUP] Ma-o Bleeding Shot a Rebel Major General for 598 points of damage.
+[Spatial]  17:11:31 [GROUP] Turd looted 475 credits from a senior SpecForce infiltrator.
+[Spatial]  17:11:31 [GROUP] Turd hits a Rancor for 160 points of damage.
+[Spatial]  17:11:31 [GROUP] Leloglo Force Choke a Krayt Dragon for 1061 points of damage.
+[Spatial]  17:11:32 [GROUP] Ma-o heals Rehote for 545 points of damage.
+[Spatial]  17:11:32 [GROUP] Ma-o Power Shot a SpecForce marine for 1249 points of damage.
+[Spatial]  17:11:32 [GROUP] Ma-o looted 367 credits from a Rancor.
+[Spatial]  17:11:32 [GROUP] Eliemau hits a senior SpecForce infiltrator for 496 points of damage.
+[Spatial]  17:11:33 [GROUP] Fikiosa hits an Imperial Stormtrooper for 1087 points of damage.
+[Spatial]  17:20:36 [GROUP] You Scatter Shot a Rancor for 1057 points of damage.
+[Spatial]  17:20:37 [GROUP] Turd Health Shot II a SpecForce marine for 1119 points of damage.
+[Spatial]  17:20:37 [GROUP] Rehote Scatter Shot a Rebel Major General for 862 points of damage.
+[Spatial]  17:20:37 [GROUP] Ma-o hits a Rancor for 191 points of damage.
+[Spatial]  17:20:37 [GROUP] Leloglo hits an Imperial Stormtrooper for 572 points of damage.
+[Spatial]  17:20:38 [GROUP] Eliemau Power Shot an Imperial Stormtrooper for 936 points of damage.
+[Spatial]  17:20:38 [GROUP] Turd looted Broken Electrobinoculars from a Rebel Major General.
+[Spatial]  17:20:38 [GROUP] Turd Health Shot II a Krayt Dragon for 1279 points of damage.
+[Spatial]  17:20:38 [GROUP] Fikiosa hits a SpecForce marine for 424 points of damage.
+[Spatial]  17:20:39 [GROUP] Eliemau heals You for 556 points of damage.
+[Spatial]  17:20:39 [GROUP] Rehote looted 355 credits from a Rebel Major General.
+[Spatial]  17:20:39 [GROUP] Rehote hits a Rancor for 1107 points of damage.
+[Spatial]  17:20:39 [GROUP] You receive 3084 points of General experience.
+[Spatial]  17:20:40 [GROUP] Ma-o looted Broken Electrobinoculars from a Rancor.
+[Spatial]  17:20:40 [GROUP] Fikiosa hits a SpecForce marine for 883 points of damage.
+[Spatial]  17:20:40 [GROUP] Fikiosa hits a Rancor for 1169 points of damage.
+[Spatial]  17:20:40 [GROUP] Eliemau looted A Damaged Datapad from a SpecForce marine.
+[Spatial]  17:20:40 [GROUP] Rehote Stun a Rebel Major General for 1273 points of damage.
+[Spatial]  17:20:40 [GROUP] Turd has died.
+[Spatial]  17:20:41 [GROUP] You receive 2457 points of Scout experience.
+[Spatial]  17:20:41 [GROUP] You hits a SpecForce marine for 696 points of damage.
+[Spatial]  17:20:41 [GROUP] Rehote looted 357 credits from a Krayt Dragon.
+[Spatial]  17:20:42 [GROUP] Eliemau hits a Rancor for 844 points of damage.
+[Spatial]  17:20:42 [GROUP] Eliemau looted Stun Baton from a Rebel Major General.
+[Spatial]  17:20:43 [GROUP] Rehote hits a senior SpecForce infiltrator for 581 points of damage.
+[Spatial]  17:20:43 [GROUP] Fikiosa hits a SpecForce marine for 766 points of damage.
+[Spatial]  17:20:43 [GROUP] Ma-o heals Eliemau for 696 points of damage.
+[Spatial]  17:20:43 [GROUP] Leloglo looted Heavy Two-Handed Sword from a senior SpecForce infiltrator.
+[Spatial]  17:20:44 [GROUP] a senior SpecForce infiltrator evades Leloglo's attack!
+[Spatial]  17:20:44 [GROUP] Turd looted 208 credits from a Krayt Dragon.
+[Spatial]  17:20:44 [GROUP] Ma-o looted 482 credits from a Rancor.
+[Spatial]  17:20:45 [GROUP] Turd hits a Rancor for 250 points of damage.
+[Spatial]  17:20:45 [GROUP] Leloglo has defeated a Rebel Major General.
+[Spatial]  17:20:45 [GROUP] Ma-o Health Shot II an Imperial Stormtrooper for 1130 points of damage.
+[Spatial]  17:20:46 [GROUP] Leloglo looted T-21 Rifle from an Imperial Stormtrooper.
+[Spatial]  17:20:46 [GROUP] Ma-o hits a senior SpecForce infiltrator for 896 points of damage.
+[Spatial]  17:20:46 [GROUP] Turd heals Ma-o for 685 points of damage.
+[Spatial]  17:20:46 [GROUP] Leloglo has defeated a senior SpecForce infiltrator.
+[Spatial]  17:20:47 [GROUP] Leloglo looted Heavy Two-Handed Sword from a senior SpecForce infiltrator.
+[Spatial]  17:20:47 [GROUP] Ma-o looted 216 credits from a senior SpecForce infiltrator.
+[Spatial]  17:20:47 [GROUP] Eliemau hits a Rancor for 425 points of damage.
+[Spatial]  17:20:47 [GROUP] Eliemau Stun a senior SpecForce infiltrator for 1377 points of damage.
+[Spatial]  17:20:48 [GROUP] Fikiosa looted Work light from a Rancor.
+[Spatial]  17:20:48 [GROUP] Ma-o hits a Krayt Dragon for 631 points of damage.
+[Spatial]  17:20:48 [GROUP] You Force Choke a Rebel Colonel for 969 points of damage.
+[Spatial]  17:20:49 [GROUP] Fikiosa heals You for 561 points of damage.
+[Spatial]  17:20:49 [GROUP] Turd has died.
+[Spatial]  17:20:49 [GROUP] Ma-o has defeated a Rebel Colonel.
+[Spatial]  17:20:50 [GROUP] Fikiosa looted 458 credits from a senior SpecForce infiltrator.
+[Spatial]  17:20:50 [GROUP] You hits a Rebel Major General for 238 points of damage.
+[Spatial]  17:20:50 [GROUP] Ma-o has defeated a Krayt Dragon.
+[Spatial]  17:20:51 [GROUP] You has defeated a Rancor.
+[Spatial]  17:20:51 [GROUP] Turd hits a senior SpecForce infiltrator for 153 points of damage.
+[Spatial]  17:20:59 [GROUP] You hits a Rebel Major General for 797 points of damage.
+[Spatial]  17:20:59 [GROUP] Rehote hits a SpecForce marine for 1114 points of damage.
+[Spatial]  17:20:59 [GROUP] Eliemau has defeated a Rancor.
+[Spatial]  17:21:00 [GROUP] Leloglo hits an Imperial Stormtrooper for 1200 points of damage.
+[Spatial]  17:21:00 [GROUP] Ma-o Bleeding Shot a Rancor for 600 points of damage.
+[Spatial]  17:21:00 [GROUP] You receive 4898 points of Surveying experience.
+[Spatial]  17:21:01 [GROUP] Eliemau heals Leloglo for 648 points of damage.
+[Spatial]  17:21:01 [GROUP] You looted 338 credits from a Rancor.
+[Spatial]  17:21:01 [GROUP] Leloglo Mind Blast an Imperial Stormtrooper for 723 points of damage.
+[Spatial]  17:21:02 [GROUP] Eliemau hits a Rancor for 594 points of damage.
+[Spatial]  17:21:02 [GROUP] Leloglo hits a Krayt Dragon for 989 points of damage.
+[Spatial]  17:21:02 [GROUP] Ma-o hits a Rancor for 1058 points of damage.
+[Spatial]  17:21:03 [GROUP] Fikiosa heals You for 693 points of damage.
+[Spatial]  17:21:03 [GROUP] Leloglo Mind Blast a SpecForce marine for 669 points of damage.
+[Spatial]  17:21:03 [GROUP] Fikiosa looted 199 credits from an Imperial Stormtrooper.
+[Spatial]  17:21:04 [GROUP] Turd heals Ma-o for 369 points of damage.
+[Spatial]  17:21:04 [GROUP] Eliemau heals Leloglo for 596 points of damage.
+[Spatial]  17:21:04 [GROUP] Turd heals Rehote for 370 points of damage.
+[Spatial]  17:21:05 [GROUP] Turd hits a Rebel Major General for 568 points of damage.
+[Spatial]  17:21:05 [GROUP] Leloglo Melee Hit an Imperial Stormtrooper for 1284 points of damage.
+[Spatial]  17:21:05 [GROUP] Rehote looted 479 credits from a Rancor.
+[Spatial]  17:21:05 [GROUP] Turd looted Stun Baton from a Rancor.
+[Spatial]  17:24:09 [GROUP] Leloglo looted Stun Baton from a Rancor.
+[Spatial]  17:24:09 [GROUP] Eliemau Scatter Shot a SpecForce marine for 1395 points of damage.
+[Spatial]  17:24:10 [GROUP] Fikiosa looted Stun Baton from a Rebel Major General.
+[Spatial]  17:24:10 [GROUP] Eliemau Power Shot a Krayt Dragon for 706 points of damage.
+[Spatial]  17:24:10 [GROUP] Eliemau looted 161 credits from a senior SpecForce infiltrator.
+[Spatial]  17:24:10 [GROUP] Rehote has died.
+[Spatial]  17:24:11 [GROUP] Turd Mind Blast a Rebel Colonel for 1451 points of damage.
+[Spatial]  17:24:11 [GROUP] You receive 3181 points of Combat experience.
+[Spatial]  17:24:11 [GROUP] Rehote heals Fikiosa for 370 points of damage.
+[Spatial]  17:24:11 [GROUP] Ma-o hits a Rebel Major General for 300 points of damage.
+[Spatial]  17:24:12 [GROUP] Fikiosa heals Eliemau for 647 points of damage.
+[Spatial]  17:24:12 [GROUP] You heals Turd for 255 points of damage.
+[Spatial]  17:24:12 [GROUP] Leloglo heals Ma-o for 761 points of damage.
+[Spatial]  17:24:13 [GROUP] Fikiosa heals You for 715 points of damage.
+[Spatial]  17:24:13 [GROUP] Turd Health Shot II a Krayt Dragon for 714 points of damage.
+[Spatial]  17:24:13 [GROUP] Fikiosa has defeated an Imperial Stormtrooper.
+[Spatial]  17:24:14 [GROUP] Eliemau heals Ma-o for 466 points of damage.
+[Spatial]  17:24:14 [GROUP] You heals Fikiosa for 767 points of damage.
+[Spatial]  17:24:14 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 345 points of damage.
+[Spatial]  17:24:15 [GROUP] Fikiosa hits a Rebel Major General for 754 points of damage.
+[Spatial]  17:24:15 [GROUP] Leloglo looted Stun Baton from a Rancor.
+[Spatial]  17:24:16 [GROUP] Leloglo Bleeding Shot an Imperial Stormtrooper for 485 points of damage.
+[Spatial]  17:24:16 [GROUP] You hits a Rancor for 377 points of damage.
+[Spatial]  17:24:16 [GROUP] Ma-o heals Fikiosa for 565 points of damage.
+[Spatial]  17:24:19 [GROUP] Eliemau Melee Hit a SpecForce marine for 1012 points of damage.
+[Spatial]  17:24:20 [GROUP] Eliemau looted 461 credits from a Rebel Major General.
+[Spatial]  17:24:20 [GROUP] Turd has defeated a senior SpecForce infiltrator.
+[Spatial]  17:24:20 [GROUP] Ma-o Mind Blast a Rebel Major General for 1010 points of damage.
+[Spatial]  17:24:21 [GROUP] You heals Fikiosa for 340 points of damage.
+[Spatial]  17:24:21 [GROUP] Leloglo Stun a Rebel Major General for 495 points of damage.
+[Spatial]  17:24:21 [GROUP] Leloglo has defeated a senior SpecForce infiltrator.
+[Spatial]  17:24:21 [GROUP] Fikiosa heals Fikiosa for 670 points of damage.
+[Spatial]  17:24:22 [GROUP] Rehote hits a SpecForce marine for 814 points of damage.
+[Spatial]  17:24:22 [GROUP] You looted A Damaged Datapad from a SpecForce marine.
+[Spatial]  17:24:22 [GROUP] You looted T-21 Rifle from a senior SpecForce infiltrator.
+[Spatial]  17:24:23 [GROUP] Ma-o Stun an Imperial Stormtrooper for 852 points of damage.
+[Spatial]  17:24:23 [GROUP] Leloglo hits a Rancor for 714 points of damage.
+[Spatial]  17:24:23 [GROUP] Eliemau Melee Hit a Rebel Colonel for 1214 points of damage.
+[Spatial]  17:24:23 [GROUP] Turd Fire Knockdown a SpecForce marine for 986 points of damage.
+[Spatial]  17:24:24 [GROUP] Fikiosa looted 297 credits from a Krayt Dragon.
+[Spatial]  17:24:24 [GROUP] a Rebel Colonel evades You's attack!
+[Spatial]  17:24:24 [GROUP] You hits a Rebel Colonel for 1135 points of damage.
+[Spatial]  17:24:24 [GROUP] a Krayt Dragon dodges Rehote's attack!
+[Spatial]  17:24:25 [GROUP] Turd hits a Rancor for 828 points of damage.
+[Spatial]  17:24:25 [GROUP] Eliemau hits a senior SpecForce infiltrator for 289 points of damage.
+[Spatial]  17:24:25 [GROUP] Fikiosa heals Leloglo for 569 points of damage.
+[Spatial]  17:24:25 [GROUP] You receive 3649 points of Weapon experience.
+[Spatial]  17:24:26 [GROUP] Rehote hits a SpecForce marine for 305 points of damage.
+[Spatial]  17:24:50 [GROUP] Rehote hits an Imperial Stormtrooper for 940 points of damage.
+[Spatial]  17:24:50 [GROUP] Rehote heals Eliemau for 200 points of damage.
+[Spatial]  17:24:51 [GROUP] Ma-o hits a Rancor for 390 points of damage.
+[Spatial]  17:24:51 [GROUP] Turd looted Heavy Two-Handed Sword from an Imperial Stormtrooper.
+[Spatial]  17:24:51 [GROUP] Ma-o has defeated a Rancor.
+[Spatial]  17:24:51 [GROUP] Eliemau Power Shot a senior SpecForce infiltrator for 775 points of damage.
+[Spatial]  17:24:52 [GROUP] Eliemau hits a senior SpecForce infiltrator for 328 points of damage.
+[Spatial]  17:24:52 [GROUP] You Bleeding Shot a Rancor for 1118 points of damage.
+[Spatial]  17:24:52 [GROUP] Leloglo hits a senior SpecForce infiltrator for 731 points of damage.
+[Spatial]  17:24:53 [GROUP] Rehote Fire Knockdown a senior SpecForce infiltrator for 1281 points of damage.
+[Spatial]  17:24:53 [GROUP] You receive 946 points of Surveying experience.
+[Spatial]  17:24:53 [GROUP] You hits an Imperial Stormtrooper for 606 points of damage.
+[Spatial]  17:24:58 [GROUP] Eliemau looted Enhanced DH-17 Carbine from a Rebel Colonel.
+[Spatial]  17:24:59 [GROUP] Leloglo hits a Rebel Major General for 462 points of damage.
+[Spatial]  17:24:59 [GROUP] You hits a Rebel Colonel for 397 points of damage.
+[Spatial]  17:24:59 [GROUP] Leloglo hits a SpecForce marine for 418 points of damage.
+[Spatial]  17:25:00 [GROUP] Turd hits a Krayt Dragon for 688 points of damage.
+[Spatial]  17:25:00 [GROUP] Eliemau looted 291 credits from a Rebel Colonel.
+[Spatial]  17:25:01 [GROUP] You receive 1172 points of Weapon experience.
+[Spatial]  17:25:01 [GROUP] Eliemau heals Ma-o for 373 points of damage.
+[Spatial]  17:25:01 [GROUP] Rehote Health Shot II a senior SpecForce infiltrator for 1174 points of damage.
+[Spatial]  17:25:01 [GROUP] Eliemau hits an Imperial Stormtrooper for 902 points of damage.
+[Spatial]  17:25:01 [GROUP] Ma-o Melee Hit a Rebel Colonel for 1164 points of damage.
+[Spatial]  17:25:02 [GROUP] Eliemau Force Choke a SpecForce marine for 1419 points of damage.
+[Spatial]  17:25:02 [GROUP] Eliemau hits a Rebel Colonel for 688 points of damage.
+[Spatial]  17:25:02 [GROUP] Turd looted Broken Electrobinoculars from an Imperial Stormtrooper.
+[Spatial]  17:25:02 [GROUP] Eliemau Scatter Shot a Rebel Colonel for 1243 points of damage.
+[Spatial]  17:25:03 [GROUP] Leloglo looted Broken Electrobinoculars from a Krayt Dragon.
+[Spatial]  17:25:03 [GROUP] Fikiosa hits an Imperial Stormtrooper for 541 points of damage.
+[Spatial]  17:25:03 [GROUP] Turd Force Choke a Rebel Colonel for 769 points of damage.
+[Spatial]  17:25:04 [GROUP] Fikiosa Health Shot II a Rebel Colonel for 1464 points of damage.
+[Spatial]  17:25:04 [GROUP] Turd hits a senior SpecForce infiltrator for 489 points of damage.
+[Spatial]  17:25:05 [GROUP] You has defeated a SpecForce marine.
+[Spatial]  17:25:05 [GROUP] Rehote hits a SpecForce marine for 628 points of damage.
+[Spatial]  17:25:06 [GROUP] Fikiosa hits a Krayt Dragon for 1147 points of damage.
+[Spatial]  17:25:06 [GROUP] Rehote heals You for 256 points of damage.
+[Spatial]  17:25:07 [GROUP] Turd heals Rehote for 408 points of damage.
+[Spatial]  17:25:07 [GROUP] Turd heals Fikiosa for 179 points of damage.
+[Spatial]  17:25:07 [GROUP] You looted A Damaged Datapad from a senior SpecForce infiltrator.
+[Spatial]  17:25:08 [GROUP] Leloglo hits a senior SpecForce infiltrator for 254 points of damage.
+[Spatial]  17:25:08 [GROUP] Ma-o hits a Krayt Dragon for 309 points of damage.
+[Spatial]  17:25:08 [GROUP] Rehote hits a Rancor for 332 points of damage.
+[Spatial]  17:25:09 [GROUP] Turd Force Choke a Rebel Major General for 954 points of damage.
+[Spatial]  17:25:09 [GROUP] Rehote looted 193 credits from a SpecForce marine.
+[Spatial]  17:25:09 [GROUP] Leloglo hits a Rebel Major General for 714 points of damage.
+[Spatial]  17:25:10 [GROUP] Turd Melee Hit a senior SpecForce infiltrator for 566 points of damage.
+[Spatial]  17:25:10 [GROUP] Fikiosa hits a Rebel Colonel for 794 points of damage.
+[Spatial]  17:25:11 [GROUP] Eliemau Mind Blast a Krayt Dragon for 763 points of damage.
+[Spatial]  17:25:11 [GROUP] Rehote hits a Krayt Dragon for 580 points of damage.
+[Spatial]  17:25:11 [GROUP] Rehote hits a senior SpecForce infiltrator for 364 points of damage.
+[Spatial]  17:25:11 [GROUP] You looted 364 credits from a SpecForce marine.
+[Spatial]  17:25:12 [GROUP] You has defeated a Rebel Major General.
+[Spatial]  17:25:12 [GROUP] Ma-o looted CDEF Pistol from a Rebel Major General.
+[Spatial]  17:25:12 [GROUP] Leloglo hits a Rebel Colonel for 613 points of damage.
+[Spatial]  17:25:13 [GROUP] Ma-o Stun an Imperial Stormtrooper for 1054 points of damage.
+[Spatial]  17:25:13 [GROUP] Rehote has defeated a Rancor.
+[Spatial]  17:25:14 [GROUP] Ma-o has defeated a Rebel Major General.
+[Spatial]  17:25:14 [GROUP] Fikiosa hits a SpecForce marine for 598 points of damage.
+[Spatial]  17:25:14 [GROUP] Fikiosa looted Broken Electrobinoculars from a Rebel Major General.
+[Spatial]  17:25:15 [GROUP] Eliemau heals Turd for 165 points of damage.
+[Spatial]  17:25:15 [GROUP] Ma-o has died.
+[Spatial]  17:25:15 [GROUP] Turd hits a SpecForce marine for 525 points of damage.
+[Spatial]  17:25:15 [GROUP] You receive 4210 points of Combat experience.
+[Spatial]  17:25:16 [GROUP] Rehote looted 361 credits from a SpecForce marine.
+[Spatial]  17:25:16 [GROUP] Fikiosa hits a Rancor for 451 points of damage.
+[Spatial]  17:25:17 [GROUP] Turd looted 210 credits from a Rebel Colonel.
+[Spatial]  17:25:17 [GROUP] Turd looted 391 credits from an Imperial Stormtrooper.
+[Spatial]  17:25:17 [GROUP] You hits a senior SpecForce infiltrator for 648 points of damage.
+[Spatial]  17:25:17 [GROUP] Leloglo Stun an Imperial Stormtrooper for 1249 points of damage.
+[Spatial]  17:25:18 [GROUP] Fikiosa hits a Krayt Dragon for 196 points of damage.
+[Spatial]  17:25:18 [GROUP] Eliemau Stun a Rebel Major General for 1287 points of damage.
+[Spatial]  17:25:18 [GROUP] Fikiosa has died.
+[Spatial]  17:39:45 [GROUP] Ma-o Force Choke a Rebel Colonel for 961 points of damage.
+[Spatial]  17:39:46 [GROUP] You hits an Imperial Stormtrooper for 422 points of damage.
+[Spatial]  17:39:46 [GROUP] Ma-o hits a Rebel Major General for 981 points of damage.
+[Spatial]  17:39:46 [GROUP] Turd has defeated a Krayt Dragon.
+[Spatial]  17:39:47 [GROUP] Leloglo hits a Rebel Major General for 1082 points of damage.
+[Spatial]  17:39:47 [GROUP] You hits a Rancor for 246 points of damage.
+[Spatial]  17:39:47 [GROUP] Turd looted Broken Electrobinoculars from a Rebel Colonel.
+[Spatial]  17:39:48 [GROUP] Leloglo hits a Rebel Colonel for 1199 points of damage.
+[Spatial]  17:39:48 [GROUP] Rehote Scatter Shot an Imperial Stormtrooper for 378 points of damage.
+[Spatial]  17:39:48 [GROUP] a Rebel Major General dodges Ma-o's attack!
+[Spatial]  17:39:49 [GROUP] Turd hits an Imperial Stormtrooper for 819 points of damage.
+[Spatial]  17:39:49 [GROUP] Ma-o hits a Rebel Major General for 237 points of damage.
+[Spatial]  17:39:49 [GROUP] Leloglo hits a Krayt Dragon for 280 points of damage.
+[Spatial]  17:39:50 [GROUP] Rehote Stun a Rebel Major General for 1268 points of damage.
+[Spatial]  17:39:50 [GROUP] Eliemau has defeated a Krayt Dragon.
+[Spatial]  17:39:50 [GROUP] You looted Broken Electrobinoculars from a senior SpecForce infiltrator.
+[Spatial]  17:39:50 [GROUP] Ma-o Health Shot II a Krayt Dragon for 1174 points of damage.
+[Spatial]  17:39:55 [GROUP] Fikiosa has defeated an Imperial Stormtrooper.
+[Spatial]  17:39:56 [GROUP] Leloglo hits a Krayt Dragon for 301 points of damage.
+[Spatial]  17:39:56 [GROUP] You Health Shot II an Imperial Stormtrooper for 1068 points of damage.
+[Spatial]  17:39:58 [GROUP] You Power Shot a Rebel Major General for 705 points of damage.
+[Spatial]  17:39:59 [GROUP] You receive 3381 points of Surveying experience.
+[Spatial]  17:39:59 [GROUP] Turd Stun a Rebel Major General for 1189 points of damage.
+[Spatial]  17:39:59 [GROUP] Leloglo hits a Rebel Major General for 455 points of damage.
+[Spatial]  17:39:59 [GROUP] Fikiosa has died.
+[Spatial]  17:40:00 [GROUP] You receive 2907 points of Weapon experience.
+[Spatial]  17:40:00 [GROUP] Rehote Fire Knockdown a Rebel Major General for 1292 points of damage.
+[Spatial]  17:40:00 [GROUP] You hits a Rancor for 769 points of damage.
+[Spatial]  17:40:01 [GROUP] Leloglo has defeated a Rebel Colonel.
+[Spatial]  17:40:01 [GROUP] You Mind Blast a senior SpecForce infiltrator for 950 points of damage.
+[Spatial]  17:40:01 [GROUP] Eliemau looted CDEF Pistol from a Rebel Colonel.
+[Spatial]  17:40:01 [GROUP] Eliemau heals Ma-o for 684 points of damage.
+[Spatial]  17:40:01 [GROUP] Ma-o Stun a Rebel Major General for 654 points of damage.
+[Spatial]  17:40:02 [GROUP] You receive 1787 points of Medicine experience.
+[Spatial]  18:24:55 [GROUP] Turd has defeated a SpecForce marine.
+[Spatial]  18:24:55 [GROUP] Leloglo hits a senior SpecForce infiltrator for 482 points of damage.
+[Spatial]  18:24:55 [GROUP] Fikiosa hits a Rebel Colonel for 291 points of damage.
+[Spatial]  18:24:56 [GROUP] Leloglo heals Fikiosa for 418 points of damage.
+[Spatial]  18:24:56 [GROUP] Leloglo looted T-21 Rifle from a SpecForce marine.
+[Spatial]  18:24:56 [GROUP] Ma-o Force Choke a Rebel Major General for 1356 points of damage.
+[Spatial]  18:24:57 [GROUP] Fikiosa Power Shot an Imperial Stormtrooper for 741 points of damage.
+[Spatial]  18:24:57 [GROUP] You hits a Krayt Dragon for 495 points of damage.
+[Spatial]  18:24:57 [GROUP] Eliemau heals You for 763 points of damage.
+[Spatial]  18:24:57 [GROUP] Ma-o looted 96 credits from an Imperial Stormtrooper.
+[Spatial]  18:24:57 [GROUP] Eliemau heals Leloglo for 390 points of damage.
+[Spatial]  18:24:58 [GROUP] Fikiosa hits a Rebel Major General for 719 points of damage.
+[Spatial]  18:24:58 [GROUP] Rehote hits a SpecForce marine for 1025 points of damage.
+[Spatial]  18:24:58 [GROUP] Eliemau Scatter Shot a Rebel Colonel for 635 points of damage.
+[Spatial]  18:24:59 [GROUP] You Mind Blast a SpecForce marine for 816 points of damage.
+[Spatial]  18:24:59 [GROUP] Turd hits a Rebel Major General for 507 points of damage.
+[Spatial]  18:24:59 [GROUP] Rehote hits a senior SpecForce infiltrator for 292 points of damage.
+[Spatial]  18:25:00 [GROUP] Turd hits a senior SpecForce infiltrator for 704 points of damage.
+[Spatial]  18:25:00 [GROUP] You looted 287 credits from an Imperial Stormtrooper.
+[Spatial]  18:25:00 [GROUP] Fikiosa has defeated a SpecForce marine.
+[Spatial]  18:25:01 [GROUP] You heals Leloglo for 581 points of damage.
+[Spatial]  18:25:01 [GROUP] Eliemau hits a senior SpecForce infiltrator for 1057 points of damage.
+[Spatial]  18:25:01 [GROUP] Eliemau has defeated a Rebel Major General.
+[Spatial]  18:25:01 [GROUP] a SpecForce marine evades Turd's attack!
+[Spatial]  18:25:02 [GROUP] You receive 4299 points of Medicine experience.
+[Spatial]  18:25:02 [GROUP] Fikiosa Mind Blast a Rancor for 804 points of damage.
+[Spatial]  18:25:02 [GROUP] Leloglo looted CDEF Pistol from a Rancor.
+[Spatial]  18:25:02 [GROUP] Leloglo looted Stun Baton from a senior SpecForce infiltrator.
+[Spatial]  18:25:03 [GROUP] Fikiosa Stun a Rancor for 362 points of damage.
+[Spatial]  18:25:03 [GROUP] Leloglo has defeated a Rancor.
+[Spatial]  18:25:03 [GROUP] Leloglo looted 355 credits from a senior SpecForce infiltrator.
+[Spatial]  18:25:03 [GROUP] Fikiosa looted CDEF Pistol from a Krayt Dragon.
+[Spatial]  18:25:04 [GROUP] a Rancor evades Eliemau's attack!
+[Spatial]  18:25:04 [GROUP] You Power Shot a senior SpecForce infiltrator for 1017 points of damage.
+[Spatial]  18:25:05 [GROUP] Fikiosa hits an Imperial Stormtrooper for 717 points of damage.
+[Spatial]  18:25:05 [GROUP] Turd hits a Rebel Colonel for 190 points of damage.
+[Spatial]  18:25:05 [GROUP] You receive 1202 points of Scout experience.
+[Spatial]  18:25:06 [GROUP] a SpecForce marine parries Turd's attack!
+[Spatial]  18:25:06 [GROUP] You has defeated a SpecForce marine.
+[Spatial]  18:25:06 [GROUP] Turd hits a Rebel Major General for 677 points of damage.
+[Spatial]  18:25:07 [GROUP] Turd hits an Imperial Stormtrooper for 307 points of damage.
+[Spatial]  18:25:07 [GROUP] Leloglo looted 500 credits from a Rebel Major General.
+[Spatial]  18:25:07 [GROUP] Ma-o hits a SpecForce marine for 449 points of damage.
+[Spatial]  18:25:07 [GROUP] Ma-o Fire Knockdown a Rebel Colonel for 864 points of damage.
+[Spatial]  18:25:08 [GROUP] Leloglo Power Shot a senior SpecForce infiltrator for 1008 points of damage.
+[Spatial]  18:25:08 [GROUP] Leloglo Stun a Rebel Colonel for 1096 points of damage.
+[Spatial]  18:25:08 [GROUP] Leloglo has defeated an Imperial Stormtrooper.
+[Spatial]  18:28:25 [GROUP] Eliemau looted 184 credits from a senior SpecForce infiltrator.
+[Spatial]  18:28:25 [GROUP] You receive 758 points of Surveying experience.
+[Spatial]  18:28:26 [GROUP] Ma-o looted 459 credits from a SpecForce marine.
+[Spatial]  18:28:26 [GROUP] Eliemau Power Shot a senior SpecForce infiltrator for 639 points of damage.
+[Spatial]  18:28:26 [GROUP] Turd Bleeding Shot a SpecForce marine for 752 points of damage.
+[Spatial]  18:28:27 [GROUP] Turd has died.
+[Spatial]  18:28:27 [GROUP] Leloglo has defeated a Rebel Colonel.
+[Spatial]  18:28:27 [GROUP] Fikiosa has defeated a Rebel Major General.
+[Spatial]  18:28:28 [GROUP] Ma-o heals Rehote for 741 points of damage.
+[Spatial]  18:28:28 [GROUP] You looted 394 credits from a senior SpecForce infiltrator.
+[Spatial]  18:28:28 [GROUP] Rehote looted 361 credits from an Imperial Stormtrooper.
+[Spatial]  18:28:28 [GROUP] Turd has died.
+[Spatial]  18:28:29 [GROUP] You heals Fikiosa for 783 points of damage.
+[Spatial]  18:28:29 [GROUP] You receive 3868 points of Combat experience.
+[Spatial]  18:28:29 [GROUP] Leloglo hits a Rancor for 470 points of damage.
+[Spatial]  18:28:30 [GROUP] Turd has defeated a senior SpecForce infiltrator.
+[Spatial]  18:28:30 [GROUP] Ma-o hits a Rebel Colonel for 208 points of damage.
+[Spatial]  18:28:31 [GROUP] You hits a Rebel Major General for 370 points of damage.
+[Spatial]  18:28:31 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 351 points of damage.
+[Spatial]  18:28:31 [GROUP] Eliemau Stun a Krayt Dragon for 1112 points of damage.
+[Spatial]  18:28:32 [GROUP] Eliemau hits a Rancor for 602 points of damage.
+[Spatial]  18:28:32 [GROUP] Rehote heals Rehote for 632 points of damage.
+[Spatial]  18:28:33 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 1103 points of damage.
+[Spatial]  18:28:33 [GROUP] Fikiosa hits a Rancor for 323 points of damage.
+[Spatial]  18:28:33 [GROUP] Fikiosa looted Broken Electrobinoculars from an Imperial Stormtrooper.
+[Spatial]  18:28:33 [GROUP] Leloglo Melee Hit a senior SpecForce infiltrator for 1252 points of damage.
+[Spatial]  18:28:34 [GROUP] Rehote heals Ma-o for 472 points of damage.
+[Spatial]  18:28:34 [GROUP] Ma-o hits a Rebel Major General for 702 points of damage.
+[Spatial]  18:28:35 [GROUP] Rehote Health Shot II a Rebel Colonel for 1194 points of damage.
+[Spatial]  18:28:35 [GROUP] Fikiosa looted Stun Baton from a Rebel Major General.
+[Spatial]  18:28:35 [GROUP] You has defeated a Rancor.
+[Spatial]  18:28:36 [GROUP] Turd hits a SpecForce marine for 776 points of damage.
+[Spatial]  18:28:36 [GROUP] Turd hits a senior SpecForce infiltrator for 852 points of damage.
+[Spatial]  18:28:37 [GROUP] Eliemau Power Shot a Krayt Dragon for 733 points of damage.
+[Spatial]  18:28:37 [GROUP] Ma-o looted Broken Electrobinoculars from a Rebel Colonel.
+[Spatial]  18:29:52 [GROUP] You heals You for 493 points of damage.
+[Spatial]  18:29:53 [GROUP] You looted 479 credits from a Rebel Colonel.
+[Spatial]  18:29:53 [GROUP] Leloglo Fire Knockdown a Rancor for 841 points of damage.
+[Spatial]  18:29:53 [GROUP] Turd hits a Rebel Colonel for 911 points of damage.
+[Spatial]  18:29:54 [GROUP] Ma-o looted CDEF Pistol from a SpecForce marine.
+[Spatial]  18:29:54 [GROUP] Ma-o looted T-21 Rifle from a Rebel Colonel.
+[Spatial]  18:29:54 [GROUP] You receive 3167 points of Combat experience.
+[Spatial]  18:29:55 [GROUP] Turd heals Eliemau for 141 points of damage.
+[Spatial]  18:29:55 [GROUP] Ma-o hits an Imperial Stormtrooper for 354 points of damage.
+[Spatial]  18:29:55 [GROUP] Leloglo hits a senior SpecForce infiltrator for 587 points of damage.
+[Spatial]  18:29:56 [GROUP] Eliemau Power Shot a senior SpecForce infiltrator for 519 points of damage.
+[Spatial]  18:29:56 [GROUP] Rehote hits a Rebel Major General for 678 points of damage.
+[Spatial]  18:29:56 [GROUP] Eliemau Bleeding Shot a Rebel Major General for 1287 points of damage.
+[Spatial]  18:29:56 [GROUP] Leloglo looted 223 credits from a Rebel Colonel.
+[Spatial]  18:29:57 [GROUP] Turd Health Shot II an Imperial Stormtrooper for 1402 points of damage.
+[Spatial]  18:29:57 [GROUP] Ma-o looted Heavy Two-Handed Sword from a Krayt Dragon.
+[Spatial]  18:29:57 [GROUP] Ma-o heals You for 462 points of damage.
+[Spatial]  18:29:58 [GROUP] Leloglo looted 325 credits from a Rancor.
+[Spatial]  18:29:58 [GROUP] You hits a Rebel Major General for 1072 points of damage.
+[Spatial]  18:29:58 [GROUP] Rehote hits a SpecForce marine for 906 points of damage.
+[Spatial]  18:29:59 [GROUP] You looted 337 credits from a Krayt Dragon.
+[Spatial]  18:29:59 [GROUP] Rehote heals Ma-o for 340 points of damage.
+[Spatial]  18:29:59 [GROUP] Eliemau heals Leloglo for 633 points of damage.
+[Spatial]  18:30:00 [GROUP] You has defeated a Krayt Dragon.
+[Spatial]  18:30:00 [GROUP] Leloglo hits a SpecForce marine for 799 points of damage.
+[Spatial]  18:30:00 [GROUP] Turd hits an Imperial Stormtrooper for 1034 points of damage.
+[Spatial]  18:30:00 [GROUP] Fikiosa Scatter Shot a Krayt Dragon for 324 points of damage.
+[Spatial]  18:30:03 [GROUP] Turd looted Stun Baton from a Krayt Dragon.
+[Spatial]  18:30:03 [GROUP] Eliemau hits a Krayt Dragon for 857 points of damage.
+[Spatial]  18:30:03 [GROUP] Fikiosa Force Choke a senior SpecForce infiltrator for 630 points of damage.
+[Spatial]  18:30:03 [GROUP] Fikiosa looted 454 credits from a Krayt Dragon.
+[Spatial]  18:30:04 [GROUP] Fikiosa hits a Rebel Colonel for 974 points of damage.
+[Spatial]  18:30:04 [GROUP] Leloglo Fire Knockdown an Imperial Stormtrooper for 463 points of damage.
+[Spatial]  18:30:04 [GROUP] Leloglo has defeated a Rebel Colonel.
+[Spatial]  18:30:05 [GROUP] You has defeated a Rancor.
+[Spatial]  18:30:05 [GROUP] Ma-o looted Work light from a senior SpecForce infiltrator.
+[Spatial]  18:34:17 [GROUP] Leloglo hits a Rebel Major General for 254 points of damage.
+[Spatial]  18:34:17 [GROUP] You hits a Rancor for 1093 points of damage.
+[Spatial]  18:34:17 [GROUP] Leloglo looted Enhanced DH-17 Carbine from a Rebel Colonel.
+[Spatial]  18:34:18 [GROUP] You looted 83 credits from a senior SpecForce infiltrator.
+[Spatial]  18:34:18 [GROUP] Leloglo Health Shot II a Rancor for 1387 points of damage.
+[Spatial]  18:34:18 [GROUP] Rehote hits a Rebel Colonel for 576 points of damage.
+[Spatial]  18:34:19 [GROUP] Eliemau Bleeding Shot an Imperial Stormtrooper for 1282 points of damage.
+[Spatial]  18:34:19 [GROUP] Rehote has defeated a Rebel Colonel.
+[Spatial]  18:34:19 [GROUP] You looted A Damaged Datapad from a Krayt Dragon.
+[Spatial]  18:34:20 [GROUP] Eliemau hits a Rebel Colonel for 268 points of damage.
+[Spatial]  18:34:20 [GROUP] Ma-o hits a senior SpecForce infiltrator for 474 points of damage.
+[Spatial]  18:34:20 [GROUP] Leloglo heals Rehote for 562 points of damage.
+[Spatial]  18:42:42 [GROUP] Ma-o heals Eliemau for 589 points of damage.
+[Spatial]  18:42:42 [GROUP] Eliemau Fire Knockdown a Rancor for 1093 points of damage.
+[Spatial]  18:42:43 [GROUP] Fikiosa hits a Rebel Colonel for 296 points of damage.
+[Spatial]  18:42:43 [GROUP] Eliemau looted Enhanced DH-17 Carbine from an Imperial Stormtrooper.
+[Spatial]  18:42:43 [GROUP] Eliemau Melee Hit a SpecForce marine for 460 points of damage.
+[Spatial]  18:42:44 [GROUP] You heals Fikiosa for 540 points of damage.
+[Spatial]  18:42:44 [GROUP] Leloglo hits a senior SpecForce infiltrator for 964 points of damage.
+[Spatial]  18:42:44 [GROUP] Eliemau looted 497 credits from a Rancor.
+[Spatial]  18:42:45 [GROUP] Turd Force Choke a SpecForce marine for 1424 points of damage.
+[Spatial]  18:42:45 [GROUP] Leloglo has died.
+[Spatial]  18:42:45 [GROUP] Leloglo Force Choke a SpecForce marine for 419 points of damage.
+[Spatial]  18:42:46 [GROUP] Leloglo Force Choke a SpecForce marine for 1294 points of damage.
+[Spatial]  18:42:46 [GROUP] You hits a SpecForce marine for 1010 points of damage.
+[Spatial]  18:42:46 [GROUP] Rehote looted 492 credits from a SpecForce marine.
+[Spatial]  18:42:47 [GROUP] You looted 429 credits from an Imperial Stormtrooper.
+[Spatial]  18:42:47 [GROUP] Turd hits an Imperial Stormtrooper for 806 points of damage.
+[Spatial]  18:42:47 [GROUP] Ma-o looted 85 credits from an Imperial Stormtrooper.
+[Spatial]  18:42:48 [GROUP] Turd Melee Hit a Rebel Major General for 1041 points of damage.
+[Spatial]  18:42:48 [GROUP] Eliemau Force Choke an Imperial Stormtrooper for 1388 points of damage.
+[Spatial]  18:42:49 [GROUP] Eliemau looted 146 credits from a Krayt Dragon.
+[Spatial]  18:43:04 [GROUP] Rehote looted CDEF Pistol from a Rebel Major General.
+[Spatial]  18:43:05 [GROUP] Ma-o hits a Rebel Colonel for 503 points of damage.
+[Spatial]  18:43:05 [GROUP] Eliemau has defeated a senior SpecForce infiltrator.
+[Spatial]  18:43:05 [GROUP] You looted 205 credits from a Krayt Dragon.
+[Spatial]  18:43:06 [GROUP] Fikiosa has died.
+[Spatial]  18:43:06 [GROUP] Eliemau hits a Rancor for 746 points of damage.
+[Spatial]  18:43:06 [GROUP] Eliemau Fire Knockdown a Rancor for 401 points of damage.
+[Spatial]  18:43:06 [GROUP] Turd looted 99 credits from a Rebel Major General.
+[Spatial]  18:43:07 [GROUP] You looted 191 credits from a Krayt Dragon.
+[Spatial]  18:43:07 [GROUP] You looted 452 credits from a Rebel Major General.
+[Spatial]  18:43:07 [GROUP] Fikiosa hits a Rancor for 1098 points of damage.
+[Spatial]  18:43:08 [GROUP] Eliemau Stun a SpecForce marine for 385 points of damage.
+[Spatial]  18:43:08 [GROUP] Ma-o looted Heavy Two-Handed Sword from a Krayt Dragon.
+[Spatial]  18:43:08 [GROUP] Eliemau looted Enhanced DH-17 Carbine from a Rebel Colonel.
+[Spatial]  18:43:09 [GROUP] Rehote heals Rehote for 119 points of damage.
+[Spatial]  18:43:09 [GROUP] Rehote hits an Imperial Stormtrooper for 218 points of damage.
+[Spatial]  18:43:09 [GROUP] Leloglo hits a Rebel Colonel for 161 points of damage.
+[Spatial]  18:43:10 [GROUP] Eliemau Mind Blast a Rebel Colonel for 949 points of damage.
+[Spatial]  18:43:10 [GROUP] Ma-o hits a Rebel Colonel for 532 points of damage.
+[Spatial]  18:43:11 [GROUP] Turd hits a Rebel Major General for 998 points of damage.
+[Spatial]  18:43:11 [GROUP] Fikiosa Force Choke a Rebel Colonel for 1458 points of damage.
+[Spatial]  18:43:11 [GROUP] You receive 3120 points of Weapon experience.
+[Spatial]  18:43:11 [GROUP] Fikiosa heals Turd for 714 points of damage.
+[Spatial]  18:43:12 [GROUP] Turd hits a Rebel Colonel for 573 points of damage.
+[Spatial]  18:43:12 [GROUP] You receive 2785 points of Medicine experience.
+[Spatial]  18:43:12 [GROUP] Leloglo has defeated a Krayt Dragon.
+[Spatial]  18:43:13 [GROUP] You Bleeding Shot a Krayt Dragon for 1109 points of damage.
+[Spatial]  18:43:13 [GROUP] You hits a Rebel Major General for 923 points of damage.
+[Spatial]  18:43:13 [GROUP] Eliemau hits a Rebel Major General for 878 points of damage.
+[Spatial]  18:43:14 [GROUP] Fikiosa hits a Krayt Dragon for 1108 points of damage.
+[Spatial]  18:43:14 [GROUP] Turd looted 365 credits from a Rebel Colonel.
+[Spatial]  18:43:15 [GROUP] Rehote hits a senior SpecForce infiltrator for 1172 points of damage.
+[Spatial]  18:43:15 [GROUP] Leloglo looted 293 credits from a Rebel Major General.
+[Spatial]  18:43:15 [GROUP] Turd Bleeding Shot a Rancor for 1379 points of damage.
+[Spatial]  18:43:15 [GROUP] Rehote Scatter Shot a senior SpecForce infiltrator for 1266 points of damage.
+[Spatial]  18:43:16 [GROUP] Fikiosa hits a SpecForce marine for 404 points of damage.
+[Spatial]  18:43:16 [GROUP] Rehote Power Shot a Rancor for 398 points of damage.
+[Spatial]  18:43:16 [GROUP] Eliemau looted 371 credits from an Imperial Stormtrooper.
+[Spatial]  18:43:16 [GROUP] You Force Choke a Krayt Dragon for 1442 points of damage.
+[Spatial]  18:43:17 [GROUP] Rehote hits a Rancor for 396 points of damage.
+[Spatial]  18:43:17 [GROUP] Ma-o heals Leloglo for 648 points of damage.
+[Spatial]  18:43:17 [GROUP] You looted Work light from a Rebel Colonel.
+[Spatial]  18:43:18 [GROUP] Rehote hits a Rebel Major General for 1157 points of damage.
+[Spatial]  18:43:18 [GROUP] Leloglo hits a senior SpecForce infiltrator for 272 points of damage.
+[Spatial]  18:43:18 [GROUP] You receive 4745 points of Surveying experience.
+[Spatial]  18:43:18 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 845 points of damage.
+[Spatial]  18:43:18 [GROUP] Turd has defeated a senior SpecForce infiltrator.
+[Spatial]  18:43:19 [GROUP] Ma-o looted Work light from an Imperial Stormtrooper.
+[Spatial]  18:43:19 [GROUP] Ma-o hits a Rancor for 452 points of damage.
+[Spatial]  18:43:20 [GROUP] You receive 1675 points of Combat experience.
+[Spatial]  18:43:20 [GROUP] Ma-o hits a Krayt Dragon for 1163 points of damage.
+[Spatial]  18:43:20 [GROUP] Rehote has defeated a Rancor.
+[Spatial]  18:43:21 [GROUP] Eliemau hits a SpecForce marine for 603 points of damage.
+[Spatial]  18:43:21 [GROUP] Rehote looted A Damaged Datapad from a Rebel Major General.
+[Spatial]  18:43:21 [GROUP] Rehote looted 377 credits from an Imperial Stormtrooper.
+[Spatial]  18:43:21 [GROUP] Rehote Force Choke a SpecForce marine for 1226 points of damage.
+[Spatial]  18:43:22 [GROUP] Eliemau Health Shot II a Krayt Dragon for 791 points of damage.
+[Spatial]  19:56:11 [GROUP] Fikiosa Force Choke a SpecForce marine for 876 points of damage.
+[Spatial]  19:56:11 [GROUP] You receive 638 points of Surveying experience.
+[Spatial]  19:56:12 [GROUP] Leloglo looted Work light from a Rebel Colonel.
+[Spatial]  19:56:12 [GROUP] Leloglo Fire Knockdown a Rancor for 625 points of damage.
+[Spatial]  19:56:12 [GROUP] Ma-o hits a Krayt Dragon for 437 points of damage.
+[Spatial]  19:56:12 [GROUP] Leloglo looted 405 credits from an Imperial Stormtrooper.
+[Spatial]  19:56:13 [GROUP] Fikiosa has defeated a senior SpecForce infiltrator.
+[Spatial]  19:56:13 [GROUP] Turd has defeated a Krayt Dragon.
+[Spatial]  19:56:14 [GROUP] Ma-o heals Turd for 140 points of damage.
+[Spatial]  19:56:14 [GROUP] Fikiosa hits an Imperial Stormtrooper for 901 points of damage.
+[Spatial]  19:56:14 [GROUP] Fikiosa hits a SpecForce marine for 221 points of damage.
+[Spatial]  19:56:15 [GROUP] You looted 198 credits from a Krayt Dragon.
+[Spatial]  19:56:15 [GROUP] Ma-o Mind Blast an Imperial Stormtrooper for 1474 points of damage.
+[Spatial]  19:56:15 [GROUP] Leloglo has defeated a SpecForce marine.
+[Spatial]  19:56:15 [GROUP] Rehote has died.
+[Spatial]  19:56:16 [GROUP] Eliemau hits a Rancor for 915 points of damage.
+[Spatial]  19:56:18 [GROUP] Rehote looted 236 credits from a senior SpecForce infiltrator.
+[Spatial]  19:56:18 [GROUP] You looted T-21 Rifle from a SpecForce marine.
+[Spatial]  19:56:19 [GROUP] Leloglo hits a SpecForce marine for 1119 points of damage.
+[Spatial]  19:56:19 [GROUP] Eliemau hits an Imperial Stormtrooper for 877 points of damage.
+[Spatial]  19:56:19 [GROUP] Turd Melee Hit a SpecForce marine for 1154 points of damage.
+[Spatial]  19:56:19 [GROUP] Fikiosa hits a SpecForce marine for 393 points of damage.
+[Spatial]  19:56:20 [GROUP] You hits a Krayt Dragon for 1060 points of damage.
+[Spatial]  19:56:20 [GROUP] You receive 1148 points of Weapon experience.
+[Spatial]  19:56:20 [GROUP] Ma-o hits a Krayt Dragon for 815 points of damage.
+[Spatial]  19:56:21 [GROUP] Fikiosa hits a Rancor for 729 points of damage.
+[Spatial]  19:56:21 [GROUP] Eliemau heals Turd for 407 points of damage.
+[Spatial]  19:56:21 [GROUP] Rehote hits a Rebel Colonel for 823 points of damage.
+[Spatial]  19:56:21 [GROUP] You hits a Rebel Major General for 1093 points of damage.
+[Spatial]  19:56:22 [GROUP] Eliemau looted T-21 Rifle from a Krayt Dragon.
+[Spatial]  19:56:22 [GROUP] Leloglo has defeated a Rebel Colonel.
+[Spatial]  19:56:22 [GROUP] You looted Work light from a Rebel Major General.
+[Spatial]  19:56:22 [GROUP] Eliemau looted 277 credits from a Rebel Major General.
+[Spatial]  19:56:23 [GROUP] Turd Force Choke a senior SpecForce infiltrator for 454 points of damage.
+[Spatial]  19:56:23 [GROUP] You hits a SpecForce marine for 1031 points of damage.
+[Spatial]  19:56:23 [GROUP] You looted 444 credits from a SpecForce marine.
+[Spatial]  19:56:23 [GROUP] You has defeated a Rebel Major General.
+[Spatial]  19:56:24 [GROUP] Leloglo hits a senior SpecForce infiltrator for 1144 points of damage.
+[Spatial]  19:56:24 [GROUP] Leloglo Stun a Rancor for 945 points of damage.
+[Spatial]  19:56:24 [GROUP] Fikiosa Health Shot II a Rebel Colonel for 1146 points of damage.
+[Spatial]  19:56:25 [GROUP] Turd has defeated a Rebel Colonel.
+[Spatial]  19:56:25 [GROUP] Ma-o hits an Imperial Stormtrooper for 430 points of damage.
+[Spatial]  19:56:25 [GROUP] You receive 2367 points of Weapon experience.
+[Spatial]  19:56:25 [GROUP] Fikiosa looted CDEF Pistol from a Rebel Colonel.
+[Spatial]  19:56:25 [GROUP] Ma-o Power Shot a Rebel Colonel for 897 points of damage.
+[Spatial]  19:56:26 [GROUP] Rehote hits a Krayt Dragon for 851 points of damage.
+[Spatial]  19:56:26 [GROUP] Turd looted 472 credits from a Rebel Colonel.
+[Spatial]  19:56:26 [GROUP] Rehote hits a SpecForce marine for 276 points of damage.
+[Spatial]  19:56:27 [GROUP] Fikiosa Power Shot a Rebel Colonel for 818 points of damage.
+[Spatial]  19:56:27 [GROUP] Leloglo has defeated a senior SpecForce infiltrator.
+[Spatial]  19:56:27 [GROUP] Rehote looted 287 credits from a Rebel Colonel.
+[Spatial]  19:56:28 [GROUP] Fikiosa hits a Rancor for 930 points of damage.
+[Spatial]  19:56:28 [GROUP] You hits a Rancor for 441 points of damage.
+[Spatial]  19:56:29 [GROUP] Fikiosa looted Stun Baton from a Krayt Dragon.
+[Spatial]  19:56:29 [GROUP] Rehote Power Shot a Krayt Dragon for 629 points of damage.
+[Spatial]  19:56:29 [GROUP] Leloglo hits a Rebel Colonel for 1065 points of damage.
+[Spatial]  19:56:30 [GROUP] You has defeated a Rebel Colonel.
+[Spatial]  19:56:30 [GROUP] Ma-o Health Shot II a Rebel Major General for 1453 points of damage.
+[Spatial]  19:56:30 [GROUP] You has defeated a Rancor.
+[Spatial]  19:56:31 [GROUP] Leloglo hits a senior SpecForce infiltrator for 435 points of damage.
+[Spatial]  19:56:31 [GROUP] Ma-o hits a Krayt Dragon for 554 points of damage.
+[Spatial]  19:56:31 [GROUP] Leloglo Scatter Shot a Rebel Colonel for 1246 points of damage.
+[Spatial]  19:56:32 [GROUP] Fikiosa has defeated a Rebel Major General.
+[Spatial]  19:56:32 [GROUP] Fikiosa hits a Krayt Dragon for 321 points of damage.
+[Spatial]  19:56:32 [GROUP] You has defeated a Rancor.
+[Spatial]  19:56:32 [GROUP] Leloglo Mind Blast a Rebel Colonel for 1022 points of damage.
+[Spatial]  19:56:32 [GROUP] Turd hits an Imperial Stormtrooper for 1068 points of damage.
+[Spatial]  19:56:33 [GROUP] Ma-o Bleeding Shot a SpecForce marine for 365 points of damage.
+[Spatial]  19:56:33 [GROUP] Rehote hits an Imperial Stormtrooper for 475 points of damage.
+[Spatial]  19:56:34 [GROUP] Ma-o hits a Rebel Colonel for 348 points of damage.
+[Spatial]  19:56:34 [GROUP] Fikiosa hits a Rebel Major General for 732 points of damage.
+[Spatial]  19:56:34 [GROUP] You hits a SpecForce marine for 1013 points of damage.
+[Spatial]  19:56:35 [GROUP] You hits a Rebel Colonel for 1040 points of damage.
+[Spatial]  19:56:35 [GROUP] Ma-o Stun a senior SpecForce infiltrator for 751 points of damage.
+[Spatial]  19:56:36 [GROUP] Ma-o hits a senior SpecForce infiltrator for 238 points of damage.
+[Spatial]  19:56:36 [GROUP] Leloglo looted T-21 Rifle from a Rebel Colonel.
+[Spatial]  19:56:36 [GROUP] You hits a SpecForce marine for 254 points of damage.
+[Spatial]  19:56:37 [GROUP] Fikiosa looted Enhanced DH-17 Carbine from a Rebel Colonel.
+[Spatial]  19:56:37 [GROUP] Ma-o has defeated an Imperial Stormtrooper.
+[Spatial]  19:56:38 [GROUP] Rehote looted Broken Electrobinoculars from a Krayt Dragon.
+[Spatial]  19:56:38 [GROUP] Ma-o has defeated a Rebel Major General.
+[Spatial]  19:56:38 [GROUP] You hits a Rebel Major General for 1100 points of damage.
+[Spatial]  19:56:38 [GROUP] Fikiosa looted 311 credits from a Rebel Major General.
+[Spatial]  19:56:38 [GROUP] Leloglo hits an Imperial Stormtrooper for 567 points of damage.
+[Spatial]  19:56:39 [GROUP] Rehote looted 173 credits from a senior SpecForce infiltrator.
+[Spatial]  19:56:39 [GROUP] You receive 4507 points of Scout experience.
+[Spatial]  19:56:39 [GROUP] You looted Heavy Two-Handed Sword from an Imperial Stormtrooper.
+[Spatial]  19:56:40 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 181 points of damage.
+[Spatial]  19:56:40 [GROUP] Fikiosa has defeated a SpecForce marine.
+[Spatial]  19:56:40 [GROUP] Ma-o Melee Hit a senior SpecForce infiltrator for 1339 points of damage.
+[Spatial]  19:56:40 [GROUP] Eliemau Power Shot a Rebel Major General for 813 points of damage.
+[Spatial]  19:56:41 [GROUP] Fikiosa Fire Knockdown a SpecForce marine for 859 points of damage.
+[Spatial]  19:56:41 [GROUP] Ma-o hits a Rebel Major General for 895 points of damage.
+[Spatial]  19:56:41 [GROUP] Leloglo hits a SpecForce marine for 916 points of damage.
+[Spatial]  19:56:42 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 1083 points of damage.
+[Spatial]  19:56:42 [GROUP] Rehote looted Heavy Two-Handed Sword from a Rancor.
+[Spatial]  19:56:42 [GROUP] Rehote hits a Rebel Colonel for 991 points of damage.
+[Spatial]  19:56:42 [GROUP] Ma-o hits a Rebel Major General for 749 points of damage.
+[Spatial]  19:56:42 [GROUP] Leloglo Health Shot II a Rancor for 1433 points of damage.
+[Spatial]  19:56:43 [GROUP] Leloglo has defeated a Rebel Major General.
+[Spatial]  19:56:43 [GROUP] Fikiosa Scatter Shot a Krayt Dragon for 987 points of damage.
+[Spatial]  19:56:43 [GROUP] You looted T-21 Rifle from a Krayt Dragon.
+[Spatial]  19:56:44 [GROUP] You looted 87 credits from an Imperial Stormtrooper.
+[Spatial]  19:56:44 [GROUP] Leloglo hits a Rebel Major General for 359 points of damage.
+[Spatial]  19:56:44 [GROUP] You has defeated a Rebel Major General.
+[Spatial]  19:56:44 [GROUP] Leloglo heals Turd for 303 points of damage.
+[Spatial]  19:56:45 [GROUP] You looted 191 credits from a senior SpecForce infiltrator.
+[Spatial]  19:56:45 [GROUP] Leloglo looted CDEF Pistol from a Rebel Major General.
+[Spatial]  19:56:45 [GROUP] You has defeated a Rebel Colonel.
+[Spatial]  19:56:45 [GROUP] Leloglo hits a Krayt Dragon for 832 points of damage.
+[Spatial]  19:56:46 [GROUP] Leloglo hits an Imperial Stormtrooper for 839 points of damage.
+[Spatial]  19:56:46 [GROUP] You receive 3781 points of Surveying experience.
+[Spatial]  19:56:46 [GROUP] Turd looted 153 credits from a Rebel Colonel.
+[Spatial]  19:56:46 [GROUP] You looted 120 credits from a Rebel Major General.
+[Spatial]  19:56:47 [GROUP] Ma-o hits a Rebel Colonel for 706 points of damage.
+[Spatial]  19:56:47 [GROUP] You looted Enhanced DH-17 Carbine from a Rancor.
+[Spatial]  19:56:47 [GROUP] Ma-o heals You for 256 points of damage.
+[Spatial]  19:56:48 [GROUP] Eliemau has defeated a Rebel Colonel.
+[Spatial]  19:56:48 [GROUP] You receive 4308 points of Weapon experience.
+[Spatial]  19:56:48 [GROUP] Eliemau has defeated a Rebel Colonel.
+[Spatial]  19:56:49 [GROUP] Fikiosa has died.
+[Spatial]  19:56:49 [GROUP] Fikiosa Health Shot II an Imperial Stormtrooper for 418 points of damage.
+[Spatial]  19:56:49 [GROUP] Fikiosa hits a Rebel Colonel for 1015 points of damage.
+[Spatial]  19:56:49 [GROUP] You receive 3008 points of Medicine experience.
+[Spatial]  19:56:50 [GROUP] Leloglo has defeated a Rebel Major General.
+[Spatial]  19:56:50 [GROUP] Turd hits a Rebel Major General for 160 points of damage.
+[Spatial]  19:56:50 [GROUP] Eliemau has defeated an Imperial Stormtrooper.
+[Spatial]  19:56:51 [GROUP] Ma-o looted 418 credits from a Rebel Major General.
+[Spatial]  19:56:51 [GROUP] Leloglo Fire Knockdown a Krayt Dragon for 899 points of damage.
+[Spatial]  19:56:51 [GROUP] Eliemau hits a Krayt Dragon for 269 points of damage.
+[Spatial]  19:56:51 [GROUP] Rehote hits a Rancor for 822 points of damage.
+[Spatial]  19:56:52 [GROUP] You receive 398 points of Combat experience.
+[Spatial]  19:56:52 [GROUP] Leloglo Bleeding Shot a SpecForce marine for 1402 points of damage.
+[Spatial]  19:56:52 [GROUP] You receive 3951 points of Scout experience.
+[Spatial]  19:56:53 [GROUP] Leloglo has defeated an Imperial Stormtrooper.
+[Spatial]  19:56:53 [GROUP] Fikiosa hits a SpecForce marine for 197 points of damage.
+[Spatial]  19:56:53 [GROUP] Rehote Stun a SpecForce marine for 985 points of damage.
+[Spatial]  19:56:53 [GROUP] Rehote hits a Rancor for 884 points of damage.
+[Spatial]  19:56:54 [GROUP] Turd has defeated a Rebel Major General.
+[Spatial]  19:56:54 [GROUP] You Bleeding Shot a SpecForce marine for 736 points of damage.
+[Spatial]  19:56:54 [GROUP] Rehote heals Eliemau for 369 points of damage.
+[Spatial]  20:07:37 [GROUP] Eliemau Stun a Rebel Colonel for 1334 points of damage.
+[Spatial]  20:07:37 [GROUP] Turd Force Choke a Krayt Dragon for 822 points of damage.
+[Spatial]  20:07:37 [GROUP] Leloglo looted CDEF Pistol from a senior SpecForce infiltrator.
+[Spatial]  20:07:38 [GROUP] Fikiosa hits a SpecForce marine for 1043 points of damage.
+[Spatial]  20:07:38 [GROUP] Ma-o looted 132 credits from a senior SpecForce infiltrator.
+[Spatial]  20:07:38 [GROUP] You hits a Rebel Major General for 237 points of damage.
+[Spatial]  20:07:38 [GROUP] Leloglo heals Rehote for 242 points of damage.
+[Spatial]  20:07:39 [GROUP] You receive 2055 points of Medicine experience.
+[Spatial]  20:07:39 [GROUP] You hits a senior SpecForce infiltrator for 433 points of damage.
+[Spatial]  20:07:39 [GROUP] Eliemau Bleeding Shot a senior SpecForce infiltrator for 1289 points of damage.
+[Spatial]  20:07:40 [GROUP] Eliemau looted Heavy Two-Handed Sword from a Rebel Colonel.
+[Spatial]  20:07:40 [GROUP] Eliemau heals Fikiosa for 558 points of damage.
+[Spatial]  20:07:41 [GROUP] Ma-o hits a Krayt Dragon for 970 points of damage.
+[Spatial]  20:07:41 [GROUP] Fikiosa hits a senior SpecForce infiltrator for 999 points of damage.
+[Spatial]  20:07:41 [GROUP] Rehote Mind Blast an Imperial Stormtrooper for 1437 points of damage.
+[Spatial]  20:07:41 [GROUP] Rehote hits an Imperial Stormtrooper for 1036 points of damage.
+[Spatial]  20:07:42 [GROUP] Eliemau Melee Hit a Rebel Colonel for 1380 points of damage.
+[Spatial]  20:07:42 [GROUP] Eliemau Bleeding Shot a SpecForce marine for 1296 points of damage.
+[Spatial]  20:07:42 [GROUP] You receive 777 points of Surveying experience.
+[Spatial]  20:07:43 [GROUP] You receive 818 points of Combat experience.
+[Spatial]  20:07:43 [GROUP] You receive 3877 points of Medicine experience.
+[Spatial]  20:07:43 [GROUP] Ma-o hits a Rebel Major General for 449 points of damage.
+[Spatial]  20:07:44 [GROUP] Turd hits a Rebel Colonel for 681 points of damage.
+[Spatial]  20:07:44 [GROUP] You hits a SpecForce marine for 873 points of damage.
+[Spatial]  20:07:44 [GROUP] Eliemau has defeated a Rebel Colonel.
+[Spatial]  20:07:44 [GROUP] Fikiosa has defeated a SpecForce marine.
+[Spatial]  20:07:45 [GROUP] Fikiosa looted 212 credits from a Krayt Dragon.
+[Spatial]  20:07:45 [GROUP] Turd looted Enhanced DH-17 Carbine from a senior SpecForce infiltrator.
+[Spatial]  20:07:45 [GROUP] Turd heals Rehote for 520 points of damage.
+[Spatial]  20:07:46 [GROUP] You looted 389 credits from a Rebel Colonel.
+[Spatial]  20:07:46 [GROUP] Eliemau hits a Rancor for 417 points of damage.
+[Spatial]  20:07:46 [GROUP] Turd hits a Krayt Dragon for 1143 points of damage.
+[Spatial]  20:07:47 [GROUP] Ma-o hits a Rebel Major General for 720 points of damage.
+[Spatial]  20:07:47 [GROUP] Eliemau has died.
+[Spatial]  20:07:47 [GROUP] Turd Scatter Shot an Imperial Stormtrooper for 867 points of damage.
+[Spatial]  20:07:48 [GROUP] Eliemau Power Shot a Rancor for 939 points of damage.
+[Spatial]  20:07:48 [GROUP] Eliemau has defeated a Rebel Major General.
+[Spatial]  20:07:48 [GROUP] Turd hits a senior SpecForce infiltrator for 764 points of damage.
+[Spatial]  20:07:48 [GROUP] Leloglo heals You for 361 points of damage.
+[Spatial]  20:07:48 [GROUP] Ma-o heals You for 436 points of damage.
+[Spatial]  20:07:49 [GROUP] Eliemau hits a SpecForce marine for 449 points of damage.
+[Spatial]  20:07:49 [GROUP] Leloglo Fire Knockdown a Rebel Colonel for 421 points of damage.
+[Spatial]  20:07:49 [GROUP] You looted 327 credits from a Rebel Colonel.
+[Spatial]  20:07:50 [GROUP] Leloglo looted 254 credits from a Rancor.
+[Spatial]  20:07:50 [GROUP] You receive 4205 points of Combat experience.
+[Spatial]  20:07:50 [GROUP] Rehote looted Work light from a Rebel Major General.
+[Spatial]  20:07:51 [GROUP] Turd hits an Imperial Stormtrooper for 431 points of damage.
+[Spatial]  20:07:51 [GROUP] Leloglo looted Stun Baton from a Rancor.
+[Spatial]  20:07:51 [GROUP] Ma-o hits an Imperial Stormtrooper for 174 points of damage.
+[Spatial]  20:07:51 [GROUP] Turd Mind Blast a Rebel Major General for 1377 points of damage.
+[Spatial]  20:07:52 [GROUP] Ma-o hits a Rebel Colonel for 386 points of damage.
+[Spatial]  20:07:52 [GROUP] Eliemau Fire Knockdown a Rebel Major General for 735 points of damage.
+[Spatial]  20:07:52 [GROUP] You has defeated a SpecForce marine.
+[Spatial]  20:07:53 [GROUP] a Rebel Colonel dodges Eliemau's attack!
+[Spatial]  20:07:53 [GROUP] Fikiosa has died.
+[Spatial]  20:07:53 [GROUP] Turd Bleeding Shot a senior SpecForce infiltrator for 1151 points of damage.
+[Spatial]  20:07:53 [GROUP] Fikiosa Fire Knockdown a Rancor for 1301 points of damage.
+[Spatial]  20:07:53 [GROUP] Ma-o looted Enhanced DH-17 Carbine from a Krayt Dragon.
+[Spatial]  20:07:54 [GROUP] Rehote heals Fikiosa for 306 points of damage.
+[Spatial]  20:07:54 [GROUP] Fikiosa has defeated a Rebel Major General.
+[Spatial]  20:07:55 [GROUP] a Krayt Dragon evades Leloglo's attack!
+[Spatial]  20:07:55 [GROUP] You heals Ma-o for 529 points of damage.
+[Spatial]  20:07:55 [GROUP] Eliemau looted 464 credits from an Imperial Stormtrooper.
+[Spatial]  20:07:56 [GROUP] You looted Stun Baton from a Rancor.
+[Spatial]  20:07:56 [GROUP] Eliemau Melee Hit a Krayt Dragon for 398 points of damage.
+[Spatial]  20:07:56 [GROUP] Rehote Force Choke a Rebel Colonel for 1472 points of damage.
+[Spatial]  20:07:56 [GROUP] Ma-o Scatter Shot a Rancor for 630 points of damage.
+[Spatial]  20:07:56 [GROUP] a Rancor dodges Rehote's attack!
+[Spatial]  20:07:57 [GROUP] You heals Eliemau for 624 points of damage.
+[Spatial]  20:07:57 [GROUP] Eliemau looted Heavy Two-Handed Sword from a senior SpecForce infiltrator.

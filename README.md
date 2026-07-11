@@ -5,9 +5,9 @@ A lightweight, real-time combat log parser for Star Wars Galaxies (SWG). This ap
 ## ✨ Features
 
 - **Real-time Damage Meter:** Track your DPS and total damage output.
-- **Leaderboards:** See how players rank during your session.
-- **Loot Tracker:** Keep a history of items looted in the last 30 minutes.
-- **Detailed Analytics:** View specific logs for individual players, including damage taken and healing.
+- **Unified Leaderboard:** A single, top-level display showing player rankings with Name, Damage, and Healing columns.
+- **Seamless Drill-down:** Click any player in the leaderboard to view their detailed combat logs (Damage Dealt, Taken, Healing, XP, Kills) directly in the same window.
+- **Loot Tracker:** Keep a history of items looted for the entire session.
 - **Customizable UI:** 
     - Adjust opacity/transparency for the perfect overlay.
     - Snap windows together for a clean layout.

@@ -6,7 +6,7 @@ from constants import (
     PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, WINDOW_BG, COLOR_DEFAULT_CLASS,
     TITLE_GRADIENT_START
 )
-from utils import create_rainbow_name
+from utils import create_rainbow_name, get_time_ago
 from windows.base_window import BasePopoutWindow
 
 class LeaderboardWindow(BasePopoutWindow):
@@ -65,84 +65,113 @@ class LeaderboardWindow(BasePopoutWindow):
             self.nav_row.pack_forget() # Hidden initially
 
             self.nav_player_label = tk.Label(self.nav_row, text="", bg=PANEL_DARK, fg=ACCENT_BLUE, font=("Segoe UI", 9, "bold"))
-            self.nav_player_label.pack(side=tk.LEFT, padx=10)
+            self.nav_player_label.pack(side=tk.LEFT, padx=10, pady=5)
 
             # Navigation Buttons in nav row
-            self.back_btn = tk.Label(self.nav_row, text="⬆", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2", padx=5)
+            self.back_btn = tk.Label(self.nav_row, text="⬆", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 11, "bold"), cursor="hand2", padx=10, pady=5)
             self.back_btn.bind("<Button-1>", lambda e: self.go_back())
             self.back_btn.pack(side=tk.RIGHT)
+            self.back_btn.bind("<Enter>", lambda e: self.back_btn.config(fg=TEXT_PRIMARY))
+            self.back_btn.bind("<Leave>", lambda e: self.back_btn.config(fg=TEXT_SECONDARY))
             
-            self.top_btn = tk.Label(self.nav_row, text="↩", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2", padx=5)
+            self.top_btn = tk.Label(self.nav_row, text="↩", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 11, "bold"), cursor="hand2", padx=10, pady=5)
             self.top_btn.bind("<Button-1>", lambda e: self.go_to_top())
             self.top_btn.pack(side=tk.RIGHT)
+            self.top_btn.bind("<Enter>", lambda e: self.top_btn.config(fg=TEXT_PRIMARY))
+            self.top_btn.bind("<Leave>", lambda e: self.top_btn.config(fg=TEXT_SECONDARY))
 
-            # Category Selector
-            self.c_frame = tk.Frame(self.content_container, bg=PANEL_DARK); self.c_frame.pack(fill=tk.X, pady=(0, 5))
-            self.cat_btns = {}
-            
-            def make_cat_cmd(v): return lambda e: [setattr(self.app, 'leaderboard_cat', v), setattr(self, 'last_full_refresh', 0), self.refresh()]
-
-            for text, val in [("DAMAGE", "damage"), ("HEALING", "healing"), ("LOOT", "loot")]:
-                btn = tk.Label(self.c_frame, text=text, bg=PANEL_DARK, fg=TEXT_SECONDARY, 
-                              font=("Segoe UI", 7, "bold"), padx=5, pady=3, cursor="hand2")
-                btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
-                btn.bind("<Button-1>", make_cat_cmd(val))
-                self.cat_btns[val] = btn
 
             # Header
             self.h_frame = tk.Frame(self.content_container, bg=PANEL_DARK); self.h_frame.pack(fill=tk.X, pady=(0, 5))
-            self.lbl_rank = tk.Label(self.h_frame, text="RANK", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
-            self.lbl_rank.pack(side=tk.LEFT, padx=5)
+            self.h_frame.pack_forget() # Hidden initially
             self.lbl_player = tk.Label(self.h_frame, text="PLAYER", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
-            self.lbl_player.pack(side=tk.LEFT, padx=20)
-            self.lbl_cat_head = tk.Label(self.h_frame, text="DAMAGE", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
-            self.lbl_cat_head.pack(side=tk.RIGHT, padx=5) 
+            self.lbl_player.pack(side=tk.LEFT, padx=5)
+            self.lbl_healing = tk.Label(self.h_frame, text="HEALING", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
+            self.lbl_healing.pack(side=tk.RIGHT, padx=5)
+            self.lbl_damage = tk.Label(self.h_frame, text="DAMAGE", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
+            self.lbl_damage.pack(side=tk.RIGHT, padx=10)
         
-            # Scrollable area
-            canvas = tk.Canvas(self.content_container, bg=WINDOW_BG, highlightthickness=0)
-            scrollbar = ttk.Scrollbar(self.content_container, orient="vertical", command=canvas.yview)
-            self.list_container = tk.Frame(canvas, bg=WINDOW_BG)
+            self.list_container_canvas = tk.Canvas(self.content_container, bg=WINDOW_BG, highlightthickness=0)
+            self.list_scrollbar = ttk.Scrollbar(self.content_container, orient="vertical", command=self.list_container_canvas.yview)
+            self.list_container = tk.Frame(self.list_container_canvas, bg=WINDOW_BG)
 
-            self.list_container.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-            canvas.create_window((0, 0), window=self.list_container, anchor="nw")
+            self.list_container.bind("<Configure>", lambda e: self.list_container_canvas.configure(scrollregion=self.list_container_canvas.bbox("all")))
+            self.list_container_canvas.create_window((0, 0), window=self.list_container, anchor="nw")
             
             def _on_canvas_configure(e):
-                 canvas.itemconfig(1, width=e.width)
-            canvas.bind("<Configure>", _on_canvas_configure)
+                 self.list_container_canvas.itemconfig(1, width=e.width)
+            self.list_container_canvas.bind("<Configure>", _on_canvas_configure)
             
-            canvas.configure(yscrollcommand=scrollbar.set)
+            self.list_container_canvas.configure(yscrollcommand=self.list_scrollbar.set)
             
             def _on_mousewheel(event):
                 if not self.window: return
-                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+                self.list_container_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
             
             self.window.bind("<MouseWheel>", _on_mousewheel)
             self.list_container.bind("<MouseWheel>", _on_mousewheel)
-            canvas.bind("<MouseWheel>", _on_mousewheel)
+            self.list_container_canvas.bind("<MouseWheel>", _on_mousewheel)
 
-            canvas.pack(side="left", fill="both", expand=True)
-            scrollbar.pack(side="right", fill="y")
+            # DO NOT pack yet
             
-            do_full = True
+            # Drill-down view (Full combat log)
+            self.detail_view = tk.Frame(self.content_container, bg=WINDOW_BG)
+            # DO NOT pack yet
+            
+            # Filter Tabs (All, Dealt, Taken)
+            t_frame = tk.Frame(self.detail_view, bg=PANEL_DARK); t_frame.pack(fill=tk.X, pady=(0, 5))
+            self.tab_btns = {}
+            
+            def make_tab_cmd(v): return lambda e: [setattr(self.app, 'details_tab', v), setattr(self, 'last_full_refresh', 0), self.refresh()]
 
-        # Update Category Buttons
-        cat = getattr(self.app, 'leaderboard_cat', 'damage')
-        if hasattr(self, 'cat_btns'):
-            for v, btn in self.cat_btns.items():
-                try:
-                    if btn.winfo_exists():
-                        active = (v == cat)
-                        btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
-                except: pass
-        if hasattr(self, 'lbl_cat_head') and self.lbl_cat_head.winfo_exists():
-            self.lbl_cat_head.config(text=cat.upper())
+            for text, val in [("DEALT", "dealt"), ("TAKEN", "taken")]:
+                btn = tk.Label(t_frame, text=text, bg=PANEL_DARK, fg=TEXT_SECONDARY, 
+                              font=("Segoe UI", 8, "bold"), padx=10, pady=5, cursor="hand2")
+                btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                btn.bind("<Button-1>", make_tab_cmd(val))
+                self.tab_btns[val] = btn
+
+            # Stats area
+            s_f = tk.Frame(self.detail_view, bg=WINDOW_BG, padx=5); s_f.pack(fill=tk.X, pady=5)
+            self.lbl_det_dmg = tk.Label(s_f, text="DAMAGE: 0", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 10, "bold"))
+            self.lbl_det_dmg.pack(side=tk.LEFT, padx=(0, 20))
+            self.lbl_det_heal = tk.Label(s_f, text="HEALING: 0", bg=WINDOW_BG, fg="#44ff44", font=("Segoe UI", 10, "bold"))
+            self.lbl_det_heal.pack(side=tk.LEFT)
+
+            # Log area
+            tk.Label(self.detail_view, text="RECENT EVENTS:", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=5, pady=(5, 2))
+            log_frame = tk.Frame(self.detail_view, bg=PANEL_DARK, padx=1, pady=1)
+            log_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            
+            self.txt = tk.Text(log_frame, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Consolas", 9), relief=tk.FLAT, borderwidth=0, padx=5, pady=5)
+            # Set tab stops: Column 1 (Amount) starts at 0, Column 2 (Detail) at 1.2cm, Column 3 (Time) at 6.0cm
+            self.txt.configure(tabs=('1.2c', '6.0c'))
+            sb_txt = ttk.Scrollbar(log_frame, orient="vertical", command=self.txt.yview)
+            self.txt.configure(yscrollcommand=sb_txt.set)
+            
+            def _on_txt_mousewheel(event):
+                self.txt.yview_scroll(int(-1*(event.delta/120)), "units")
+            self.txt.bind("<MouseWheel>", _on_txt_mousewheel)
+            
+            sb_txt.pack(side=tk.RIGHT, fill=tk.Y)
+            self.txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            # Bind context menus
+            self.window.bind("<Button-3>", self.show_context_menu)
+            self.scroll_canvas.bind("<Button-3>", self.show_context_menu)
+            self.player_list_frame.bind("<Button-3>", self.show_context_menu)
+            self.txt.bind("<Button-3>", self.show_context_menu)
+
+            do_full = True
 
         # Update Title and Navigation Buttons
         is_drill = getattr(self, 'is_drilldown', False)
         if is_drill:
             if hasattr(self, 'nav_row') and self.nav_row.winfo_exists():
-                if hasattr(self, 'c_frame') and self.c_frame.winfo_exists() and self.c_frame.winfo_ismapped():
-                    self.nav_row.pack(fill=tk.X, before=self.c_frame)
+                if hasattr(self, 'h_frame') and self.h_frame.winfo_exists() and self.h_frame.winfo_ismapped():
+                    self.nav_row.pack(fill=tk.X, before=self.h_frame)
+                elif hasattr(self, 'detail_view') and self.detail_view.winfo_exists() and self.detail_view.winfo_ismapped():
+                    self.nav_row.pack(fill=tk.X, before=self.detail_view)
                 else:
                     self.nav_row.pack(fill=tk.X)
                 p_name = getattr(self, 'selected_player', 'PLAYER')
@@ -150,7 +179,7 @@ class LeaderboardWindow(BasePopoutWindow):
                 is_you = ctx_text == "YOU" or ctx_text == self.app.char_name.get().upper()
                 self.nav_player_label.config(text=ctx_text, fg="#00ffff" if is_you else ACCENT_BLUE)
 
-            try: self.title_bar.itemconfig(self.title_label, text="LEADERBOARD")
+            try: self.title_bar.itemconfig(self.title_label, text="DETAILS")
             except: pass
         else:
             if hasattr(self, 'nav_row'):
@@ -158,13 +187,22 @@ class LeaderboardWindow(BasePopoutWindow):
             try: self.title_bar.itemconfig(self.title_label, text="Leaderboard")
             except: pass
 
+        if is_drill:
+            if hasattr(self, 'h_frame'): self.h_frame.pack_forget()
+            if hasattr(self, 'list_container_canvas'): self.list_container_canvas.pack_forget()
+            if hasattr(self, 'list_scrollbar'): self.list_scrollbar.pack_forget()
+            if hasattr(self, 'detail_view'): self.detail_view.pack(fill=tk.BOTH, expand=True)
+        else:
+            if hasattr(self, 'detail_view'): self.detail_view.pack_forget()
+            if hasattr(self, 'h_frame'): self.h_frame.pack(fill=tk.X, pady=(0, 5))
+            if hasattr(self, 'list_container_canvas'): self.list_container_canvas.pack(side="left", fill="both", expand=True)
+            if hasattr(self, 'list_scrollbar'): self.list_scrollbar.pack(side="right", fill="y")
+
         if not do_full: return
         self.last_full_refresh = now
 
         # Use caching to minimize flicker
-        cat = getattr(self.app, 'leaderboard_cat', 'damage')
-        
-        cache_key = f"main_{cat}_{len(self.app.player_data)}_{sum(d.get(cat,0) for d in self.app.player_data.values())}"
+        cache_key = f"main_{len(self.app.player_data)}_{sum(d.get('damage',0)+d.get('healing',0) for d in self.app.player_data.values())}"
         
         if not force and hasattr(self, '_last_cache_key') and self._last_cache_key == cache_key:
             return
@@ -173,128 +211,155 @@ class LeaderboardWindow(BasePopoutWindow):
 
         # Main Leaderboard View
         data_list = []
-        if cat in ["damage", "healing"]:
-            for name, data in self.app.player_data.items():
-                val = data.get(cat, 0)
-                if val > 0: data_list.append((name, val))
-        elif cat == "loot":
-            for name, data in self.app.player_data.items():
-                val = data.get("total_credits", 0)
-                if val > 0: data_list.append((name, val))
-            if not data_list:
-                for name, data in self.app.player_data.items():
-                    val = data.get("lb_loot", 0)
-                    if val > 0: data_list.append((name, val))
+        from utils import is_probable_player
+        for name, data in self.app.player_data.items():
+            if not is_probable_player(name, self.app.bosses): continue
+            dmg = data.get("damage", 0)
+            heal = data.get("healing", 0)
+            if dmg > 0 or heal > 0:
+                data_list.append((name, dmg, heal))
 
+        # Sort by damage primarily
         sorted_list = sorted(data_list, key=lambda x: x[1], reverse=True)
-        merged_data = {name: val for name, val in sorted_list}
-        if self.app.enable_sync.get() and self.app.sync_data:
-            remote_data = self.app.sync_data.get("data", {}).get(cat, {})
-            seen_recently = set(self.app.locally_seen_players.keys())
-            for remote_name, remote_val in remote_data.items():
-                if remote_name == self.app.char_name.get(): continue
-                if cat in ["damage", "healing"] and remote_name not in seen_recently and remote_name not in merged_data: continue
-                if cat == "loot":
-                    count = len(remote_val) if isinstance(remote_val, list) else remote_val
-                    merged_data[remote_name] = max(merged_data.get(remote_name, 0), count)
-                else:
-                    merged_data[remote_name] = max(merged_data.get(remote_name, 0), remote_val)
-
-        final_list = sorted(merged_data.items(), key=lambda x: x[1], reverse=True)
-
-        # Reordering check for smoother updates
-        current_order = getattr(self, '_last_order', [])
-        new_order = [name for name, _ in final_list[:100]]
-        order_changed = current_order != new_order
-        self._last_order = new_order
-
-        # Clear or setup Drill-down vs Main
-        if is_drill:
-            self.c_frame.pack_forget()
-            self.h_frame.pack_forget()
-        else:
-            self.c_frame.pack(fill=tk.X, pady=(0, 5))
-            self.h_frame.pack(fill=tk.X, pady=(0, 5))
-
-        current_widgets = self.list_container.winfo_children()
         
+        # Merge with sync data if available
+        merged_data = {name: {"damage": dmg, "healing": heal} for name, dmg, heal in sorted_list}
+        if self.app.enable_sync.get() and self.app.sync_data:
+            remote_dmg_data = self.app.sync_data.get("data", {}).get("damage", {})
+            remote_heal_data = self.app.sync_data.get("data", {}).get("healing", {})
+            seen_recently = set(self.app.locally_seen_players.keys())
+            
+            all_remote_players = set(remote_dmg_data.keys()) | set(remote_heal_data.keys())
+            for remote_name in all_remote_players:
+                if remote_name == self.app.char_name.get(): continue
+                if remote_name not in seen_recently and remote_name not in merged_data: continue
+                
+                r_dmg = remote_dmg_data.get(remote_name, 0)
+                r_heal = remote_heal_data.get(remote_name, 0)
+                
+                if remote_name not in merged_data:
+                    merged_data[remote_name] = {"damage": r_dmg, "healing": r_heal}
+                else:
+                    merged_data[remote_name]["damage"] = max(merged_data[remote_name]["damage"], r_dmg)
+                    merged_data[remote_name]["healing"] = max(merged_data[remote_name]["healing"], r_heal)
+
+        final_list = sorted(merged_data.items(), key=lambda x: x[1]["damage"], reverse=True)
+        top_players = final_list[:100]
+
         if is_drill:
             p = getattr(self, 'selected_player', '')
-            for widget in current_widgets: widget.destroy()
+            tab = getattr(self.app, 'details_tab', 'dealt')
+            if tab not in ['dealt', 'taken']: tab = 'dealt'
             
-            tk.Label(self.list_container, text=f"DETAILS FOR {p.upper()}", bg=WINDOW_BG, fg="#00ffff" if (p == "You" or p == self.app.char_name.get()) else ACCENT_BLUE, font=("Segoe UI", 10, "bold")).pack(anchor="w", pady=(10, 5))
+            # Update Tab Buttons
+            if hasattr(self, 'tab_btns'):
+                for v, btn in self.tab_btns.items():
+                    try:
+                        active = (v == tab)
+                        btn.config(bg=ACCENT_BLUE if active else PANEL_DARK, fg=TEXT_PRIMARY if active else TEXT_SECONDARY)
+                    except: pass
+
+            data = self.app.player_data.get(p, {})
             
-            p_data = self.app.player_data.get(p, {})
-            stats_to_show = [
-                ("Total Damage", f"{p_data.get('damage', 0):,}"),
-                ("Total Healing", f"{p_data.get('healing', 0):,}"),
-                ("Mob Kills", f"{p_data.get('lb_mobs', 0):,}"),
-                ("Loot Credits", f"{p_data.get('total_credits', 0):,}cr"),
-            ]
+            self.update_if_changed(self.lbl_det_dmg, f"DAMAGE: {data.get('damage', 0):,}")
+            self.update_if_changed(self.lbl_det_heal, f"HEALING: {data.get('healing', 0):,}")
+            self.lbl_det_dmg.config(font=("Consolas", 9, "bold"))
+            self.lbl_det_heal.config(font=("Consolas", 9, "bold"))
+
+            log_key = f"log_{p}_{tab}_{len(data.get('logs', []))}_{data.get('damage', 0)}_{data.get('healing', 0)}"
+            # Force update if time ago needs refresh (every 5s)
+            time_ago_refresh = (time.time() - getattr(self, '_last_time_ago_update', 0) >= 5.0)
             
-            for label, val in stats_to_show:
-                row = tk.Frame(self.list_container, bg=PANEL_DARK, padx=10, pady=5)
-                row.pack(fill=tk.X, pady=1)
-                tk.Label(row, text=label, bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 9)).pack(side=tk.LEFT)
-                tk.Label(row, text=val, bg=PANEL_DARK, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold")).pack(side=tk.RIGHT)
+            if not force and hasattr(self, '_last_log_key') and self._last_log_key == log_key and not time_ago_refresh:
+                return
             
+            self._last_log_key = log_key
+            self._last_time_ago_update = time.time()
+
+            events = data.get('logs', [])
+            # Filter out loot events as requested
+            events = [e for e in events if e.get('type') != 'loot']
+            
+            if tab == "dealt":
+                events = [e for e in events if e.get('type') in ["dealt", "healing"]]
+            elif tab == "taken":
+                events = [e for e in events if e.get('type') == "taken"]
+            
+            new_log_text = ""
+            for e in events[-100:]:
+                time_str = get_time_ago(e.get('time'))
+                msg = e.get('msg', '')
+                e_type = e.get('type')
+                
+                # Columnar formatting: [Amount] \t [Detail] \t [Time]
+                if e_type in ['taken', 'dealt', 'healing', 'xp']:
+                    parts = msg.split(' ', 1)
+                    if len(parts) == 2:
+                        final_msg = f"{parts[0]}\t{parts[1]}\t{time_str}"
+                    else:
+                        final_msg = f"{msg}\t\t{time_str}"
+                elif e_type == 'kill':
+                    if msg.startswith("Defeated "):
+                        final_msg = f"KILL\t{msg[9:]}\t{time_str}"
+                    else:
+                        final_msg = f"KILL\t{msg}\t{time_str}"
+                else:
+                    final_msg = f"\t{msg}\t{time_str}"
+                
+                new_log_text += final_msg + "\n"
+            
+            try:
+                if self.txt.get("1.0", tk.END).strip() != new_log_text.strip():
+                    self.txt.config(state=tk.NORMAL)
+                    self.txt.delete("1.0", tk.END)
+                    self.txt.insert(tk.END, new_log_text)
+                    self.txt.see(tk.END)
+                    self.txt.config(state=tk.DISABLED)
+            except: pass
             return
 
-        if not final_list[:100]:
-            if current_widgets:
-                # Check if we already have the "No data" label to avoid redundant destruction
-                is_no_data = False
-                if len(current_widgets) == 1 and isinstance(current_widgets[0], tk.Label):
-                    if "No " in current_widgets[0].cget("text"):
-                        is_no_data = True
-                
-                if not is_no_data:
-                    for widget in current_widgets: widget.destroy()
-                    tk.Label(self.list_container, text=f"No {cat} data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
-            elif not current_widgets:
-                tk.Label(self.list_container, text=f"No {cat} data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
-            self._last_order = []
-            self._row_frames = {}
-            self._row_widgets = {}
-            self._row_ranks = {}
+        if not top_players:
+            if not hasattr(self, '_no_data_lbl'):
+                for widget in self.list_container.winfo_children(): widget.destroy()
+                self._no_data_lbl = tk.Label(self.list_container, text="No combat data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic"))
+                self._no_data_lbl.pack(pady=20)
+                self._row_frames = {}
+                self._row_widgets = {}
             return
+        
+        if hasattr(self, '_no_data_lbl'):
+            self._no_data_lbl.destroy()
+            del self._no_data_lbl
 
         # Ensure we have row tracking
         if not hasattr(self, '_row_frames'): self._row_frames = {}
         if not hasattr(self, '_row_widgets'): self._row_widgets = {}
-        if not hasattr(self, '_row_ranks'): self._row_ranks = {}
 
-        if len(self._row_frames) != len(final_list[:100]) or force:
-            # Full rebuild if count changed or forced
-            for widget in current_widgets: widget.destroy()
-            self._row_frames = {}
-            self._row_widgets = {}
-            self._row_ranks = {}
-            
-            for i, (name, val) in enumerate(final_list[:100]):
-                f = tk.Frame(self.list_container, bg=WINDOW_BG); f.pack(fill=tk.X, pady=2)
+        # Reorder and update
+        for i, (name, val_dict) in enumerate(top_players):
+            if name not in self._row_frames:
+                f = tk.Frame(self.list_container, bg=WINDOW_BG)
                 self._row_frames[name] = f
                 
                 is_boss = name.lower() in self.app.bosses
                 is_you = name == "You" or name == self.app.char_name.get()
                 color = "#00ffff" if is_you else TEXT_PRIMARY
                 
-                rank_lbl = tk.Label(f, text=f"#{i+1}", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "bold"))
-                rank_lbl.pack(side=tk.LEFT, padx=5)
-                self._row_ranks[name] = rank_lbl
-                
                 if is_boss:
                     p_lbl = tk.Label(f, text=name, bg=WINDOW_BG, fg="#ff4444", font=("Segoe UI", 9, "bold"))
-                    p_lbl.pack(side=tk.LEFT, padx=10)
+                    p_lbl.pack(side=tk.LEFT, padx=5)
                 else:
                     name_container = tk.Frame(f, bg=WINDOW_BG)
-                    name_container.pack(side=tk.LEFT, padx=10)
+                    name_container.pack(side=tk.LEFT, padx=5)
                     create_rainbow_name(name_container, self.app, name, color, ("Segoe UI", 9, "bold"), WINDOW_BG)
                 
-                val_str = f"{val:,.0f}cr" if cat == "loot" and "total_credits" in self.app.player_data.get(name, {}) else f"{val:,.0f}"
-                val_lbl = tk.Label(f, text=val_str, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 9))
-                val_lbl.pack(side=tk.RIGHT, padx=5)
-                self._row_widgets[name] = val_lbl
+                h_lbl = tk.Label(f, text="0", bg=WINDOW_BG, fg="#44ff44", font=("Consolas", 9, "bold"), width=10, anchor="e")
+                h_lbl.pack(side=tk.RIGHT, padx=5)
+                self._row_widgets[f"{name}_heal"] = h_lbl
+
+                d_lbl = tk.Label(f, text="0", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Consolas", 9, "bold"), width=10, anchor="e")
+                d_lbl.pack(side=tk.RIGHT, padx=5)
+                self._row_widgets[f"{name}_dmg"] = d_lbl
                 
                 f.bind("<Button-1>", lambda e, p=name: self.drill_down(p))
                 for child in f.winfo_children():
@@ -302,40 +367,72 @@ class LeaderboardWindow(BasePopoutWindow):
                     if isinstance(child, tk.Frame):
                         for subchild in child.winfo_children():
                             subchild.bind("<Button-1>", lambda e, p=name: self.drill_down(p))
-        else:
-            # Reorder existing frames and update values
-            for i, (name, val) in enumerate(final_list[:100]):
-                if name in self._row_frames:
-                    f = self._row_frames[name]
-                    f.pack_forget()
-                    f.pack(fill=tk.X, pady=2)
-                    
-                    # Update rank
-                    rank_str = f"#{i+1}"
-                    if self._row_ranks[name].cget("text") != rank_str:
-                        self._row_ranks[name].config(text=rank_str)
-                    
-                    # Update value
-                    val_str = f"{val:,.0f}cr" if cat == "loot" and "total_credits" in self.app.player_data.get(name, {}) else f"{val:,.0f}"
-                    if self._row_widgets[name].cget("text") != val_str:
-                        self._row_widgets[name].config(text=val_str)
-                else:
-                    # This shouldn't happen if len matches, but safety first
-                    force = True
-                    self.refresh(force=True)
-                    return
+            
+            f = self._row_frames[name]
+            f.pack(fill=tk.X, pady=2) # Repack in order
+            
+            self.update_if_changed(self._row_widgets[f"{name}_dmg"], f"{val_dict['damage']:,.0f}")
+            self.update_if_changed(self._row_widgets[f"{name}_heal"], f"{val_dict['healing']:,.0f}")
+
+        # Cleanup old rows
+        current_top_names = set(name for name, _ in top_players)
+        to_delete = [name for name in self._row_frames if name not in current_top_names]
+        for name in to_delete:
+            self._row_frames[name].destroy()
+            del self._row_frames[name]
+            del self._row_widgets[f"{name}_dmg"]
+            del self._row_widgets[f"{name}_heal"]
+        return
         return
 
     def drill_down(self, player):
         self.is_drilldown = True
         self.selected_player = player
         self.last_full_refresh = 0
+        setattr(self.app, 'details_tab', 'dealt')
+        # Reset scroll position when drilling down
+        if hasattr(self, 'list_container_canvas'):
+            self.list_container_canvas.yview_moveto(0)
+        if hasattr(self, 'txt'):
+            self.txt.yview_moveto(0)
         self.refresh(force=True)
 
     def go_to_top(self):
         self.is_drilldown = False
         self.last_full_refresh = 0
+        # Reset scroll position when going back to top
+        if hasattr(self, 'list_container_canvas'):
+            self.list_container_canvas.yview_moveto(0)
         self.refresh(force=True)
 
     def go_back(self):
         self.go_to_top()
+
+    def copy_to_clipboard(self):
+        if getattr(self, 'is_drilldown', False):
+            # Copy logs for the selected player
+            try:
+                content = self.txt.get("1.0", tk.END).strip()
+                if content:
+                    p = getattr(self, 'selected_player', 'PLAYER')
+                    tab = getattr(self.app, 'details_tab', 'dealt').upper()
+                    header = f"Combat Log for {p.upper()} ({tab}):\n"
+                    self.window.clipboard_clear()
+                    self.window.clipboard_append(header + content)
+            except: pass
+        else:
+            # Copy rankings
+            from utils import is_probable_player
+            players = sorted([n for n in self.app.player_data.keys() if is_probable_player(n, self.app.bosses)], 
+                            key=lambda p: self.app.player_data.get(p, {}).get("damage", 0), reverse=True)
+            if not players: return
+            
+            lines = ["PLAYER\tDAMAGE\tHEALING"]
+            for p in players:
+                data = self.app.player_data.get(p, {})
+                dmg = data.get('damage', 0)
+                heal = data.get('healing', 0)
+                lines.append(f"{p}\t{dmg:,}\t{heal:,}")
+            
+            self.window.clipboard_clear()
+            self.window.clipboard_append("\n".join(lines))

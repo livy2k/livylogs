@@ -5,7 +5,7 @@ from constants import (
     WINDOW_BG, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, TEXT_ACCENT, COLOR_DEFAULT_CLASS,
     TITLE_GRADIENT_START
 )
-from utils import create_rainbow_name
+from utils import create_rainbow_name, get_time_ago
 from windows.base_window import BasePopoutWindow
 
 class DetailsWindow(BasePopoutWindow):
@@ -58,26 +58,35 @@ class DetailsWindow(BasePopoutWindow):
 
             # Navigation Row (Below title bar, contains icons and player name in drilldown)
             self.nav_row = tk.Frame(self.content_container, bg=PANEL_DARK)
-            self.nav_row.pack(fill=tk.X)
-            self.nav_row.pack_forget() # Hidden initially
+            # DO NOT pack yet
 
-            self.nav_player_label = tk.Label(self.nav_row, text="", bg=PANEL_DARK, fg=TEXT_ACCENT, font=("Segoe UI", 9, "bold"))
-            self.nav_player_label.pack(side=tk.LEFT, padx=10)
+            self.nav_player_label = tk.Label(self.nav_row, text="", bg=PANEL_DARK, fg=ACCENT_BLUE, font=("Segoe UI", 9, "bold"))
+            self.nav_player_label.pack(side=tk.LEFT, padx=10, pady=5)
 
             # Navigation Buttons in nav row
-            self.back_btn = tk.Label(self.nav_row, text="⬆", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2", padx=5)
+            self.back_btn = tk.Label(self.nav_row, text="⬆", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 11, "bold"), cursor="hand2", padx=10, pady=5)
             self.back_btn.bind("<Button-1>", lambda e: self.go_back())
             self.back_btn.pack(side=tk.RIGHT)
+            self.back_btn.bind("<Enter>", lambda e: self.back_btn.config(fg=TEXT_PRIMARY))
+            self.back_btn.bind("<Leave>", lambda e: self.back_btn.config(fg=TEXT_SECONDARY))
             
-            self.top_btn = tk.Label(self.nav_row, text="↩", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12, "bold"), cursor="hand2", padx=5)
+            self.top_btn = tk.Label(self.nav_row, text="↩", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 11, "bold"), cursor="hand2", padx=10, pady=5)
             self.top_btn.bind("<Button-1>", lambda e: self.go_to_top())
             self.top_btn.pack(side=tk.RIGHT)
+            self.top_btn.bind("<Enter>", lambda e: self.top_btn.config(fg=TEXT_PRIMARY))
+            self.top_btn.bind("<Leave>", lambda e: self.top_btn.config(fg=TEXT_SECONDARY))
 
             self.top_view = tk.Frame(self.content_container, bg=WINDOW_BG)
+            # DO NOT pack yet
             
             # Header
-            h_frame = tk.Frame(self.top_view, bg=PANEL_DARK); h_frame.pack(fill=tk.X, pady=(0, 5))
-            tk.Label(h_frame, text="PLAYER", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(side=tk.LEFT, padx=5)
+            self.h_frame = tk.Frame(self.top_view, bg=PANEL_DARK); self.h_frame.pack(fill=tk.X, pady=(0, 5))
+            self.lbl_player = tk.Label(self.h_frame, text="PLAYER", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
+            self.lbl_player.pack(side=tk.LEFT, padx=5)
+            self.lbl_healing = tk.Label(self.h_frame, text="HEALING", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
+            self.lbl_healing.pack(side=tk.RIGHT, padx=5)
+            self.lbl_damage = tk.Label(self.h_frame, text="DAMAGE", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"))
+            self.lbl_damage.pack(side=tk.RIGHT, padx=10)
 
             # Scrollable area
             self.scroll_canvas = tk.Canvas(self.top_view, bg=WINDOW_BG, highlightthickness=0)
@@ -108,6 +117,7 @@ class DetailsWindow(BasePopoutWindow):
 
             # Drill-down view
             self.detail_view = tk.Frame(self.content_container, bg=WINDOW_BG)
+            # DO NOT pack yet
             
             # Filter Tabs (All, Dealt, Taken)
             t_frame = tk.Frame(self.detail_view, bg=PANEL_DARK); t_frame.pack(fill=tk.X, pady=(0, 5))
@@ -115,7 +125,7 @@ class DetailsWindow(BasePopoutWindow):
             
             def make_tab_cmd(v): return lambda e: [setattr(self.app, 'details_tab', v), setattr(self, 'last_full_refresh', 0), self.refresh()]
 
-            for text, val in [("ALL", "all"), ("DEALT", "dealt"), ("TAKEN", "taken")]:
+            for text, val in [("DEALT", "dealt"), ("TAKEN", "taken")]:
                 btn = tk.Label(t_frame, text=text, bg=PANEL_DARK, fg=TEXT_SECONDARY, 
                               font=("Segoe UI", 8, "bold"), padx=10, pady=5, cursor="hand2")
                 btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
@@ -135,6 +145,8 @@ class DetailsWindow(BasePopoutWindow):
             log_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             
             self.txt = tk.Text(log_frame, bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Consolas", 9), relief=tk.FLAT, borderwidth=0, padx=5, pady=5)
+            # Set tab stops: Column 1 (Amount) starts at 0, Column 2 (Detail) at 1.2cm, Column 3 (Time) at 6.0cm
+            self.txt.configure(tabs=('1.2c', '6.0c')) 
             sb_txt = ttk.Scrollbar(log_frame, orient="vertical", command=self.txt.yview)
             self.txt.configure(yscrollcommand=sb_txt.set)
             
@@ -144,6 +156,13 @@ class DetailsWindow(BasePopoutWindow):
             
             sb_txt.pack(side=tk.RIGHT, fill=tk.Y)
             self.txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            
+            # Bind context menus
+            self.window.bind("<Button-3>", self.show_context_menu)
+            self.scroll_canvas.bind("<Button-3>", self.show_context_menu)
+            self.player_list_frame.bind("<Button-3>", self.show_context_menu)
+            self.txt.bind("<Button-3>", self.show_context_menu)
+            
             do_full = True
 
         # Update Title and Navigation Buttons
@@ -159,7 +178,7 @@ class DetailsWindow(BasePopoutWindow):
                 p_name = getattr(self, 'selected_player', 'PLAYER')
                 ctx_text = p_name.upper()
                 is_you = ctx_text == "YOU" or ctx_text == self.app.char_name.get().upper()
-                self.nav_player_label.config(text=ctx_text, fg="#00ffff" if is_you else TEXT_ACCENT)
+                self.nav_player_label.config(text=ctx_text, fg="#00ffff" if is_you else ACCENT_BLUE)
 
             try: self.title_bar.itemconfig(self.title_label, text="DETAILS")
             except: pass
@@ -170,7 +189,8 @@ class DetailsWindow(BasePopoutWindow):
             except: pass
 
         # Player List View
-        players = sorted(list(self.app.player_data.keys()))
+        from utils import is_probable_player
+        players = sorted([n for n in self.app.player_data.keys() if is_probable_player(n, self.app.bosses)])
         current_widgets = self.player_list_frame.winfo_children()
 
         if is_drill:
@@ -187,50 +207,67 @@ class DetailsWindow(BasePopoutWindow):
         # Surgical update for top player list
         last_players = getattr(self, '_last_players', [])
         
-        # If transitioning to empty, show "No combat data" immediately
         if not players:
-            if last_players: # Only clear if we actually had players before
-                for widget in current_widgets: widget.destroy()
-                tk.Label(self.player_list_frame, text="No combat data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
-                self._last_players = []
+            if not hasattr(self, '_no_data_lbl'):
+                for widget in self.player_list_frame.winfo_children(): widget.destroy()
+                self._no_data_lbl = tk.Label(self.player_list_frame, text="No combat data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic"))
+                self._no_data_lbl.pack(pady=20)
                 self._row_frames = {}
-            elif not current_widgets: # First time setup
-                tk.Label(self.player_list_frame, text="No combat data", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 9, "italic")).pack(pady=20)
-                self._last_players = []
-                self._row_frames = {}
+                self._row_widgets = {}
             return
 
-        if not hasattr(self, '_row_frames'): self._row_frames = {}
+        if hasattr(self, '_no_data_lbl'):
+            self._no_data_lbl.destroy()
+            del self._no_data_lbl
 
-        if len(self._row_frames) != len(players) or force:
-            for widget in current_widgets: widget.destroy()
-            self._last_players = players
-            self._row_frames = {}
-            for p in players:
-                f = tk.Frame(self.player_list_frame, bg=WINDOW_BG); f.pack(fill=tk.X, pady=1)
+        if not hasattr(self, '_row_frames'): self._row_frames = {}
+        if not hasattr(self, '_row_widgets'): self._row_widgets = {}
+
+        # Reorder and update
+        for p in players:
+            if p not in self._row_frames:
+                f = tk.Frame(self.player_list_frame, bg=WINDOW_BG)
                 self._row_frames[p] = f
                 
                 is_you = p == "You" or p == self.app.char_name.get()
                 color = "#00ffff" if is_you else TEXT_PRIMARY
+                
+                # Columnar layout for top level
                 create_rainbow_name(f, self.app, p, color, ("Segoe UI", 9, "bold"), WINDOW_BG)
+                
+                l_heal = tk.Label(f, text="0", bg=WINDOW_BG, fg="#44ff44", font=("Consolas", 9, "bold"), width=10, anchor="e")
+                l_heal.pack(side=tk.RIGHT, padx=5)
+                self._row_widgets[f"{p}_heal"] = l_heal
+                
+                l_dmg = tk.Label(f, text="0", bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Consolas", 9, "bold"), width=10, anchor="e")
+                l_dmg.pack(side=tk.RIGHT, padx=5)
+                self._row_widgets[f"{p}_dmg"] = l_dmg
+
                 f.bind("<Button-1>", lambda e, p=p: self.drill_down(p))
                 for child in f.winfo_children():
                     child.bind("<Button-1>", lambda e, p=p: self.drill_down(p))
-        else:
-            # Reorder existing frames
-            for p in players:
-                if p in self._row_frames:
-                    f = self._row_frames[p]
-                    f.pack_forget()
-                    f.pack(fill=tk.X, pady=1)
-                else:
-                    self.refresh(force=True)
-                    return
+            
+            f = self._row_frames[p]
+            f.pack(fill=tk.X, pady=1)
+            
+            data = self.app.player_data.get(p, {})
+            self.update_if_changed(self._row_widgets[f"{p}_dmg"], f"{data.get('damage', 0):,}")
+            self.update_if_changed(self._row_widgets[f"{p}_heal"], f"{data.get('healing', 0):,}")
+
+        # Cleanup old rows
+        current_names = set(players)
+        to_delete = [name for name in self._row_frames if name not in current_names]
+        for name in to_delete:
+            self._row_frames[name].destroy()
+            del self._row_frames[name]
+            del self._row_widgets[f"{name}_dmg"]
+            del self._row_widgets[f"{name}_heal"]
 
         # Refresh Drill-down view if active
         if is_drill:
             p = getattr(self, 'selected_player', '')
-            tab = getattr(self.app, 'details_tab', 'all')
+            tab = getattr(self.app, 'details_tab', 'dealt')
+            if tab not in ['dealt', 'taken']: tab = 'dealt'
             
             # Update Tab Buttons
             if hasattr(self, 'tab_btns'):
@@ -249,24 +286,63 @@ class DetailsWindow(BasePopoutWindow):
             
             self.player_header.config(text=f"COMBAT LOG: {p.upper()}", fg="#00ffff" if (p == "You" or p == self.app.char_name.get()) else ACCENT_BLUE)
 
-            self.lbl_det_dmg.config(text=f"DAMAGE: {data.get('damage', 0):,}")
-            self.lbl_det_heal.config(text=f"HEALING: {data.get('healing', 0):,}")
+            self.update_if_changed(self.lbl_det_dmg, f"DAMAGE: {data.get('damage', 0):,}")
+            self.update_if_changed(self.lbl_det_heal, f"HEALING: {data.get('healing', 0):,}")
+            self.lbl_det_dmg.config(font=("Consolas", 9, "bold"))
+            self.lbl_det_heal.config(font=("Consolas", 9, "bold"))
 
-            log_key = f"log_{p}_{tab}_{len(data.get('log', []))}"
-            if not force and hasattr(self, '_last_log_key') and self._last_log_key == log_key:
-                return
-            self._last_log_key = log_key
-
-            events = data.get('log', [])
-            if tab != "all":
-                events = [e for e in events if e.get('type') == tab]
+            log_key = f"log_{p}_{tab}_{len(data.get('logs', []))}_{data.get('damage', 0)}_{data.get('healing', 0)}"
+            time_ago_refresh = (time.time() - getattr(self, '_last_time_ago_update', 0) >= 5.0)
             
-            self.txt.config(state=tk.NORMAL)
-            self.txt.delete("1.0", tk.END)
+            if not force and hasattr(self, '_last_log_key') and self._last_log_key == log_key and not time_ago_refresh:
+                return
+            
+            self._last_log_key = log_key
+            self._last_time_ago_update = time.time()
+
+            events = data.get('logs', [])
+            # Filter out loot events as requested
+            events = [e for e in events if e.get('type') != 'loot']
+            
+            if tab == "dealt":
+                events = [e for e in events if e.get('type') in ["dealt", "healing"]]
+            elif tab == "taken":
+                events = [e for e in events if e.get('type') == "taken"]
+            
+            new_log_text = ""
             for e in events[-100:]:
-                self.txt.insert(tk.END, f"[{e.get('time', '')}] {e.get('msg', '')}\n")
-            self.txt.see(tk.END)
-            self.txt.config(state=tk.DISABLED)
+                time_str = get_time_ago(e.get('time'))
+                msg = e.get('msg', '')
+                e_type = e.get('type')
+                
+                # Columnar formatting: [Amount] \t [Detail] \t [Time]
+                if e_type in ['taken', 'dealt', 'healing', 'xp']:
+                    # These should all now be "amount detail..."
+                    parts = msg.split(' ', 1)
+                    if len(parts) == 2:
+                        final_msg = f"{parts[0]}\t{parts[1]}\t{time_str}"
+                    else:
+                        final_msg = f"{msg}\t\t{time_str}"
+                elif e_type == 'kill':
+                    # msg is "Defeated Target"
+                    if msg.startswith("Defeated "):
+                        final_msg = f"KILL\t{msg[9:]}\t{time_str}"
+                    else:
+                        final_msg = f"KILL\t{msg}\t{time_str}"
+                else:
+                    final_msg = f"\t{msg}\t{time_str}"
+                
+                new_log_text += final_msg + "\n"
+            
+            try:
+                if self.txt.get("1.0", tk.END).strip() != new_log_text.strip():
+                    self.txt.config(state=tk.NORMAL)
+                    self.txt.delete("1.0", tk.END)
+                    self.txt.insert(tk.END, new_log_text)
+                    self.txt.see(tk.END)
+                    self.txt.config(state=tk.DISABLED)
+            except: pass
+            return
 
         return
 
@@ -274,12 +350,49 @@ class DetailsWindow(BasePopoutWindow):
         self.is_drilldown = True
         self.selected_player = player
         self.last_full_refresh = 0
+        setattr(self.app, 'details_tab', 'dealt')
+        # Reset scroll position when drilling down
+        if hasattr(self, 'scroll_canvas'):
+            self.scroll_canvas.yview_moveto(0)
+        if hasattr(self, 'txt'):
+            self.txt.yview_moveto(0)
         self.refresh(force=True)
 
     def go_to_top(self):
         self.is_drilldown = False
         self.last_full_refresh = 0
+        # Reset scroll position when going back to top
+        if hasattr(self, 'scroll_canvas'):
+            self.scroll_canvas.yview_moveto(0)
         self.refresh(force=True)
 
     def go_back(self):
         self.go_to_top()
+
+    def copy_to_clipboard(self):
+        if getattr(self, 'is_drilldown', False):
+            # Copy logs for the selected player
+            try:
+                content = self.txt.get("1.0", tk.END).strip()
+                if content:
+                    p = getattr(self, 'selected_player', 'PLAYER')
+                    tab = getattr(self.app, 'details_tab', 'dealt').upper()
+                    header = f"Combat Log for {p.upper()} ({tab}):\n"
+                    self.window.clipboard_clear()
+                    self.window.clipboard_append(header + content)
+            except: pass
+        else:
+            # Copy rankings
+            from utils import is_probable_player
+            players = sorted([n for n in self.app.player_data.keys() if is_probable_player(n, self.app.bosses)])
+            if not players: return
+            
+            lines = ["PLAYER\tDAMAGE\tHEALING"]
+            for p in players:
+                data = self.app.player_data.get(p, {})
+                dmg = data.get('damage', 0)
+                heal = data.get('healing', 0)
+                lines.append(f"{p}\t{dmg:,}\t{heal:,}")
+            
+            self.window.clipboard_clear()
+            self.window.clipboard_append("\n".join(lines))

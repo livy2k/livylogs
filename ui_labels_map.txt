@@ -1,0 +1,15 @@
+# UI Labels Coordinate Mapping
+# ------------------------------
+# Format: Name, X, Y
+# 
+# Instructions:
+# 1. Open 'radiogrid.jpg' to find the coordinates.
+# 2. X is the horizontal position (top numbers).
+# 3. Y is the vertical position (side numbers).
+# 4. Enter your labels below, one per line.
+#
+# Examples:
+# VolumeKnob, 100, 50
+# StationDisplay, 320, 75
+#
+# ENTER LABELS BELOW:

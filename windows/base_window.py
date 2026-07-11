@@ -59,6 +59,13 @@ class BasePopoutWindow:
         self.window.geometry(f"{w}x{h}+{x}+{y}")
         self.window.configure(bg=WINDOW_BG)
         self.window.overrideredirect(True)
+        
+        # Set window icon (should be inherited from root, but explicit for safety)
+        try:
+            if hasattr(self.app, '_icon_photo'):
+                self.window.iconphoto(False, self.app._icon_photo)
+        except: pass
+
         # Ensure it doesn't show in taskbar by setting it as a tool window
         try:
             GWL_EXSTYLE = -20

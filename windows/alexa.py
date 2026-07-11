@@ -92,6 +92,8 @@ class AlexaWindow(BasePopoutWindow):
                 self.show_ghettosmith_view()
             elif self.view_state == "drops":
                 self.show_drops_view()
+            elif self.view_state == "radio":
+                self.show_radio_view()
         else:
             # We are in the same view, only update content if needed
             if self.view_state == "drops":
@@ -148,12 +150,17 @@ class AlexaWindow(BasePopoutWindow):
             "activeforeground": TEXT_ACCENT,
             "font": ("Segoe UI", 10, "bold"),
             "bd": 0,
-            "pady": 8,
+            "pady": 6,
             "cursor": "hand2",
             "relief": tk.FLAT,
             "highlightthickness": 1,
             "highlightbackground": BORDER_COLOR
         }
+
+        radio_btn = tk.Button(btn_frame, text="RADIO", command=lambda: self.switch_view("radio"), **btn_style)
+        radio_btn.pack(fill=tk.X, pady=2)
+        radio_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+        radio_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
 
         geo_btn = tk.Button(btn_frame, text="GEO CODES", command=lambda: self.switch_view("geocodes"), **btn_style)
         geo_btn.pack(fill=tk.X, pady=2)
@@ -170,10 +177,40 @@ class AlexaWindow(BasePopoutWindow):
         drops_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
         drops_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
 
-        armor_btn = tk.Button(btn_frame, text="ARMOR", command=self.open_armor_calc, **btn_style)
-        armor_btn.pack(fill=tk.X, pady=2)
-        armor_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
-        armor_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+        mitigation_btn = tk.Button(btn_frame, text="MITIGATION", command=self.open_armor_calc, **btn_style)
+        mitigation_btn.pack(fill=tk.X, pady=2)
+        mitigation_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+        mitigation_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+
+        hitmiss_btn = tk.Button(btn_frame, text="   COMPAT RES", command=self.open_hitmiss_calc, anchor="w", **btn_style)
+        hitmiss_btn.pack(fill=tk.X, pady=2)
+        hitmiss_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+        hitmiss_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+        
+        # Icon beside label
+        try:
+            from PIL import Image, ImageTk
+            import os
+            from utils import get_resource_path
+            icon_path = get_resource_path("hitmiss_icon.png")
+            if os.path.exists(icon_path):
+                img = Image.open(icon_path)
+                img = img.resize((20, 20), Image.Resampling.LANCZOS)
+                self.hitmiss_btn_img = ImageTk.PhotoImage(img)
+                self.hitmiss_icon_lbl = tk.Label(hitmiss_btn, image=self.hitmiss_btn_img, bg=PANEL_DARK)
+            else:
+                self.hitmiss_icon_lbl = tk.Label(hitmiss_btn, text="🎯", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 12))
+            
+            self.hitmiss_icon_lbl.place(relx=0.05, rely=0.5, anchor="w")
+            # Update hover colors for icon too
+            hitmiss_btn.bind("<Enter>", lambda e: (e.widget.configure(bg=BUTTON_HOVER), self.hitmiss_icon_lbl.configure(bg=BUTTON_HOVER)), add="+")
+            hitmiss_btn.bind("<Leave>", lambda e: (e.widget.configure(bg=PANEL_DARK), self.hitmiss_icon_lbl.configure(bg=PANEL_DARK)), add="+")
+        except: pass
+
+        resists_btn = tk.Button(btn_frame, text="CM", command=self.open_resists_calc, **btn_style)
+        resists_btn.pack(fill=tk.X, pady=2)
+        resists_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+        resists_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
 
         calc_btn = tk.Button(btn_frame, text="CALC", command=self.open_calculator, **btn_style)
         calc_btn.pack(fill=tk.X, pady=2)
@@ -191,6 +228,18 @@ class AlexaWindow(BasePopoutWindow):
         if not hasattr(self.app, 'armor_win') or not self.app.armor_win:
             self.app.armor_win = ArmorCalcWindow(self.app)
         self.app.armor_win.show()
+
+    def open_hitmiss_calc(self):
+        from windows.hit_miss_calc import HitMissCalcWindow
+        if not hasattr(self.app, 'hitmiss_win') or not self.app.hitmiss_win:
+            self.app.hitmiss_win = HitMissCalcWindow(self.app)
+        self.app.hitmiss_win.show()
+
+    def open_resists_calc(self):
+        from windows.resists_calc import ResistsCalcWindow
+        if not hasattr(self.app, 'resists_win') or not self.app.resists_win:
+            self.app.resists_win = ResistsCalcWindow(self.app)
+        self.app.resists_win.show()
 
     def show_geocodes_view(self):
         # Navigation Row
@@ -329,6 +378,34 @@ class AlexaWindow(BasePopoutWindow):
         scroll_frame.bind("<Destroy>", lambda e: canvas.unbind_all("<MouseWheel>"))
 
         self.update_drops_content(force=True)
+
+    def show_radio_view(self):
+        # Navigation Row
+        nav_row = tk.Frame(self.content_container, bg=PANEL_DARK)
+        nav_row.pack(fill=tk.X, pady=(0, 5))
+        
+        tk.Label(nav_row, text="RADIO STATIONS", bg=PANEL_DARK, fg=ACCENT_BLUE, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=10, pady=5)
+
+        back_btn = tk.Label(nav_row, text="⬆", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 11, "bold"), cursor="hand2", padx=10, pady=5)
+        back_btn.bind("<Button-1>", lambda e: self.switch_view("main"))
+        back_btn.pack(side=tk.RIGHT)
+        back_btn.bind("<Enter>", lambda e: back_btn.config(fg=TEXT_PRIMARY))
+        back_btn.bind("<Leave>", lambda e: back_btn.config(fg=TEXT_SECONDARY))
+        
+        # Content
+        content_frame = tk.Frame(self.content_container, bg=WINDOW_BG, padx=10, pady=5)
+        content_frame.pack(fill=tk.BOTH, expand=True)
+
+        from radio_manager import SAFE_RAP_STATIONS
+        
+        for name in SAFE_RAP_STATIONS.keys():
+            btn = tk.Button(content_frame, text=name, bg=PANEL_DARK, fg=TEXT_PRIMARY, 
+                            activebackground=BUTTON_HOVER, activeforeground=TEXT_ACCENT,
+                            font=("Segoe UI", 9, "bold"), bd=0, pady=5, cursor="hand2",
+                            command=lambda n=name: self.app.radio_mgr.play(n))
+            btn.pack(fill=tk.X, pady=2)
+            btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+            btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
 
     def switch_view(self, state):
         self.view_state = state

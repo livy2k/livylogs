@@ -35,13 +35,14 @@ from windows.leaderboard import LeaderboardWindow
 from windows.details import DetailsWindow
 from windows.options import OptionsWindow
 from windows.alexa import AlexaWindow
+from radio_manager import RadioManager, SAFE_RAP_STATIONS
 
 
 class CombatLogApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Combat Log Analyzer")
-        self.root.geometry("260x50")
+        self.root.geometry("400x50")
         self.root.configure(bg=WINDOW_BG)
         
         # Font objects
@@ -58,12 +59,30 @@ class CombatLogApp:
 
         initial_log_path = self.config.get("General", "log_path", fallback="")
         initial_alpha = self.config.getfloat("General", "transparency", fallback=1.0)
-        initial_width = max(MIN_WIDTH, self.config.getint("General", "width", fallback=260))
+        initial_width = max(MIN_WIDTH, self.config.getint("General", "width", fallback=400))
         initial_height = max(MIN_HEIGHT, self.config.getint("General", "height", fallback=50))
         initial_x = self.config.get("General", "x", fallback="50")
         initial_y = self.config.get("General", "y", fallback="50")
 
         self.root.geometry(f"{initial_width}x{initial_height}+{initial_x}+{initial_y}")
+        
+        # Set window icon
+        try:
+            from PIL import Image, ImageTk
+            icon_path = get_resource_path("iconbell.jpg")
+            if os.path.exists(icon_path):
+                icon_img = Image.open(icon_path)
+                # Resize for icon (typically 32x32 or 16x16)
+                icon_photo = ImageTk.PhotoImage(icon_img.resize((32, 32), Image.Resampling.LANCZOS))
+                self.root.iconphoto(True, icon_photo)
+                # Keep a reference to prevent garbage collection
+                self._icon_photo = icon_photo
+        except Exception as e:
+            try:
+                with open("crash_log.txt", "a") as f:
+                    f.write(f"--- ICON ERROR {datetime.now()} ---\n{e}\n")
+            except: pass
+
         if initial_alpha < 0.01: initial_alpha = 1.0
         self.target_alpha = initial_alpha
         self.current_alpha = initial_alpha
@@ -104,6 +123,8 @@ class CombatLogApp:
         self.alexa_win = AlexaWindow(self)
         self.calc_win = None
         self.armor_win = None
+        self.hitmiss_win = None
+        self.resists_win = None
         
         # UI State
         self.details_tab = "all"
@@ -137,6 +158,10 @@ class CombatLogApp:
         self.load_bosses()
         self.load_filters()
         self.load_class_configs()
+
+        # Radio Manager
+        self.radio_mgr = RadioManager(status_callback=self._update_radio_ui)
+
         self.build_layout()
         
         self.pulse_state = False
@@ -163,6 +188,8 @@ class CombatLogApp:
         self.always_on_top = True
         self.is_dialog_open = False
         self.target_game_hwnd = None
+
+        # self.radio_mgr = RadioManager(status_callback=self._update_radio_ui) # Moved up
 
         self.initial_show()
         threading.Thread(target=self.start_pipe_listener, daemon=True).start()
@@ -598,7 +625,23 @@ class CombatLogApp:
             self.main_title_bar.coords("alexa_btn", w - 35, h // 2)
             self.main_title_bar.coords("menu_btn", w - 100, h // 2)
             self.main_title_bar.coords("clock", w - 180, h // 2)
-            title_lbl.config(bg=TITLE_GRADIENT_START)
+            self.main_title_bar.coords("radio_toggle", w // 2, h // 2)
+            self.main_title_bar.coords("radio_up", w // 2 - 125, h // 2)
+            self.main_title_bar.coords("radio_down", w // 2 + 125, h // 2)
+            
+            # Update bezel coords
+            bz_w = 210
+            bz_h = 26
+            self.main_title_bar.coords("radio_bezel_outer", w//2 - bz_w//2 - 4, h//2 - bz_h//2 - 4, 
+                                            w//2 + bz_w//2 + 4, h//2 + bz_h//2 + 4)
+            self.main_title_bar.coords("radio_bezel", w//2 - bz_w//2 - 2, h//2 - bz_h//2 - 2, 
+                                            w//2 + bz_w//2 + 2, h//2 + bz_h//2 + 2)
+            self.main_title_bar.coords("radio_bezel_hi", w//2 - bz_w//2 - 2, h//2 - bz_h//2 - 2, 
+                                        w//2 + bz_w//2 + 2, h//2 - bz_h//2 - 2)
+            self.main_title_bar.coords("radio_bezel_hi2", w//2 - bz_w//2 - 2, h//2 - bz_h//2 - 2, 
+                                        w//2 - bz_w//2 - 2, h//2 + bz_h//2 + 2)
+            if hasattr(self, 'title_lbl'):
+                self.title_lbl.config(bg=TITLE_GRADIENT_START)
 
         self.main_title_bar.bind("<Configure>", draw_main_gradient)
         
@@ -624,15 +667,55 @@ class CombatLogApp:
         self.main_title_bar.create_window(130, 17, window=self.clock_lbl, anchor="e", tags="clock")
         self.update_clock()
 
+        # Radio Toggle Label
+        # LED style font: Consolas Bold, background dark, foreground bright green/red
+        # We add a "bezel" look by placing it inside a slightly larger frame or adding canvas rects
+        radio_text = "OFF".center(20)
+        radio_fg = "#ff4444"
+        
+        # Bezel / Frame for the radio display
+        # We use a series of rectangles to create a metallic/plastic bezel effect
+        bz_w = 210
+        bz_h = 26
+        # Outer darker bezel
+        self.main_title_bar.create_rectangle(0, 0, 0, 0, 
+                                            fill="#222222", outline="#111111", tags="radio_bezel_outer")
+        # Main inner bezel
+        self.main_title_bar.create_rectangle(0, 0, 0, 0, 
+                                            fill="#333333", outline="#555555", tags="radio_bezel")
+        # Highlight for 3D effect
+        self.main_title_bar.create_line(0, 0, 0, 0, 
+                                        fill="#666666", tags="radio_bezel_hi")
+        self.main_title_bar.create_line(0, 0, 0, 0, 
+                                        fill="#666666", tags="radio_bezel_hi2")
+        
+        self.radio_toggle_lbl = tk.Label(self.main_title_bar, text=radio_text, bg="#000000", fg=radio_fg, 
+                                         font=("Consolas", 10, "bold"), padx=5, pady=2, bd=0, width=20)
+        self.main_title_bar.create_window(0, 0, window=self.radio_toggle_lbl, anchor="center", tags="radio_toggle")
+        self.radio_toggle_lbl.bind("<Button-1>", lambda e: self.toggle_radio())
+        
+        # Up/Down buttons for stations
+        self.radio_up_btn = tk.Label(self.main_title_bar, text="◄", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
+        self.main_title_bar.create_window(0, 0, window=self.radio_up_btn, anchor="center", tags="radio_up")
+        self.radio_up_btn.bind("<Button-1>", lambda e: self.prev_radio_station())
+        self.radio_up_btn.bind("<Enter>", lambda e: self.radio_up_btn.config(fg=TEXT_ACCENT))
+        self.radio_up_btn.bind("<Leave>", lambda e: self.radio_up_btn.config(fg=TEXT_SECONDARY))
+
+        self.radio_down_btn = tk.Label(self.main_title_bar, text="►", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
+        self.main_title_bar.create_window(0, 0, window=self.radio_down_btn, anchor="center", tags="radio_down")
+        self.radio_down_btn.bind("<Button-1>", lambda e: self.next_radio_station())
+        self.radio_down_btn.bind("<Enter>", lambda e: self.radio_down_btn.config(fg=TEXT_ACCENT))
+        self.radio_down_btn.bind("<Leave>", lambda e: self.radio_down_btn.config(fg=TEXT_SECONDARY))
+
         self.ontop_btn = tk.Label(self.main_title_bar, text="ONTOP: OFF", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2")
         self.main_title_bar.create_window(10, 17, window=self.ontop_btn, anchor="w")
         self.ontop_btn.bind("<Button-1>", lambda e: self.toggle_always_on_top())
 
-        title_lbl = tk.Label(self.main_title_bar, text="LIVYLOGS", bg=TITLE_GRADIENT_START, fg=TEXT_ACCENT, font=self.font_title_obj)
-        self.main_title_bar.create_window(85, 17, window=title_lbl, anchor="w")
-        title_lbl.bind("<Button-1>", self.click_window)
-        title_lbl.bind("<B1-Motion>", self.drag_window)
-        title_lbl.bind("<ButtonRelease-1>", self.release_window)
+        self.title_lbl = tk.Label(self.main_title_bar, text="LIVYLOGS", bg=TITLE_GRADIENT_START, fg=TEXT_ACCENT, font=self.font_title_obj)
+        self.main_title_bar.create_window(85, 17, window=self.title_lbl, anchor="w")
+        self.title_lbl.bind("<Button-1>", self.click_window)
+        self.title_lbl.bind("<B1-Motion>", self.drag_window)
+        self.title_lbl.bind("<ButtonRelease-1>", self.release_window)
 
         nav = tk.Frame(header, bg=PANEL_DARK, pady=2)
         nav.pack(fill=tk.X)
@@ -1239,6 +1322,50 @@ class CombatLogApp:
             now_ts = time.time()
             if now_ts - self.last_pulse_time > 0.3:
                 self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
+
+            # Update radio scrolling text if playing
+            if hasattr(self, 'radio_mgr') and self.radio_mgr.is_playing:
+                if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
+                if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
+                
+                # Scroll every 0.3 seconds for smooth LED look
+                if now_ts - self._radio_scroll_last_tick > 0.3:
+                    self._radio_scroll_last_tick = now_ts
+                    
+                    if hasattr(self.radio_mgr, 'is_interrupting') and self.radio_mgr.is_interrupting:
+                        text = "INTERRUPT: " + (os.path.splitext(self.radio_mgr.last_played_mp3)[0].upper() if self.radio_mgr.last_played_mp3 else "UNKNOWN")
+                    else:
+                        text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "PLAYING"
+                    
+                    # Add padding for scroll loop
+                    display_text = text + "   ***   "
+                    visible_len = 20 # LED display width in characters
+                    
+                    if len(text) > visible_len:
+                        self._radio_scroll_pos = (self._radio_scroll_pos + 1) % len(display_text)
+                        start = self._radio_scroll_pos
+                        marquee = (display_text * 2)[start:start+visible_len]
+                        
+                        if getattr(self.radio_mgr, 'is_interrupting', False):
+                            fg = "#ffcc00"
+                        elif self.radio_mgr.current_station == "X MINUS ONE":
+                            fg = "#FFFFFF"
+                        else:
+                            fg = "#CD853F"
+                        self.radio_toggle_lbl.config(text=marquee, fg=fg)
+                    else:
+                        # No scroll needed
+                        self._radio_scroll_pos = 0
+                        if getattr(self.radio_mgr, 'is_interrupting', False):
+                            fg = "#ffcc00"
+                        elif self.radio_mgr.current_station == "X MINUS ONE":
+                            fg = "#FFFFFF"
+                        else:
+                            fg = "#CD853F"
+                        self.radio_toggle_lbl.config(text=text.center(visible_len), fg=fg)
+            else:
+                if hasattr(self, 'radio_toggle_lbl') and self.radio_toggle_lbl.winfo_exists():
+                    self.radio_toggle_lbl.config(text="OFF".center(20), fg="#ff4444")
     
             # Damage meter is highest priority for real-time feel
             if hasattr(self, 'damage_meter_win') and self.damage_meter_win:
@@ -1265,6 +1392,12 @@ class CombatLogApp:
                 self.leaderboard_win.refresh(force=force)
             if refresh_skimmers and hasattr(self, 'skimmers_win') and self.skimmers_win:
                 self.skimmers_win.refresh(force=force)
+
+            if hasattr(self, 'armor_win') and self.armor_win:
+                self.armor_win.refresh(force=force)
+
+            if hasattr(self, 'hitmiss_win') and self.hitmiss_win:
+                self.hitmiss_win.refresh(force=force)
 
             # Other windows (less frequent)
             if now_heavy >= 1.0:
@@ -1341,15 +1474,19 @@ class CombatLogApp:
             with open("crash_log.txt", "a") as f:
                 f.write(f"--- ENTERING SETUP_TRAY_ICON {datetime.now()} ---\n")
 
+            icon_path = get_resource_path("iconbell.jpg")
             png_path = get_resource_path("livylogs.png")
             ico_path = get_resource_path("livylogs.ico")
             
             with open("crash_log.txt", "a") as f:
-                f.write(f"--- PATHS: png={png_path}, ico={ico_path} ---\n")
+                f.write(f"--- PATHS: icon={icon_path}, png={png_path}, ico={ico_path} ---\n")
 
             # Always try to create a fresh image to be safe
             try:
-                if os.path.exists(png_path):
+                if os.path.exists(icon_path):
+                    image = Image.open(icon_path)
+                    image.load()
+                elif os.path.exists(png_path):
                     image = Image.open(png_path)
                     image.load() # Force load
                 elif os.path.exists(ico_path):
@@ -1511,7 +1648,7 @@ class CombatLogApp:
         })
         
         # Save popout positions/sizes
-        for win in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win, self.calc_win]:
+        for win in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win, self.calc_win, self.armor_win, self.hitmiss_win, self.resists_win]:
             if win and win.window and win.window.winfo_exists():
                 if win.config_key not in self.config: self.config[win.config_key] = {}
                 self.config[win.config_key].update({
@@ -1600,6 +1737,19 @@ class CombatLogApp:
             self.save_config()
         except: pass
         self.refresh_ui_only(force=True)
+
+    def toggle_radio(self):
+        self.radio_mgr.toggle()
+
+    def next_radio_station(self):
+        self.radio_mgr.next_station()
+
+    def prev_radio_station(self):
+        self.radio_mgr.prev_station()
+
+    def _update_radio_ui(self, is_playing):
+        # We now handle this in refresh_ui_only for smooth scrolling
+        pass
 
     def on_configure(self, event):
         if hasattr(self, "is_interacting") and self.is_interacting:

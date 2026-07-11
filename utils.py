@@ -244,6 +244,19 @@ def is_probable_player(name, bosses=None, known_npcs=None, known_players=None):
             return True
     return False
 
+def get_dynamic_text_color(alpha):
+    # Standard TEXT_PRIMARY is #dcdcdc (220, 220, 220)
+    # Brighten as alpha goes from 0.7 down to 0.4
+    if alpha >= 0.7:
+        return "#dcdcdc"
+    
+    # Calculate factor: 0.0 at 0.7 alpha, 1.0 at 0.4 alpha
+    factor = max(0, min(1.0, (0.7 - alpha) / 0.3))
+    
+    # Interpolate from 220 to 255
+    val = int(220 + (255 - 220) * factor)
+    return f"#{val:02x}{val:02x}{val:02x}"
+
 def save_log_segment(original_log_path, duration_minutes):
     """Saves the last duration_minutes of combat log to a new file in a 'saved_logs' directory."""
     import os

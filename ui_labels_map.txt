@@ -13,3 +13,12 @@
 # StationDisplay, 320, 75
 #
 # ENTER LABELS BELOW:
+Alexa, 100, 90
+DMG METER 210, 90
+Details 300, 90
+Skimmers 380, 90
+Loot 470, 90
+Exit 590, 90
+Settings 140, 45
+Radio, 365, 82.5
+# Box area: X(210 to 520), Y(45 to 120)

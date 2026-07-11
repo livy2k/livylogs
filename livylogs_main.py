@@ -8,7 +8,7 @@ import threading
 import subprocess
 import pystray
 from pystray import MenuItem as item
-from PIL import Image
+from PIL import Image, ImageTk
 from datetime import datetime, timedelta
 from configparser import ConfigParser
 from pathlib import Path
@@ -36,6 +36,7 @@ from windows.details import DetailsWindow
 from windows.options import OptionsWindow
 from windows.alexa import AlexaWindow
 from radio_manager import RadioManager, SAFE_RAP_STATIONS
+from killstreak_manager import KillstreakManager
 
 
 class CombatLogApp:
@@ -61,8 +62,8 @@ class CombatLogApp:
         initial_alpha = self.config.getfloat("General", "transparency", fallback=1.0)
         initial_width = max(MIN_WIDTH, self.config.getint("General", "width", fallback=400))
         initial_height = max(MIN_HEIGHT, self.config.getint("General", "height", fallback=50))
-        initial_x = self.config.get("General", "x", fallback="50")
-        initial_y = self.config.get("General", "y", fallback="50")
+        initial_x = self.config.get("General", "x", fallback="971")
+        initial_y = self.config.get("General", "y", fallback="92")
 
         self.root.geometry(f"{initial_width}x{initial_height}+{initial_x}+{initial_y}")
         
@@ -161,6 +162,7 @@ class CombatLogApp:
 
         # Radio Manager
         self.radio_mgr = RadioManager(status_callback=self._update_radio_ui)
+        self.killstreak_mgr = KillstreakManager(sfx_dir=os.path.join(os.getcwd(), "sfx"))
 
         self.build_layout()
         
@@ -290,7 +292,7 @@ class CombatLogApp:
             # self.current_alpha = 0.0
             # self.root.attributes("-alpha", 0.0)
             self.root.overrideredirect(True)
-            self.root.withdraw()
+            self.root.deiconify()
             if self.always_on_top:
                 self.root.attributes("-topmost", True)
         except: pass
@@ -571,182 +573,108 @@ class CombatLogApp:
         t.start()
 
     def build_layout(self):
-        style = ttk.Style()
-        style.theme_use('clam')
-        
-        # Configure the Vertical TScrollbar style to match our theme
-        style.configure("Vertical.TScrollbar", 
-                        gripcount=0, 
-                        background=BUTTON_BG, 
-                        darkcolor=PANEL_DARK, 
-                        lightcolor=PANEL_DARK, 
-                        troughcolor=WINDOW_BG, 
-                        bordercolor=BORDER_COLOR, 
-                        arrowcolor=TEXT_SECONDARY,
-                        width=14)
-        
-        style.map("Vertical.TScrollbar", 
-                  background=[('active', BORDER_HIGHLIGHT), ('pressed', ACCENT_BLUE)],
-                  arrowcolor=[('active', TEXT_PRIMARY)])
+        # Load the radio base image
+        try:
+            self.bg_image_raw = Image.open("realradioBASE.jpg")
+            self.bg_photo = ImageTk.PhotoImage(self.bg_image_raw)
+            img_w, img_h = self.bg_image_raw.size
+        except Exception as e:
+            print(f"Error loading background image: {e}")
+            img_w, img_h = 638, 154
+            self.bg_photo = None
 
+        # Set fixed window size based on image
+        self.root.geometry(f"{img_w}x{img_h}")
+        
         self.root_border = tk.Frame(self.root, bg=BORDER_COLOR, padx=1, pady=1)
         self.root_border.pack(fill=tk.BOTH, expand=True)
-        outer = tk.Frame(self.root_border, bg=WINDOW_BG)
-        outer.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-        outer.bind("<Button-1>", self.click_window)
-        outer.bind("<B1-Motion>", self.drag_window)
-        outer.bind("<ButtonRelease-1>", self.release_window)
+        
+        self.main_canvas = tk.Canvas(self.root_border, width=img_w, height=img_h, 
+                                     bg=WINDOW_BG, highlightthickness=0)
+        self.main_canvas.pack(fill=tk.BOTH, expand=True)
+        
+        if self.bg_photo:
+            self.main_canvas.create_image(0, 0, image=self.bg_photo, anchor="nw")
+            
+        # Bind dragging to the entire canvas
+        self.main_canvas.bind("<Button-1>", self.click_window)
+        self.main_canvas.bind("<B1-Motion>", self.drag_window)
+        self.main_canvas.bind("<ButtonRelease-1>", self.release_window)
         self.root.bind("<Configure>", self.on_configure)
 
-        header = tk.Frame(outer, bg=WINDOW_BG)
-        header.pack(fill=tk.X)
-        
-        # Sophisticated Main Title Bar
-        self.main_title_bar = tk.Canvas(header, bg=TITLE_GRADIENT_END, height=35, highlightthickness=0)
-        self.main_title_bar.pack(fill=tk.X)
-        self.main_title_bar.bind("<Button-1>", self.click_window)
-        self.main_title_bar.bind("<B1-Motion>", self.drag_window)
-        self.main_title_bar.bind("<ButtonRelease-1>", self.release_window)
-        
-        def draw_main_gradient(e=None):
-            w = self.main_title_bar.winfo_width()
-            h = self.main_title_bar.winfo_height()
-            self.main_title_bar.delete("gradient")
-            for i in range(h):
-                r1, g1, b1 = self.root.winfo_rgb(TITLE_GRADIENT_START)
-                r2, g2, b2 = self.root.winfo_rgb(TITLE_GRADIENT_END)
-                r = int(r1 + (r2 - r1) * (i / h)) // 256
-                g = int(g1 + (g2 - g1) * (i / h)) // 256
-                b = int(b1 + (b2 - b1) * (i / h)) // 256
-                color = f"#{r:02x}{g:02x}{b:02x}"
-                self.main_title_bar.create_line(0, i, w, i, fill=color, tags="gradient")
-            self.main_title_bar.tag_lower("gradient")
-            self.main_title_bar.coords("exit_btn", w - 5, h // 2)
-            self.main_title_bar.coords("alexa_btn", w - 35, h // 2)
-            self.main_title_bar.coords("menu_btn", w - 100, h // 2)
-            self.main_title_bar.coords("clock", w - 180, h // 2)
-            self.main_title_bar.coords("radio_toggle", w // 2, h // 2)
-            self.main_title_bar.coords("radio_up", w // 2 - 125, h // 2)
-            self.main_title_bar.coords("radio_down", w // 2 + 125, h // 2)
+        def create_ui_label(name, x, y, cmd=None, fg=TEXT_SECONDARY, font_obj=None, tags=None):
+            if font_obj is None:
+                font_obj = self.font_small_obj
             
-            # Update bezel coords
-            bz_w = 210
-            bz_h = 26
-            self.main_title_bar.coords("radio_bezel_outer", w//2 - bz_w//2 - 4, h//2 - bz_h//2 - 4, 
-                                            w//2 + bz_w//2 + 4, h//2 + bz_h//2 + 4)
-            self.main_title_bar.coords("radio_bezel", w//2 - bz_w//2 - 2, h//2 - bz_h//2 - 2, 
-                                            w//2 + bz_w//2 + 2, h//2 + bz_h//2 + 2)
-            self.main_title_bar.coords("radio_bezel_hi", w//2 - bz_w//2 - 2, h//2 - bz_h//2 - 2, 
-                                        w//2 + bz_w//2 + 2, h//2 - bz_h//2 - 2)
-            self.main_title_bar.coords("radio_bezel_hi2", w//2 - bz_w//2 - 2, h//2 - bz_h//2 - 2, 
-                                        w//2 - bz_w//2 - 2, h//2 + bz_h//2 + 2)
-            if hasattr(self, 'title_lbl'):
-                self.title_lbl.config(bg=TITLE_GRADIENT_START)
+            # Use canvas text for "transparency"
+            text_id = self.main_canvas.create_text(x, y, text=name, fill=fg, font=font_obj, anchor="center", tags=tags)
+            
+            if cmd:
+                self.main_canvas.tag_bind(text_id, "<Button-1>", lambda e: cmd())
+                
+                # Hover effects
+                def on_enter(e, tid=text_id, color=TEXT_ACCENT):
+                    self.main_canvas.itemconfig(tid, fill=color)
+                    self.main_canvas.config(cursor="hand2")
+                def on_leave(e, tid=text_id, color=fg):
+                    self.main_canvas.itemconfig(tid, fill=color)
+                    self.main_canvas.config(cursor="")
+                
+                self.main_canvas.tag_bind(text_id, "<Enter>", on_enter)
+                self.main_canvas.tag_bind(text_id, "<Leave>", on_leave)
+            
+            return text_id
 
-        self.main_title_bar.bind("<Configure>", draw_main_gradient)
+        # Place labels based on ui_labels_map.txt
+        # Alexa, 100, 110
+        self.btn_alexa = create_ui_label("ALEXA", 100, 110, self.alexa_win.show)
         
-        exit_btn = tk.Label(self.main_title_bar, text=" ✕ ", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
-        self.main_title_bar.create_window(300, 17, window=exit_btn, anchor="e", tags="exit_btn")
-        exit_btn.bind("<Button-1>", lambda e: self.on_exit())
-        exit_btn.bind("<Enter>", lambda e: exit_btn.config(fg="#ff4444"))
-        exit_btn.bind("<Leave>", lambda e: exit_btn.config(fg=TEXT_SECONDARY))
+        # DMG METER 210, 110
+        self.lbl_dmg = create_ui_label("DMG METER", 210, 110, self.damage_meter_win.show)
+        
+        # Details 300, 110
+        self.lbl_det = create_ui_label("DETAILS", 300, 110, self.details_win.show)
+        
+        # Skimmers 380, 110
+        self.lbl_skm = create_ui_label("SKIMMERS", 380, 110, self.skimmers_win.show)
+        
+        # Loot 470, 110
+        self.lbl_loot = create_ui_label("LOOT", 470, 110, self.leaderboard_win.show)
+        
+        # Exit 590, 100
+        self.btn_exit = create_ui_label(" ✕ ", 590, 100, self.on_exit, fg="#ff4444", font_obj=("Segoe UI", 12))
+        
+        # Settings 110, 45
+        self.btn_settings = create_ui_label("SETTINGS", 110, 45, self.toggle_menu)
 
-        alexa_btn = tk.Label(self.main_title_bar, text=" ALEXA ", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2")
-        self.main_title_bar.create_window(270, 17, window=alexa_btn, anchor="e", tags="alexa_btn")
-        alexa_btn.bind("<Button-1>", lambda e: self.alexa_win.show())
-        alexa_btn.bind("<Enter>", lambda e: alexa_btn.config(fg=TEXT_ACCENT))
-        alexa_btn.bind("<Leave>", lambda e: alexa_btn.config(fg=TEXT_SECONDARY))
+        # ONTOP (Manual addition for functionality)
+        self.always_on_top = False
+        self.btn_ontop = create_ui_label("ONTOP: OFF", 40, 45, self.toggle_always_on_top, font_obj=("Segoe UI", 8, "bold"), tags="ontop_btn")
+        
+        # VOLUME CONTROL (Inspired by Python-m3u-radio-player)
+        self.lbl_vol = create_ui_label("VOL: 100%", 180, 45, self.cycle_volume, font_obj=("Segoe UI", 8, "bold"), tags="vol_btn")
+        
+        # RadioManager, 400, 72.5
+        radio_text = "OFF".center(40)
+        self.radio_toggle_id = self.main_canvas.create_text(400, 72.5, text=radio_text, fill="#ff4444", 
+                                                         font=("Consolas", 18, "bold"), anchor="center", tags="radio_toggle")
+        self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: self.toggle_radio())
+        
+        # Radio hover effects
+        self.main_canvas.tag_bind(self.radio_toggle_id, "<Enter>", lambda e: self.main_canvas.config(cursor="hand2"))
+        self.main_canvas.tag_bind(self.radio_toggle_id, "<Leave>", lambda e: self.main_canvas.config(cursor=""))
+        self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-3>", self.show_radio_context_menu)
 
-        menu_btn = tk.Label(self.main_title_bar, text=" SETTINGS ", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2")
-        self.main_title_bar.create_window(200, 17, window=menu_btn, anchor="e", tags="menu_btn")
-        menu_btn.bind("<Button-1>", lambda e: self.toggle_menu())
-        menu_btn.bind("<Enter>", lambda e: menu_btn.config(fg=TEXT_ACCENT))
-        menu_btn.bind("<Leave>", lambda e: menu_btn.config(fg=TEXT_SECONDARY))
-
-        self.clock_lbl = tk.Label(self.main_title_bar, text="00:00:00", bg=TITLE_GRADIENT_END, fg="#00ff00", font=("Consolas", 9, "bold"))
-        self.main_title_bar.create_window(130, 17, window=self.clock_lbl, anchor="e", tags="clock")
+        # Additional UI elements
+        self.clock_id = self.main_canvas.create_text(520, 30, text="00:00:00", fill="#00ff00", font=("Consolas", 9, "bold"), anchor="ne")
         self.update_clock()
 
-        # Radio Toggle Label
-        # LED style font: Consolas Bold, background dark, foreground bright green/red
-        # We add a "bezel" look by placing it inside a slightly larger frame or adding canvas rects
-        radio_text = "OFF".center(20)
-        radio_fg = "#ff4444"
-        
-        # Bezel / Frame for the radio display
-        # We use a series of rectangles to create a metallic/plastic bezel effect
-        bz_w = 210
-        bz_h = 26
-        # Outer darker bezel
-        self.main_title_bar.create_rectangle(0, 0, 0, 0, 
-                                            fill="#222222", outline="#111111", tags="radio_bezel_outer")
-        # Main inner bezel
-        self.main_title_bar.create_rectangle(0, 0, 0, 0, 
-                                            fill="#333333", outline="#555555", tags="radio_bezel")
-        # Highlight for 3D effect
-        self.main_title_bar.create_line(0, 0, 0, 0, 
-                                        fill="#666666", tags="radio_bezel_hi")
-        self.main_title_bar.create_line(0, 0, 0, 0, 
-                                        fill="#666666", tags="radio_bezel_hi2")
-        
-        self.radio_toggle_lbl = tk.Label(self.main_title_bar, text=radio_text, bg="#000000", fg=radio_fg, 
-                                         font=("Consolas", 10, "bold"), padx=5, pady=2, bd=0, width=20)
-        self.main_title_bar.create_window(0, 0, window=self.radio_toggle_lbl, anchor="center", tags="radio_toggle")
-        self.radio_toggle_lbl.bind("<Button-1>", lambda e: self.toggle_radio())
-        
-        # Up/Down buttons for stations
-        self.radio_up_btn = tk.Label(self.main_title_bar, text="◄", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
-        self.main_title_bar.create_window(0, 0, window=self.radio_up_btn, anchor="center", tags="radio_up")
-        self.radio_up_btn.bind("<Button-1>", lambda e: self.prev_radio_station())
-        self.radio_up_btn.bind("<Enter>", lambda e: self.radio_up_btn.config(fg=TEXT_ACCENT))
-        self.radio_up_btn.bind("<Leave>", lambda e: self.radio_up_btn.config(fg=TEXT_SECONDARY))
+        self.status_id = self.main_canvas.create_text(600, 30, text="DISCONNECTED", fill="#ff4444", font=("Segoe UI", 7, "bold"), anchor="ne")
 
-        self.radio_down_btn = tk.Label(self.main_title_bar, text="►", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 12), cursor="hand2")
-        self.main_title_bar.create_window(0, 0, window=self.radio_down_btn, anchor="center", tags="radio_down")
-        self.radio_down_btn.bind("<Button-1>", lambda e: self.next_radio_station())
-        self.radio_down_btn.bind("<Enter>", lambda e: self.radio_down_btn.config(fg=TEXT_ACCENT))
-        self.radio_down_btn.bind("<Leave>", lambda e: self.radio_down_btn.config(fg=TEXT_SECONDARY))
+        self.radio_up_id = create_ui_label("◄", 235, 77.5, self.prev_radio_station, font_obj=("Segoe UI", 16))
+        self.radio_down_id = create_ui_label("►", 585, 77.5, self.next_radio_station, font_obj=("Segoe UI", 16))
 
-        self.ontop_btn = tk.Label(self.main_title_bar, text="ONTOP: OFF", bg=TITLE_GRADIENT_START, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold"), cursor="hand2")
-        self.main_title_bar.create_window(10, 17, window=self.ontop_btn, anchor="w")
-        self.ontop_btn.bind("<Button-1>", lambda e: self.toggle_always_on_top())
-
-        self.title_lbl = tk.Label(self.main_title_bar, text="LIVYLOGS", bg=TITLE_GRADIENT_START, fg=TEXT_ACCENT, font=self.font_title_obj)
-        self.main_title_bar.create_window(85, 17, window=self.title_lbl, anchor="w")
-        self.title_lbl.bind("<Button-1>", self.click_window)
-        self.title_lbl.bind("<B1-Motion>", self.drag_window)
-        self.title_lbl.bind("<ButtonRelease-1>", self.release_window)
-
-        nav = tk.Frame(header, bg=PANEL_DARK, pady=2)
-        nav.pack(fill=tk.X)
-        nav.bind("<Button-1>", self.click_window)
-        nav.bind("<B1-Motion>", self.drag_window)
-        nav.bind("<ButtonRelease-1>", self.release_window)
-
-        def btn(t, cmd): 
-            l = tk.Label(nav, text=t, bg=PANEL_DARK, fg=TEXT_SECONDARY, font=self.font_small_obj, cursor="hand2", padx=5)
-            l.pack(side=tk.LEFT); l.bind("<Button-1>", lambda e: cmd())
-            return l
-        self.lbl_dmg = btn("DMG METER", self.damage_meter_win.show)
-        self.lbl_det = btn("DETAILS", self.details_win.show)
-        self.lbl_skm = btn("SKIMMERS", self.skimmers_win.show)
-        self.lbl_ldb = btn("LEADERBOARD", self.leaderboard_win.show)
-        
-        self.lbl_status = tk.Label(nav, text="DISCONNECTED", bg=PANEL_DARK, fg="#ff4444", font=("Segoe UI", 7, "bold"))
-        self.lbl_status.pack(side=tk.RIGHT, padx=5)
-        
-        self.lbl_version = tk.Label(nav, text="1.0", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 8))
-        self.lbl_version.pack(side=tk.RIGHT)
-
-        # Spacer to keep minimal height
-        tk.Frame(outer, bg=WINDOW_BG, height=2).pack()
-        
-        # Add resize handle for main window
-        self.resize_handle = tk.Label(outer, text="◢", bg=WINDOW_BG, fg=BORDER_COLOR, font=("Segoe UI", 8), cursor="size_nw_se")
-        self.resize_handle.place(relx=1.0, rely=1.0, anchor="se")
-        self.resize_handle.bind("<Button-1>", self.init_resize)
-        self.resize_handle.bind("<B1-Motion>", self.do_resize)
-        self.resize_handle.bind("<ButtonRelease-1>", self.release_window)
+        self.version_id = self.main_canvas.create_text(620, 140, text="1.0", fill=TEXT_SECONDARY, font=("Segoe UI", 8), anchor="center")
 
     def create_stat_box(self, parent, title, value):
         f = tk.Frame(parent, bg=BORDER_COLOR, padx=1, pady=1); f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2)
@@ -804,8 +732,8 @@ class CombatLogApp:
             return None
 
         while self.running:
-            if hasattr(self, 'lbl_status'):
-                self.lbl_status.config(text="RECONNECTING...", fg="#ffaa00")
+            if hasattr(self, 'status_id'):
+                self.main_canvas.itemconfig(self.status_id, text="RECONNECTING...", fill="#ffaa00")
             
             # Use discovery logic
             current_pipe = find_active_pipe()
@@ -854,8 +782,8 @@ class CombatLogApp:
                     time.sleep(1)
                 continue
             
-            if hasattr(self, 'lbl_status'):
-                self.lbl_status.config(text="CONNECTED", fg="#00ff88")
+            if hasattr(self, 'status_id'):
+                self.main_canvas.itemconfig(self.status_id, text="CONNECTED", fill="#00ff88")
             
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
@@ -1042,8 +970,13 @@ class CombatLogApp:
             
             p = self.player_data[source_for_logs]
             amount = event.get("amount", 0)
+            xp_type = event.get("xp_type", "Unknown")
             p["lb_xp"] = p.get("lb_xp", 0) + amount
             
+            # Killstreak trigger: PvP XP (Faction)
+            if xp_type.lower() == "faction" and source_for_logs.lower() == self.char_name.get().lower():
+                self.killstreak_mgr.record_kill()
+
             if "xp_history" not in p: p["xp_history"] = []
             p["xp_history"].append({"amount": amount, "type": event.get("xp_type", "Unknown"), "time": time.time()})
             if len(p["xp_history"]) > 100: p["xp_history"].pop(0)
@@ -1073,6 +1006,14 @@ class CombatLogApp:
             norm_target = normalize_name(target)
             p["logs"].append({"msg": f"Defeated {norm_target}", "time": timestamp, "type": "kill"})
             if len(p["logs"]) > 200: p["logs"].pop(0)
+            
+            # Killstreak trigger: PvP Kill
+            if source_for_logs.lower() == self.char_name.get().lower() and is_probable_player(target, self.bosses, self.known_npcs):
+                self.killstreak_mgr.record_kill()
+            
+            # If our character dies
+            if target.lower() == self.char_name.get().lower():
+                self.killstreak_mgr.record_death()
             
             # self.refresh_ui_only(force=True) -> REMOVED
             # FALL THROUGH
@@ -1307,15 +1248,15 @@ class CombatLogApp:
     def update_clock(self):
         try:
             now = datetime.now().strftime("%I:%M:%S %p").lstrip("0")
-            if hasattr(self, 'clock_lbl') and self.clock_lbl.winfo_exists():
-                self.clock_lbl.config(text=now)
+            if hasattr(self, 'clock_id'):
+                self.main_canvas.itemconfig(self.clock_id, text=now)
             self.root.after(1000, self.update_clock)
         except: pass
 
     def start_ticker_loop(self):
         if self.running:
             self.refresh_ui_only(force=False)
-            self.root.after(200, self.start_ticker_loop)
+            self.root.after(500, self.start_ticker_loop) # Restore 500ms ticker for smoother marquee
 
     def refresh_ui_only(self, force=False):
         try:
@@ -1339,7 +1280,7 @@ class CombatLogApp:
                     
                     # Add padding for scroll loop
                     display_text = text + "   ***   "
-                    visible_len = 20 # LED display width in characters
+                    visible_len = 30 # LED display width in characters
                     
                     if len(text) > visible_len:
                         self._radio_scroll_pos = (self._radio_scroll_pos + 1) % len(display_text)
@@ -1352,7 +1293,7 @@ class CombatLogApp:
                             fg = "#FFFFFF"
                         else:
                             fg = "#CD853F"
-                        self.radio_toggle_lbl.config(text=marquee, fg=fg)
+                        self.main_canvas.itemconfig(self.radio_toggle_id, text=marquee, fill=fg)
                     else:
                         # No scroll needed
                         self._radio_scroll_pos = 0
@@ -1362,10 +1303,10 @@ class CombatLogApp:
                             fg = "#FFFFFF"
                         else:
                             fg = "#CD853F"
-                        self.radio_toggle_lbl.config(text=text.center(visible_len), fg=fg)
+                        self.main_canvas.itemconfig(self.radio_toggle_id, text=text.center(visible_len), fill=fg)
             else:
-                if hasattr(self, 'radio_toggle_lbl') and self.radio_toggle_lbl.winfo_exists():
-                    self.radio_toggle_lbl.config(text="OFF".center(20), fg="#ff4444")
+                if hasattr(self, 'radio_toggle_id'):
+                    self.main_canvas.itemconfig(self.radio_toggle_id, text="OFF".center(30), fill="#ff4444")
     
             # Damage meter is highest priority for real-time feel
             if hasattr(self, 'damage_meter_win') and self.damage_meter_win:
@@ -1411,7 +1352,22 @@ class CombatLogApp:
 
     def toggle_always_on_top(self):
         self.always_on_top = not self.always_on_top
-        self.ontop_btn.config(text="ONTOP: ON" if self.always_on_top else "ONTOP: OFF", fg=ACCENT_BLUE if self.always_on_top else TEXT_SECONDARY)
+        text = "ONTOP: ON" if self.always_on_top else "ONTOP: OFF"
+        fg = ACCENT_BLUE if self.always_on_top else TEXT_SECONDARY
+        self.main_canvas.itemconfig(self.btn_ontop, text=text, fill=fg)
+        self.root.attributes("-topmost", self.always_on_top)
+
+    def cycle_volume(self):
+        # Cycles volume: 100 -> 75 -> 50 -> 25 -> 0 -> 100
+        current_vol = self.radio_mgr.volume
+        if current_vol > 75: new_vol = 75
+        elif current_vol > 50: new_vol = 50
+        elif current_vol > 25: new_vol = 25
+        elif current_vol > 0: new_vol = 0
+        else: new_vol = 100
+        
+        self.radio_mgr.set_volume(new_vol)
+        self.main_canvas.itemconfig(self.lbl_vol, text=f"VOL: {new_vol}%")
 
     def web_sync_loop(self):
         import urllib.request
@@ -1462,12 +1418,12 @@ class CombatLogApp:
                             self.last_sync_time = time.time()
                 
             except Exception as e:
-                try:
-                    with open("crash_log.txt", "a") as f:
-                        f.write(f"--- SYNC ERROR {datetime.now()} ---\n{e}\n")
-                except: pass
+                pass
             
-            time.sleep(10) # Sync every 10 seconds
+            # Wait 30 seconds between syncs
+            for _ in range(600): # Sync every 60 seconds
+                if not self.running: break
+                time.sleep(0.1)
 
     def setup_tray_icon(self):
         try:
@@ -1747,9 +1703,22 @@ class CombatLogApp:
     def prev_radio_station(self):
         self.radio_mgr.prev_station()
 
+    def show_radio_context_menu(self, event):
+        from radio_manager import SAFE_RAP_STATIONS
+        menu = tk.Menu(self.root, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, 
+                       activebackground=ACCENT_BLUE, activeforeground=TEXT_PRIMARY, font=("Segoe UI", 9))
+        
+        for station in SAFE_RAP_STATIONS.keys():
+            menu.add_command(label=station, command=lambda s=station: self.radio_mgr.play(s))
+            
+        menu.post(event.x_root, event.y_root)
+
     def _update_radio_ui(self, is_playing):
-        # We now handle this in refresh_ui_only for smooth scrolling
-        pass
+        if is_playing:
+            st = self.radio_mgr.current_station if self.radio_mgr.current_station else "PLAYING"
+            self.main_canvas.itemconfig(self.radio_toggle_id, text=st.center(30), fill="#00ff00")
+        else:
+            self.main_canvas.itemconfig(self.radio_toggle_id, text="OFF".center(30), fill="#ff4444")
 
     def on_configure(self, event):
         if hasattr(self, "is_interacting") and self.is_interacting:

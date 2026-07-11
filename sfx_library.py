@@ -6,7 +6,8 @@ class StonerSoundLibrary:
     def __init__(self, audio_dir="sfx"):
         """Initializes the pygame mixer and structures the audio library paths."""
         try:
-            pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
+            # Increased buffer to 2048 to prevent stuttering and conflicts
+            pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
         except Exception as e:
             print(f"[Error] Failed to initialize pygame mixer: {e}")
 

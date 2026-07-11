@@ -1,3 +1,9 @@
+"""
+LivyLogs - Combat Log Analyzer
+Copyright (c) 2026 Livy
+Licensed under the GNU General Public License v3.0.
+"""
+
 import tkinter as tk
 from tkinter import ttk
 from windows.base_window import BasePopoutWindow
@@ -94,6 +100,8 @@ class AlexaWindow(BasePopoutWindow):
                 self.show_drops_view()
             elif self.view_state == "radio":
                 self.show_radio_view()
+            elif self.view_state == "ukn":
+                self.show_ukn_view()
         else:
             # We are in the same view, only update content if needed
             if self.view_state == "drops":
@@ -101,7 +109,7 @@ class AlexaWindow(BasePopoutWindow):
             elif self.view_state == "ghettosmith":
                 # Ghettosmith content is static for now, no need to update
                 pass
-            # Geocodes and Main are static
+            # Geocodes, Main, and UKN are static
 
     def update_drops_content(self, force=False):
         # We need a reference to the scroll_frame in show_drops_view
@@ -216,6 +224,11 @@ class AlexaWindow(BasePopoutWindow):
         calc_btn.pack(fill=tk.X, pady=2)
         calc_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
         calc_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+
+        ukn_btn = tk.Button(btn_frame, text="UKN", command=lambda: self.switch_view("ukn"), **btn_style)
+        ukn_btn.pack(fill=tk.X, pady=2)
+        ukn_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+        ukn_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
 
     def open_calculator(self):
         from windows.calculator import CalculatorWindow
@@ -406,6 +419,76 @@ class AlexaWindow(BasePopoutWindow):
             btn.pack(fill=tk.X, pady=2)
             btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
             btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+
+    def show_ukn_view(self):
+        # Navigation Row
+        nav_row = tk.Frame(self.content_container, bg=PANEL_DARK)
+        nav_row.pack(fill=tk.X, pady=(0, 5))
+        
+        tk.Label(nav_row, text="LIVIUS KEY (UKN)", bg=PANEL_DARK, fg=ACCENT_BLUE, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=10, pady=5)
+
+        back_btn = tk.Label(nav_row, text="⬆", bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Segoe UI", 11, "bold"), cursor="hand2", padx=10, pady=5)
+        back_btn.bind("<Button-1>", lambda e: self.switch_view("main"))
+        back_btn.pack(side=tk.RIGHT)
+        back_btn.bind("<Enter>", lambda e: back_btn.config(fg=TEXT_PRIMARY))
+        back_btn.bind("<Leave>", lambda e: back_btn.config(fg=TEXT_SECONDARY))
+
+        # Scrollable area
+        container = tk.Frame(self.content_container, bg=WINDOW_BG)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        canvas = tk.Canvas(container, bg=WINDOW_BG, highlightthickness=0, bd=0)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scroll_frame = tk.Frame(canvas, bg=WINDOW_BG)
+
+        scroll_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        
+        def _on_canvas_configure(e):
+             canvas.itemconfig(1, width=e.width)
+        canvas.bind("<Configure>", _on_canvas_configure)
+        
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Icon Data
+        # st_type: (icon, label, color, description)
+        ukn_data = [
+            ("knockdown", "🎯", "DB", "#FF8800", "Knockdown (Scope Target)"),
+            ("posture", "🧎", "PD", "#00FFFF", "Posture Change (Kneeling)"),
+            ("intimidate", "!!!", "Int", "#FF00FF", "Intimidate"),
+            ("poison", "🧪", "DOT", "#00FF00", "Poison Hits (Beaker)"),
+            ("incap", "🥴", "inc", "#FF0000", "Incapacitated (:s face)"),
+            ("death", "💀", "", "#888888", "Dead (Grey Name)"),
+            ("top_dps", "🏋️", "MVP", "#00FFFF", "Top DPS (MVP - Scales up)"),
+            ("top_tank", "🐑", "Tank", "#FFFFFF", "Top Tank (Sheep - Scales up)"),
+            ("top_healing", "✚", "ems", "#00FF00", "Top Healing (EMS - Scales up)"),
+            ("kills", "🏋️", "KB", "#FFFF00", "PvP Killing Blows"),
+        ]
+
+        for st_type, icon, label, col, desc in ukn_data:
+            f = tk.Frame(scroll_frame, bg=PANEL_DARK, pady=5, highlightthickness=1, highlightbackground=BORDER_COLOR)
+            f.pack(fill=tk.X, pady=2, padx=5)
+            
+            # Icon Preview (Canvas style to match LIVIUS)
+            icon_canvas = tk.Canvas(f, bg=PANEL_DARK, width=40, height=40, highlightthickness=0)
+            icon_canvas.pack(side=tk.LEFT, padx=10)
+            
+            cx, cy = 20, 20
+            icon_canvas.create_text(cx, cy, text=icon, font=("Segoe UI Emoji", 18), fill="white")
+            if label:
+                for dx, dy in [(-1,-1), (-1,1), (1,-1), (1,1)]:
+                    icon_canvas.create_text(cx+dx, cy+dy, text=label, font=("Arial", 8, "bold"), fill="black")
+                icon_canvas.create_text(cx, cy, text=label, font=("Arial", 8, "bold"), fill=col)
+            
+            # Description
+            info_frame = tk.Frame(f, bg=PANEL_DARK)
+            info_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+            
+            tk.Label(info_frame, text=desc, bg=PANEL_DARK, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold")).pack(anchor="w")
+            if label:
+                tk.Label(info_frame, text=f"Label: {label}", bg=PANEL_DARK, fg=col, font=("Consolas", 8)).pack(anchor="w")
 
     def switch_view(self, state):
         self.view_state = state

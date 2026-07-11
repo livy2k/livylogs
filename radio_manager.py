@@ -1,3 +1,9 @@
+"""
+LivyLogs - Combat Log Analyzer
+Copyright (c) 2026 Livy
+Licensed under the GNU General Public License v3.0.
+"""
+
 import os
 # Ensure VLC binary is in the path for the vlc module to load correctly
 vlc_path = r'C:\Program Files\VideoLAN\VLC'
@@ -179,18 +185,7 @@ class RadioStreamMixer:
 
 # Updated 100% Legally safe and open-source friendly stations with verified URLs
 SAFE_RAP_STATIONS = {
-    "181.FM OLDSCHOOL": "http://listen.181fm.com/181-oldschool_128k.mp3",
-    "SOMAFM FLUID": "http://ice1.somafm.com/fluid-128-mp3",
-    "1.FM 80S HITS": "http://strm112.1.fm/back280s_mobile_mp3",
-    "STREET STYLE": "http://streetstyle.out.airtime.pro:8000/streetstyle_a",
-    "CLASSIC RAP": "http://198.178.123.5:8320/stream",
-    "88.6 ROCK": "http://radio886.at/streams/radio_88.6/mp3",
-    "88.6 CLASSIC ROCK": "http://radio886.at/streams/88.6_Classic_Rock/mp3",
-    "X MINUS ONE": "https://archive.org/download/OTRR_Certified_X_Minus_One/XMinusOne_55-05-08_012_Mars_Is_Heaven.mp3",
-    "WAR OF THE WORLDS (1938)": "https://archive.org/download/WarOfTheWorlds1938RadioBroadcast256kbps/War-of-the-Worlds-1938-Radio-Broadcast-96kbps.mp3",
-    "WAR OF THE WORLDS (1955)": "https://archive.org/download/WarOfTheWorldsOriginal1938Broadcast/The_War_of_the_Worlds_Lux_1955.mp3",
-    "MARS IS HEAVEN! (1950)": "https://archive.org/download/Dimension-X/DimensionX_50-07-07_Mars_is_Heaven.mp3",
-    "ZERO HOUR (1955)": "https://archive.org/download/Suspense-1955/Suspense_55-04-05_601_Zero_Hour.mp3"
+    "RNS 420AM": "https://stream.bigfm.de/oldschoolrap/aac-128/liveradioie"
 }
 
 class RadioManager:
@@ -217,6 +212,9 @@ class RadioManager:
         self.last_played_mp3 = None
         self.is_interrupting = False
         self.current_song_name = None
+        self._pending_metadata = None
+        self._metadata_timer = None
+        self.metadata_delay = 2.5 # 2.5 seconds offset for buffering
         self.current_art_url = None
         self.stream_mixer = None
         self._is_fading_in = False
@@ -323,6 +321,12 @@ class RadioManager:
         self._worker_thread.start()
 
     def stop(self, is_transition=False):
+        # Cancel any pending metadata updates
+        if self._metadata_timer:
+            self._metadata_timer.cancel()
+            self._metadata_timer = None
+        self._pending_metadata = None
+
         self._stop_event.set()
         if not is_transition:
             self.is_playing = False
@@ -409,6 +413,35 @@ class RadioManager:
                 if state in [vlc.State.Ended, vlc.State.Error]:
                     break
                 
+                # Update metadata
+                media = self.player.get_media()
+                if media:
+                    raw_playing = media.get_meta(vlc.Meta.NowPlaying)
+                    if not raw_playing:
+                        artist = media.get_meta(vlc.Meta.Artist)
+                        title = media.get_meta(vlc.Meta.Title)
+                        if artist and title: raw_playing = f"{artist} - {title}"
+                        elif title: raw_playing = title
+
+                    if raw_playing:
+                        parsed = self._parse_metadata(raw_playing)
+                        if parsed != self._pending_metadata and parsed != self.current_song_name:
+                            # Start a delayed update
+                            if self._metadata_timer:
+                                self._metadata_timer.cancel()
+                            
+                            self._pending_metadata = parsed
+                            
+                            def _apply_metadata(meta_val):
+                                if not self._stop_event.is_set():
+                                    self.current_song_name = meta_val
+                                    self._pending_metadata = None
+                                    self._metadata_timer = None
+                            
+                            self._metadata_timer = threading.Timer(self.metadata_delay, _apply_metadata, args=[parsed])
+                            self._metadata_timer.daemon = True
+                            self._metadata_timer.start()
+                
                 # Check for 30-minute interruption
                 if not self.is_interrupting and time.time() - self.last_interrupt_time >= self.interrupt_interval:
                     # For VLC, we just stop the player and do the interrupt
@@ -426,6 +459,62 @@ class RadioManager:
         self.is_playing = False
         if self.status_callback:
             self.status_callback(False)
+
+    def _parse_metadata(self, raw_metadata):
+        if not raw_metadata:
+            return None
+        
+        import re
+        text = raw_metadata.strip()
+        
+        # 1. Remove obvious clutter
+        text = re.sub(r'https?://\S+', '', text)
+        text = re.sub(r'(?i)^(LIVE|ON AIR|STREAMING|NOW PLAYING):\s*', '', text)
+        text = re.sub(r'(?i)\s*(\(?(buy on iTunes|on air|listening to|streaming|radio|live)\)?)\s*', '', text)
+        
+        # 2. Extract Artist and Song
+        if " - " in text:
+            parts = [p.strip() for p in text.split(" - ") if p.strip()]
+            if len(parts) >= 2:
+                # If we have "Station - Artist - Song", the candidate artist string is parts[-2]
+                raw_artist = parts[-2]
+                song = parts[-1]
+                
+                # Split artists by common delimiters: " feat. ", " ft. ", " & ", ", "
+                artists = re.split(r'(?i)\s+(?:feat\.?|ft\.?|&)\s+|,\s+', raw_artist)
+                artists = [a.strip() for a in artists if a.strip()]
+                
+                # Take up to the first three artists
+                display_artists = " & ".join(artists[:3])
+                
+                # Clean song name from (Remix), [Official Video], (feat. X) etc.
+                # We strip anything in parentheses/brackets to keep it minimalist as per previous patterns
+                song = re.sub(r'\s*[\(\[\{].*?[\)\]\}]\s*', ' ', song).strip()
+                song = re.sub(r'\s*@.*$', '', song)
+                
+                result = f"{display_artists} - {song}".strip()
+                if self._is_mostly_english(result):
+                    return result
+                return None
+        
+        # Fallback to general cleaning
+        text = re.sub(r'\s+', ' ', text).strip()
+        if self._is_mostly_english(text):
+            return text
+        return None
+
+    def _is_mostly_english(self, text):
+        if not text:
+            return True
+        try:
+            text.encode('ascii')
+            return True
+        except UnicodeEncodeError:
+            non_ascii = len([c for c in text if ord(c) > 127])
+            # If more than 20% of the text is non-ASCII, it's likely not English/Latin-based
+            if non_ascii / len(text) > 0.2:
+                return False
+            return True
 
     def _handle_interrupt(self):
         if not self.local_mp3s:

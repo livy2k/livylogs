@@ -1,3 +1,9 @@
+/*
+ * LivyLogs - Combat Log Analyzer
+ * Copyright (c) 2026 Livy
+ * Licensed under the GNU General Public License v3.0.
+ */
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,6 +55,12 @@ unsigned char s_for[] = {0x1c, 0x15, 0x8, 0x00};
 unsigned char s_on[] = {0x15, 0x14, 0x00};
 unsigned char s_to[] = {0xe, 0x15, 0x00};
 unsigned char s_you[] = {0x3, 0x15, 0xf, 0x00};
+unsigned char s_no_longer_intimidated[] = {0x14, 0x15, 0x5a, 0x16, 0x15, 0x14, 0x1d, 0x1f, 0x08, 0x5a, 0x13, 0x14, 0x0e, 0x13, 0x17, 0x13, 0x1e, 0x1b, 0x0e, 0x1f, 0x1e, 0x00};
+unsigned char s_poison[] = {0x1a, 0x15, 0x13, 0x9, 0x15, 0x14, 0x00};
+unsigned char s_resists[] = {0x8, 0x1f, 0x9, 0x13, 0x9, 0xe, 0x9, 0x00};
+unsigned char s_incapacitated[] = {0x13, 0x14, 0x19, 0x1b, 0x1a, 0x1b, 0x19, 0x13, 0xe, 0x1b, 0xe, 0x1f, 0x1e, 0x00};
+unsigned char s_you_have_been[] = {0x3, 0x15, 0xf, 0x5a, 0x12, 0x1b, 0x2c, 0x1f, 0x5a, 0x18, 0x1f, 0x1f, 0x14, 0x00};
+unsigned char s_has_been[] = {0x12, 0x1b, 0x9, 0x5a, 0x18, 0x1f, 0x1f, 0x14, 0x00};
 
 // State structures
 typedef struct {
@@ -216,7 +228,109 @@ void p_l(HANDLE h, char* l) {
     for(int i=0; clean[i]; i++) lower[i] = tolower(clean[i]);
     lower[strlen(clean)] = '\0';
 
-    char s_ap[32], s_lt[32], s_fr[32], s_hd[32], s_ar[32], s_l_key[32], s_ac[32], s_he[32], s_de[32], s_tk[32], s_od[32], s_di[32], s_f[32], s_o[32], s_t[32], s_y[32];
+    char s_ap[32], s_lt[32], s_fr[32], s_hd[32], s_ar[32], s_l_key[32], s_ac[32], s_he[32], s_de[32], s_tk[32], s_od[32], s_di[32], s_f[32], s_o[32], s_t[32], s_y[32], s_nli[64], s_poi[32], s_res[32], s_inc[32], s_yhb[32], s_hb[32];
+
+    // Incapacitated tracking
+    strcpy(s_inc, (char*)s_incapacitated); d(s_inc);
+    if (strstr(lower, s_inc)) {
+        char target[128] = "Unknown";
+        int found = 0;
+        
+        strcpy(s_yhb, (char*)s_you_have_been); d(s_yhb);
+        if (strstr(lower, s_yhb)) {
+            strcpy(target, "You");
+            found = 1;
+        } else {
+            strcpy(s_hb, (char*)s_has_been); d(s_hb);
+            char* p_hb = s_i_s(clean, s_hb);
+            if (p_hb) {
+                int t_len = p_hb - clean;
+                if (t_len > 127) t_len = 127;
+                if (t_len > 0) {
+                    strncpy(target, clean, t_len); target[t_len] = '\0';
+                    while(strlen(target) > 0 && target[strlen(target)-1] == ' ') target[strlen(target)-1] = '\0';
+                    found = 1;
+                }
+            }
+        }
+        
+        if (found) {
+            char j[BUFFER_SIZE];
+            char e_n[256];
+            e_j(target, e_n);
+            sprintf(j, "{\"type\": \"incapacitated\", \"target\": \"%s\"}\n", e_n);
+            send_raw_event(h, j);
+            // Don't return, might also be a death or other event in some logs
+        }
+    }
+
+    // Poison tracking: "Target resists your poison" or "You apply poison to Target"
+    strcpy(s_res, (char*)s_resists); d(s_res);
+    if (strstr(lower, s_res) && strstr(lower, "poison")) {
+        char* p_res = s_i_s(clean, s_res);
+        if (p_res) {
+            char target[128] = "Unknown";
+            int t_len = p_res - clean;
+            if (t_len > 127) t_len = 127;
+            if (t_len > 0) {
+                strncpy(target, clean, t_len); target[t_len] = '\0';
+                while(strlen(target) > 0 && target[strlen(target)-1] == ' ') target[strlen(target)-1] = '\0';
+                
+                char j[BUFFER_SIZE];
+                char e_n[256];
+                e_j(target, e_n);
+                sprintf(j, "{\"type\": \"poison_resist\", \"target\": \"%s\"}\n", e_n);
+                send_raw_event(h, j);
+                return;
+            }
+        }
+    }
+
+    strcpy(s_poi, (char*)s_poison); d(s_poi);
+    if (strstr(lower, s_poi) && strstr(lower, "you apply")) {
+        // "You apply poison to Target"
+        char* p_to = strstr(lower, " to ");
+        if (p_to) {
+            char target[128] = "Unknown";
+            char* p_target = clean + (p_to - lower) + 4;
+            strncpy(target, p_target, 127); target[127] = '\0';
+            // Remove trailing period if present
+            if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
+            while(strlen(target) > 0 && (target[strlen(target)-1] == ' ' || target[strlen(target)-1] == '!')) target[strlen(target)-1] = '\0';
+
+            char j[BUFFER_SIZE];
+            char e_n[256];
+            e_j(target, e_n);
+            sprintf(j, "{\"type\": \"poison\", \"source\": \"You\", \"target\": \"%s\"}\n", e_n);
+            send_raw_event(h, j);
+            return;
+        }
+    }
+
+    // No longer intimidated
+    strcpy(s_nli, (char*)s_no_longer_intimidated); d(s_nli);
+    if (strstr(lower, s_nli)) {
+        char* p = s_i_s(clean, s_nli);
+        if (p) {
+            char name[128] = "Unknown";
+            int n_len = p - clean;
+            if (n_len > 127) n_len = 127;
+            if (n_len > 0) {
+                strncpy(name, clean, n_len); name[n_len] = '\0';
+                while(strlen(name) > 0 && name[strlen(name)-1] == ' ') name[strlen(name)-1] = '\0';
+                
+                char j[BUFFER_SIZE];
+                char e_n[256];
+                e_j(name, e_n);
+                sprintf(j, "{\"type\": \"status_removed\", \"target\": \"%s\", \"status\": \"intimidate\"}\n", e_n);
+                send_raw_event(h, j);
+                return;
+            } else if (n_len == 0) {
+                 // "No longer intimidated..." starting the line might mean "You" in some games
+                 // but let's assume it's "[Name] no longer intimidated"
+            }
+        }
+    }
 
     // Armor prevented
     strcpy(s_ap, (char*)s_armor_prevented); d(s_ap);
@@ -325,6 +439,43 @@ void p_l(HANDLE h, char* l) {
         }
     }
 
+    // Chat parsing for [Groupchat]
+    if (l[0] == '[') {
+        char* first_bracket_end = strchr(l, ']');
+        if (first_bracket_end) {
+            char channel[64];
+            int c_len = first_bracket_end - (l + 1);
+            if (c_len > 63) c_len = 63;
+            strncpy(channel, l + 1, c_len);
+            channel[c_len] = '\0';
+
+            if (_stricmp(channel, "Groupchat") == 0) {
+                char* after_channel = first_bracket_end + 1;
+                while (*after_channel == ' ') after_channel++;
+                
+                // Format is usually "[Groupchat] PlayerName: message"
+                char* colon = strchr(after_channel, ':');
+                if (colon) {
+                    char name[128];
+                    int n_len = colon - after_channel;
+                    if (n_len > 127) n_len = 127;
+                    strncpy(name, after_channel, n_len);
+                    name[n_len] = '\0';
+                    
+                    char* msg = colon + 1;
+                    while (*msg == ' ') msg++;
+                    
+                    char j[BUFFER_SIZE];
+                    char e_n[256], e_m[BUFFER_SIZE];
+                    e_j(name, e_n);
+                    e_j(msg, e_m);
+                    sprintf(j, "{\"type\": \"chat\", \"channel\": \"Groupchat\", \"source\": \"%s\", \"message\": \"%s\"}\n", e_n, e_m);
+                    send_raw_event(h, j);
+                }
+            }
+        }
+    }
+
     // Death
     strcpy(s_hd, (char*)s_has_died); d(s_hd);
     if (strstr(lower, s_hd)) {
@@ -363,7 +514,8 @@ void p_l(HANDLE h, char* l) {
             PlayerStats* ps = get_player("You");
             if (ps) {
                 ps->mob_count++;
-                // Removed redundant s_s(h) here
+                char s_ki[64]; strcpy(s_ki, (char*)s_kill); d(s_ki);
+                s_e(h, s_ki, "You", "", 0, 0, "", "", 0);
             }
         }
     }
@@ -380,7 +532,9 @@ void p_l(HANDLE h, char* l) {
         PlayerStats* ps = get_player(name);
         if (ps) {
             ps->mob_count++;
-            // Removed redundant s_s(h) here
+            // Notify Python about the kill
+            char s_ki[64]; strcpy(s_ki, (char*)s_kill); d(s_ki);
+            s_e(h, s_ki, name, "", 0, 0, "", "", 0);
         }
     }
 

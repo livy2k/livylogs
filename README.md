@@ -54,4 +54,4 @@ For details on the latest architectural changes (Flow Inversion), build instruct
 - [BUILD_ENGINE.md](BUILD_ENGINE.md)
 
 ## 📄 License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for the full text.
+This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for the full text.

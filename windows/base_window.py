@@ -1,3 +1,9 @@
+"""
+LivyLogs - Combat Log Analyzer
+Copyright (c) 2026 Livy
+Licensed under the GNU General Public License v3.0.
+"""
+
 import tkinter as tk
 from constants import (
     WINDOW_BG, BORDER_COLOR, PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY,
@@ -7,7 +13,7 @@ from constants import (
 from utils import apply_snapping
 
 class BasePopoutWindow:
-    def __init__(self, app, title, config_key, default_w, default_h, centered=False, fixed_size=False):
+    def __init__(self, app, title, config_key, default_w, default_h, centered=False, fixed_size=False, show_title=True):
         self.app = app
         self.title = title
         self.config_key = config_key
@@ -15,6 +21,7 @@ class BasePopoutWindow:
         self.default_h = default_h
         self.centered = centered
         self.fixed_size = fixed_size
+        self.show_title = show_title
         self.window = None
 
     def update_if_changed(self, label, new_value):
@@ -40,8 +47,6 @@ class BasePopoutWindow:
         self.window = tk.Toplevel(self.app.root)
         self.window.title(self.title)
         
-        saved_x = self.app.config.get(self.config_key, "x", fallback=None)
-        saved_y = self.app.config.get(self.config_key, "y", fallback=None)
         w = self.app.config.getint(self.config_key, "width", fallback=self.default_w)
         h = self.app.config.getint(self.config_key, "height", fallback=self.default_h)
 
@@ -85,37 +90,47 @@ class BasePopoutWindow:
         self.window.bind("<Control-c>", self._on_global_copy)
         self.window.bind("<Control-a>", self._on_global_select_all)
         
-        border = tk.Frame(self.window, bg=BORDER_COLOR, padx=1, pady=1)
+        border = tk.Frame(self.window, bg=BORDER_COLOR, padx=0, pady=0)
         border.pack(fill=tk.BOTH, expand=True)
         self.inner = tk.Frame(border, bg=WINDOW_BG)
         self.inner.pack(fill=tk.BOTH, expand=True)
 
-        # Gradient Title Bar
-        self.title_bar = tk.Canvas(self.inner, bg=TITLE_GRADIENT_END, height=32, highlightthickness=0)
-        self.title_bar.pack(fill=tk.X)
-        self.title_bar.bind("<Button-1>", self.click_window)
-        self.title_bar.bind("<B1-Motion>", self.drag_window)
-        self.title_bar.bind("<ButtonRelease-1>", self.release_window)
-        
-        # Draw subtle gradient
-        self.title_bar.bind("<Configure>", self._draw_title_gradient)
-        
-        self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=TITLE_GRADIENT_START, fg=TEXT_PRIMARY, font=("Segoe UI", 9, "bold"))
-        # We'll place the label after the gradient is drawn or use transparent-like placement
-        self.title_bar.create_window(10, 16, window=self.title_label, anchor="w")
-        
-        self.title_label.bind("<Button-1>", self.click_window)
-        self.title_label.bind("<B1-Motion>", self.drag_window)
-        self.title_label.bind("<ButtonRelease-1>", self.release_window)
-        
-        close_btn = tk.Label(self.title_bar, text="✕", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 11), cursor="hand2", padx=10)
-        self.title_bar.create_window(self.default_w - 5, 16, window=close_btn, anchor="e", tags="close_btn")
-        close_btn.bind("<Button-1>", lambda e: self.close())
-        close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#ff4444"))
-        close_btn.bind("<Leave>", lambda e: close_btn.config(fg=TEXT_SECONDARY))
-        
-        self.content_container = tk.Frame(self.inner, bg=WINDOW_BG, padx=8, pady=8)
+        # Content container
+        # Reduced padding to 0,0 for maximum space
+        self.content_container = tk.Frame(self.inner, bg=WINDOW_BG, padx=0, pady=0)
         self.content_container.pack(fill=tk.BOTH, expand=True)
+
+        # Gradient Title Bar
+        if self.show_title:
+            self.title_bar = tk.Canvas(self.inner, bg=TITLE_GRADIENT_END, height=20, highlightthickness=0)
+            self.title_bar.pack(side=tk.TOP, fill=tk.X, before=self.content_container)
+            self.title_bar.bind("<Button-1>", self.click_window)
+            self.title_bar.bind("<B1-Motion>", self.drag_window)
+            self.title_bar.bind("<ButtonRelease-1>", self.release_window)
+            
+            # Draw subtle gradient
+            self.title_bar.bind("<Configure>", self._draw_title_gradient)
+            
+            # Close Button on the far right
+            close_btn = tk.Label(self.title_bar, text="✕", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 10), cursor="hand2", padx=8)
+            self.title_bar.create_window(self.window.winfo_width() - 5 if self.window else self.default_w - 5, 10, window=close_btn, anchor="e", tags="close_btn")
+            close_btn.bind("<Button-1>", lambda e: self.close())
+            close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#ff4444"))
+            close_btn.bind("<Leave>", lambda e: close_btn.config(fg=TEXT_SECONDARY))
+            
+            # If title is empty or not provided, we just have the bar
+            if self.title and self.title != "LIVIUS":
+                self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=TITLE_GRADIENT_START, fg=TEXT_PRIMARY, font=("Segoe UI", 8, "bold"))
+                self.title_bar.create_window(10, 10, window=self.title_label, anchor="w", tags="title_label")
+                self.title_label.bind("<Button-1>", self.click_window)
+                self.title_label.bind("<B1-Motion>", self.drag_window)
+                self.title_label.bind("<ButtonRelease-1>", self.release_window)
+        else:
+            # If no title bar, make the content container draggable
+            self.content_container.bind("<Button-1>", self.click_window)
+            self.content_container.bind("<B1-Motion>", self.drag_window)
+            self.content_container.bind("<ButtonRelease-1>", self.release_window)
+        
 
         if not self.fixed_size:
             self.resize_handle = tk.Label(self.inner, text="◢", bg=WINDOW_BG, fg=BORDER_COLOR, font=("Segoe UI", 8), cursor="size_nw_se")
@@ -137,6 +152,8 @@ class BasePopoutWindow:
         self.app.last_interaction_time = __import__("time").time()
         self._is_resizing = True
         self.app.do_resize_popout(e, self.window, self.default_w, self.default_h)
+        # Update textures or layout if needed immediately
+        self.refresh(force=True)
 
     def on_resize_end(self, e):
         self.app.is_interacting = False
@@ -260,6 +277,7 @@ class BasePopoutWindow:
         if not self.title_bar: return
         w = self.title_bar.winfo_width()
         h = self.title_bar.winfo_height()
+        if h == 0: h = 24
         self.title_bar.delete("gradient")
         
         # Simple vertical gradient
@@ -277,5 +295,13 @@ class BasePopoutWindow:
         
         # Reposition close button
         self.title_bar.coords("close_btn", w - 5, h // 2)
+        # Reposition title label
+        if hasattr(self, "title_label"):
+            try:
+                self.title_bar.coords(self.title_bar.find_withtag("title_label"), 10, h // 2)
+            except:
+                # If finding by tag fails, try using the widget itself or its window item
+                pass
+        
         # Update label background to match gradient start
         self.title_label.config(bg=TITLE_GRADIENT_START)

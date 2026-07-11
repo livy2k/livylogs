@@ -1,3 +1,9 @@
+"""
+LivyLogs - Combat Log Analyzer
+Copyright (c) 2026 Livy
+Licensed under the GNU General Public License v3.0.
+"""
+
 import tkinter as tk
 import os
 import time
@@ -124,17 +130,17 @@ class OptionsWindow(BasePopoutWindow):
         tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
         tk.Label(self.content_container, text="TESTING", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(0, 5))
         
-        test_btn = tk.Label(self.content_container, text="HOLD TO GENERATE TEST DATA", bg=BUTTON_BG, fg=TEXT_PRIMARY, 
+        test_btn = tk.Label(self.content_container, text="HOLD TO TEST DATA", bg=BUTTON_BG, fg=TEXT_PRIMARY, 
                            font=("Segoe UI", 9, "bold"), pady=12, cursor="hand2")
         test_btn.pack(fill=tk.X, pady=4)
 
         def on_press(e):
-            test_btn.config(bg=ACCENT_BLUE)
+            test_btn.config(bg=ACCENT_BLUE, text="TESTING DATA...")
             self.app.toggle_test_mode(True)
             self.refresh()
 
         def on_release(e):
-            test_btn.config(bg=BUTTON_BG)
+            test_btn.config(bg=BUTTON_BG, text="HOLD TO TEST DATA")
             self.app.toggle_test_mode(False)
             self.refresh()
 

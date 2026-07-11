@@ -1,3 +1,9 @@
+"""
+LivyLogs - Combat Log Analyzer
+Copyright (c) 2026 Livy
+Licensed under the GNU General Public License v3.0.
+"""
+
 import tkinter as tk
 import math
 from windows.base_window import BasePopoutWindow

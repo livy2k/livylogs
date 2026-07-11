@@ -1,3 +1,9 @@
+"""
+LivyLogs - Combat Log Analyzer
+Copyright (c) 2026 Livy
+Licensed under the GNU General Public License v3.0.
+"""
+
 import ctypes
 from ctypes import wintypes
 
@@ -33,6 +39,7 @@ BORDER_HIGHLIGHT = "#3f444d"
 TEXT_PRIMARY = "#e1e4e8"
 TEXT_SECONDARY = "#8b949e"
 TEXT_ACCENT = "#00a2ff"
+TEXT_DISABLED = "#555555"
 BUTTON_BG = "#1f242d"
 BUTTON_HOVER = "#2a2e35"
 ENTRY_BG = "#090a0c"

@@ -1,3 +1,9 @@
+"""
+LivyLogs - Combat Log Analyzer
+Copyright (c) 2026 Livy
+Licensed under the GNU General Public License v3.0.
+"""
+
 import tkinter as tk
 from tkinter import ttk
 import os
@@ -35,6 +41,7 @@ from windows.leaderboard import LeaderboardWindow
 from windows.details import DetailsWindow
 from windows.options import OptionsWindow
 from windows.alexa import AlexaWindow
+from windows.livius import LiviusWindow
 from radio_manager import RadioManager, SAFE_RAP_STATIONS
 from killstreak_manager import KillstreakManager
 
@@ -122,6 +129,7 @@ class CombatLogApp:
         self.details_win = DetailsWindow(self)
         self.options_win = OptionsWindow(self)
         self.alexa_win = AlexaWindow(self)
+        self.livius_win = LiviusWindow(self)
         self.calc_win = None
         self.armor_win = None
         self.hitmiss_win = None
@@ -134,7 +142,7 @@ class CombatLogApp:
         
         self._managed_windows = [
             self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
-            self.details_win, self.options_win, self.alexa_win, None, None # placeholders for calc_win, armor_win
+            self.details_win, self.options_win, self.alexa_win, self.livius_win, None, None # placeholders for calc_win, armor_win
         ]
         
         self.is_interacting = False
@@ -153,6 +161,21 @@ class CombatLogApp:
         self.leaderboard_data = {}
         self.known_npcs = set()
         self.known_players = set()
+        self.friendly_players = set()
+        self.enemy_players = set()
+        self.player_arrival_order = [] # List to track order of first appearance
+        self.status_cooldowns = {} # {player_name: {status_type: timestamp}}
+        self.damage_history = {} # {player_name: [(timestamp, damage)]}
+        self.damage_taken_history = {} # {player_name: [(timestamp, damage_taken)]}
+        self.healing_history = {} # {player_name: [(timestamp, healing)]}
+        self.top_dps_durations = {} # {player_name: total_seconds_at_top}
+        self.top_tank_durations = {} # {player_name: total_seconds_at_top_tank}
+        self.top_healing_durations = {} # {player_name: total_seconds_at_top_healing}
+        self.current_top_dps = {'friendly': None, 'enemy': None}
+        self.current_top_tank = {'friendly': None, 'enemy': None}
+        self.current_top_healing = {'friendly': None, 'enemy': None}
+        self.current_focus_target = {'friendly': None, 'enemy': None}
+        self.last_top_stats_check = time.time()
         self.permanent_drops = {} # { "item_name": ["dropper1", "dropper2"] }
         self.load_permanent_drops()
         
@@ -299,7 +322,7 @@ class CombatLogApp:
 
     def _get_managed_windows(self):
         managed = [self.root]
-        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win, self.calc_win]:
+        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win, self.calc_win, self.livius_win]:
             if w and w.window and w.window.winfo_exists(): managed.append(w.window)
         return managed
 
@@ -610,7 +633,13 @@ class CombatLogApp:
             text_id = self.main_canvas.create_text(x, y, text=name, fill=fg, font=font_obj, anchor="center", tags=tags)
             
             if cmd:
-                self.main_canvas.tag_bind(text_id, "<Button-1>", lambda e: cmd())
+                # Handle both types of callbacks: those that expect 'e' and those that don't
+                def safe_call(e):
+                    try:
+                        cmd(e)
+                    except TypeError:
+                        cmd()
+                self.main_canvas.tag_bind(text_id, "<Button-1>", safe_call)
                 
                 # Hover effects
                 def on_enter(e, tid=text_id, color=TEXT_ACCENT):
@@ -626,20 +655,23 @@ class CombatLogApp:
             return text_id
 
         # Place labels based on ui_labels_map.txt
-        # Alexa, 100, 110
-        self.btn_alexa = create_ui_label("ALEXA", 100, 110, self.alexa_win.show)
+        # Alexa, 100, 120
+        self.btn_alexa = create_ui_label("ALEXA", 100, 120, self.alexa_win.show)
         
-        # DMG METER 210, 110
-        self.lbl_dmg = create_ui_label("DMG METER", 210, 110, self.damage_meter_win.show)
+        # DMG METER 210, 120
+        self.lbl_dmg = create_ui_label("DMG METER", 210, 120, self.damage_meter_win.show)
         
-        # Details 300, 110
-        self.lbl_det = create_ui_label("DETAILS", 300, 110, self.details_win.show)
+        # Details 300, 120
+        self.lbl_det = create_ui_label("DETAILS", 300, 120, self.details_win.show)
         
-        # Skimmers 380, 110
-        self.lbl_skm = create_ui_label("SKIMMERS", 380, 110, self.skimmers_win.show)
+        # Skimmers 380, 120
+        self.lbl_skm = create_ui_label("SKIMMERS", 380, 120, self.skimmers_win.show)
         
-        # Loot 470, 110
-        self.lbl_loot = create_ui_label("LOOT", 470, 110, self.leaderboard_win.show)
+        # Loot 470, 120
+        self.lbl_loot = create_ui_label("LOOT", 470, 120, self.leaderboard_win.show)
+        
+        # Livius 550, 120
+        self.lbl_livius = create_ui_label("LIVIUS", 550, 120, self.livius_win.show)
         
         # Exit 590, 100
         self.btn_exit = create_ui_label(" ✕ ", 590, 100, self.on_exit, fg="#ff4444", font_obj=("Segoe UI", 12))
@@ -654,10 +686,10 @@ class CombatLogApp:
         # VOLUME CONTROL (Inspired by Python-m3u-radio-player)
         self.lbl_vol = create_ui_label("VOL: 100%", 180, 45, self.cycle_volume, font_obj=("Segoe UI", 8, "bold"), tags="vol_btn")
         
-        # RadioManager, 400, 72.5
-        radio_text = "OFF".center(40)
-        self.radio_toggle_id = self.main_canvas.create_text(400, 72.5, text=radio_text, fill="#ff4444", 
-                                                         font=("Consolas", 18, "bold"), anchor="center", tags="radio_toggle")
+        # RadioManager, 385, 72.5
+        radio_text = "OFF".center(30)
+        self.radio_toggle_id = self.main_canvas.create_text(385, 72.5, text=radio_text, fill="#ff4444", 
+                                                         font=("Consolas", 14, "bold"), anchor="center", tags="radio_toggle")
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: self.toggle_radio())
         
         # Radio hover effects
@@ -666,10 +698,10 @@ class CombatLogApp:
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-3>", self.show_radio_context_menu)
 
         # Additional UI elements
-        self.clock_id = self.main_canvas.create_text(520, 30, text="00:00:00", fill="#00ff00", font=("Consolas", 9, "bold"), anchor="ne")
+        self.clock_id = self.main_canvas.create_text(520, 25, text="00:00:00", fill="#00ff00", font=("Consolas", 9, "bold"), anchor="ne")
         self.update_clock()
 
-        self.status_id = self.main_canvas.create_text(600, 30, text="DISCONNECTED", fill="#ff4444", font=("Segoe UI", 7, "bold"), anchor="ne")
+        self.status_id = self.main_canvas.create_text(600, 30, text="●", fill="#ff4444", font=("Segoe UI", 12, "bold"), anchor="ne")
 
         self.radio_up_id = create_ui_label("◄", 235, 77.5, self.prev_radio_station, font_obj=("Segoe UI", 16))
         self.radio_down_id = create_ui_label("►", 585, 77.5, self.next_radio_station, font_obj=("Segoe UI", 16))
@@ -733,7 +765,7 @@ class CombatLogApp:
 
         while self.running:
             if hasattr(self, 'status_id'):
-                self.main_canvas.itemconfig(self.status_id, text="RECONNECTING...", fill="#ffaa00")
+                self.main_canvas.itemconfig(self.status_id, fill="#ffaa00")
             
             # Use discovery logic
             current_pipe = find_active_pipe()
@@ -783,7 +815,7 @@ class CombatLogApp:
                 continue
             
             if hasattr(self, 'status_id'):
-                self.main_canvas.itemconfig(self.status_id, text="CONNECTED", fill="#00ff88")
+                self.main_canvas.itemconfig(self.status_id, fill="#00ff88")
             
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
@@ -850,6 +882,7 @@ class CombatLogApp:
             time.sleep(1) # Wait before reconnecting to avoid tight loop on failure
 
     def process_external_event(self, event, is_last=False):
+        import json
         # First-pass normalization for specific keys
         for key in ["name", "source", "target"]:
             val = event.get(key)
@@ -860,10 +893,61 @@ class CombatLogApp:
                     self.known_players.add(normalize_name(val).lower())
                     event[key] = val
                 
-                event[key] = normalize_name(event.get(key, ""))
+                v_norm = normalize_name(event.get(key, ""))
+                event[key] = v_norm
+                
+                # TRACK ARRIVAL ORDER
+                if v_norm and v_norm != "Unknown":
+                    if v_norm not in self.player_arrival_order:
+                        self.player_arrival_order.append(v_norm)
+                        try:
+                            with open("livius_debug.log", "a") as f:
+                                f.write(f"[{time.strftime('%H:%M:%S')}] ARRIVAL: {v_norm} (via {key})\n")
+                        except: pass
         
         event_type = event.get("type")
-        
+
+        # LIVIUS DEBUG LOGGING
+        if event_type in ["chat", "poison", "incapacitated", "status_removed", "cooldown", "death", "kill"]:
+             try:
+                 with open("livius_debug.log", "a") as f:
+                     f.write(f"[{time.strftime('%H:%M:%S')}] EVENT: {json.dumps(event)}\n")
+             except: pass
+
+        if event_type == "chat":
+            channel = event.get("channel")
+            source = event.get("source")
+            message = event.get("message", "")
+            if channel == "Groupchat" and source:
+                source = normalize_name(source)
+                msg_clean = message.strip()
+                if msg_clean == "123":
+                    self.friendly_players.add(source)
+                    self.known_players.add(source.lower())
+                    # ENSURE IN ARRIVAL ORDER
+                    if source not in self.player_arrival_order:
+                        self.player_arrival_order.append(source)
+                
+                    try:
+                        with open("livius_debug.log", "a") as f:
+                            f.write(f"[{time.strftime('%H:%M:%S')}] FRIEND ADDED: {source} (Chat 123). Order: {self.player_arrival_order}\n")
+                    except: pass
+                
+                    if source in self.enemy_players:
+                        self.enemy_players.remove(source)
+                    # Force a data init for the friendly player
+                    if source not in self.player_data:
+                        self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0}
+                    else:
+                        if "poison_hits" not in self.player_data[source]: self.player_data[source]["poison_hits"] = 0
+                        if "incapacitated_count" not in self.player_data[source]: self.player_data[source]["incapacitated_count"] = 0
+                        if "kill_count" not in self.player_data[source]: self.player_data[source]["kill_count"] = 0
+                    
+                    # Force a UI refresh to show the new friend immediately
+                    if hasattr(self, 'livius_win') and self.livius_win:
+                        self.livius_win.refresh(force=True)
+            return
+
         if event_type == "stats":
             name = event.get("name")
             if not name: return
@@ -875,13 +959,45 @@ class CombatLogApp:
             
             # p should be keyed by the normalized name
             if name not in self.player_data:
-                self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
+                self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0}
             
             p = self.player_data[name]
             
             # If they did something, mark them as definitely a player locally (to bypass NPC filters if needed)
             if event.get("damage", 0) > 0 or event.get("healing", 0) > 0 or event.get("taken", 0) > 0:
                 self.known_players.add(name.lower())
+                # Mark as enemy if not already friendly and is a player (not NPC)
+                if name != "You" and name not in self.friendly_players:
+                    # Check if it's a known player or passes the probable player test
+                    if name.lower() in self.known_players or is_probable_player(name, self.bosses, self.known_npcs, self.known_players):
+                        if name not in self.enemy_players:
+                            self.enemy_players.add(name)
+                            # ENSURE IN ARRIVAL ORDER
+                            if name not in self.player_arrival_order:
+                                self.player_arrival_order.append(name)
+                            try:
+                                with open("livius_debug.log", "a") as f:
+                                    f.write(f"[{time.strftime('%H:%M:%S')}] ENEMY ADDED: {name} (Combat Action). Order: {self.player_arrival_order}\n")
+                            except: pass
+                
+                # Ensure player data has fields for LIVIUS UI
+                if name not in self.player_data:
+                    self.player_data[name] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0}
+                else:
+                    if "poison_hits" not in self.player_data[name]: self.player_data[name]["poison_hits"] = 0
+                    if "incapacitated_count" not in self.player_data[name]: self.player_data[name]["incapacitated_count"] = 0
+                    if "kill_count" not in self.player_data[name]: self.player_data[name]["kill_count"] = 0
+
+            # Track knockdowns
+            if event_type == "stats":
+                # stats events don't usually have ability, check dealing/taken events
+                pass
+            
+            # Reset status cooldowns if a player dies or is defeated
+            if event.get("died", False) or event.get("defeated", False):
+                if name in self.status_cooldowns:
+                    del self.status_cooldowns[name]
+
             # Ensure cumulative session stats only increase
             p["damage"] = max(p.get("damage", 0), event.get("damage", 0))
             p["healing"] = max(p.get("healing", 0), event.get("healing", 0))
@@ -945,6 +1061,136 @@ class CombatLogApp:
         ability = event.get("ability", "")
         is_mitigated = event.get("is_mitigated", False)
 
+        # Track statuses (knockdown, posture change, intimidate)
+        if ability:
+            low_ability = ability.lower()
+            status_type = None
+            if "knockdown" in low_ability: status_type = "knockdown"
+            elif "posture" in low_ability: status_type = "posture"
+            elif "intimidate" in low_ability: status_type = "intimidate"
+            
+            if status_type and target and target != "Unknown":
+                cur_time = time.time()
+                # DEBUG STATUS
+                try:
+                    with open("livius_debug.log", "a") as dbf:
+                        dbf.write(f"[{time.strftime('%H:%M:%S')}] STATUS DETECTED: {status_type} on {target}\n")
+                except: pass
+                
+                if target not in self.status_cooldowns:
+                    self.status_cooldowns[target] = {}
+                
+                last_time = self.status_cooldowns[target].get(status_type, 0)
+                if cur_time - last_time > 30:
+                    self.status_cooldowns[target][status_type] = cur_time
+                else:
+                    try:
+                        with open("livius_debug.log", "a") as dbf:
+                            dbf.write(f"  (Ignored: {cur_time - last_time:.1f}s since last)\n")
+                    except: pass
+
+        # Early status removal (e.g., "no longer intimidated")
+        if event_type == "status_removed":
+            status_type = event.get("status")
+            if target and target != "Unknown" and target in self.status_cooldowns:
+                if status_type in self.status_cooldowns[target]:
+                    del self.status_cooldowns[target][status_type]
+
+        # Incapacitated tracking
+        if event_type == "incapacitated":
+            if target not in self.player_data:
+                self.player_data[target] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0}
+            
+            # Ensure field exists
+            if "poison_hits" not in self.player_data[target]:
+                 self.player_data[target]["poison_hits"] = 0
+            if "incapacitated_count" not in self.player_data[target]:
+                 self.player_data[target]["incapacitated_count"] = 0
+
+            self.player_data[target]["incapacitated_count"] = self.player_data[target].get("incapacitated_count", 0) + 1
+            self.player_data[target]["logs"].append({"msg": "Incapacitated!", "time": timestamp, "type": "incapacitated"})
+
+        # Poison tracking
+        if event_type == "poison":
+            if source not in self.player_data:
+                self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0}
+            
+            # Ensure field exists
+            if "poison_hits" not in self.player_data[source]:
+                 self.player_data[source]["poison_hits"] = 0
+            if "incapacitated_count" not in self.player_data[source]:
+                 self.player_data[source]["incapacitated_count"] = 0
+
+            self.player_data[source]["poison_hits"] = self.player_data[source].get("poison_hits", 0) + 1
+            self.player_data[source]["logs"].append({"msg": f"Applied poison to {target}", "time": timestamp, "type": "poison"})
+            if len(self.player_data[source]["logs"]) > 200: self.player_data[source]["logs"].pop(0)
+
+        if event_type == "poison_resist":
+            # Just log it for now
+            if "You" not in self.player_data:
+                self.player_data["You"] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0}
+            self.player_data["You"]["logs"].append({"msg": f"{target} resisted your poison", "time": timestamp, "type": "poison_resist"})
+            if len(self.player_data["You"]["logs"]) > 200: self.player_data["You"]["logs"].pop(0)
+
+        # Death/Defeated trigger
+        if event_type in ["death", "kill"]:
+            if target and target != "Unknown":
+                if target in self.status_cooldowns:
+                    del self.status_cooldowns[target]
+                if target not in self.player_data:
+                    self.player_data[target] = {"damage": 0, "healing": 0, "logs": [], "died": True, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0}
+                else:
+                    self.player_data[target]["died"] = True
+                    # Ensure fields exist for the UI even if player already existed
+                    if "poison_hits" not in self.player_data[target]:
+                        self.player_data[target]["poison_hits"] = 0
+                    if "incapacitated_count" not in self.player_data[target]:
+                        self.player_data[target]["incapacitated_count"] = 0
+                    if "kill_count" not in self.player_data[target]:
+                        self.player_data[target]["kill_count"] = 0
+            
+            # Increment kill count for the source if it was a kill event
+            # FILTER: Only count it if the target is a probable player (PvP Kill)
+            if event_type == "kill" and source and source != "Unknown":
+                is_pvp = False
+                if target and target != "Unknown":
+                    # Check if target is a known player or passes player test
+                    if target.lower() in self.known_players or is_probable_player(target, self.bosses, self.known_npcs, self.known_players):
+                        is_pvp = True
+                
+                if is_pvp:
+                    if source not in self.player_data:
+                        self.player_data[source] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0}
+                    
+                    self.player_data[source]["kill_count"] = self.player_data[source].get("kill_count", 0) + 1
+                    try:
+                        with open("livius_debug.log", "a") as f:
+                            f.write(f"[{time.strftime('%H:%M:%S')}] PVP KILL TRACKED: {source} killed {target}. Total: {self.player_data[source]['kill_count']}\n")
+                    except: pass
+
+        # Handle rolling damage for Top DPS and Top Tank
+        if event_type in ["taken", "healing"]:
+            attacker_name = source
+            victim_name = target
+            val = damage if event_type == "taken" else healing
+            
+            # Attacker's damage history
+            if attacker_name and attacker_name != "Unknown" and val > 0:
+                if event_type == "taken":
+                    if attacker_name not in self.damage_history:
+                        self.damage_history[attacker_name] = []
+                    self.damage_history[attacker_name].append((time.time(), val))
+                elif event_type == "healing":
+                    if attacker_name not in self.healing_history:
+                        self.healing_history[attacker_name] = []
+                    self.healing_history[attacker_name].append((time.time(), val))
+            
+            # Victim's damage taken history
+            if event_type == "taken" and victim_name and victim_name != "Unknown" and val > 0:
+                if victim_name not in self.damage_taken_history:
+                    self.damage_taken_history[victim_name] = []
+                self.damage_taken_history[victim_name].append((time.time(), val))
+
         # Re-assign p for correct log attribution
         # If it's a 'taken' event, the victim is 'target'
         if event_type == "taken":
@@ -966,7 +1212,7 @@ class CombatLogApp:
 
         if (event_type == "xp"):
             if source_for_logs not in self.player_data:
-                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
+                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0}
             
             p = self.player_data[source_for_logs]
             amount = event.get("amount", 0)
@@ -994,7 +1240,7 @@ class CombatLogApp:
         
         elif (event_type == "mobs"):
             if source_for_logs not in self.player_data:
-                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0}
+                self.player_data[source_for_logs] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 0, "incapacitated_count": 0}
             
             p = self.player_data[source_for_logs]
             p["lb_mobs"] = p.get("lb_mobs", 0) + 1
@@ -1247,14 +1493,111 @@ class CombatLogApp:
 
     def update_clock(self):
         try:
-            now = datetime.now().strftime("%I:%M:%S %p").lstrip("0")
+            # Format: 3:16PM
+            now = datetime.now().strftime("%I:%M%p").lstrip("0")
             if hasattr(self, 'clock_id'):
                 self.main_canvas.itemconfig(self.clock_id, text=now)
-            self.root.after(1000, self.update_clock)
+            self.root.after(10000, self.update_clock) # Update every 10 seconds is enough for this format
         except: pass
+
+    def _update_top_stats(self):
+        """Calculates rolling 10s damage/tanking/healing and updates top status/focus for each team."""
+        now = time.time()
+        if now - self.last_top_stats_check < 0.5:
+            return
+            
+        elapsed = now - self.last_top_stats_check
+        self.last_top_stats_check = now
+        
+        # 1. Update Top DPS
+        rolling_dps = {}
+        for player, history in list(self.damage_history.items()):
+            self.damage_history[player] = [(ts, dmg) for ts, dmg in history if now - ts <= 10]
+            total = sum(dmg for ts, dmg in self.damage_history[player])
+            if total > 0:
+                rolling_dps[player] = total
+        
+        # 2. Update Top Tank (Damage Taken)
+        rolling_tank = {}
+        for player, history in list(self.damage_taken_history.items()):
+            self.damage_taken_history[player] = [(ts, dmg) for ts, dmg in history if now - ts <= 10]
+            total = sum(dmg for ts, dmg in self.damage_taken_history[player])
+            if total > 0:
+                rolling_tank[player] = total
+                
+        # 3. Update Top Healing
+        rolling_healing = {}
+        for player, history in list(self.healing_history.items()):
+            self.healing_history[player] = [(ts, heal) for ts, heal in history if now - ts <= 10]
+            total = sum(heal for ts, heal in self.healing_history[player])
+            if total > 0:
+                rolling_healing[player] = total
+        
+        new_tops = {'friendly': None, 'enemy': None}
+        new_tanks = {'friendly': None, 'enemy': None}
+        new_heals = {'friendly': None, 'enemy': None}
+        new_focus = {'friendly': None, 'enemy': None}
+        
+        # Find Friendly Top DPS / Tank / Healer / Focus
+        f_players = [p for p in rolling_dps if p in self.friendly_players or p == "You"]
+        if f_players:
+            new_tops['friendly'] = max(f_players, key=lambda p: rolling_dps[p])
+        
+        f_tank_players = [p for p in rolling_tank if p in self.friendly_players or p == "You"]
+        if f_tank_players:
+            # Most damage taken is the Top Tank, but also the Focus Target
+            new_tanks['friendly'] = max(f_tank_players, key=lambda p: rolling_tank[p])
+            new_focus['friendly'] = new_tanks['friendly']
+            
+        f_heal_players = [p for p in rolling_healing if p in self.friendly_players or p == "You"]
+        if f_heal_players:
+            new_heals['friendly'] = max(f_heal_players, key=lambda p: rolling_healing[p])
+            
+        # Find Enemy Top DPS / Tank / Healer / Focus
+        e_dps_players = [p for p in rolling_dps if p in self.enemy_players]
+        if e_dps_players:
+            new_tops['enemy'] = max(e_dps_players, key=lambda p: rolling_dps[p])
+
+        e_tank_players = [p for p in rolling_tank if p in self.enemy_players]
+        if e_tank_players:
+            new_tanks['enemy'] = max(e_tank_players, key=lambda p: rolling_tank[p])
+            new_focus['enemy'] = new_tanks['enemy']
+            
+        e_heal_players = [p for p in rolling_healing if p in self.enemy_players]
+        if e_heal_players:
+            new_heals['enemy'] = max(e_heal_players, key=lambda p: rolling_healing[p])
+            
+        # Update Top DPS durations
+        for team in ['friendly', 'enemy']:
+            top_p = new_tops[team]
+            old_top_p = self.current_top_dps[team]
+            if top_p and top_p == old_top_p:
+                self.top_dps_durations[top_p] = self.top_dps_durations.get(top_p, 0) + elapsed
+            self.current_top_dps[team] = top_p
+            
+        # Update Top Tank durations
+        for team in ['friendly', 'enemy']:
+            tank_p = new_tanks[team]
+            old_tank_p = self.current_top_tank[team]
+            if tank_p and tank_p == old_tank_p:
+                self.top_tank_durations[tank_p] = self.top_tank_durations.get(tank_p, 0) + elapsed
+            self.current_top_tank[team] = tank_p
+            
+        # Update Top Healing durations
+        for team in ['friendly', 'enemy']:
+            heal_p = new_heals[team]
+            old_heal_p = self.current_top_healing[team]
+            if heal_p and heal_p == old_heal_p:
+                self.top_healing_durations[heal_p] = self.top_healing_durations.get(heal_p, 0) + elapsed
+            self.current_top_healing[team] = heal_p
+            
+        # Update Focus Target
+        for team in ['friendly', 'enemy']:
+            self.current_focus_target[team] = new_focus[team]
 
     def start_ticker_loop(self):
         if self.running:
+            self._update_top_stats()
             self.refresh_ui_only(force=False)
             self.root.after(500, self.start_ticker_loop) # Restore 500ms ticker for smoother marquee
 
@@ -1268,15 +1611,30 @@ class CombatLogApp:
             if hasattr(self, 'radio_mgr') and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
+                if not hasattr(self, '_radio_station_cycle_start'): self._radio_station_cycle_start = now_ts
                 
                 # Scroll every 0.3 seconds for smooth LED look
                 if now_ts - self._radio_scroll_last_tick > 0.3:
                     self._radio_scroll_last_tick = now_ts
                     
+                    # Cycle: 20 seconds song info, 5 seconds station name
+                    cycle_time = (now_ts - self._radio_station_cycle_start) % 25
+                    show_station = cycle_time >= 20
+                    
                     if hasattr(self.radio_mgr, 'is_interrupting') and self.radio_mgr.is_interrupting:
                         text = "INTERRUPT: " + (os.path.splitext(self.radio_mgr.last_played_mp3)[0].upper() if self.radio_mgr.last_played_mp3 else "UNKNOWN")
+                    elif show_station:
+                        text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "RNS 420AM"
+                    elif getattr(self.radio_mgr, 'current_song_name', None):
+                        text = self.radio_mgr.current_song_name.upper()
                     else:
                         text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "PLAYING"
+                    
+                    # If text changed, reset scroll pos
+                    last_text = getattr(self, '_last_radio_text', "")
+                    if text != last_text:
+                        self._radio_scroll_pos = 0
+                        self._last_radio_text = text
                     
                     # Add padding for scroll loop
                     display_text = text + "   ***   "
@@ -1333,6 +1691,8 @@ class CombatLogApp:
                 self.leaderboard_win.refresh(force=force)
             if refresh_skimmers and hasattr(self, 'skimmers_win') and self.skimmers_win:
                 self.skimmers_win.refresh(force=force)
+            if hasattr(self, 'livius_win') and self.livius_win:
+                self.livius_win.refresh(force=force)
 
             if hasattr(self, 'armor_win') and self.armor_win:
                 self.armor_win.refresh(force=force)
@@ -1657,6 +2017,8 @@ class CombatLogApp:
             self.context_menu = tk.Menu(self.root, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, activebackground=ACCENT_BLUE, borderwidth=1)
             self.context_menu.add_command(label="Copy", command=self._on_global_copy, accelerator="Ctrl+C")
             self.context_menu.add_command(label="Select All", command=self._on_global_select_all, accelerator="Ctrl+A")
+            self.context_menu.add_separator()
+            self.context_menu.add_command(label="LIVIUS", command=lambda: self.livius_win.show())
         
         self.context_menu.unpost()
         self.context_menu.post(event.x_root, event.y_root)
@@ -1833,6 +2195,27 @@ class CombatLogApp:
         self.locally_seen_players = {}
         self.leaderboard_data = {}
         self.known_npcs = set()
+        self.known_players = set()
+        self.friendly_players = set()
+        self.enemy_players = set()
+        self.player_arrival_order = []
+        self.status_cooldowns = {}
+        self.damage_history = {}
+        self.damage_taken_history = {}
+        self.healing_history = {}
+        self.top_dps_durations = {}
+        self.top_tank_durations = {}
+        self.top_healing_durations = {}
+        self.current_top_dps = {'friendly': None, 'enemy': None}
+        self.current_top_tank = {'friendly': None, 'enemy': None}
+        self.current_top_healing = {'friendly': None, 'enemy': None}
+        self.current_focus_target = {'friendly': None, 'enemy': None}
+        # Reset player counts
+        for p in self.player_data.values():
+            p["poison_hits"] = 0
+            p["incapacitated_count"] = 0
+            p["kill_count"] = 0
+            p["died"] = False
         self.app_start_time = None
         self._encounter_start_stats = {}
         self.session_start_time = datetime.now()
@@ -1928,8 +2311,17 @@ class CombatLogApp:
                     # RESET DATA FOR NEW SESSION
                     self.root.after(0, self.reset_session_data)
                     
+                    # Force a refresh after a small delay to ensure lists are clear
+                    self.root.after(500, lambda: self.refresh_ui_only(force=True))
+                    
                     # RESTART ENGINE for test log
                     self.start_c_engine(test_log)
+                    
+                    # Log state for debugging
+                    try:
+                        with open("livius_debug.log", "a") as f:
+                            f.write(f"[{time.strftime('%H:%M:%S')}] TEST SESSION RESTARTED. File: {test_log}\n")
+                    except: pass
                     
                     # Immediate refresh to show connection status
                     self.root.after(0, lambda: self.refresh_ui_only(force=True))
@@ -1963,10 +2355,46 @@ class CombatLogApp:
         import time
         from datetime import datetime
         
+        # Wait until we are CONNECTED before starting to generate data
+        # Also wait for reset_session_data to finish (it's queued via root.after)
+        time.sleep(1.0) 
+
         players = ["You", "Turd", "Leloglo", "Rehote", "Ma-o", "Fikiosa", "Eliemau"]
+        enemies = ["Dark Jedi", "Rebel Scum", "Imp Trooper", "Bounty Hunter", "Sith Lord"]
+        
+        # Manually inject some players into friendlies/enemies and player_data to bypass log delay
+        for p in players:
+             norm_p = normalize_name(p)
+             self.known_players.add(norm_p.lower())
+             if norm_p not in self.player_arrival_order:
+                 self.player_arrival_order.append(norm_p)
+             self.friendly_players.add(norm_p)
+             if norm_p not in self.player_data:
+                 self.player_data[norm_p] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 10, "incapacitated_count": 2, "kill_count": 3}
+             
+             # Also inject some initial statuses for immediate visual feedback
+             self.status_cooldowns[norm_p] = {"knockdown": time.time(), "intimidate": time.time() - 5}
+             
+        for e in enemies:
+             norm_e = normalize_name(e)
+             self.known_players.add(norm_e.lower())
+             if norm_e not in self.player_arrival_order:
+                 self.player_arrival_order.append(norm_e)
+             self.enemy_players.add(norm_e)
+             if norm_e not in self.player_data:
+                 self.player_data[norm_e] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "poison_hits": 5, "incapacitated_count": 1, "kill_count": 0}
+
+        try:
+            with open("livius_debug.log", "a") as f:
+                f.write(f"[{time.strftime('%H:%M:%S')}] TEST DATA START: Friendlies={len(self.friendly_players)}, Enemies={len(self.enemy_players)}\n")
+                f.write(f"  FRIENDLIES: {list(self.friendly_players)}\n")
+                f.write(f"  ENEMIES: {list(self.enemy_players)}\n")
+                f.write(f"  ARRIVAL ORDER: {self.player_arrival_order}\n")
+        except: pass
+
         items = ["Work light", "Broken Electrobinoculars", "A Damaged Datapad", "CDEF Pistol", "Stun Baton", "Heavy Two-Handed Sword", "Enhanced DH-17 Carbine", "T-21 Rifle"]
         xp_types = ["Combat", "Weapon", "General", "Medicine", "Scout", "Surveying"]
-        abilities = ["Power Shot", "Fire Knockdown", "Health Shot II", "Bleeding Shot", "Stun", "Melee Hit", "Force Choke", "Mind Blast", "Scatter Shot"]
+        abilities = ["Power Shot", "Fire Knockdown", "Posture Change", "Intimidate", "Health Shot II", "Bleeding Shot", "Stun", "Melee Hit", "Force Choke", "Mind Blast", "Scatter Shot"]
         targets = ["a SpecForce marine", "a senior SpecForce infiltrator", "a Rebel Colonel", "a Rebel Major General", "an Imperial Stormtrooper", "a Krayt Dragon", "a Rancor"]
         damage_types = ["energy", "kinetic", "elemental", "stun"]
         
@@ -1974,71 +2402,155 @@ class CombatLogApp:
         if not os.path.exists(os.path.dirname(log_path)):
             os.makedirs(os.path.dirname(log_path), exist_ok=True)
         
+        # Initial 123 messages to mark friendlies
+        with open(log_path, "a") as f:
+            for p in players:
+                ts = datetime.now().strftime("%H:%M:%S")
+                f.write(f"[Groupchat]  {ts} {p}: 123\n")
+                norm_p = normalize_name(p)
+                if norm_p not in self.player_arrival_order:
+                    self.player_arrival_order.append(norm_p)
+                self.friendly_players.add(norm_p)
+            f.flush()
+
         # Wait until we are CONNECTED before starting to generate data
         while self.running and self.test_mode.get():
-            if hasattr(self, 'lbl_status') and self.lbl_status.cget("text") == "CONNECTED":
-                time.sleep(1.0)
-                break
+            if hasattr(self, 'status_id'):
+                # In the dot mode, connected is #00ff88
+                if self.main_canvas.itemcget(self.status_id, "fill") == "#00ff88":
+                    time.sleep(1.0)
+                    break
             time.sleep(0.5)
 
         while self.running and self.test_mode.get():
             try:
+                # Force refresh UI frequently during test mode to show icons
+                if hasattr(self, 'livius_win'):
+                    self.root.after(0, lambda: self.livius_win.refresh(force=True))
+
                 with open(log_path, "a") as f:
                     ts = datetime.now().strftime("%H:%M:%S")
                     event_type = random.random()
                     
-                    if event_type < 0.3: # Simple Hits
-                        p1 = random.choice(players)
-                        target = random.choice(targets)
-                        dmg = random.randint(150, 1200)
-                        line = f"[Spatial]  {ts} [GROUP] {p1} hits {target} for {dmg} points of damage.\n"
+                    # Force statuses frequently for all players/enemies in test mode
+                    if random.random() < 0.6: # High frequency for testing
+                        p_target = random.choice(players + enemies)
+                        st_type = random.choice(["Fire Knockdown", "Posture Change", "Intimidate"])
+                        # Inject directly into state using normalized name
+                        norm_target = normalize_name(p_target)
+                        status_key = st_type.lower().split()[-1]
+                        if norm_target not in self.status_cooldowns: self.status_cooldowns[norm_target] = {}
+                        self.status_cooldowns[norm_target][status_key] = time.time()
+                        
+                        line = f"[Combat]  {ts} A_Giant_Spider {st_type} {p_target} for 0 points of damage.\n"
                         f.write(line)
-                    elif event_type < 0.5: # Ability Hits
-                        p1 = random.choice(players)
-                        target = random.choice(targets)
+
+                    if random.random() < 0.3: # Focused damage burst
+                        target = random.choice(players + enemies)
+                        for _ in range(3):
+                            p1 = random.choice(players + enemies)
+                            dmg = random.randint(500, 2000)
+                            line = f"[Combat]  {ts} {p1} hits {target} for {dmg} points of damage.\n"
+                            f.write(line)
+                        f.flush()
+
+                    if event_type < 0.2: # Simple Hits
+                        p1 = random.choice(players + enemies)
+                        target = random.choice(targets + players + enemies)
+                        dmg = random.randint(150, 1200)
+                        line = f"[Combat]  {ts} {p1} hits {target} for {dmg} points of damage.\n"
+                        f.write(line)
+                    elif event_type < 0.4: # Ability Hits & Statuses
+                        p1 = random.choice(players + enemies)
+                        target = random.choice(targets + players + enemies)
                         dmg = random.randint(300, 1500)
                         ability = random.choice(abilities)
-                        line = f"[Spatial]  {ts} [GROUP] {p1} {ability} {target} for {dmg} points of damage.\n"
+                        
+                        # Simulate some high healing for testing
+                        if "Health" in ability:
+                            heal_val = random.randint(500, 2000)
+                            if p1 not in self.healing_history: self.healing_history[p1] = []
+                            self.healing_history[p1].append((time.time(), heal_val))
+
+                        line = f"[Combat]  {ts} {p1} {ability} {target} for {dmg} points of damage.\n"
                         f.write(line)
-                    elif event_type < 0.6: # Healing
+                        
+                        # Occasionally remove intimidate
+                        if ability == "Intimidate" and random.random() < 0.3:
+                            time.sleep(0.5)
+                            f.write(f"[Combat]  {ts} {target} no longer intimidated.\n")
+                    elif event_type < 0.5: # Healing
                         p1 = random.choice(players)
                         p2 = random.choice(players)
                         heal = random.randint(100, 800)
-                        line = f"[Spatial]  {ts} [GROUP] {p1} heals {p2} for {heal} points of damage.\n"
+                        line = f"[Combat]  {ts} {p1} heals {p2} for {heal} points of damage.\n"
                         f.write(line)
-                    elif event_type < 0.7: # Loot credits
+                    elif event_type < 0.6: # Loot credits
                         p = random.choice(players)
                         target = random.choice(targets)
                         credits = random.randint(80, 500)
-                        line = f"[Spatial]  {ts} [GROUP] {p} looted {credits} credits from {target}.\n"
+                        line = f"[Combat]  {ts} {p} looted {credits} credits from {target}.\n"
                         f.write(line)
-                    elif event_type < 0.8: # Loot item
+                    elif event_type < 0.7: # Loot item
                         p = random.choice(players)
                         target = random.choice(targets)
                         item = random.choice(items)
-                        line = f"[Spatial]  {ts} [GROUP] {p} looted {item} from {target}.\n"
+                        line = f"[Combat]  {ts} {p} looted {item} from {target}.\n"
                         f.write(line)
-                    elif event_type < 0.9: # Mobs (Defeated)
+                    elif event_type < 0.8: # Mobs (Defeated)
                         p = random.choice(players)
                         target = random.choice(targets)
-                        line = f"[Spatial]  {ts} [GROUP] {p} has defeated {target}.\n"
+                        line = f"[Combat]  {ts} {p} has defeated {target}.\n"
+                        f.write(line)
+                    elif event_type < 0.85: # Poison
+                        p1 = random.choice(players)
+                        target = random.choice(enemies)
+                        # More poison hits
+                        line = f"[Combat]  {ts} You apply poison to {target}.\n" if p1 == "You" else f"[Combat]  {ts} {p1} applies poison to {target}.\n"
+                        f.write(line)
+                    elif event_type < 0.9: # Incapacitated
+                        target = random.choice(players + enemies)
+                        line = f"[Combat]  {ts} {target} has been incapacitated by something.\n"
+                        f.write(line)
+                        p1 = random.choice(players + enemies)
+                        target = random.choice(players + enemies)
+                        if target == "You":
+                            line = f"[Combat]  {ts} You have been incapacitated by {p1}.\n"
+                        else:
+                            line = f"[Combat]  {ts} {target} has been incapacitated by {p1}.\n"
                         f.write(line)
                     elif event_type < 0.95: # XP
                         xp = random.randint(250, 5000)
                         xt = random.choice(xp_types)
-                        line = f"[Spatial]  {ts} [GROUP] You receive {xp} points of {xt} experience.\n"
+                        line = f"[Combat]  {ts} You receive {xp} points of {xt} experience.\n"
                         f.write(line)
-                    elif event_type < 0.98: # Death
-                        p = random.choice(players)
-                        if p != "You":
-                             line = f"[Spatial]  {ts} [GROUP] {p} has died.\n"
-                             f.write(line)
+                    elif event_type < 0.98: # Death / Kill
+                        p = random.choice(players + enemies)
+                        line = f"[Combat]  {ts} {p} has died.\n"
+                        f.write(line)
+                        
+                        # Occasionally simulate a PvP Kill by another player
+                        if random.random() < 0.5:
+                            killer = random.choice(players)
+                            victim = random.choice(enemies)
+                            f.write(f"[Combat]  {ts} {killer} has defeated {victim}.\n")
                     else: # Mitigation (Dodge/Parry)
                         p1 = random.choice(players)
                         target = random.choice(targets)
                         mit = random.choice(["dodges", "parries", "evades"])
-                        line = f"[Spatial]  {ts} [GROUP] {target} {mit} {p1}'s attack!\n"
+                        line = f"[Combat]  {ts} {target} {mit} {p1}'s attack!\n"
                         f.write(line)
+                    
+                    # INJECT SOME ROLLING DAMAGE for Top DPS/Tank testing
+                    if random.random() < 0.3:
+                        p_dmg = random.choice(players + enemies)
+                        d_val = random.randint(500, 2000)
+                        victim = random.choice(players + enemies)
+                        f.write(f"[Combat]  {ts} {p_dmg} hits {victim} for {d_val} damage.\n")
+                        # Also add a heavy hitter to see growth (Turd is injected as Friendly)
+                        f.write(f"[Combat]  {ts} Turd hits target for 5000 damage.\n")
+                        # Add someone taking a lot of damage to see Sheep icon (Bob is usually a target)
+                        f.write(f"[Combat]  {ts} Someone hits Bob for 10000 damage.\n")
                     
                     f.flush()
             except Exception as e:
@@ -2074,9 +2586,19 @@ class CombatLogApp:
         self.skimmers_win.show(force_open=True)
 
     # Required for popout window resizing
-    def init_resize_popout(self, e, w, dw, dh): self._rs_x = e.x_root; self._rs_y = e.y_root; self._rs_w = w.winfo_width(); self._rs_h = w.winfo_height()
-    def do_resize_popout(self, e, w, dw, dh): w.geometry(f"{max(dw//3, self._rs_w + e.x_root - self._rs_x)}x{max(dh//3, self._rs_h + e.y_root - self._rs_y)}")
-    def save_size(self, e): self.save_config()
+    def init_resize_popout(self, e, w, dw, dh): 
+        self._rs_x = e.x_root
+        self._rs_y = e.y_root
+        self._rs_w = w.winfo_width()
+        self._rs_h = w.winfo_height()
+
+    def do_resize_popout(self, e, w, dw, dh): 
+        nw = max(200, self._rs_w + e.x_root - self._rs_x)
+        nh = max(200, self._rs_h + e.y_root - self._rs_y)
+        w.geometry(f"{nw}x{nh}")
+
+    def save_size(self, e): 
+        self.save_config()
     
     # Required for main window resizing
     def init_resize(self, e): 

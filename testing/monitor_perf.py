@@ -113,9 +113,13 @@ def main():
             try: engine_proc.terminate()
             except: pass
             
-    # Save raw data
-    with open("perf_results.json", "w") as f:
-        json.dump(data, f)
+    # 4. Generate report
+    try:
+        print("Generating PDF report...")
+        subprocess.run([sys.executable, os.path.join("testing", "generate_report.py")], check=True)
+        print("Report generated: performance_report.pdf")
+    except Exception as e:
+        print(f"Failed to generate report: {e}")
     
     print("Performance data collection complete.")
 

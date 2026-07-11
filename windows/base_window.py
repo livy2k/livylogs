@@ -135,6 +135,9 @@ class BasePopoutWindow:
         self.app.is_interacting = False
         self._is_resizing = False
         self.app.save_size(e)
+        try:
+            self.app.save_config()
+        except: pass
         self.app.refresh_ui_only(force=True)
 
     def on_configure(self, event):
@@ -144,6 +147,9 @@ class BasePopoutWindow:
 
     def close(self):
         if self.window:
+            try:
+                self.app.save_config()
+            except: pass
             self.window.destroy()
             self.window = None
 
@@ -164,6 +170,9 @@ class BasePopoutWindow:
 
     def release_window(self, event=None):
         self.app.is_interacting = False
+        try:
+            self.app.save_config()
+        except: pass
         self.app.refresh_ui_only(force=True)
 
     def refresh(self, force=False):

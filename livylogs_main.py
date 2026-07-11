@@ -102,6 +102,8 @@ class CombatLogApp:
         self.details_win = DetailsWindow(self)
         self.options_win = OptionsWindow(self)
         self.alexa_win = AlexaWindow(self)
+        self.calc_win = None
+        self.armor_win = None
         
         # UI State
         self.details_tab = "all"
@@ -110,7 +112,7 @@ class CombatLogApp:
         
         self._managed_windows = [
             self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
-            self.details_win, self.options_win, self.alexa_win
+            self.details_win, self.options_win, self.alexa_win, None, None # placeholders for calc_win, armor_win
         ]
         
         self.is_interacting = False
@@ -268,8 +270,8 @@ class CombatLogApp:
 
     def _get_managed_windows(self):
         managed = [self.root]
-        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win]:
-            if w.window and w.window.winfo_exists(): managed.append(w.window)
+        for w in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win, self.calc_win]:
+            if w and w.window and w.window.winfo_exists(): managed.append(w.window)
         return managed
 
     def check_target_window(self):
@@ -1221,7 +1223,7 @@ class CombatLogApp:
 
     def update_clock(self):
         try:
-            now = datetime.now().strftime("%H:%M:%S")
+            now = datetime.now().strftime("%I:%M:%S %p").lstrip("0")
             if hasattr(self, 'clock_lbl') and self.clock_lbl.winfo_exists():
                 self.clock_lbl.config(text=now)
             self.root.after(1000, self.update_clock)
@@ -1268,6 +1270,7 @@ class CombatLogApp:
             if now_heavy >= 1.0:
                 if hasattr(self, 'alexa_win') and self.alexa_win: self.alexa_win.refresh(force=False)
                 if hasattr(self, 'options_win') and self.options_win: self.options_win.refresh(force=False)
+                if hasattr(self, 'calc_win') and self.calc_win: self.calc_win.refresh(force=False)
         except: pass
 
     def process_events_for_ui(self, all_events, manual=False):
@@ -1508,8 +1511,8 @@ class CombatLogApp:
         })
         
         # Save popout positions/sizes
-        for win in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win]:
-            if win.window and win.window.winfo_exists():
+        for win in [self.skimmers_win, self.damage_meter_win, self.leaderboard_win, self.details_win, self.options_win, self.alexa_win, self.calc_win]:
+            if win and win.window and win.window.winfo_exists():
                 if win.config_key not in self.config: self.config[win.config_key] = {}
                 self.config[win.config_key].update({
                     "width": str(win.window.winfo_width()),
@@ -1517,6 +1520,9 @@ class CombatLogApp:
                     "x": str(win.window.winfo_x()),
                     "y": str(win.window.winfo_y())
                 })
+            elif win and hasattr(win, 'config_key'):
+                # Also save from config if window is not currently open, to preserve last known position
+                pass 
 
         self.config.set("General", "character_name", self.char_name.get())
         self.config.set("General", "api_url", self.api_url.get())
@@ -1590,6 +1596,9 @@ class CombatLogApp:
 
     def release_window(self, event=None):
         self.is_interacting = False
+        try:
+            self.save_config()
+        except: pass
         self.refresh_ui_only(force=True)
 
     def on_configure(self, event):

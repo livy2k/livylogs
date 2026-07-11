@@ -158,8 +158,10 @@ class LeaderboardWindow(BasePopoutWindow):
 
             # Bind context menus
             self.window.bind("<Button-3>", self.show_context_menu)
-            self.scroll_canvas.bind("<Button-3>", self.show_context_menu)
-            self.player_list_frame.bind("<Button-3>", self.show_context_menu)
+            if hasattr(self, 'list_container_canvas'):
+                self.list_container_canvas.bind("<Button-3>", self.show_context_menu)
+            if hasattr(self, 'list_container'):
+                self.list_container.bind("<Button-3>", self.show_context_menu)
             self.txt.bind("<Button-3>", self.show_context_menu)
 
             do_full = True

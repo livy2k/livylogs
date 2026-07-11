@@ -97,7 +97,7 @@ class DamageMeterWindow(BasePopoutWindow):
                 start_ts = self.app.last_dm_reset
             
             dur = 0
-            if self.app.app_start_time:
+            if self.app.app_start_time and self.app.last_combat_time > 0:
                 # Check if combat is active or paused
                 is_active = (time.time() - self.app.last_combat_time) <= self.app.time_window_dm
                 if is_active:

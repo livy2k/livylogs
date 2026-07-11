@@ -117,7 +117,6 @@ class OptionsWindow(BasePopoutWindow):
             b.bind("<Leave>", lambda e: b.config(bg=BUTTON_BG))
             b.bind("<Button-1>", lambda e: [cmd(), self.refresh()])
 
-        add_btn("SELECT LOG (MATCHING CHAR)", self.app.select_log_filtered)
         add_btn("BROWSE ALL LOGS", self.app.change_log_path)
         add_btn("RESET ALL DATA", self.app.reset_all_data_manual)
 

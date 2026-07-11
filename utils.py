@@ -207,15 +207,19 @@ def normalize_name(name):
         return "You"
     return name
 
-def is_probable_player(name, bosses=None, known_npcs=None):
+def is_probable_player(name, bosses=None, known_npcs=None, known_players=None):
     if not name or name == "Unknown": return False
     
     # Normalize before checking heuristics
     name = normalize_name(name)
     if name == "You": return True
     
-    # If it's in our bosses or known NPCs list, it's NOT a player
+    # Check if we've already confirmed this as a player
     lower_name = name.lower()
+    if known_players and lower_name in known_players:
+        return True
+    
+    # If it's in our bosses or known NPCs list, it's NOT a player
     if bosses and lower_name in bosses: return False
     if known_npcs and lower_name in known_npcs: return False
     

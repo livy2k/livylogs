@@ -374,7 +374,8 @@ class SkimmersWindow(BasePopoutWindow):
              # Basic check to see if we should show 'No data'
              pass
 
-        final_players = sorted([p for p in players_with_data if not query or query in p.lower()])
+        from utils import is_probable_player
+        final_players = sorted([p for p in players_with_data if (not query or query in p.lower()) and is_probable_player(p, self.app.bosses, known_players=self.app.known_players)])
 
         current_widgets = self.scrollable_frame.winfo_children()
         

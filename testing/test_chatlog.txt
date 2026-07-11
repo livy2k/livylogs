@@ -2136,3 +2136,12 @@
 [Spatial]  20:07:56 [GROUP] a Rancor dodges Rehote's attack!
 [Spatial]  20:07:57 [GROUP] You heals Eliemau for 624 points of damage.
 [Spatial]  20:07:57 [GROUP] Eliemau looted Heavy Two-Handed Sword from a senior SpecForce infiltrator.
+[Spatial]  22:30:30 [GROUP] You receive 3025 points of General experience.
+[Spatial]  22:30:30 [GROUP] Eliemau Mind Blast a Rancor for 565 points of damage.
+[Spatial]  22:30:30 [GROUP] Ma-o hits a Rancor for 395 points of damage.
+[Spatial]  22:30:31 [GROUP] Eliemau looted 460 credits from an Imperial Stormtrooper.
+[Spatial]  22:30:31 [GROUP] Leloglo hits a Rancor for 611 points of damage.
+[Spatial]  22:30:31 [GROUP] Ma-o looted T-21 Rifle from a Krayt Dragon.
+[Spatial]  22:30:32 [GROUP] Ma-o hits an Imperial Stormtrooper for 914 points of damage.
+[Spatial]  22:30:32 [GROUP] Leloglo hits a Rebel Major General for 511 points of damage.
+[Spatial]  22:30:32 [GROUP] Fikiosa has died.

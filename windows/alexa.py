@@ -33,6 +33,12 @@ class AlexaWindow(BasePopoutWindow):
                             except: pass
             except: pass
 
+    def show(self, force_open=False):
+        super().show(force_open)
+        # Ensure view state is initialized when window is first shown
+        self._last_view_state = None 
+        self.refresh(force=True)
+
     def refresh(self, force=False):
         if not self.window or self.window.state() == "withdrawn": return
         
@@ -142,7 +148,7 @@ class AlexaWindow(BasePopoutWindow):
             "activeforeground": TEXT_ACCENT,
             "font": ("Segoe UI", 10, "bold"),
             "bd": 0,
-            "pady": 12,
+            "pady": 8,
             "cursor": "hand2",
             "relief": tk.FLAT,
             "highlightthickness": 1,
@@ -163,6 +169,28 @@ class AlexaWindow(BasePopoutWindow):
         drops_btn.pack(fill=tk.X, pady=2)
         drops_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
         drops_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+
+        armor_btn = tk.Button(btn_frame, text="ARMOR", command=self.open_armor_calc, **btn_style)
+        armor_btn.pack(fill=tk.X, pady=2)
+        armor_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+        armor_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+
+        calc_btn = tk.Button(btn_frame, text="CALC", command=self.open_calculator, **btn_style)
+        calc_btn.pack(fill=tk.X, pady=2)
+        calc_btn.bind("<Enter>", lambda e: e.widget.configure(bg=BUTTON_HOVER))
+        calc_btn.bind("<Leave>", lambda e: e.widget.configure(bg=PANEL_DARK))
+
+    def open_calculator(self):
+        from windows.calculator import CalculatorWindow
+        if not hasattr(self.app, 'calc_win') or not self.app.calc_win:
+            self.app.calc_win = CalculatorWindow(self.app)
+        self.app.calc_win.show()
+
+    def open_armor_calc(self):
+        from windows.armor_calc import ArmorCalcWindow
+        if not hasattr(self.app, 'armor_win') or not self.app.armor_win:
+            self.app.armor_win = ArmorCalcWindow(self.app)
+        self.app.armor_win.show()
 
     def show_geocodes_view(self):
         # Navigation Row
@@ -306,9 +334,13 @@ class AlexaWindow(BasePopoutWindow):
         self.view_state = state
         self.search_active = False
         self.search_query = ""
-        if hasattr(self, 'search_entry'):
+        if hasattr(self, 'search_entry') and self.search_entry.winfo_exists():
             self.search_entry.delete(0, tk.END)
             self.title_bar.itemconfig(self.search_entry_window, state="hidden")
+        self._last_view_state = None # Force content rebuild
+        try:
+            self.app.save_config()
+        except: pass
         self.refresh(force=True)
 
     def toggle_search(self):
@@ -319,7 +351,8 @@ class AlexaWindow(BasePopoutWindow):
         else:
             self.title_bar.itemconfig(self.search_entry_window, state="hidden")
             self.search_query = ""
-            self.search_entry.delete(0, tk.END)
+            if self.search_entry.winfo_exists():
+                self.search_entry.delete(0, tk.END)
             self.refresh(force=True)
 
     def on_search_change(self):

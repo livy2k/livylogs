@@ -781,6 +781,7 @@ class CombatLogApp:
                                 with open("crash_log.txt", "a") as f:
                                     f.write(f"Label Command Error ({name}): {ex}\n")
                             except: pass
+                    return "break"
                 self.main_canvas.tag_bind(text_id, "<Button-1>", safe_call)
                 
                 # Hover effects
@@ -856,11 +857,19 @@ class CombatLogApp:
         self.lbl_jog = create_ui_label("JOG", jx, jy, None, fg=jfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=jsz))
 
-        # ON - Replaced with Connectivity Status Dot
+        # RADIO_LBL - positioned above Status Dot
+        rlx, rly, rlfg, rlsz = get_pos("RADIO_LBL", 26, 18, "#bbbbbb", 5)
+        self.lbl_radio = create_ui_label("⏻", rlx, rly, self.toggle_radio, fg=rlfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=rlsz), anchor="center")
+
+        # ON - Replaced with Connectivity Status Dot / Radio Power
         onx, ony, onfg, onsz = get_pos("ON", 26, 33, "#d31a18", 5)
         # We create a circle (oval) instead of text for the ON label.
         # onsz is used here as a proxy for radius/diameter.
         self.status_id = self.main_canvas.create_oval(onx, ony, onx + 10, ony + 10, fill="#ff4444", outline="", tags="status_dot")
+        self.main_canvas.tag_bind(self.status_id, "<Button-1>", lambda e: [self.toggle_radio(), "break"][-1])
+        self.main_canvas.tag_bind(self.status_id, "<Enter>", lambda e: self.main_canvas.config(cursor="hand2"))
+        self.main_canvas.tag_bind(self.status_id, "<Leave>", lambda e: self.main_canvas.config(cursor=""))
 
         # Gharv
         gx, gy, gfg, gsz = get_pos("GHARV", 139, 76, "#d21a18", 6)
@@ -1059,43 +1068,44 @@ class CombatLogApp:
         # Radio 292, 130
         rax, ray, rafg, rasz = get_pos("RADIO", 233, 51, "#d31a18", 5)
         
-        # User wants a monochrome dot matrix display using the orange color (#CD853F used in refresh_ui_only)
-        # Bounding box: Design width 155, height 30. At 2x scale: 310x60.
-        # User extended 40px either side: 390x60.
-        # User now wants to reduce by 20 either side: 390 - 40 = 350x60.
-        # Double resolution to 48x16, still 15% smaller (298x51)
+        # Display resolution setup
         self._dot_rows = 16
         self._dot_cols = 48
-        self.radio_image = tk.PhotoImage(width=298, height=51)
-        # Initialize with 'off' dots background
-        data_rows = []
+        
+        # Optimized Rendering: Faking the Dot Matrix
+        # We draw a static background of "off" dots once, then overlay a content image.
+        self.radio_bg_image = tk.PhotoImage(width=298, height=51)
+        bg_rows = []
         dot_color_off = "#0A0500"
         for r in range(self._dot_rows):
-            # Each "dot" at 298x51 and 48x16:
-            # Width: 298 / 48 = 6.2. 5px dot + 1px spacing = 6px.
-            # Height: 51 / 16 = 3.18. 2px dot + 1px spacing = 3px.
-            for dot_row in range(2): # 2px height per dot
+            for dot_row in range(2):
                 pixel_row = []
                 for c in range(self._dot_cols):
                     pixel_row.extend([dot_color_off] * 5 + ["#000000"])
-                data_rows.append("{" + " ".join(pixel_row) + "}")
-            data_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
-        self.radio_image.put(" ".join(data_rows))
+                bg_rows.append("{" + " ".join(pixel_row) + "}")
+            bg_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
+        self.radio_bg_image.put(" ".join(bg_rows))
+
+        self.radio_image = tk.PhotoImage(width=298, height=51)
+        # Use #000000 as transparency key for content
+        self.radio_image.put("#000000", to=(0, 0, 298, 51))
         
         start_x = rax + 155 - 149 # Center - 149 (half of 298)
         start_y = ray + 4 # Shifted slightly down within the bezel
         
-        # Display the PhotoImage
+        # Display the Background and Overlay
+        self.main_canvas.create_image(start_x, start_y, image=self.radio_bg_image, anchor="nw", tags="radio_dot_bg")
         self.radio_image_id = self.main_canvas.create_image(start_x, start_y, image=self.radio_image, anchor="nw", tags="radio_dot")
 
         # Invisible interaction layer
         self.radio_toggle_id = self.main_canvas.create_rectangle(start_x, start_y, start_x + 298, start_y + 51,
                                                               fill="", outline="", tags="radio_toggle")
         
-        self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: self.toggle_radio())
+        # Clicking radio display now shows full cover art
+        self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: [self.show_full_art(), "break"][-1])
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Enter>", lambda e: self.main_canvas.config(cursor="hand2"))
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Leave>", lambda e: self.main_canvas.config(cursor=""))
-        self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-3>", self.show_radio_context_menu)
+        self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-3>", lambda e: [self.show_radio_context_menu(e), "break"][-1])
 
 
         self.version_id = self.main_canvas.create_text(img_w - 18, img_h - 14, text="1.0", fill=TEXT_SECONDARY, font=("Segoe UI", 8), anchor="center")
@@ -2106,6 +2116,7 @@ class CombatLogApp:
             rax, ray, rafg, rasz = self.build_layout_get_pos("RADIO", 233, 51, "#d31a18", 5)
             if hasattr(self, 'radio_image_id'):
                 start_x = rax + 155 - 149
+                self.main_canvas.coords("radio_dot_bg", start_x, ray + 4)
                 self.main_canvas.coords(self.radio_image_id, start_x, ray + 4)
             
             if hasattr(self, 'radio_toggle_id'):
@@ -2172,42 +2183,65 @@ class CombatLogApp:
             is_adjusting_vol = (now_ts - getattr(self, 'last_interaction_time', 0) < 1.5)
 
             # Dot matrix helper
-            def update_radio_dots(text, color="#CD853F", is_off=False):
+            def update_radio_dots(text, color="#CD853F", is_off=False, is_volume=False, vol_stage=0):
                 from utils import text_to_dot_matrix
                 # Dot matrix is 48 cols x 16 rows (High Res)
                 matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=10)
                 if not matrix and not is_off: return
                 
                 # Render to PhotoImage buffer
-                dot_color_on = color
                 dot_color_off = "#0A0500" # Darkest shade of orange
                 if is_off:
-                    dot_color_on = dot_color_off
-                
-                # Check if display content changed to save CPU
-                content_key = f"{text}_{color}_{is_off}"
-                if hasattr(self, "_last_dot_matrix_content") and self._last_dot_matrix_content == content_key:
+                    # Fill with transparency key
+                    self.radio_image.put("#000000", to=(0, 0, 298, 51))
                     return
-                self._last_dot_matrix_content = content_key
-                
-                # Build a pixel data string for PhotoImage
+
+                # Build a pixel data string for the 48x16 dots
                 data_rows = []
+                # Volume gradient colors (Dull Orange -> Bright Orange)
+                # Starting from a darker shade and ending at the main theme orange #CD853F
+                vol_colors = [
+                    "#301808", "#48240C", "#603010", "#783C14", "#904818", 
+                    "#A8541C", "#C06020", "#D86C24", "#F07828", "#FF8C3F", "#CD853F"
+                ]
+                
+                # Check if we should use the user's specific gradient request (0-110)
+                # We'll use the vol_colors but map them to the 0-110 range.
+                
                 for r in range(self._dot_rows):
-                    # Each "dot" is 5x2 with 1px spacing (total 6x3)
-                    for dot_row in range(2): # 2px height per dot
+                    for dot_row in range(2): 
                         pixel_row = []
                         for c in range(self._dot_cols):
                             c_on = matrix[r][c] if matrix else False
-                            c_color = dot_color_on if c_on else dot_color_off
+                            
+                            if is_volume and c_on:
+                                # Look for column range of the bar inside f"VOL [{bar}] {vol_stage * 10:03d}"
+                                # "[" is at index 4, "]" is at index 16
+                                # Dot matrix resolution is 48 cols. 
+                                # visible_len was 16 chars. 
+                                # 48 / 16 = 3 dots per character.
+                                # The bar starts at character 5 (index 4) -> dot 12.
+                                # The bar ends at character 16 (index 15) -> dot 45.
+                                if 12 <= c < 45:
+                                    # This is inside the [bar] area
+                                    # Map dots 12-45 (33 dots) to 11 colors
+                                    rel_c = c - 12
+                                    color_idx = int((rel_c / 33.0) * 11)
+                                    if color_idx >= len(vol_colors): color_idx = len(vol_colors) - 1
+                                    c_color = vol_colors[color_idx]
+                                else:
+                                    c_color = color # "VOL " and " 110" parts
+                            else:
+                                c_color = color if c_on else "#000000" 
+                            
                             pixel_row.extend([c_color] * 5 + ["#000000"]) 
                         data_rows.append("{" + " ".join(pixel_row) + "}")
-                    # 1px spacing between rows
                     data_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
                 
                 self.radio_image.put(" ".join(data_rows))
                 
             if is_adjusting_vol:
-                # Show LED volume bar: VOL [|||||     ] 11
+                # Show LED volume bar: VOL [|||||     ] 110
                 # Use the latest interaction volume stage, but ensure it's not None
                 vol_stage = getattr(self, '_last_vol_stage', None)
                 if vol_stage is None and hasattr(self, 'radio_mgr'):
@@ -2215,58 +2249,19 @@ class CombatLogApp:
                 
                 vol_stage = vol_stage if vol_stage is not None else 0
                 bar = "|" * vol_stage + " " * (11 - vol_stage)
-                vol_display = f"VOL [{bar}] {vol_stage:02d}"
-                update_radio_dots(vol_display, color="#00FF00")
+                vol_display = f"VOL [{bar}] {vol_stage * 10:03d}"
+                update_radio_dots(vol_display, color="#CD853F", is_volume=True, vol_stage=vol_stage)
             elif hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
                 if not hasattr(self, '_radio_station_cycle_start'): self._radio_station_cycle_start = now_ts
                 
-                # ASCII Art / Image Display
+                # Metadata / scrolling text
+                # We skip the dot-matrix art rendering as requested (only popup now)
                 if getattr(self.radio_mgr, "art_changed", False):
-                    art_data = getattr(self.radio_mgr, "current_art_data", None)
-                    if art_data:
-                        from PIL import Image
-                        import io
-                        try:
-                            img = Image.open(io.BytesIO(art_data)).convert("1").resize((self._dot_cols, self._dot_rows), Image.NEAREST)
-                            pixels = list(img.getdata())
-                            self._radio_dot_art = []
-                            for r in range(self._dot_rows):
-                                self._radio_dot_art.append(pixels[r * self._dot_cols : (r + 1) * self._dot_cols])
-                            self._radio_art_display_start = now_ts
-                        except: pass
-                    else:
-                        self._radio_dot_art = None
+                    # Still keep the art data up to date for the popup, but don't set display timers
+                    self.update_art_window() # Update the popup if it's open
                     self.radio_mgr.art_changed = False
-
-                show_art = False
-                if getattr(self, "_radio_dot_art", None) and (now_ts - getattr(self, "_radio_art_display_start", 0) < 5.0):
-                    show_art = True
-
-                if show_art:
-                    # Display bitmask art directly to PhotoImage
-                    dot_color_on = "#CD853F"
-                    dot_color_off = "#0A0500"
-                    
-                    # Content check for artwork
-                    art_key = f"ART_{hash(tuple(map(tuple, self._radio_dot_art)))}"
-                    if hasattr(self, "_last_dot_matrix_content") and self._last_dot_matrix_content == art_key:
-                        return
-                    self._last_dot_matrix_content = art_key
-                    
-                    data_rows = []
-                    for r in range(self._dot_rows):
-                        for dot_row in range(2):
-                            pixel_row = []
-                            for c in range(self._dot_cols):
-                                c_on = self._radio_dot_art[r][c]
-                                c_color = dot_color_on if c_on else dot_color_off
-                                pixel_row.extend([c_color] * 5 + ["#000000"])
-                            data_rows.append("{" + " ".join(pixel_row) + "}")
-                        data_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
-                    self.radio_image.put(" ".join(data_rows))
-                    return # Skip scrolling
 
                 # Scroll every 0.3 seconds for smooth LED look
                 if now_ts - self._radio_scroll_last_tick > 0.3:
@@ -2291,7 +2286,7 @@ class CombatLogApp:
                         self._last_radio_text = text
                     
                     display_text = text + "   ***   "
-                    visible_len = 16 # High resolution (48 cols)
+                    visible_len = 16 # High resolution (48 cols, 3 dots per char)
                     
                     if len(text) > visible_len:
                         self._radio_scroll_pos = (self._radio_scroll_pos + 1) % len(display_text)
@@ -2720,26 +2715,26 @@ class CombatLogApp:
         self.root.geometry(f"+{x}+{y}")
 
     def click_window(self, event):
-        # Only allow dragging if clicking near the borders
-        # Or if clicking an empty area of the canvas
-        margin = 10
-        w = self.root.winfo_width()
-        h = self.root.winfo_height()
+        # The user wants to drag the window easier (anywhere on background)
+        # but EXCLUDE the area around the volume knob.
         
-        # If it's a border click, allow it
-        is_border = (event.x < margin or event.x > w - margin or 
-                     event.y < margin or event.y > h - margin)
+        # Calculate distance to volume knob center
+        # knob_cx and knob_cy are established in build_layout
+        dist_to_knob = ((event.x - getattr(self, "knob_cx", 0))**2 + (event.y - getattr(self, "knob_cy", 0))**2)**0.5
         
-        # Also check if we clicked an actual object on the canvas
-        # If we clicked "nothing" (background), we can allow drag too,
-        # but the user said "only let the borders drag".
-        if is_border:
-            self._dragging_allowed = True
-            self.is_interacting = True
-            self.last_interaction_time = time.time()
-            self._offsetx = event.x_root - self.root.winfo_x(); self._offsety = event.y_root - self.root.winfo_y()
-        else:
+        # Interaction area for knob is 40px radius
+        if dist_to_knob < 45: # Slightly larger buffer for safety
             self._dragging_allowed = False
+            return
+            
+        # Check if we clicked any other interactive UI label
+        # Tkinter's find_closest or find_withtag can help, but standard tag_binds
+        # for labels often return "break". If we are here, it means no label handler consumed it.
+        
+        self._dragging_allowed = True
+        self.is_interacting = True
+        self.last_interaction_time = time.time()
+        self._offsetx = event.x_root - self.root.winfo_x(); self._offsety = event.y_root - self.root.winfo_y()
 
     def release_window(self, event=None):
         self._dragging_allowed = False
@@ -2753,6 +2748,113 @@ class CombatLogApp:
     def toggle_radio(self):
         if self.radio_mgr:
             self.radio_mgr.toggle()
+            # Update status dot color immediately
+            if self.radio_mgr.is_playing:
+                self.main_canvas.itemconfig(self.status_id, fill="#00ff00")
+            else:
+                self.main_canvas.itemconfig(self.status_id, fill="#ff4444")
+
+    def show_full_art(self):
+        """Displays the current cover art in a popup window with app theme."""
+        if not self.radio_mgr:
+            return
+
+        # Toggle OFF if window already exists
+        if hasattr(self, "art_win") and self.art_win and self.art_win.winfo_exists():
+            # Save position before closing
+            self.art_win_pos = (self.art_win.winfo_x(), self.art_win.winfo_y())
+            self.art_win.destroy()
+            self.art_win = None
+            return
+
+        if not getattr(self.radio_mgr, "current_art_data", None):
+            return
+            
+        art_data = self.radio_mgr.current_art_data
+        from PIL import Image, ImageTk
+        import io
+        try:
+            img = Image.open(io.BytesIO(art_data))
+            # Square 300x300 as requested
+            size = 300
+            img = img.resize((size, size), Image.LANCZOS)
+            
+            # Create a themed top-level window
+            top = tk.Toplevel(self.root)
+            self.art_win = top
+            top.title("COVER ART")
+            top.geometry(f"{size+20}x{size+50}")
+            top.configure(bg=PANEL_DARK, highlightthickness=1, highlightbackground=BORDER_COLOR)
+            top.overrideredirect(True) # Frameless like other secondary windows
+            top.attributes("-topmost", True)
+            
+            # Make it draggable
+            def start_move(e):
+                top.x = e.x
+                top.y = e.y
+            def do_move(e):
+                x = top.winfo_x() + (e.x - top.x)
+                y = top.winfo_y() + (e.y - top.y)
+                top.geometry(f"+{x}+{y}")
+                self.art_win_pos = (x, y) # Update remembered position
+            top.bind("<Button-1>", start_move)
+            top.bind("<B1-Motion>", do_move)
+
+            # Header with X icon
+            header = tk.Frame(top, bg=PANEL_DARK, height=25)
+            header.pack(fill=tk.X)
+            header.pack_propagate(False)
+            
+            tk.Label(header, text="COVER ART", bg=PANEL_DARK, fg=TEXT_SECONDARY, 
+                     font=("Lilita One", 8)).pack(side=tk.LEFT, padx=10)
+            
+            close_btn = tk.Label(header, text="✕", bg=PANEL_DARK, fg="#ff4444", 
+                                 font=("Segoe UI", 10, "bold"), cursor="hand2")
+            close_btn.pack(side=tk.RIGHT, padx=5)
+            def on_close(e=None):
+                self.art_win_pos = (top.winfo_x(), top.winfo_y())
+                top.destroy()
+                self.art_win = None
+            close_btn.bind("<Button-1>", on_close)
+            
+            # The Image
+            photo = ImageTk.PhotoImage(img)
+            self.art_lbl = tk.Label(top, image=photo, bg=PANEL_DARK, bd=0, highlightthickness=0)
+            self.art_lbl.image = photo # Keep reference
+            self.art_lbl.pack(padx=10, pady=5)
+            
+            # Use remembered position or center
+            if hasattr(self, "art_win_pos") and self.art_win_pos:
+                top.geometry(f"+{self.art_win_pos[0]}+{self.art_win_pos[1]}")
+            else:
+                mx = self.root.winfo_x() + (self.root.winfo_width() // 2) - (size // 2)
+                my = self.root.winfo_y() + (self.root.winfo_height() // 2) - (size // 2)
+                top.geometry(f"+{mx}+{my}")
+                self.art_win_pos = (top.winfo_x(), top.winfo_y())
+
+        except Exception as e:
+            print(f"[DEBUG] Full art display error: {e}")
+
+    def update_art_window(self):
+        """Updates the image in the existing cover art window."""
+        if not hasattr(self, "art_win") or not self.art_win or not self.art_win.winfo_exists():
+            return
+        if not self.radio_mgr or not getattr(self.radio_mgr, "current_art_data", None):
+            return
+            
+        from PIL import Image, ImageTk
+        import io
+        try:
+            art_data = self.radio_mgr.current_art_data
+            img = Image.open(io.BytesIO(art_data))
+            size = 300
+            img = img.resize((size, size), Image.LANCZOS)
+            photo = ImageTk.PhotoImage(img)
+            if hasattr(self, "art_lbl") and self.art_lbl:
+                self.art_lbl.config(image=photo)
+                self.art_lbl.image = photo
+        except Exception as e:
+            print(f"[DEBUG] Art window update error: {e}")
 
     def next_radio_station(self):
         if self.radio_mgr:
@@ -2771,6 +2873,9 @@ class CombatLogApp:
         
         menu = tk.Menu(self.root, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, 
                        activebackground=ACCENT_BLUE, activeforeground=TEXT_PRIMARY, font=("Segoe UI", 9))
+        
+        menu.add_command(label="Show Cover Art", command=self.show_full_art)
+        menu.add_separator()
         
         # Get all stations from radio_mgr which includes custom ones
         for station in self.radio_mgr.stations.keys():
@@ -2804,7 +2909,8 @@ class CombatLogApp:
 
     def toggle_menu(self):
         self.is_dialog_open = True
-        self.options_win.show()
+        if hasattr(self, "options_win"):
+            self.options_win.show()
 
     def on_options_closed(self):
         self.is_dialog_open = False
@@ -2812,7 +2918,7 @@ class CombatLogApp:
         # to ensure they come back on top of the game client correctly
         self.root.after(100, lambda: [
             user32.SetWindowPos(win.winfo_id(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
-            for win in self._get_managed_windows()
+            for win in self._get_managed_windows() if win and win.winfo_exists()
         ])
         # Force a refresh to catch up if we missed any updates while open
         self.refresh_ui_only(force=True)

@@ -2135,6 +2135,36 @@ class CombatLogApp:
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
                 if not hasattr(self, '_radio_station_cycle_start'): self._radio_station_cycle_start = now_ts
                 
+                # ASCII Art Display Logic
+                if getattr(self.radio_mgr, "art_changed", False):
+                    # We have new art!
+                    art_data = getattr(self.radio_mgr, "current_art_data", None)
+                    print(f"[DEBUG] Art changed detected, data present: {art_data is not None}")
+                    if art_data:
+                        from utils import image_to_ascii
+                        self._radio_ascii_art = image_to_ascii(art_data, width=35, height=12) # Slightly smaller for radio display
+                        self._radio_ascii_display_start = now_ts # Show art for some time
+                    else:
+                        self._radio_ascii_art = None
+                    self.radio_mgr.art_changed = False
+
+                # Show ASCII art if it was recently updated (for 5 seconds)
+                show_ascii = False
+                if getattr(self, "_radio_ascii_art", None) and (now_ts - getattr(self, "_radio_ascii_display_start", 0) < 5.0):
+                    show_ascii = True
+
+                if show_ascii:
+                    # Clear scrolling text and show ASCII
+                    current_text = self.main_canvas.itemcget(self.radio_toggle_id, "text")
+                    if current_text != self._radio_ascii_art:
+                        # Use smaller font for ASCII if needed, but for now try current
+                        self.main_canvas.itemconfig(self.radio_toggle_id, text=self._radio_ascii_art, fill="#60fc17", font=tkfont.Font(family="Consolas", size=4))
+                    return # Skip scrolling while showing art
+                else:
+                    # Restore radio font if we were showing ASCII
+                    # Lilita One size 14
+                    self.main_canvas.itemconfig(self.radio_toggle_id, font=tkfont.Font(family="Lilita One", size=14))
+
                 # Scroll every 0.3 seconds for smooth LED look
                 if now_ts - self._radio_scroll_last_tick > 0.3:
                     self._radio_scroll_last_tick = now_ts

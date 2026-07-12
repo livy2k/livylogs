@@ -1,3 +1,33 @@
+def image_to_ascii(image_data, width=40, height=20):
+    """Converts image data (bytes or path) to ASCII art."""
+    from PIL import Image
+    import io
+    
+    try:
+        if isinstance(image_data, bytes):
+            img = Image.open(io.BytesIO(image_data))
+        else:
+            img = Image.open(image_data)
+            
+        # Convert to grayscale and resize
+        img = img.convert("L")
+        img = img.resize((width, height), Image.Resampling.LANCZOS)
+        
+        # ASCII characters from dark to light
+        chars = ["@", "#", "S", "%", "?", "*", "+", ";", ":", ",", "."]
+        
+        pixels = img.getdata()
+        ascii_str = ""
+        for i, pixel in enumerate(pixels):
+            # Map 0-255 to index 0-10
+            ascii_str += chars[pixel // 25]
+            if (i + 1) % width == 0:
+                ascii_str += "\n"
+        return ascii_str
+    except Exception as e:
+        print(f"[DEBUG] ASCII Conversion Error: {e}")
+        return None
+
 """
 LivyLogs - Combat Log Analyzer
 Copyright (c) 2026 Livy

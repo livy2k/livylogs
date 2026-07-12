@@ -222,6 +222,8 @@ class RadioManager:
         self._metadata_timer = None
         self.metadata_delay = 2.5 # 2.5 seconds offset for buffering
         self.current_art_url = None
+        self.current_art_data = None # Raw image data for ASCII
+        self.art_changed = False
         self.stream_mixer = None
         self._is_fading_in = False
         self.equalizer = None # Current vlc.AudioEqualizer object
@@ -462,6 +464,12 @@ class RadioManager:
                     else:
                         self.current_song_name = os.path.basename(file_path)
 
+                    # Extract Art
+                    art_url = m.get_meta(vlc.Meta.ArtworkURL)
+                    if art_url and art_url != self.current_art_url:
+                        self.current_art_url = art_url
+                        self._extract_art_data(art_url)
+
                 time.sleep(0.5)
                 
         except Exception as e:
@@ -518,6 +526,12 @@ class RadioManager:
                             self.current_song_name = f"{artist} - {title}"
                         elif title:
                             self.current_song_name = title
+
+                        # Extract Art
+                        art_url = m.get_meta(vlc.Meta.ArtworkURL)
+                        if art_url and art_url != self.current_art_url:
+                            self.current_art_url = art_url
+                            self._extract_art_data(art_url)
                     
                     time.sleep(0.5)
                 
@@ -710,6 +724,15 @@ class RadioManager:
                                     self.current_song_name = meta_val
                                     self._pending_metadata = None
                                     self._metadata_timer = None
+                                    
+                                    # Extract Art when song actually changes
+                                    if self.player:
+                                        m_obj = self.player.get_media()
+                                        if m_obj:
+                                            art_url = m_obj.get_meta(vlc.Meta.ArtworkURL)
+                                            if art_url and art_url != self.current_art_url:
+                                                self.current_art_url = art_url
+                                                self._extract_art_data(art_url)
                             
                             self._metadata_timer = threading.Timer(self.metadata_delay, _apply_metadata, args=[parsed])
                             self._metadata_timer.daemon = True
@@ -859,6 +882,36 @@ class RadioManager:
         finally:
             self.is_interrupting = False
             self.last_interrupt_time = time.time()
+
+    def _extract_art_data(self, art_url):
+        """Fetches and stores raw art data for ASCII conversion."""
+        if not art_url:
+            self.current_art_data = None
+            self.art_changed = True
+            return
+
+        def _fetch_art():
+            try:
+                data = None
+                print(f"[DEBUG] Fetching art from: {art_url}")
+                if art_url.startswith("file:///"):
+                    # Local file URL from VLC metadata
+                    local_path = urllib.parse.unquote(art_url[8:])
+                    if os.path.exists(local_path):
+                        with open(local_path, "rb") as f:
+                            data = f.read()
+                elif art_url.startswith("http"):
+                    resp = requests.get(art_url, timeout=5)
+                    if resp.status_code == 200:
+                        data = resp.content
+                
+                if data:
+                    self.current_art_data = data
+                    self.art_changed = True
+            except Exception as e:
+                print(f"[DEBUG] Art fetch error: {e}")
+
+        threading.Thread(target=_fetch_art, daemon=True).start()
 
     def _fade_in_stream(self):
         # This is now handled internally by _stream_thread's VLC logic

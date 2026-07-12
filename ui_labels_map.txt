@@ -14,11 +14,11 @@ DMG METER, 233.0, 123.0, #d31a18, None, 28, 15, LilitaOne, 5
 DETAILS, 333.0, 123.0, #d31a18, None, 19, 13, LilitaOne, 5
 SKIMMERS, 411.0, 124.0, #d31a18, None, 27, 16, LilitaOne, 5
 CLOCK, 471.0, 9.0, #60fc17, None, 32, 18, LilitaOne, 7
-AUX, 571.0, 49.0, #bbbbbb, None, 32, 18, LilitaOne, 10
-PLAY, 571.0, 62.0, #d31a18, None, 10, 10, LilitaOne, 10
-PAUSE, 586.0, 62.0, #d31a18, None, 10, 10, LilitaOne, 10
-STOP, 601.0, 62.0, #d31a18, None, 10, 10, LilitaOne, 10
-SKIP, 616.0, 62.0, #d31a18, None, 10, 10, LilitaOne, 10
+AUX, 551.0, 24.0, #bbbbbb, None, 32, 18, LilitaOne, 10
+PLAY, 551.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
+PAUSE, 566.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
+STOP, 581.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
+SKIP, 596.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
 DAMAGE, 80.0, 23.0, #d31a17, None, 47, 12, LilitaOne, 10
 XP, 200.0, 23.0, #60fc17, None, 44, 11, LilitaOne, 10
 XP/H, 380.0, 23.0, #60fc17, None, 41, 12, LilitaOne, 10

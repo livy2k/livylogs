@@ -918,24 +918,24 @@ class CombatLogApp:
         self.update_clock()
 
         # AUX Label - positioned 50px right of Clock (updated to new pos)
-        ax, ay, afg, asz = get_pos("AUX", 571, 49, "#bbbbbb", 10)
+        ax, ay, afg, asz = get_pos("AUX", 551, 24, "#bbbbbb", 10)
         self.lbl_aux = create_ui_label("AUX", ax, ay, self.open_aux_mode, fg=afg, 
                                        font_obj=tkfont.Font(family="Lilita One", size=asz))
 
         # Transport Controls
-        px, py, pfg, psz = get_pos("PLAY", 571, 62, "#d31a18", 10)
+        px, py, pfg, psz = get_pos("PLAY", 551, 37, "#d31a18", 10)
         self.lbl_play = create_ui_label("▶", px, py, lambda e: self.radio_mgr.pause() if self.radio_mgr else None, fg=pfg,
                                         font_obj=tkfont.Font(family="Lilita One", size=psz))
         
-        pax, pay, pafg, pasz = get_pos("PAUSE", 586, 62, "#d31a18", 10)
+        pax, pay, pafg, pasz = get_pos("PAUSE", 566, 37, "#d31a18", 10)
         self.lbl_pause = create_ui_label("Ⅱ", pax, pay, lambda e: self.radio_mgr.pause() if self.radio_mgr else None, fg=pafg,
                                          font_obj=tkfont.Font(family="Lilita One", size=pasz))
         
-        stx, sty, stfg, stsz = get_pos("STOP", 601, 62, "#d31a18", 10)
+        stx, sty, stfg, stsz = get_pos("STOP", 581, 37, "#d31a18", 10)
         self.lbl_stop = create_ui_label("■", stx, sty, lambda e: self.radio_mgr.stop() if self.radio_mgr else None, fg=stfg,
                                         font_obj=tkfont.Font(family="Lilita One", size=stsz))
         
-        skx, sky, skfg, sksz = get_pos("SKIP", 616, 62, "#d31a18", 10)
+        skx, sky, skfg, sksz = get_pos("SKIP", 596, 37, "#d31a18", 10)
         self.lbl_skip = create_ui_label("⏭", skx, sky, lambda e: self.radio_mgr.next_track() if self.radio_mgr else None, fg=skfg,
                                         font_obj=tkfont.Font(family="Lilita One", size=sksz))
 

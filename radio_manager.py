@@ -200,6 +200,12 @@ class RadioManager:
         self._stop_event = threading.Event()
         self.vlc_available = True 
         
+        # Load all stations (safe + custom)
+        # We allow custom_stations.txt to completely override defaults if desired,
+        # but by default we merge them.
+        self.stations = SAFE_RAP_STATIONS.copy()
+        self.load_stations()
+        
         # Local MP3 Interruption Logic
         self.last_interrupt_time = time.time()
         self.interrupt_interval = 1800 # 30 minutes
@@ -221,6 +227,7 @@ class RadioManager:
         self.equalizer = None # Current vlc.AudioEqualizer object
         self.eq_bands = [0.0] * 10
         self.eq_preamp = 0.0
+        self._skip_track = False
         
         # Stoner Sound Library Integration
         from sfx_library import StonerSoundLibrary
@@ -247,6 +254,70 @@ class RadioManager:
                 json.dump(self.played_history, f)
         except:
             pass
+
+    def load_stations(self):
+        """Loads custom radio stations from custom_stations.txt"""
+        filename = "custom_stations.txt"
+        # Always ensure the file exists so the user can find it
+        if not os.path.exists(filename):
+            try:
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write("###############################################################################\n")
+                    f.write("# LIVYLOGS CUSTOM RADIO STATIONS\n")
+                    f.write("###############################################################################\n")
+                    f.write("#\n")
+                    f.write("# Instructions:\n")
+                    f.write("# 1. Add your custom radio stations below.\n")
+                    f.write("# 2. Each station should be on its own line.\n")
+                    f.write("# 3. Format: Station Name | Stream URL\n")
+                    f.write("#    Example: My Cool Station | http://streaming.example.com/radio.mp3\n")
+                    f.write("#\n")
+                    f.write("# Linking External Services (Spotify, YouTube, etc.):\n")
+                    f.write("# - Direct Spotify/YouTube links are NOT supported directly due to DRM.\n")
+                    f.write("# - To link YouTube: Search for the video/playlist on \"YouTube to MP3 Stream\" \n")
+                    f.write("#   websites that provide a direct .mp3 or .m3u8 URL.\n")
+                    f.write("# - To link Spotify: Use \"Spotify to Radio\" tools or search for the artist \n")
+                    f.write("#   on \"Radio-Browser.info\" to find a stream playing that genre.\n")
+                    f.write("# - Recommended: Use \"https://www.radio-browser.info/\" to find thousands \n")
+                    f.write("#   of free streams. Look for the \"Stream URL\" ending in .mp3 or .pls.\n")
+                    f.write("#\n")
+                    f.write("# Specific How-To for YouTube:\n")
+                    f.write("# 1. Go to a site like \"https://y2mate.is\" or \"https://loader.to\".\n")
+                    f.write("# 2. Paste your YouTube link and look for a \"Live Stream\" or \"Permanent Link\".\n")
+                    f.write("# 3. Copy that URL and paste it here: [Name] | [URL]\n")
+                    f.write("#\n")
+                    f.write("# Specific How-To for Spotify:\n")
+                    f.write("# 1. Open your Spotify Playlist.\n")
+                    f.write("# 2. Use a tool like \"Soundiiz\" to export it to a generic PLS or M3U8.\n")
+                    f.write("# 3. Or simply find a similar Radio Station on TuneIn and use its URL.\n")
+                    f.write("#\n")
+                    f.write("# Tips:\n")
+                    f.write("# - The Station Name is what will show up on the radio display.\n")
+                    f.write("# - Use a vertical bar (|) to separate the name from the URL.\n")
+                    f.write("# - Most MP3, AAC, and PLS streams are supported via VLC.\n")
+                    f.write("# - Lines starting with # are comments and will be ignored.\n")
+                    f.write("# - Empty lines will also be ignored.\n")
+                    f.write("#\n")
+                    f.write("###############################################################################\n\n")
+                    f.write("# Examples (Remove the # to enable):\n")
+                    f.write("# Lofi Girl | https://lofi.stream.url/live.mp3\n")
+                    f.write("# Classic Rock | http://classic.rock.example/stream\n")
+            except: pass
+
+        if os.path.exists(filename):
+            try:
+                with open(filename, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#"):
+                            continue
+                        if "|" in line:
+                            parts = [p.strip() for p in line.split("|")]
+                            if len(parts) >= 2:
+                                name, url = parts[0], parts[1]
+                                self.stations[name] = url
+            except Exception as e:
+                print(f"[DEBUG] Error loading custom stations: {e}")
         
     def is_available(self):
         return True
@@ -285,7 +356,7 @@ class RadioManager:
                 return
 
             # Now play a real station
-            station_name = list(SAFE_RAP_STATIONS.keys())[0]
+            station_name = list(self.stations.keys())[0]
             self.play(station_name)
 
         self._stop_event.clear()
@@ -293,7 +364,7 @@ class RadioManager:
         self._worker_thread.start()
 
     def next_station(self):
-        stations = list(SAFE_RAP_STATIONS.keys())
+        stations = list(self.stations.keys())
         if not self.current_station or self.current_station not in stations:
             new_idx = 0
         else:
@@ -301,16 +372,175 @@ class RadioManager:
         self.play(stations[new_idx])
 
     def prev_station(self):
-        stations = list(SAFE_RAP_STATIONS.keys())
+        stations = list(self.stations.keys())
         if not self.current_station or self.current_station not in stations:
             new_idx = len(stations) - 1
         else:
             new_idx = (stations.index(self.current_station) - 1) % len(stations)
         self.play(stations[new_idx])
 
-    def play(self, station_name, force_join=True):
-        if station_name not in SAFE_RAP_STATIONS:
+    def play_local_file(self, file_path):
+        """Plays a single local audio file."""
+        if not os.path.exists(file_path):
             return
+            
+        self.stop(is_transition=True)
+        self.current_art_url = None
+        self.current_station = "LOCAL AUX"
+        self.current_song_name = os.path.basename(file_path)
+        
+        self._stop_event.clear()
+        self._worker_thread = threading.Thread(target=self._local_playback_thread, args=(file_path,), daemon=True)
+        self._worker_thread.start()
+
+    def play_local_playlist(self, file_list):
+        """Plays a list of local audio files."""
+        if not file_list:
+            return
+            
+        self.stop(is_transition=True)
+        self.current_art_url = None
+        self.current_station = "LOCAL PLAYLIST"
+        
+        self._stop_event.clear()
+        self._worker_thread = threading.Thread(target=self._playlist_playback_thread, args=(file_list,), daemon=True)
+        self._worker_thread.start()
+
+    def pause(self):
+        """Pauses the current playback."""
+        if hasattr(self, 'player') and self.player:
+            self.player.pause()
+            # Note: VLC pause() toggles pause state
+            
+    def next_track(self):
+        """Skip to next track (only for playlists)."""
+        if self.current_station == "LOCAL PLAYLIST":
+            # We can't easily tell the thread to skip without complex signaling
+            # But we can set a flag that the thread checks
+            self._skip_track = True
+
+    def prev_track(self):
+        """Skip to previous track (only for playlists)."""
+        # Playlists currently only go forward, but we could implement a full player state
+        pass
+
+    def _local_playback_thread(self, file_path):
+        """Thread for playing a single local file."""
+        try:
+            import vlc
+            instance = vlc.Instance("--no-xlib", "--quiet")
+            self.player = instance.media_player_new()
+            
+            media = instance.media_new_path(file_path)
+            self.player.set_media(media)
+            self.player.audio_set_volume(self.volume)
+            
+            if self.equalizer:
+                self.player.audio_set_equalizer(self.equalizer)
+                
+            if self.status_callback:
+                self.status_callback(True)
+            
+            self.is_playing = True
+            self.player.play()
+            
+            # Wait for it to finish or be stopped
+            while not self._stop_event.is_set():
+                state = self.player.get_state()
+                if state in [vlc.State.Ended, vlc.State.Error, vlc.State.Stopped]:
+                    break
+                
+                # Extract metadata for local file
+                m = self.player.get_media()
+                if m:
+                    artist = m.get_meta(vlc.Meta.Artist)
+                    title = m.get_meta(vlc.Meta.Title)
+                    if artist and title:
+                        self.current_song_name = f"{artist} - {title}"
+                    elif title:
+                        self.current_song_name = title
+                    else:
+                        self.current_song_name = os.path.basename(file_path)
+
+                time.sleep(0.5)
+                
+        except Exception as e:
+            print(f"[DEBUG] Local playback error: {e}")
+        finally:
+            if self.player:
+                self.player.stop()
+                self.player.release()
+                self.player = None
+            if instance:
+                instance.release()
+            self.is_playing = False
+            if self.status_callback:
+                self.status_callback(False)
+
+    def _playlist_playback_thread(self, file_list):
+        """Thread for playing a sequence of local files."""
+        try:
+            import vlc
+            instance = vlc.Instance("--no-xlib", "--quiet")
+            
+            self._skip_track = False
+            for file_path in file_list:
+                if self._stop_event.is_set():
+                    break
+                    
+                self.player = instance.media_player_new()
+                media = instance.media_new_path(file_path)
+                self.player.set_media(media)
+                self.player.audio_set_volume(self.volume)
+                self.current_song_name = os.path.basename(file_path)
+                
+                if self.equalizer:
+                    self.player.audio_set_equalizer(self.equalizer)
+                    
+                if self.status_callback:
+                    self.status_callback(True)
+                
+                self.is_playing = True
+                self.player.play()
+                
+                # Wait for current file to finish
+                while not self._stop_event.is_set() and not self._skip_track:
+                    state = self.player.get_state()
+                    if state in [vlc.State.Ended, vlc.State.Error, vlc.State.Stopped]:
+                        break
+                    
+                    # Metadata extraction
+                    m = self.player.get_media()
+                    if m:
+                        artist = m.get_meta(vlc.Meta.Artist)
+                        title = m.get_meta(vlc.Meta.Title)
+                        if artist and title:
+                            self.current_song_name = f"{artist} - {title}"
+                        elif title:
+                            self.current_song_name = title
+                    
+                    time.sleep(0.5)
+                
+                self._skip_track = False
+                self.player.stop()
+                self.player.release()
+                self.player = None
+                
+        except Exception as e:
+            print(f"[DEBUG] Playlist playback error: {e}")
+        finally:
+            self.is_playing = False
+            if self.status_callback:
+                self.status_callback(False)
+            if instance:
+                instance.release()
+
+    def play(self, station_name, force_join=True):
+        if station_name not in self.stations:
+            # Refresh stations and check again in case user just added it
+            self.load_stations()
+            if station_name not in self.stations:
+                return
             
         # Ensure previous thread is stopped and cleaned up
         self.stop(is_transition=True)
@@ -364,7 +594,10 @@ class RadioManager:
         if hasattr(self, 'player') and self.player:
             # We must use a direct call to avoid any potential thread/instance lock issues
             try:
-                self.player.audio_set_volume(int(self.volume))
+                # Store it as an attribute to check if it's already set
+                current = self.player.audio_get_volume()
+                if current != int(self.volume):
+                    self.player.audio_set_volume(int(self.volume))
             except: pass
 
     def set_equalizer(self, bands, preamp=0.0):
@@ -376,16 +609,22 @@ class RadioManager:
         self.eq_preamp = preamp
         
         if self.vlc_available:
-            import vlc
-            if self.equalizer is None:
-                self.equalizer = vlc.AudioEqualizer()
-            
-            self.equalizer.set_preamp(preamp)
-            for i in range(len(bands)):
-                self.equalizer.set_amp_at_index(bands[i], i)
-            
-            if hasattr(self, 'player') and self.player:
-                self.player.audio_set_equalizer(self.equalizer)
+            try:
+                import vlc
+                if self.equalizer is None:
+                    self.equalizer = vlc.AudioEqualizer()
+                
+                # Preamp is set on the equalizer object
+                self.equalizer.set_preamp(preamp)
+                for i in range(min(len(bands), 10)):
+                    # VLC expects 10 bands at specific frequencies
+                    self.equalizer.set_amp_at_index(bands[i], i)
+                
+                # IMPORTANT: Apply to active player if it exists
+                if hasattr(self, 'player') and self.player:
+                    self.player.audio_set_equalizer(self.equalizer)
+            except Exception as e:
+                print(f"[DEBUG] Error setting EQ: {e}")
 
     def get_equalizer(self):
         return self.eq_bands, self.eq_preamp
@@ -397,7 +636,7 @@ class RadioManager:
         instance = vlc.Instance("--no-xlib", "--quiet", "--network-caching=2000")
         self.player = instance.media_player_new()
         
-        url = SAFE_RAP_STATIONS[station_name]
+        url = self.stations[station_name]
         media = instance.media_new(url)
         self.player.set_media(media)
         
@@ -409,7 +648,10 @@ class RadioManager:
 
         # Apply equalizer if set
         if self.equalizer:
-            self.player.audio_set_equalizer(self.equalizer)
+            try:
+                self.player.audio_set_equalizer(self.equalizer)
+            except Exception as e:
+                print(f"[DEBUG] Failed to apply EQ to new player: {e}")
 
         if self.status_callback:
             self.status_callback(True)

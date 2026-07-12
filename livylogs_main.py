@@ -917,6 +917,28 @@ class CombatLogApp:
                                                      font=tkfont.Font(family="Lilita One", size=10), anchor="nw")
         self.update_clock()
 
+        # AUX Label - positioned 50px right of Clock
+        ax, ay, afg, asz = get_pos("AUX", 521, 9, "#bbbbbb", 7)
+        self.lbl_aux = create_ui_label("AUX", ax, ay, self.open_aux_mode, fg=afg, 
+                                       font_obj=tkfont.Font(family="Lilita One", size=asz))
+
+        # Transport Controls
+        px, py, pfg, psz = get_pos("PLAY", 521, 22, "#bbbbbb", 5)
+        self.lbl_play = create_ui_label("▶", px, py, lambda e: self.radio_mgr.pause() if self.radio_mgr else None, fg=pfg,
+                                        font_obj=tkfont.Font(family="Lilita One", size=psz))
+        
+        pax, pay, pafg, pasz = get_pos("PAUSE", 536, 22, "#bbbbbb", 5)
+        self.lbl_pause = create_ui_label("Ⅱ", pax, pay, lambda e: self.radio_mgr.pause() if self.radio_mgr else None, fg=pafg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=pasz))
+        
+        stx, sty, stfg, stsz = get_pos("STOP", 551, 22, "#bbbbbb", 5)
+        self.lbl_stop = create_ui_label("■", stx, sty, lambda e: self.radio_mgr.stop() if self.radio_mgr else None, fg=stfg,
+                                        font_obj=tkfont.Font(family="Lilita One", size=stsz))
+        
+        skx, sky, skfg, sksz = get_pos("SKIP", 566, 22, "#bbbbbb", 5)
+        self.lbl_skip = create_ui_label("⏭", skx, sky, lambda e: self.radio_mgr.next_track() if self.radio_mgr else None, fg=skfg,
+                                        font_obj=tkfont.Font(family="Lilita One", size=sksz))
+
         # Exit 590, 100
         ex, ey, efg, esz = get_pos("EXIT", 829, -4, "#ff4444", 12)
         # Check if EXIT is already in dynamic labels, if not, add it for compatibility
@@ -939,9 +961,24 @@ class CombatLogApp:
         self.knob_area_id = self.main_canvas.create_oval(self.knob_cx - 40, self.knob_cy - 40, self.knob_cx + 40, self.knob_cy + 40,
                                                         fill="", outline="", tags="vol_knob_area")
 
+        self._last_knob_angle = getattr(self, '_last_knob_angle', 90)
+        self.update_knob_visual(self._last_knob_angle)
+
         def on_knob_drag(e):
             if not self.radio_mgr: return "break"
             import math
+            # Mark that we are interacting to prevent refresh_ui_only from overriding
+            self.is_interacting = True
+            self.last_interaction_time = time.time()
+
+            # Initialize _last_adj_angle if not present
+            if not hasattr(self, '_last_adj_angle'):
+                if hasattr(self, 'radio_mgr'):
+                    vol_stage = int((self.radio_mgr.volume / 100.0) * 11)
+                    self._last_adj_angle = vol_stage * 30.0
+                else:
+                    self._last_adj_angle = 0
+
             # Calculate angle relative to knob center (right edge)
             dx = e.x - self.knob_cx
             dy = e.y - self.knob_cy
@@ -951,27 +988,63 @@ class CombatLogApp:
             # Convert to degrees (0 is right, 180 is left, 270 is up, 90 is down)
             angle_deg = math.degrees(angle_rad) % 360
             
-            # Map angle to volume. 
-            # 0 volume at 180 deg (pointing left). Rotation range 0-350.
-            adj_angle = (angle_deg - 180) % 360
+            # Map angle to volume based on a clock face starting at 6 o'clock (down)
+            # 6 o'clock (down) = 90 deg
+            # 9 o'clock (left) = 180 deg
+            # 12 o'clock (up) = 270 deg
+            # 3 o'clock (right) = 0/360 deg
+            # 5 o'clock = 60 deg (30 deg past 4 o'clock, which is 30 deg)
             
-            # If we're between 350 and 360 (a small 10 degree dead zone),
-            # snap to the nearest limit to prevent jumping.
-            if 350 < adj_angle < 355:
-                adj_angle = 350
-            elif 355 <= adj_angle < 360:
-                adj_angle = 0
+            # Adjust angle so that 6 o'clock (90 deg) is the start (0)
+            adj_angle = (angle_deg - 90) % 360
             
-            new_vol = int((adj_angle / 350) * 11)
-            self.radio_mgr.set_volume(int((new_vol / 11) * 100))
+            # Rotation is 30 degrees per volume unit (0-11)
+            # Total range: 11 * 30 = 330 degrees
+            # Dead zone: 330 to 360 (30 degrees)
             
-            # Immediate visual feedback - use the snapped angle
-            final_angle = (adj_angle + 180) % 360
-            self.update_knob_visual(final_angle)
+            # Implementation of strict deadzone/stop:
+            # We want to prevent jumping between Volume 0 (adj_angle=0) and Volume 11 (adj_angle=330)
+            # if the mouse moves into the deadzone (330-360).
             
-            # Mark that we are interacting to prevent refresh_ui_only from overriding
-            self.is_interacting = True
-            self.last_interaction_time = time.time()
+            # Get the previous adjusted angle to detect direction and cross-over
+            prev_adj = getattr(self, '_last_adj_angle', 0)
+            
+            if 330 < adj_angle < 360:
+                # User moved into the deadzone. Snap to the nearest limit based on previous position.
+                if prev_adj < 165: # Closer to 0
+                    adj_angle = 0
+                else: # Closer to 330
+                    adj_angle = 330
+            
+            # Save the current adj_angle for the next drag event
+            self._last_adj_angle = adj_angle
+            
+            new_vol_stage = int(round(adj_angle / 30.0))
+            if new_vol_stage > 11: new_vol_stage = 11
+            
+            # Update volume dynamically
+            # We use a power curve for more natural volume steps (logarithmic human hearing)
+            # stage 11 is still 100%, but the steps leading to it are more gradual
+            # ratio = new_vol_stage / 11.0
+            # target_vol = int((ratio ** 2) * 100)
+            # However, user says 11 jumps 15db, which suggests the previous linear 100% was already high.
+            # In VLC, 100 is 100%. If it jumps at 11, maybe stage 10 was too low or 11 is interpreted differently.
+            # Let's try a slightly smoother linear-to-log mapping.
+            if new_vol_stage == 11:
+                target_vol = 100
+            else:
+                target_vol = int((new_vol_stage / 11.0) * 90) # Cap stage 10 at 90% to make the jump to 100 smaller
+            
+            # ONLY update if stage changed to reduce erratic behavior
+            if getattr(self, '_last_vol_stage', -1) != new_vol_stage:
+                self.radio_mgr.set_volume(target_vol)
+                self._last_vol_stage = new_vol_stage
+            
+            self._last_knob_angle = (new_vol_stage * 30 + 90) % 360
+            
+            # Immediate visual feedback
+            self.update_knob_visual(self._last_knob_angle)
+            
             return "break"
 
         self.main_canvas.tag_bind("vol_knob", "<B1-Motion>", on_knob_drag)
@@ -1931,6 +2004,8 @@ class CombatLogApp:
             label_map = {
                 "SETUP": "lbl_setup", "ALEXA": "lbl_alexa", "DMG METER": "lbl_dmm",
                 "DETAILS": "lbl_det", "SKIMMERS": "lbl_skm", "CLOCK": "lbl_clock_header",
+                "AUX": "lbl_aux", "PLAY": "lbl_play", "PAUSE": "lbl_pause", 
+                "STOP": "lbl_stop", "SKIP": "lbl_skip",
                 "DAMAGE": "lbl_damage_header", "XP": "lbl_xp", "XP/H": "lbl_xph",
                 "GHARV": "lbl_gharv", "LIVIUS": "lbl_livius", "RESET": "lbl_reset",
                 "EXIT": "btn_exit", "ITEM LINK": "lbl_itemlink"
@@ -1970,10 +2045,12 @@ class CombatLogApp:
             vx, vy, vfg, vsz = self.build_layout_get_pos("VOL_DOT", 51, 74, "#ffffff", 5)
             self.knob_cx = vx + 10
             self.knob_cy = vy + 5
-            if hasattr(self, 'vol_knob_id'):
-                self.update_knob_visual(getattr(self, '_last_knob_angle', 180))
             if hasattr(self, 'knob_area_id'):
                 self.main_canvas.coords(self.knob_area_id, self.knob_cx - 40, self.knob_cy - 40, self.knob_cx + 40, self.knob_cy + 40)
+            
+            # Reposition the volume line start/end if it's being forced
+            if hasattr(self, 'vol_knob_id'):
+                self.update_knob_visual(getattr(self, '_last_knob_angle', 90))
             
             # Radio
             rax, ray, rafg, rasz = self.build_layout_get_pos("RADIO", 233, 51, "#d31a18", 5)
@@ -2021,17 +2098,41 @@ class CombatLogApp:
             if hasattr(self, 'radio_mgr') and self.radio_mgr:
                 # If user is currently dragging the knob, don't override the position from manager
                 # to prevent "snapping" due to integer volume rounding or network delay
-                is_dragging_knob = (time.time() - getattr(self, 'last_interaction_time', 0) < 2.5)
-                if not is_dragging_knob:
-                    # Map volume 0-100 back to 0-350 degrees relative to 180
-                    angle = (self.radio_mgr.volume / 100.0) * 350 + 180
+                now_t = time.time()
+                is_interacting = (now_t - getattr(self, 'last_interaction_time', 0) < 3.0)
+                if not is_interacting:
+                    # Map volume 0-100 back to 0-11 stages, then to 0-330 degrees relative to 90
+                    # Use float for more precision during mapping back
+                    vol_stage = int((self.radio_mgr.volume / 100.0) * 11)
+                    angle = (vol_stage * 30.0) + 90
                     self.update_knob_visual(angle)
+                    self._last_knob_angle = angle
+                    self._last_vol_stage = vol_stage
+                    self._last_adj_angle = vol_stage * 30.0
         except: pass
 
         # Update radio scrolling text if playing
         try:
             now_ts = time.time()
-            if hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
+            is_adjusting_vol = (now_ts - getattr(self, 'last_interaction_time', 0) < 1.5)
+                
+            if is_adjusting_vol:
+                # Show LED volume bar: VOL [|||||     ] 11
+                # Use the latest interaction volume stage, but ensure it's not None
+                vol_stage = getattr(self, '_last_vol_stage', None)
+                if vol_stage is None and hasattr(self, 'radio_mgr'):
+                    vol_stage = int((self.radio_mgr.volume / 100.0) * 11)
+                
+                vol_stage = vol_stage if vol_stage is not None else 0
+                bar = "|" * vol_stage + " " * (11 - vol_stage)
+                vol_display = f"VOL [{bar}] {vol_stage:02d}"
+                
+                # Check current display to avoid redundant updates
+                current_text = self.main_canvas.itemcget(self.radio_toggle_id, "text")
+                expected_text = vol_display.center(26)
+                if current_text != expected_text:
+                    self.main_canvas.itemconfig(self.radio_toggle_id, text=expected_text, fill="#00FF00")
+            elif hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
                 if not hasattr(self, '_radio_station_cycle_start'): self._radio_station_cycle_start = now_ts
@@ -2046,6 +2147,11 @@ class CombatLogApp:
                     
                     if hasattr(self.radio_mgr, 'is_interrupting') and self.radio_mgr.is_interrupting:
                         text = "INTERRUPT: " + (os.path.splitext(self.radio_mgr.last_played_mp3)[0].upper() if self.radio_mgr.last_played_mp3 else "UNKNOWN")
+                    elif self.radio_mgr.current_station in ["LOCAL AUX", "LOCAL PLAYLIST"]:
+                        if getattr(self.radio_mgr, 'current_song_name', None):
+                            text = self.radio_mgr.current_song_name.upper()
+                        else:
+                            text = self.radio_mgr.current_station.upper()
                     elif show_station:
                         text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "RNS 420AM"
                     elif getattr(self.radio_mgr, 'current_song_name', None):
@@ -2154,6 +2260,10 @@ class CombatLogApp:
         else: new_vol = 100
         
         self.radio_mgr.set_volume(new_vol)
+        self._last_vol_stage = int((new_vol / 100.0) * 11)
+        self._last_adj_angle = self._last_vol_stage * 30.0
+        self.last_interaction_time = time.time()
+        
         if hasattr(self, 'lbl_vol'):
             self.main_canvas.itemconfig(self.lbl_vol, text=f"VOL: {new_vol}%")
 
@@ -2527,11 +2637,15 @@ class CombatLogApp:
     def show_radio_context_menu(self, event):
         if not self.radio_mgr:
             return
-        from radio_manager import SAFE_RAP_STATIONS
+        
+        # Reload stations from file before showing menu
+        self.radio_mgr.load_stations()
+        
         menu = tk.Menu(self.root, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, 
                        activebackground=ACCENT_BLUE, activeforeground=TEXT_PRIMARY, font=("Segoe UI", 9))
         
-        for station in SAFE_RAP_STATIONS.keys():
+        # Get all stations from radio_mgr which includes custom ones
+        for station in self.radio_mgr.stations.keys():
             menu.add_command(label=station, command=lambda s=station: self.radio_mgr.play(s))
             
         menu.post(event.x_root, event.y_root)
@@ -2655,6 +2769,27 @@ class CombatLogApp:
     def open_equalizer(self):
         if hasattr(self, 'eq_win') and self.eq_win:
             self.eq_win.show()
+
+    def open_aux_mode(self, event=None):
+        """Allows users to select and play local audio files/playlists."""
+        from tkinter import filedialog
+        files = filedialog.askopenfilenames(
+            title="Select Local Audio Files",
+            filetypes=[("Audio Files", "*.mp3 *.wav *.ogg *.flac *.m4a"), ("All Files", "*.*")]
+        )
+        if files:
+            if not self.radio_mgr:
+                from tkinter import messagebox
+                messagebox.showerror("Error", "Radio Manager is not initialized.")
+                return
+
+            # Check if it's a single file or multiple
+            if len(files) == 1:
+                # Play single file
+                self.radio_mgr.play_local_file(files[0])
+            else:
+                # Play multiple files (playlist)
+                self.radio_mgr.play_local_playlist(list(files))
 
     def reset_session_data(self):
         self.player_data = {}

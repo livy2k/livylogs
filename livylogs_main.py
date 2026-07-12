@@ -41,6 +41,7 @@ from windows.leaderboard import LeaderboardWindow
 from windows.details import DetailsWindow
 from windows.options import OptionsWindow
 from windows.alexa import AlexaWindow
+from windows.equalizer import EqualizerWindow
 from windows.livius import LiviusWindow
 from radio_manager import RadioManager, SAFE_RAP_STATIONS
 from killstreak_manager import KillstreakManager
@@ -158,6 +159,7 @@ class CombatLogApp:
             self.details_win = DetailsWindow(self)
             self.options_win = OptionsWindow(self)
             self.alexa_win = AlexaWindow(self)
+            self.eq_win = EqualizerWindow(self)
             self.livius_win = LiviusWindow(self)
         except Exception as e:
             print(f"[DEBUG] Error creating subwindows: {e}")
@@ -702,13 +704,27 @@ class CombatLogApp:
         self.root.geometry(f"{img_w}x{img_h}")
         self.root.resizable(False, False)
         
+        # Transparent background for "smoke" effect
+        try:
+            # We use a color that is unlikely to be used in the UI for transparency
+            # Windows allows a transparent color key. 
+            # Or we can use -alpha for overall transparency.
+            # User said "smoke", which often means semi-transparent black.
+            # But "still not smoke" might mean they want the window background itself
+            # to be completely transparent where the image isn't.
+            TRANS_COLOR = '#000001'
+            self.root.config(bg=TRANS_COLOR)
+            self.root.wm_attributes("-transparentcolor", TRANS_COLOR)
+            self.root.wm_attributes("-alpha", self.target_alpha)
+        except: pass
+        
         # Remove title bar for a clean UI look
         try:
             self.root.overrideredirect(True)
         except: pass
         
         self.main_canvas = tk.Canvas(self.root, width=img_w, height=img_h, 
-                                     bg=WINDOW_BG, highlightthickness=0)
+                                     bg=TRANS_COLOR, highlightthickness=0)
         self.main_canvas.pack(fill=tk.BOTH, expand=True)
         
         if self.bg_photo:
@@ -719,7 +735,7 @@ class CombatLogApp:
                 self.root.geometry(f"{img_w}x{img_h}")
                 self.main_canvas.config(width=img_w, height=img_h)
                 # Position image at (0, 0)
-                self.main_canvas.create_image(0, 0, image=self.bg_photo, anchor="nw")
+                self.main_canvas.create_image(0, 0, image=self.bg_photo, anchor="nw", tags="bg_image")
                 
                 # UImaker design notes:
                 # The original design used a 700x400 canvas.
@@ -733,7 +749,7 @@ class CombatLogApp:
                 self.coord_offset_x = 0 # Not used directly anymore, but kept for safety
                 self.coord_offset_y = 0
             else:
-                self.main_canvas.create_image(178, 107, image=self.bg_photo, anchor="nw")
+                self.main_canvas.create_image(178, 107, image=self.bg_photo, anchor="nw", tags="bg_image")
                 self.coord_offset_x = 0
                 self.coord_offset_y = 0
         else:
@@ -792,6 +808,8 @@ class CombatLogApp:
             # No transformation is needed.
             
             return raw_x, raw_y, fg, size
+        
+        self.build_layout_get_pos = get_pos
 
         # In UImaker design, the background is 638x154 and placed at (178, 107).
         # However, the window is 700x400.
@@ -824,7 +842,7 @@ class CombatLogApp:
                                          font_obj=tkfont.Font(family="Lilita One", size=tsz))
         
         # Skimmers: 381, 162
-        kx, ky, kfg, ksz = get_pos("SKIMMERS", 411, 122, "#d31a18", 5)
+        kx, ky, kfg, ksz = get_pos("SKIMMERS", 411, 124, "#d31a18", 5)
         self.lbl_skm = create_ui_label("SKIMMERS", kx, ky, self.skimmers_win.show, fg=kfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=ksz))
 
@@ -838,20 +856,17 @@ class CombatLogApp:
         self.lbl_jog = create_ui_label("JOG", jx, jy, None, fg=jfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=jsz))
 
-        # ON
-        onx, ony, onfg, onsz = get_pos("ON", 29, 34, "#d31a18", 5)
-        self.lbl_on = create_ui_label("on", onx, ony, None, fg=onfg,
-                                         font_obj=tkfont.Font(family="Lilita One", size=onsz))
+        # ON - Replaced with Connectivity Status Dot
+        onx, ony, onfg, onsz = get_pos("ON", 26, 33, "#d31a18", 5)
+        # We create a circle (oval) instead of text for the ON label.
+        # onsz is used here as a proxy for radius/diameter.
+        self.status_id = self.main_canvas.create_oval(onx, ony, onx + 10, ony + 10, fill="#ff4444", outline="", tags="status_dot")
 
         # Gharv
         gx, gy, gfg, gsz = get_pos("GHARV", 139, 76, "#d21a18", 6)
-        self.lbl_gharv = create_ui_label("Gharv", gx, gy, None, fg=gfg,
+        self.lbl_gharv = create_ui_label("GHARV", gx, gy, None, fg=gfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=gsz))
 
-        # Icon_12 (c8ed355647.svg) at 202, 139 - This looks like a small icon next to Gharv
-        # In design it's a 12x12 icon. We'll use a bullet point.
-        ix12_x, ix12_y, _, _ = get_pos("ICON12", 53, 76)
-        self.main_canvas.create_text(ix12_x, ix12_y, text="●", fill="#bbbbbb", font=("Arial", 10), anchor="nw")
         
         # Text_6: Clock (411, 114) - design uses 'Clock' as header
         # We'll skip the 'CLOCK' header label to avoid clutter, as the time value is displayed here.
@@ -863,38 +878,41 @@ class CombatLogApp:
         self.lbl_itemlink = create_ui_label("ITEM LINK", ix, iy, None, fg=ifg,
                                          font_obj=tkfont.Font(family="Lilita One", size=isz))
 
+        # Bass Boost: Bottom Left
+        bbx, bby, bbfg, bbsz = get_pos("BASS BOOST", 25, 129, "#d21a17", 5)
+        self.lbl_bassboost = create_ui_label("BASS\nBOOST", bbx, bby, self.open_equalizer, fg=bbfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=bbsz))
+
         # Reset: 261, 163
         rx, ry, rfg, rsz = get_pos("RESET", 171, 122, "#d31a18", 4)
         self.btn_reset = create_ui_label("RESET", rx, ry, self.reset_session_data, fg=rfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=rsz))
 
         # XP: 272, 117
-        xx, xy, xfg, xsz = get_pos("XP", 193, 30, "#60fc17", 7)
-        # self.lbl_xp = create_ui_label("XP", xx, xy, None, fg=xfg,
-        #                                 font_obj=tkfont.Font(family="Lilita One", size=xsz))
+        xx, xy, xfg, xsz = get_pos("XP", 200, 23, "#60fc17", 10)
+        self.lbl_xp = create_ui_label("XP", xx, xy, None, fg=xfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=xsz))
 
         # XP/H: 364, 117
-        xhx, xhy, xhfg, xhsz = get_pos("XP/H", 377, 30, "#60fc17", 7)
-        # self.lbl_xph = create_ui_label("XP/H", xhx, xhy, None, fg=xhfg,
-        #                                 font_obj=tkfont.Font(family="Lilita One", size=xhsz))
+        xhx, xhy, xhfg, xhsz = get_pos("XP/H", 380, 23, "#60fc17", 10)
+        self.lbl_xph = create_ui_label("XP/H", xhx, xhy, None, fg=xhfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=xhsz))
 
         # Damage: 218, 117
-        dmx, dmy, dmfg, dmsz = get_pos("DAMAGE", 85, 30, "#d31a17", 7)
-        # self.lbl_damage_header = create_ui_label("DAMAGE", dmx, dmy, None, fg=dmfg,
-        #                                 font_obj=tkfont.Font(family="Lilita One", size=dmsz))
+        dmx, dmy, dmfg, dmsz = get_pos("DAMAGE", 80, 23, "#d31a17", 10)
+        self.lbl_damage_header = create_ui_label("DAMAGE", dmx, dmy, None, fg=dmfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=dmsz))
 
-        # XP Labels - using coordinates from design (Damage: 218,117, XP: 272,117, XP/H: 364,117)
-        # In design these are headers. We'll place the values 14 pixels below (7 design px * 2).
-        self.lbl_damage = create_ui_label("0", dmx, dmy + 14, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=12))
-        xpx, xpy, _, _ = get_pos("XP", 193, 30)
-        xphx, xphy, _, _ = get_pos("XP/H", 377, 30)
-        self.lbl_xp_val = create_ui_label("0", xpx, xpy + 14, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=12))
-        self.lbl_xph_val = create_ui_label("0", xphx, xphy + 14, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=12))
+        # XP Labels - values aligned horizontally to the right of headers
+        self.lbl_damage = create_ui_label("0", dmx + 60, dmy, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=10))
+        xpx, xpy, _, _ = get_pos("XP", 200, 23)
+        xphx, xphy, _, _ = get_pos("XP/H", 380, 23)
+        self.lbl_xp_val = create_ui_label("0", xpx + 40, xpy, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=10))
+        self.lbl_xph_val = create_ui_label("0", xphx + 50, xphy, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=10))
 
         # Text_6: Clock (411, 114) - design uses 'Clock' as header
-        clx, cly, clfg, clsz = get_pos("CLOCK", 466, 9, "#60fc17", 7)
-        # Position value below header in design space would be (411, 114 + 7 approx)
-        # Since we use NW anchor, we align with the header position or slightly below.
+        clx, cly, clfg, clsz = get_pos("CLOCK", 471, 9, "#60fc17", 7)
+        # Clock value remains 14px below the header position as per previous layout
         self.clock_id = self.main_canvas.create_text(clx, cly + 14, text="00:00:00", fill=clfg, 
                                                      font=tkfont.Font(family="Lilita One", size=10), anchor="nw")
         self.update_clock()
@@ -907,24 +925,76 @@ class CombatLogApp:
         
         self.btn_exit = create_ui_label(" ✕ ", ex, ey, self.on_exit, fg=efg, font_obj=("Segoe UI", esz))
         
+        # Volume Knob Line (Rotating Knob)
+        vx, vy, vfg, vsz = get_pos("VOL_DOT", 51, 74, "#ffffff", 5)
+        # The user wants a line that rotates 355 degrees around its right edge.
+        # Center of rotation is the right edge (vx+10, vy+5). Line length is 20 pixels.
+        self.knob_cx = vx + 10
+        self.knob_cy = vy + 5
+        self.knob_len = 30
+        self.vol_knob_id = self.main_canvas.create_line(self.knob_cx - self.knob_len, self.knob_cy, self.knob_cx, self.knob_cy, 
+                                                        fill=vfg, width=3, tags="vol_knob")
+        
+        # Interaction area for the knob - a larger invisible rectangle or oval
+        self.knob_area_id = self.main_canvas.create_oval(self.knob_cx - 40, self.knob_cy - 40, self.knob_cx + 40, self.knob_cy + 40,
+                                                        fill="", outline="", tags="vol_knob_area")
+
+        def on_knob_drag(e):
+            if not self.radio_mgr: return "break"
+            import math
+            # Calculate angle relative to knob center (right edge)
+            dx = e.x - self.knob_cx
+            dy = e.y - self.knob_cy
+            
+            # atan2 returns radians between -pi and pi. 
+            angle_rad = math.atan2(dy, dx)
+            # Convert to degrees (0 is right, 180 is left, 270 is up, 90 is down)
+            angle_deg = math.degrees(angle_rad) % 360
+            
+            # Map angle to volume. 
+            # 0 volume at 180 deg (pointing left). Rotation range 0-350.
+            adj_angle = (angle_deg - 180) % 360
+            
+            # If we're between 350 and 360 (a small 10 degree dead zone),
+            # snap to the nearest limit to prevent jumping.
+            if 350 < adj_angle < 355:
+                adj_angle = 350
+            elif 355 <= adj_angle < 360:
+                adj_angle = 0
+            
+            new_vol = int((adj_angle / 350) * 11)
+            self.radio_mgr.set_volume(int((new_vol / 11) * 100))
+            
+            # Immediate visual feedback - use the snapped angle
+            final_angle = (adj_angle + 180) % 360
+            self.update_knob_visual(final_angle)
+            
+            # Mark that we are interacting to prevent refresh_ui_only from overriding
+            self.is_interacting = True
+            self.last_interaction_time = time.time()
+            return "break"
+
+        self.main_canvas.tag_bind("vol_knob", "<B1-Motion>", on_knob_drag)
+        self.main_canvas.tag_bind("vol_knob", "<Button-1>", on_knob_drag)
+        self.main_canvas.tag_bind("vol_knob", "<ButtonRelease-1>", lambda e: setattr(self, 'last_interaction_time', time.time()))
+        self.main_canvas.tag_bind("vol_knob_area", "<B1-Motion>", on_knob_drag)
+        self.main_canvas.tag_bind("vol_knob_area", "<Button-1>", on_knob_drag)
+        self.main_canvas.tag_bind("vol_knob_area", "<ButtonRelease-1>", lambda e: setattr(self, 'last_interaction_time', time.time()))
+
         # Radio 292, 130
         rax, ray, rafg, rasz = get_pos("RADIO", 233, 51, "#d31a18", 5)
-        radio_text = "OFF".center(30)
+        radio_text = "OFF".center(26)
         # For the radio text which is centered in design, we use center anchor
         # UImaker width=155 in design. At 2x scale, it's 310.
-        # height=30 in design. At 2x scale, it's 60.
+        # User wants to extend 40px either side -> total width 310 + 80 = 390.
+        # Centering remains at the same X coordinate relative to rax.
         self.radio_toggle_id = self.main_canvas.create_text(rax + 155, ray + 30, text=radio_text, fill=rafg, 
-                                                         font=("Consolas", rasz * 2, "bold"), anchor="center", tags="radio_toggle")
+                                                         font=("Lilita One", 14, "bold"), anchor="center", tags="radio_toggle")
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: self.toggle_radio())
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Enter>", lambda e: self.main_canvas.config(cursor="hand2"))
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Leave>", lambda e: self.main_canvas.config(cursor=""))
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-3>", self.show_radio_context_menu)
 
-        self.status_id = self.main_canvas.create_text(img_w - 38, 30, text="●", fill="#ff4444", font=("Segoe UI", 12, "bold"), anchor="ne")
-
-        # Radio controls - repositioned relative to scaled radio area
-        self.radio_up_id = create_ui_label("◄", rax + 10, ray + 14, self.prev_radio_station, font_obj=("Segoe UI", 12))
-        self.radio_down_id = create_ui_label("►", rax + 270, ray + 14, self.next_radio_station, font_obj=("Segoe UI", 12))
 
         self.version_id = self.main_canvas.create_text(img_w - 18, img_h - 14, text="1.0", fill=TEXT_SECONDARY, font=("Segoe UI", 8), anchor="center")
 
@@ -1714,12 +1784,22 @@ class CombatLogApp:
                         self.last_ui_update_time = now_f
                 except: pass
 
+    def update_knob_visual(self, angle_deg):
+        import math
+        self._last_knob_angle = angle_deg
+        rad = math.radians(angle_deg)
+        ex = self.knob_cx + self.knob_len * math.cos(rad)
+        ey = self.knob_cy + self.knob_len * math.sin(rad)
+        if hasattr(self, 'vol_knob_id'):
+            self.main_canvas.coords(self.vol_knob_id, self.knob_cx, self.knob_cy, ex, ey)
+
     def update_clock(self):
         try:
             # Format: 3:16PM
             now = datetime.now().strftime("%I:%M%p").lstrip("0")
             if hasattr(self, 'clock_id'):
-                self.main_canvas.itemconfig(self.clock_id, text=now)
+                if self.main_canvas.itemcget(self.clock_id, "text") != now:
+                    self.main_canvas.itemconfig(self.clock_id, text=now)
             self.root.after(10000, self.update_clock) # Update every 10 seconds is enough for this format
         except: pass
 
@@ -1826,12 +1906,131 @@ class CombatLogApp:
 
     def refresh_ui_only(self, force=False):
         if force:
+            # Instead of full build_layout which causes flashing,
+            # we just reload positions and update items if they exist.
             self._load_dynamic_labels()
-            self.build_layout()
-            return
-        try:
+            # If the canvas doesn't exist, we must build it.
+            if not hasattr(self, 'main_canvas') or not self.main_canvas.winfo_exists():
+                self.build_layout()
+                return
+            
+            # Optimization: Try to just move existing items instead of destroying canvas
+            # This significantly reduces flashing.
+            img_w, img_h = self.root.winfo_width(), self.root.winfo_height()
+            
+            # Reposition labels based on new mapping
+            def update_pos(name, item_attr):
+                if hasattr(self, item_attr):
+                    item = getattr(self, item_attr)
+                    data = self.dynamic_labels.get(name.upper())
+                    if data:
+                        self.main_canvas.coords(item, data['x'], data['y'])
+                        if 'fg' in data: self.main_canvas.itemconfig(item, fill=data['fg'])
 
-            # Update radio scrolling text if playing
+            # List of standard labels to update
+            label_map = {
+                "SETUP": "lbl_setup", "ALEXA": "lbl_alexa", "DMG METER": "lbl_dmm",
+                "DETAILS": "lbl_det", "SKIMMERS": "lbl_skm", "CLOCK": "lbl_clock_header",
+                "DAMAGE": "lbl_damage_header", "XP": "lbl_xp", "XP/H": "lbl_xph",
+                "GHARV": "lbl_gharv", "LIVIUS": "lbl_livius", "RESET": "lbl_reset",
+                "EXIT": "btn_exit", "ITEM LINK": "lbl_itemlink"
+            }
+            for name, attr in label_map.items():
+                update_pos(name, attr)
+
+            if hasattr(self, 'lbl_bassboost'):
+                bbx, bby, bbfg, bbsz = self.build_layout_get_pos("BASS BOOST", 25, 129, "#d21a17", 5)
+                self.main_canvas.coords(self.lbl_bassboost, bbx, bby)
+            
+            # Special cases
+            if hasattr(self, 'clock_id'):
+                clx, cly, _, _ = self.build_layout_get_pos("CLOCK", 471, 9)
+                self.main_canvas.coords(self.clock_id, clx, cly + 14)
+            
+            if hasattr(self, 'lbl_damage'):
+                dmx, dmy, _, _ = self.build_layout_get_pos("DAMAGE", 80, 23)
+                self.main_canvas.coords(self.lbl_damage, dmx + 60, dmy)
+            
+            if hasattr(self, 'lbl_xp_val'):
+                xpx, xpy, _, _ = self.build_layout_get_pos("XP", 200, 23)
+                self.main_canvas.coords(self.lbl_xp_val, xpx + 40, xpy)
+            
+            if hasattr(self, 'lbl_xph_val'):
+                xphx, xphy, _, _ = self.build_layout_get_pos("XP/H", 380, 23)
+                self.main_canvas.coords(self.lbl_xph_val, xphx + 50, xphy)
+
+            # Background image
+            if hasattr(self, 'bg_photo') and self.bg_photo:
+                bg_items = self.main_canvas.find_withtag("bg_image")
+                if bg_items:
+                    self.main_canvas.coords(bg_items[0], 0, 0)
+                    self.main_canvas.itemconfig(bg_items[0], image=self.bg_photo)
+                
+            # Volume knob
+            vx, vy, vfg, vsz = self.build_layout_get_pos("VOL_DOT", 51, 74, "#ffffff", 5)
+            self.knob_cx = vx + 10
+            self.knob_cy = vy + 5
+            if hasattr(self, 'vol_knob_id'):
+                self.update_knob_visual(getattr(self, '_last_knob_angle', 180))
+            if hasattr(self, 'knob_area_id'):
+                self.main_canvas.coords(self.knob_area_id, self.knob_cx - 40, self.knob_cy - 40, self.knob_cx + 40, self.knob_cy + 40)
+            
+            # Radio
+            rax, ray, rafg, rasz = self.build_layout_get_pos("RADIO", 233, 51, "#d31a18", 5)
+            if hasattr(self, 'radio_toggle_id'):
+                self.main_canvas.coords(self.radio_toggle_id, rax + 155, ray + 30)
+            
+            return
+        
+        # Update Combat Stats
+        try:
+            you = self.player_data.get("You", {})
+            dmg = you.get("damage", 0)
+            xp = sum(item.get("amount", 0) for item in you.get("xp_history", []))
+            
+            # Calculate XP/H
+            xph = 0
+            if "xp_history" in you and you["xp_history"]:
+                first_ts = you["xp_history"][0].get("time", time.time())
+                elapsed_hours = (time.time() - first_ts) / 3600.0
+                if elapsed_hours > 0:
+                    xph = int(xp / elapsed_hours)
+
+            def format_val(val):
+                if val >= 1000000:
+                    return f"{val/1000000:.1f}mil"
+                elif val >= 1000:
+                    return f"{val/1000:.1f}k"
+                return str(val)
+
+            new_dmg_text = format_val(dmg)
+            new_xp_text = format_val(xp)
+            new_xph_text = format_val(xph)
+
+            if hasattr(self, 'lbl_damage'):
+                if self.main_canvas.itemcget(self.lbl_damage, "text") != new_dmg_text:
+                    self.main_canvas.itemconfig(self.lbl_damage, text=new_dmg_text)
+            if hasattr(self, 'lbl_xp_val'):
+                if self.main_canvas.itemcget(self.lbl_xp_val, "text") != new_xp_text:
+                    self.main_canvas.itemconfig(self.lbl_xp_val, text=new_xp_text)
+            if hasattr(self, 'lbl_xph_val'):
+                if self.main_canvas.itemcget(self.lbl_xph_val, "text") != new_xph_text:
+                    self.main_canvas.itemconfig(self.lbl_xph_val, text=new_xph_text)
+
+            # Update Volume Knob visual
+            if hasattr(self, 'radio_mgr') and self.radio_mgr:
+                # If user is currently dragging the knob, don't override the position from manager
+                # to prevent "snapping" due to integer volume rounding or network delay
+                is_dragging_knob = (time.time() - getattr(self, 'last_interaction_time', 0) < 2.5)
+                if not is_dragging_knob:
+                    # Map volume 0-100 back to 0-350 degrees relative to 180
+                    angle = (self.radio_mgr.volume / 100.0) * 350 + 180
+                    self.update_knob_visual(angle)
+        except: pass
+
+        # Update radio scrolling text if playing
+        try:
+            now_ts = time.time()
             if hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
@@ -1862,7 +2061,7 @@ class CombatLogApp:
                     
                     # Add padding for scroll loop
                     display_text = text + "   ***   "
-                    visible_len = 30 # LED display width in characters
+                    visible_len = 26 # LED display width in characters (increased by ~6 for 80px extra width)
                     
                     if len(text) > visible_len:
                         self._radio_scroll_pos = (self._radio_scroll_pos + 1) % len(display_text)
@@ -1888,8 +2087,10 @@ class CombatLogApp:
                         self.main_canvas.itemconfig(self.radio_toggle_id, text=text.center(visible_len), fill=fg)
             else:
                 if hasattr(self, 'radio_toggle_id'):
-                    self.main_canvas.itemconfig(self.radio_toggle_id, text="OFF".center(30), fill="#ff4444")
-    
+                    self.main_canvas.itemconfig(self.radio_toggle_id, text="OFF".center(26), fill="#ff4444")
+        except: pass
+
+        try:
             # Damage meter is highest priority for real-time feel
             if hasattr(self, 'damage_meter_win') and self.damage_meter_win:
                 self.damage_meter_win.refresh(force=force)
@@ -2111,6 +2312,13 @@ class CombatLogApp:
             except: pass
             
     def on_exit(self, icon=None, item=None):
+        try:
+            # Save all window positions
+            for win_attr in ['skimmers_win', 'damage_meter_win', 'leaderboard_win', 
+                            'details_win', 'options_win', 'alexa_win', 'eq_win', 'livius_win']:
+                win = getattr(self, win_attr, None)
+                if win: win.save_config()
+        except: pass
         if hasattr(self, '_exiting') and self._exiting:
             return
         self._exiting = True
@@ -2266,18 +2474,39 @@ class CombatLogApp:
         self.root.after(50, force_top)
 
     def drag_window(self, event):
+        if not getattr(self, "_dragging_allowed", False):
+            return
         self.is_interacting = True
         self.last_interaction_time = time.time()
         x, y = apply_snapping(self.root, self.root.winfo_pointerx() - self._offsetx, self.root.winfo_pointery() - self._offsety)
         self.root.geometry(f"+{x}+{y}")
 
     def click_window(self, event):
-        self.is_interacting = True
-        self.last_interaction_time = time.time()
-        self._offsetx = event.x_root - self.root.winfo_x(); self._offsety = event.y_root - self.root.winfo_y()
+        # Only allow dragging if clicking near the borders
+        # Or if clicking an empty area of the canvas
+        margin = 10
+        w = self.root.winfo_width()
+        h = self.root.winfo_height()
+        
+        # If it's a border click, allow it
+        is_border = (event.x < margin or event.x > w - margin or 
+                     event.y < margin or event.y > h - margin)
+        
+        # Also check if we clicked an actual object on the canvas
+        # If we clicked "nothing" (background), we can allow drag too,
+        # but the user said "only let the borders drag".
+        if is_border:
+            self._dragging_allowed = True
+            self.is_interacting = True
+            self.last_interaction_time = time.time()
+            self._offsetx = event.x_root - self.root.winfo_x(); self._offsety = event.y_root - self.root.winfo_y()
+        else:
+            self._dragging_allowed = False
 
     def release_window(self, event=None):
+        self._dragging_allowed = False
         self.is_interacting = False
+        self.last_interaction_time = time.time()
         try:
             self.save_config()
         except: pass
@@ -2422,6 +2651,10 @@ class CombatLogApp:
         self.reset_skimmers_manual()
         self.reset_details_manual()
         self.refresh_ui_only(force=True)
+
+    def open_equalizer(self):
+        if hasattr(self, 'eq_win') and self.eq_win:
+            self.eq_win.show()
 
     def reset_session_data(self):
         self.player_data = {}

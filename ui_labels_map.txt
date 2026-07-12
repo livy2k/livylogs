@@ -6,21 +6,24 @@
 # No offsets or scaling are applied by the app. What you see is what you get.
 # 
 # Note: Positions use (x,y) as top-left (NW) anchor.
+# Note: 'ON' has been repurposed as the 'Status Dot' coordinate.
 
 SETUP, 129.0, 49.0, #d21a17, None, 26, 12, LilitaOne, 7
 ALEXA, 121.0, 98.0, #d21a18, None, 20, 16, LilitaOne, 7
 DMG METER, 233.0, 123.0, #d31a18, None, 28, 15, LilitaOne, 5
 DETAILS, 333.0, 123.0, #d31a18, None, 19, 13, LilitaOne, 5
-SKIMMERS, 411.0, 122.0, #d31a18, None, 27, 16, LilitaOne, 5
-CLOCK, 466.0, 9.0, #60fc17, None, 32, 18, LilitaOne, 7
-DAMAGE, 85.0, 30.0, #d31a17, None, 47, 12, LilitaOne, 7
+SKIMMERS, 411.0, 124.0, #d31a18, None, 27, 16, LilitaOne, 5
+CLOCK, 471.0, 9.0, #60fc17, None, 32, 18, LilitaOne, 7
+DAMAGE, 80.0, 23.0, #d31a17, None, 47, 12, LilitaOne, 10
+XP, 200.0, 23.0, #60fc17, None, 44, 11, LilitaOne, 10
+XP/H, 380.0, 23.0, #60fc17, None, 41, 12, LilitaOne, 10
 ITEM LINK, 487.0, 124.0, #d31a18, None, 27, 10, LilitaOne, 5
+BASS BOOST, 25.0, 129.0, #d21a17, None, 10, 14, LilitaOne, 5
 RADIO, 233.0, 51.0, #d31a18, None, 155, 30, LilitaOne, 5
 JOG, 595.0, -74.0, #ececec, None, 86, 159, LilitaOne, 5
-XP, 193.0, 30.0, #60fc17, None, 44, 11, LilitaOne, 7
-XP/H, 377.0, 30.0, #60fc17, None, 41, 12, LilitaOne, 7
 GHARV, 139.0, 76.0, #d21a18, None, 20, 16, LilitaOne, 6
 LIVIUS, 101.0, 124.0, #bbbbbb, None, 26, 12, LilitaOne, 7
 RESET, 171.0, 122.0, #d31a18, None, 28, 15, LilitaOne, 4
-ON, 29.0, 34.0, #d31a18, None, 10, 14, LilitaOne, 5
+ON, 26.0, 33.0, #d31a18, None, 10, 14, LilitaOne, 5
+VOL_DOT, 51.0, 74.0, #ffffff, None, 10, 10, LilitaOne, 5
 EXIT, 829.0, -4.0, #ff4444, None, 12, 12, Segoe UI, 12

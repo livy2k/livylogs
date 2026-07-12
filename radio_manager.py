@@ -218,6 +218,9 @@ class RadioManager:
         self.current_art_url = None
         self.stream_mixer = None
         self._is_fading_in = False
+        self.equalizer = None # Current vlc.AudioEqualizer object
+        self.eq_bands = [0.0] * 10
+        self.eq_preamp = 0.0
         
         # Stoner Sound Library Integration
         from sfx_library import StonerSoundLibrary
@@ -358,10 +361,34 @@ class RadioManager:
     def set_volume(self, volume):
         self.volume = max(0, min(100, volume))
         # Update VLC player if it's active
-        # We need to find a way to access the player from the thread
-        # For now, let's add it to the manager
         if hasattr(self, 'player') and self.player:
-            self.player.audio_set_volume(self.volume)
+            # We must use a direct call to avoid any potential thread/instance lock issues
+            try:
+                self.player.audio_set_volume(int(self.volume))
+            except: pass
+
+    def set_equalizer(self, bands, preamp=0.0):
+        """
+        bands: list of 10 floats (-20.0 to 20.0)
+        preamp: float (-20.0 to 20.0)
+        """
+        self.eq_bands = bands
+        self.eq_preamp = preamp
+        
+        if self.vlc_available:
+            import vlc
+            if self.equalizer is None:
+                self.equalizer = vlc.AudioEqualizer()
+            
+            self.equalizer.set_preamp(preamp)
+            for i in range(len(bands)):
+                self.equalizer.set_amp_at_index(bands[i], i)
+            
+            if hasattr(self, 'player') and self.player:
+                self.player.audio_set_equalizer(self.equalizer)
+
+    def get_equalizer(self):
+        return self.eq_bands, self.eq_preamp
 
     def _stream_thread(self, station_name):
         self.last_interrupt_time = time.time()
@@ -379,6 +406,10 @@ class RadioManager:
              self.player.audio_set_volume(0)
         else:
              self.player.audio_set_volume(self.volume)
+
+        # Apply equalizer if set
+        if self.equalizer:
+            self.player.audio_set_equalizer(self.equalizer)
 
         if self.status_callback:
             self.status_callback(True)

@@ -2186,11 +2186,12 @@ class CombatLogApp:
             def update_radio_dots(text, color="#CD853F", is_off=False, is_volume=False, vol_stage=0):
                 from utils import text_to_dot_matrix
                 # Dot matrix is 48 cols x 16 rows (High Res)
-                matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=10)
-                if not matrix and not is_off: return
+                matrix = None
+                if not is_volume and not is_off:
+                    matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=10)
+                    if not matrix: return
                 
                 # Render to PhotoImage buffer
-                dot_color_off = "#0A0500" # Darkest shade of orange
                 if is_off:
                     # Fill with transparency key
                     self.radio_image.put("#000000", to=(0, 0, 298, 51))
@@ -2199,39 +2200,35 @@ class CombatLogApp:
                 # Build a pixel data string for the 48x16 dots
                 data_rows = []
                 # Volume gradient colors (Dull Orange -> Bright Orange)
-                # Starting from a darker shade and ending at the main theme orange #CD853F
                 vol_colors = [
-                    "#301808", "#48240C", "#603010", "#783C14", "#904818", 
-                    "#A8541C", "#C06020", "#D86C24", "#F07828", "#FF8C3F", "#CD853F"
+                    "#301808", "#40200A", "#50280C", "#60300E", "#703810", 
+                    "#804012", "#904814", "#A05016", "#B05818", "#C0601A", "#CD853F"
                 ]
                 
-                # Check if we should use the user's specific gradient request (0-110)
-                # We'll use the vol_colors but map them to the 0-110 range.
-                
+                # 48 cols, 16 rows. 
+                # For volume, we want a bar from left to right.
+                # Stage 0-11. 
+                # Each stage could be roughly 4 columns (4 * 12 = 48, but we have 11 stages + 0)
+                # Let's say stage 11 is full width (48 cols).
+                # Each stage is approx 4.36 columns.
+                max_col = int((vol_stage / 11.0) * self._dot_cols)
+
                 for r in range(self._dot_rows):
                     for dot_row in range(2): 
                         pixel_row = []
                         for c in range(self._dot_cols):
-                            c_on = matrix[r][c] if matrix else False
-                            
-                            if is_volume and c_on:
-                                # Look for column range of the bar inside f"VOL [{bar}] {vol_stage * 10:03d}"
-                                # "[" is at index 4, "]" is at index 16
-                                # Dot matrix resolution is 48 cols. 
-                                # visible_len was 16 chars. 
-                                # 48 / 16 = 3 dots per character.
-                                # The bar starts at character 5 (index 4) -> dot 12.
-                                # The bar ends at character 16 (index 15) -> dot 45.
-                                if 12 <= c < 45:
-                                    # This is inside the [bar] area
-                                    # Map dots 12-45 (33 dots) to 11 colors
-                                    rel_c = c - 12
-                                    color_idx = int((rel_c / 33.0) * 11)
+                            if is_volume:
+                                if c <= max_col and vol_stage > 0:
+                                    # Active bar dot
+                                    # Map column to gradient
+                                    color_idx = int((c / float(self._dot_cols)) * 10)
                                     if color_idx >= len(vol_colors): color_idx = len(vol_colors) - 1
                                     c_color = vol_colors[color_idx]
                                 else:
-                                    c_color = color # "VOL " and " 110" parts
+                                    # Background/inactive dot
+                                    c_color = "#0A0500" 
                             else:
+                                c_on = matrix[r][c] if matrix else False
                                 c_color = color if c_on else "#000000" 
                             
                             pixel_row.extend([c_color] * 5 + ["#000000"]) 
@@ -2241,16 +2238,13 @@ class CombatLogApp:
                 self.radio_image.put(" ".join(data_rows))
                 
             if is_adjusting_vol:
-                # Show LED volume bar: VOL [|||||     ] 110
-                # Use the latest interaction volume stage, but ensure it's not None
+                # Show LED volume bar as a grading slider
                 vol_stage = getattr(self, '_last_vol_stage', None)
                 if vol_stage is None and hasattr(self, 'radio_mgr'):
                     vol_stage = int((self.radio_mgr.volume / 100.0) * 11)
                 
                 vol_stage = vol_stage if vol_stage is not None else 0
-                bar = "|" * vol_stage + " " * (11 - vol_stage)
-                vol_display = f"VOL [{bar}] {vol_stage * 10:03d}"
-                update_radio_dots(vol_display, color="#CD853F", is_volume=True, vol_stage=vol_stage)
+                update_radio_dots("", color="#CD853F", is_volume=True, vol_stage=vol_stage)
             elif hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0

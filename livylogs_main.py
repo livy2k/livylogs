@@ -1062,29 +1062,34 @@ class CombatLogApp:
         # User wants a monochrome dot matrix display using the orange color (#CD853F used in refresh_ui_only)
         # Bounding box: Design width 155, height 30. At 2x scale: 310x60.
         # User extended 40px either side: 390x60.
-        # Background dot grid: 5x5 dots with 1px spacing?
-        dot_color_off = "#221100" # Very dark orange
-        self.radio_dots = []
-        self._dot_rows = 12
-        self._dot_cols = 78
-        dot_size = 4
-        dot_spacing = 5
-        
-        start_x = rax + 155 - 195 # Center - 195 (half of 390)
-        start_y = ray
-        
+        # User now wants to reduce by 20 either side: 390 - 40 = 350x60.
+        # Double resolution to 48x16, still 15% smaller (298x51)
+        self._dot_rows = 16
+        self._dot_cols = 48
+        self.radio_image = tk.PhotoImage(width=298, height=51)
+        # Initialize with 'off' dots background
+        data_rows = []
+        dot_color_off = "#0A0500"
         for r in range(self._dot_rows):
-            row_dots = []
-            for c in range(self._dot_cols):
-                dx = start_x + c * dot_spacing
-                dy = start_y + r * dot_spacing
-                dot_id = self.main_canvas.create_rectangle(dx, dy, dx + dot_size, dy + dot_size, 
-                                                         fill=dot_color_off, outline="", tags="radio_dot")
-                row_dots.append(dot_id)
-            self.radio_dots.append(row_dots)
+            # Each "dot" at 298x51 and 48x16:
+            # Width: 298 / 48 = 6.2. 5px dot + 1px spacing = 6px.
+            # Height: 51 / 16 = 3.18. 2px dot + 1px spacing = 3px.
+            for dot_row in range(2): # 2px height per dot
+                pixel_row = []
+                for c in range(self._dot_cols):
+                    pixel_row.extend([dot_color_off] * 5 + ["#000000"])
+                data_rows.append("{" + " ".join(pixel_row) + "}")
+            data_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
+        self.radio_image.put(" ".join(data_rows))
+        
+        start_x = rax + 155 - 149 # Center - 149 (half of 298)
+        start_y = ray + 4 # Shifted slightly down within the bezel
+        
+        # Display the PhotoImage
+        self.radio_image_id = self.main_canvas.create_image(start_x, start_y, image=self.radio_image, anchor="nw", tags="radio_dot")
 
         # Invisible interaction layer
-        self.radio_toggle_id = self.main_canvas.create_rectangle(start_x, start_y, start_x + 390, start_y + 60,
+        self.radio_toggle_id = self.main_canvas.create_rectangle(start_x, start_y, start_x + 298, start_y + 51,
                                                               fill="", outline="", tags="radio_toggle")
         
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: self.toggle_radio())
@@ -1997,9 +2002,30 @@ class CombatLogApp:
 
     def start_ticker_loop(self):
         if self.running:
-            self._update_top_stats()
-            self.refresh_ui_only(force=False)
-            self.root.after(500, self.start_ticker_loop) # Restore 500ms ticker for smoother marquee
+            # Throttle UI refresh to save CPU
+            # Dot matrix and marquee look fine at 5 FPS
+            now = time.time()
+            if not hasattr(self, '_last_ui_tick'): self._last_ui_tick = 0
+            
+            # 1.0s = 1 FPS. User said FPS doesn't matter much.
+            if now - self._last_ui_tick >= 1.0:
+                self._update_top_stats()
+                self.refresh_ui_only(force=False)
+                self._last_ui_tick = now
+            
+            # Polling for high-performance needs can be slightly faster, 
+            # but for UI 500ms is a good compromise
+            self.root.after(500, self.start_ticker_loop)
+
+    def _sync_labels_with_game(self):
+        # Dedicated loop for non-UI critical game data synchronization
+        # Can run less frequently to save CPU
+        if self.running:
+            try:
+                # Any non-UI game data sync here
+                pass
+            except: pass
+            self.root.after(1000, self._sync_labels_with_game)
 
     def refresh_ui_only(self, force=False):
         if force:
@@ -2078,20 +2104,13 @@ class CombatLogApp:
             
             # Radio
             rax, ray, rafg, rasz = self.build_layout_get_pos("RADIO", 233, 51, "#d31a18", 5)
-            if hasattr(self, 'radio_dots'):
-                start_x = rax + 155 - 195
-                start_y = ray
-                dot_size = 4
-                dot_spacing = 5
-                for r in range(self._dot_rows):
-                    for c in range(self._dot_cols):
-                        dx = start_x + c * dot_spacing
-                        dy = start_y + r * dot_spacing
-                        self.main_canvas.coords(self.radio_dots[r][c], dx, dy, dx + dot_size, dy + dot_size)
+            if hasattr(self, 'radio_image_id'):
+                start_x = rax + 155 - 149
+                self.main_canvas.coords(self.radio_image_id, start_x, ray + 4)
             
             if hasattr(self, 'radio_toggle_id'):
-                start_x = rax + 155 - 195
-                self.main_canvas.coords(self.radio_toggle_id, start_x, ray, start_x + 390, ray + 60)
+                start_x = rax + 155 - 149
+                self.main_canvas.coords(self.radio_toggle_id, start_x, ray + 4, start_x + 298, ray + 51 + 4)
             
             return
         
@@ -2153,23 +2172,39 @@ class CombatLogApp:
             is_adjusting_vol = (now_ts - getattr(self, 'last_interaction_time', 0) < 1.5)
 
             # Dot matrix helper
-            def update_radio_dots(text, color="#CD853F"):
+            def update_radio_dots(text, color="#CD853F", is_off=False):
                 from utils import text_to_dot_matrix
-                # Dot matrix is 78 cols x 12 rows
-                matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=12)
-                if not matrix: return
+                # Dot matrix is 48 cols x 16 rows (High Res)
+                matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=10)
+                if not matrix and not is_off: return
                 
+                # Render to PhotoImage buffer
                 dot_color_on = color
-                dot_color_off = "#221100"
+                dot_color_off = "#0A0500" # Darkest shade of orange
+                if is_off:
+                    dot_color_on = dot_color_off
                 
+                # Check if display content changed to save CPU
+                content_key = f"{text}_{color}_{is_off}"
+                if hasattr(self, "_last_dot_matrix_content") and self._last_dot_matrix_content == content_key:
+                    return
+                self._last_dot_matrix_content = content_key
+                
+                # Build a pixel data string for PhotoImage
+                data_rows = []
                 for r in range(self._dot_rows):
-                    for c in range(self._dot_cols):
-                        is_on = matrix[r][c]
-                        dot_id = self.radio_dots[r][c]
-                        target_color = dot_color_on if is_on else dot_color_off
-                        # Optimize: only change color if needed
-                        if self.main_canvas.itemcget(dot_id, "fill") != target_color:
-                            self.main_canvas.itemconfig(dot_id, fill=target_color)
+                    # Each "dot" is 5x2 with 1px spacing (total 6x3)
+                    for dot_row in range(2): # 2px height per dot
+                        pixel_row = []
+                        for c in range(self._dot_cols):
+                            c_on = matrix[r][c] if matrix else False
+                            c_color = dot_color_on if c_on else dot_color_off
+                            pixel_row.extend([c_color] * 5 + ["#000000"]) 
+                        data_rows.append("{" + " ".join(pixel_row) + "}")
+                    # 1px spacing between rows
+                    data_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
+                
+                self.radio_image.put(" ".join(data_rows))
                 
             if is_adjusting_vol:
                 # Show LED volume bar: VOL [|||||     ] 11
@@ -2194,7 +2229,7 @@ class CombatLogApp:
                         from PIL import Image
                         import io
                         try:
-                            img = Image.open(io.BytesIO(art_data)).convert("1").resize((self._dot_cols, self._dot_rows))
+                            img = Image.open(io.BytesIO(art_data)).convert("1").resize((self._dot_cols, self._dot_rows), Image.NEAREST)
                             pixels = list(img.getdata())
                             self._radio_dot_art = []
                             for r in range(self._dot_rows):
@@ -2210,15 +2245,27 @@ class CombatLogApp:
                     show_art = True
 
                 if show_art:
-                    # Display bitmask art directly
-                    dot_color_on = "#60fc17"
-                    dot_color_off = "#221100"
+                    # Display bitmask art directly to PhotoImage
+                    dot_color_on = "#CD853F"
+                    dot_color_off = "#0A0500"
+                    
+                    # Content check for artwork
+                    art_key = f"ART_{hash(tuple(map(tuple, self._radio_dot_art)))}"
+                    if hasattr(self, "_last_dot_matrix_content") and self._last_dot_matrix_content == art_key:
+                        return
+                    self._last_dot_matrix_content = art_key
+                    
+                    data_rows = []
                     for r in range(self._dot_rows):
-                        for c in range(self._dot_cols):
-                            dot_id = self.radio_dots[r][c]
-                            target_color = dot_color_on if self._radio_dot_art[r][c] else dot_color_off
-                            if self.main_canvas.itemcget(dot_id, "fill") != target_color:
-                                self.main_canvas.itemconfig(dot_id, fill=target_color)
+                        for dot_row in range(2):
+                            pixel_row = []
+                            for c in range(self._dot_cols):
+                                c_on = self._radio_dot_art[r][c]
+                                c_color = dot_color_on if c_on else dot_color_off
+                                pixel_row.extend([c_color] * 5 + ["#000000"])
+                            data_rows.append("{" + " ".join(pixel_row) + "}")
+                        data_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
+                    self.radio_image.put(" ".join(data_rows))
                     return # Skip scrolling
 
                 # Scroll every 0.3 seconds for smooth LED look
@@ -2230,13 +2277,13 @@ class CombatLogApp:
                     if hasattr(self.radio_mgr, 'is_interrupting') and self.radio_mgr.is_interrupting:
                         text = "INTERRUPT: " + (os.path.splitext(self.radio_mgr.last_played_mp3)[0].upper() if self.radio_mgr.last_played_mp3 else "UNKNOWN")
                     elif self.radio_mgr.current_station in ["LOCAL AUX", "LOCAL PLAYLIST"]:
-                        text = (self.radio_mgr.current_song_name.upper() if getattr(self.radio_mgr, 'current_song_name', None) else self.radio_mgr.current_station.upper())
-                    elif show_station:
-                        text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "RNS 420AM"
-                    elif getattr(self.radio_mgr, 'current_song_name', None):
-                        text = self.radio_mgr.current_song_name.upper()
+                        text = (self.radio_mgr.current_song_name.upper() if getattr(self.radio_mgr, 'current_song_name', None) else "LOCAL AUDIO")
                     else:
-                        text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "PLAYING"
+                        station_name = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "RNS 420AM"
+                        if getattr(self.radio_mgr, 'current_song_name', None):
+                            text = f"{self.radio_mgr.current_song_name.upper()}"
+                        else:
+                            text = station_name
                     
                     last_text = getattr(self, '_last_radio_text', "")
                     if text != last_text:
@@ -2244,7 +2291,7 @@ class CombatLogApp:
                         self._last_radio_text = text
                     
                     display_text = text + "   ***   "
-                    visible_len = 26
+                    visible_len = 16 # High resolution (48 cols)
                     
                     if len(text) > visible_len:
                         self._radio_scroll_pos = (self._radio_scroll_pos + 1) % len(display_text)
@@ -2266,7 +2313,7 @@ class CombatLogApp:
                         elif self.radio_mgr.current_station == "X MINUS ONE": fg = "#FFFFFF"
                         else: fg = "#CD853F"
                         
-                        visible_len = 26
+                        visible_len = 16
                         if len(text) > visible_len:
                             display_text = text + "   ***   "
                             marquee = (display_text * 2)[self._radio_scroll_pos : self._radio_scroll_pos + visible_len]
@@ -2274,7 +2321,7 @@ class CombatLogApp:
                         else:
                             update_radio_dots(text.center(visible_len), color=fg)
             else:
-                update_radio_dots("OFF", color="#ff4444")
+                update_radio_dots("", is_off=True)
         except: pass
 
         try:
@@ -2732,14 +2779,9 @@ class CombatLogApp:
         menu.post(event.x_root, event.y_root)
 
     def _update_radio_ui(self, is_playing):
-        if not self.radio_mgr:
-            self.main_canvas.itemconfig(self.radio_toggle_id, text="NO AUDIO".center(30), fill="#ff4444")
-            return
-        if is_playing:
-            st = self.radio_mgr.current_station if self.radio_mgr.current_station else "PLAYING"
-            self.main_canvas.itemconfig(self.radio_toggle_id, text=st.center(30), fill="#00ff00")
-        else:
-            self.main_canvas.itemconfig(self.radio_toggle_id, text="OFF".center(30), fill="#ff4444")
+        # The radio display is now handled by the dot-matrix grid in refresh_ui_only.
+        # This method is kept for compatibility but no longer updates text on the toggle rectangle.
+        pass
 
     def on_configure(self, event):
         if hasattr(self, "is_interacting") and self.is_interacting:

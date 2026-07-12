@@ -466,6 +466,9 @@ class RadioManager:
 
                     # Extract Art
                     art_url = m.get_meta(vlc.Meta.ArtworkURL)
+                    if not art_url:
+                        art_url = self._lookup_cover_art(self.current_song_name)
+                        
                     if art_url and art_url != self.current_art_url:
                         self.current_art_url = art_url
                         self._extract_art_data(art_url)
@@ -529,6 +532,9 @@ class RadioManager:
 
                         # Extract Art
                         art_url = m.get_meta(vlc.Meta.ArtworkURL)
+                        if not art_url:
+                            art_url = self._lookup_cover_art(self.current_song_name)
+                            
                         if art_url and art_url != self.current_art_url:
                             self.current_art_url = art_url
                             self._extract_art_data(art_url)
@@ -728,11 +734,17 @@ class RadioManager:
                                     # Extract Art when song actually changes
                                     if self.player:
                                         m_obj = self.player.get_media()
+                                        art_url = None
                                         if m_obj:
                                             art_url = m_obj.get_meta(vlc.Meta.ArtworkURL)
-                                            if art_url and art_url != self.current_art_url:
-                                                self.current_art_url = art_url
-                                                self._extract_art_data(art_url)
+                                        
+                                        # If no art URL in metadata, try lookup
+                                        if not art_url:
+                                            art_url = self._lookup_cover_art(self.current_song_name)
+                                            
+                                        if art_url and art_url != self.current_art_url:
+                                            self.current_art_url = art_url
+                                            self._extract_art_data(art_url)
                             
                             self._metadata_timer = threading.Timer(self.metadata_delay, _apply_metadata, args=[parsed])
                             self._metadata_timer.daemon = True
@@ -901,7 +913,9 @@ class RadioManager:
                         with open(local_path, "rb") as f:
                             data = f.read()
                 elif art_url.startswith("http"):
-                    resp = requests.get(art_url, timeout=5)
+                    # Use a standard User-Agent to avoid being blocked by some CDNs
+                    headers = {"User-Agent": "LivyLogs/1.0 (https://github.com/LivyC/LivyLogs)"}
+                    resp = requests.get(art_url, timeout=5, headers=headers)
                     if resp.status_code == 200:
                         data = resp.content
                 
@@ -912,6 +926,45 @@ class RadioManager:
                 print(f"[DEBUG] Art fetch error: {e}")
 
         threading.Thread(target=_fetch_art, daemon=True).start()
+
+    def _lookup_cover_art(self, song_name):
+        """Attempts to find cover art URL for a song name (Artist - Title)."""
+        if not song_name or " - " not in song_name:
+            return None
+            
+        # Check cache first
+        if not hasattr(self, "_art_cache"):
+            self._art_cache = {}
+            
+        if song_name in self._art_cache:
+            return self._art_cache[song_name]
+            
+        try:
+            # We'll use the iTunes Search API as it's very fast, free, and doesn't require an API key
+            # It's much lighter than MusicBrainz for simple cover art.
+            query = urllib.parse.quote(song_name)
+            api_url = f"https://itunes.apple.com/search?term={query}&entity=song&limit=1"
+            
+            resp = requests.get(api_url, timeout=3)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("resultCount", 0) > 0:
+                    # Prefer higher resolution for the popup window, 100x100 is fine for lookup
+                    # but iTunes also offers artworkUrl600
+                    artwork_url = data["results"][0].get("artworkUrl600")
+                    if not artwork_url:
+                        artwork_url = data["results"][0].get("artworkUrl100")
+                        
+                    if artwork_url:
+                        self._art_cache[song_name] = artwork_url
+                        return artwork_url
+            
+            # If not found, cache None to avoid re-searching
+            self._art_cache[song_name] = None
+        except Exception as e:
+            print(f"[DEBUG] Cover art lookup error: {e}")
+            
+        return None
 
     def _fade_in_stream(self):
         # This is now handled internally by _stream_thread's VLC logic

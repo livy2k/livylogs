@@ -12,20 +12,21 @@ class StonerSoundLibrary:
     def __init__(self, audio_dir="sfx"):
         """Initializes the pygame mixer and structures the audio library paths."""
         try:
-            # Attempt to initialize with dummy driver first to be safe
+            # Check if we should use dummy driver
             import os
-            if 'SDL_AUDIODRIVER' not in os.environ:
-                os.environ['SDL_AUDIODRIVER'] = 'dummy'
+            # If dummy is set in env, it might be due to a previous crash or lack of audio device.
+            # However, the user wants sound, so let's try to remove dummy and init normally first.
+            if os.environ.get('SDL_AUDIODRIVER') == 'dummy':
+                del os.environ['SDL_AUDIODRIVER']
             
             # Increased buffer to 2048 to prevent stuttering and conflicts
             pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
         except Exception as e:
-            print(f"[Error] Failed to initialize pygame mixer (dummy): {e}")
+            print(f"[Error] Failed to initialize pygame mixer: {e}")
             try:
-                # Try without dummy
-                if os.environ.get('SDL_AUDIODRIVER') == 'dummy':
-                    del os.environ['SDL_AUDIODRIVER']
-                    pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
+                # Fallback to dummy if normal init fails
+                os.environ['SDL_AUDIODRIVER'] = 'dummy'
+                pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
             except: pass
 
         self.audio_dir = audio_dir

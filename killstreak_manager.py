@@ -43,19 +43,16 @@ class KillstreakManager:
 
         if not pygame.mixer.get_init():
             try:
-                # Set dummy driver if needed or just try to init
                 import os
-                if 'SDL_AUDIODRIVER' not in os.environ:
-                    os.environ['SDL_AUDIODRIVER'] = 'dummy' # Fallback to dummy to prevent crash
+                if os.environ.get('SDL_AUDIODRIVER') == 'dummy':
+                    del os.environ['SDL_AUDIODRIVER']
                 
                 pygame.mixer.init()
             except Exception as e:
                 print(f"Failed to initialize pygame mixer: {e}")
                 try:
-                    # Try one more time without dummy if it failed
-                    if os.environ.get('SDL_AUDIODRIVER') == 'dummy':
-                        del os.environ['SDL_AUDIODRIVER']
-                        pygame.mixer.init()
+                    os.environ['SDL_AUDIODRIVER'] = 'dummy'
+                    pygame.mixer.init()
                 except: pass
 
     def record_kill(self):

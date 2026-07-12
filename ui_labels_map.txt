@@ -14,11 +14,11 @@ DMG METER, 233.0, 123.0, #d31a18, None, 28, 15, LilitaOne, 5
 DETAILS, 333.0, 123.0, #d31a18, None, 19, 13, LilitaOne, 5
 SKIMMERS, 411.0, 124.0, #d31a18, None, 27, 16, LilitaOne, 5
 CLOCK, 471.0, 9.0, #60fc17, None, 32, 18, LilitaOne, 7
-AUX, 551.0, 24.0, #bbbbbb, None, 32, 18, LilitaOne, 10
-PLAY, 551.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
-PAUSE, 566.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
-STOP, 581.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
-SKIP, 596.0, 37.0, #d31a18, None, 10, 10, LilitaOne, 10
+AUX, 573.5, 17.0, #bbbbbb, None, 32, 18, LilitaOne, 10
+PLAY, 551.0, 30.0, #d31a18, None, 10, 10, LilitaOne, 10
+PAUSE, 566.0, 30.0, #d31a18, None, 10, 10, LilitaOne, 10
+STOP, 581.0, 30.0, #d31a18, None, 10, 10, LilitaOne, 10
+SKIP, 596.0, 30.0, #d31a18, None, 10, 10, LilitaOne, 10
 DAMAGE, 80.0, 23.0, #d31a17, None, 47, 12, LilitaOne, 10
 XP, 200.0, 23.0, #60fc17, None, 44, 11, LilitaOne, 10
 XP/H, 380.0, 23.0, #60fc17, None, 41, 12, LilitaOne, 10
@@ -29,6 +29,6 @@ JOG, 595.0, -74.0, #ececec, None, 86, 159, LilitaOne, 5
 GHARV, 139.0, 76.0, #d21a18, None, 20, 16, LilitaOne, 6
 LIVIUS, 101.0, 124.0, #bbbbbb, None, 26, 12, LilitaOne, 7
 RESET, 171.0, 122.0, #d31a18, None, 28, 15, LilitaOne, 4
-ON, 26.0, 33.0, #d31a18, None, 10, 14, LilitaOne, 5
+RADIO_LBL, 31.0, 35.0, #d31a18, None, 10, 10, LilitaOne, 20
 VOL_DOT, 51.0, 74.0, #ffffff, None, 10, 10, LilitaOne, 5
 EXIT, 829.0, -4.0, #ff4444, None, 12, 12, Segoe UI, 12

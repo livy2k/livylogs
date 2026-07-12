@@ -857,19 +857,10 @@ class CombatLogApp:
         self.lbl_jog = create_ui_label("JOG", jx, jy, None, fg=jfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=jsz))
 
-        # RADIO_LBL - positioned above Status Dot
-        rlx, rly, rlfg, rlsz = get_pos("RADIO_LBL", 26, 18, "#bbbbbb", 5)
-        self.lbl_radio = create_ui_label("⏻", rlx, rly, self.toggle_radio, fg=rlfg,
-                                         font_obj=tkfont.Font(family="Lilita One", size=rlsz), anchor="center")
-
-        # ON - Replaced with Connectivity Status Dot / Radio Power
-        onx, ony, onfg, onsz = get_pos("ON", 26, 33, "#d31a18", 5)
-        # We create a circle (oval) instead of text for the ON label.
-        # onsz is used here as a proxy for radius/diameter.
-        self.status_id = self.main_canvas.create_oval(onx, ony, onx + 10, ony + 10, fill="#ff4444", outline="", tags="status_dot")
-        self.main_canvas.tag_bind(self.status_id, "<Button-1>", lambda e: [self.toggle_radio(), "break"][-1])
-        self.main_canvas.tag_bind(self.status_id, "<Enter>", lambda e: self.main_canvas.config(cursor="hand2"))
-        self.main_canvas.tag_bind(self.status_id, "<Leave>", lambda e: self.main_canvas.config(cursor=""))
+        # RADIO_LBL - Power Button Icon
+        rlx, rly, rlfg, rlsz = get_pos("RADIO_LBL", 31, 35, "#d31a18", 20)
+        self.lbl_radio = create_ui_label("⏻", rlx, rly, self.toggle_radio, fg="#d31a18",
+                                         font_obj=tkfont.Font(family="Lilita One", size=rlsz, weight="bold"), anchor="center")
 
         # Gharv
         gx, gy, gfg, gsz = get_pos("GHARV", 139, 76, "#d21a18", 6)
@@ -1166,9 +1157,6 @@ class CombatLogApp:
             return None
 
         while self.running:
-            if hasattr(self, 'status_id'):
-                self.main_canvas.itemconfig(self.status_id, fill="#ffaa00")
-            
             # Use discovery logic
             current_pipe = find_active_pipe()
             
@@ -1215,9 +1203,6 @@ class CombatLogApp:
                 else:
                     time.sleep(1)
                 continue
-            
-            if hasattr(self, 'status_id'):
-                self.main_canvas.itemconfig(self.status_id, fill="#00ff88")
             
             buf = ctypes.create_string_buffer(65536); bytes_read = wintypes.DWORD(); leftover = ""
             while self.running:
@@ -2017,15 +2002,14 @@ class CombatLogApp:
             now = time.time()
             if not hasattr(self, '_last_ui_tick'): self._last_ui_tick = 0
             
-            # 1.0s = 1 FPS. User said FPS doesn't matter much.
-            if now - self._last_ui_tick >= 1.0:
+            # 0.5s = 2 FPS. Doubled from 1 FPS per user request.
+            if now - self._last_ui_tick >= 0.5:
                 self._update_top_stats()
                 self.refresh_ui_only(force=False)
                 self._last_ui_tick = now
             
-            # Polling for high-performance needs can be slightly faster, 
-            # but for UI 500ms is a good compromise
-            self.root.after(500, self.start_ticker_loop)
+            # Poll every 250ms for smoother response
+            self.root.after(250, self.start_ticker_loop)
 
     def _sync_labels_with_game(self):
         # Dedicated loop for non-UI critical game data synchronization
@@ -2072,6 +2056,14 @@ class CombatLogApp:
             }
             for name, attr in label_map.items():
                 update_pos(name, attr)
+
+            if hasattr(self, 'lbl_radio'):
+                update_pos("RADIO_LBL", "lbl_radio")
+                if hasattr(self, 'radio_mgr') and self.radio_mgr:
+                    if self.radio_mgr.is_playing:
+                        self.main_canvas.itemconfig(self.lbl_radio, fill="#00ff00")
+                    else:
+                        self.main_canvas.itemconfig(self.lbl_radio, fill="#d31a18")
 
             if hasattr(self, 'lbl_bassboost'):
                 bbx, bby, bbfg, bbsz = self.build_layout_get_pos("BASS BOOST", 25, 129, "#d21a17", 5)
@@ -2141,7 +2133,7 @@ class CombatLogApp:
 
             def format_val(val):
                 if val >= 1000000:
-                    return f"{val/1000000:.1f}mil"
+                    return f"{val/1000000:.1f}m"
                 elif val >= 1000:
                     return f"{val/1000:.1f}k"
                 return str(val)
@@ -2237,6 +2229,13 @@ class CombatLogApp:
                 
                 self.radio_image.put(" ".join(data_rows))
                 
+            # Update power icon color
+            if hasattr(self, 'radio_mgr') and self.radio_mgr and hasattr(self, 'lbl_radio'):
+                if self.radio_mgr.is_playing:
+                    self.main_canvas.itemconfig(self.lbl_radio, fill="#00ff00")
+                else:
+                    self.main_canvas.itemconfig(self.lbl_radio, fill="#d31a18")
+
             if is_adjusting_vol:
                 # Show LED volume bar as a grading slider
                 vol_stage = getattr(self, '_last_vol_stage', None)
@@ -2257,8 +2256,8 @@ class CombatLogApp:
                     self.update_art_window() # Update the popup if it's open
                     self.radio_mgr.art_changed = False
 
-                # Scroll every 0.3 seconds for smooth LED look
-                if now_ts - self._radio_scroll_last_tick > 0.3:
+                # Scroll every 0.15 seconds for smooth LED look (Doubled FPS)
+                if now_ts - self._radio_scroll_last_tick > 0.15:
                     self._radio_scroll_last_tick = now_ts
                     cycle_time = (now_ts - self._radio_station_cycle_start) % 25
                     show_station = cycle_time >= 20
@@ -2742,11 +2741,12 @@ class CombatLogApp:
     def toggle_radio(self):
         if self.radio_mgr:
             self.radio_mgr.toggle()
-            # Update status dot color immediately
+            # The screen/dot matrix will reflect the state.
+            # We also update the power icon color to reflect the state.
             if self.radio_mgr.is_playing:
-                self.main_canvas.itemconfig(self.status_id, fill="#00ff00")
+                self.main_canvas.itemconfig(self.lbl_radio, fill="#00ff00")
             else:
-                self.main_canvas.itemconfig(self.status_id, fill="#ff4444")
+                self.main_canvas.itemconfig(self.lbl_radio, fill="#d31a18")
 
     def show_full_art(self):
         """Displays the current cover art in a popup window with app theme."""
@@ -3240,13 +3240,7 @@ class CombatLogApp:
             f.flush()
 
         # Wait until we are CONNECTED before starting to generate data
-        while self.running and self.test_mode.get():
-            if hasattr(self, 'status_id'):
-                # In the dot mode, connected is #00ff88
-                if self.main_canvas.itemcget(self.status_id, "fill") == "#00ff88":
-                    time.sleep(1.0)
-                    break
-            time.sleep(0.5)
+        time.sleep(2.0)
 
         while self.running and self.test_mode.get():
             try:

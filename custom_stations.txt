@@ -1,0 +1,41 @@
+###############################################################################
+# LIVYLOGS CUSTOM RADIO STATIONS
+###############################################################################
+#
+# Instructions:
+# 1. Add your custom radio stations below.
+# 2. Each station should be on its own line.
+# 3. Format: Station Name | Stream URL
+#    Example: My Cool Station | http://streaming.example.com/radio.mp3
+#
+# Linking External Services (Spotify, YouTube, etc.):
+# - Direct Spotify/YouTube links are NOT supported directly due to DRM.
+# - To link YouTube: Search for the video/playlist on "YouTube to MP3 Stream" 
+#   websites that provide a direct .mp3 or .m3u8 URL.
+# - To link Spotify: Use "Spotify to Radio" tools or search for the artist 
+#   on "Radio-Browser.info" to find a stream playing that genre.
+# - Recommended: Use "https://www.radio-browser.info/" to find thousands 
+#   of free streams. Look for the "Stream URL" ending in .mp3 or .pls.
+#
+# Specific How-To for YouTube:
+# 1. Go to a site like "https://y2mate.is" or "https://loader.to".
+# 2. Paste your YouTube link and look for a "Live Stream" or "Permanent Link".
+# 3. Copy that URL and paste it here: [Name] | [URL]
+#
+# Specific How-To for Spotify:
+# 1. Open your Spotify Playlist.
+# 2. Use a tool like "Soundiiz" to export it to a generic PLS or M3U8.
+# 3. Or simply find a similar Radio Station on TuneIn and use its URL.
+#
+# Tips:
+# - The Station Name is what will show up on the radio display.
+# - Use a vertical bar (|) to separate the name from the URL.
+# - Most MP3, AAC, and PLS streams are supported via VLC.
+# - Lines starting with # are comments and will be ignored.
+# - Empty lines will also be ignored.
+#
+###############################################################################
+
+# Examples (Remove the # to enable):
+# Lofi Girl | https://lofi.stream.url/live.mp3
+# Classic Rock | http://classic.rock.example/stream

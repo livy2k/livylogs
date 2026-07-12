@@ -1,3 +1,46 @@
+def text_to_dot_matrix(text, width, height, font_family="Consolas", font_size=10):
+    """Converts text to a bitmask for dot matrix display."""
+    from PIL import Image, ImageDraw, ImageFont
+    
+    # Create a small image and draw text on it
+    # We use a 1-bit image (mode "1")
+    img = Image.new("1", (width, height), 0)
+    draw = ImageDraw.Draw(img)
+    
+    try:
+        # Try to load a font, fallback to default
+        try:
+            # On Windows, fonts are usually in C:\Windows\Fonts
+            # We try to find LilitaOne.ttf in our assets first if possible
+            import os
+            font_path = os.path.join("UImaker", "assets", "fonts", "LilitaOne", "LilitaOne.ttf")
+            if not os.path.exists(font_path):
+                 font_path = font_family + ".ttf"
+            font = ImageFont.truetype(font_path, font_size)
+        except:
+            font = ImageFont.load_default()
+            
+        # Get text bounding box and center it
+        # textsize is deprecated in newer PIL, use textbbox
+        try:
+            left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+            w, h = right - left, bottom - top
+            draw.text(((width - w) // 2 - left, (height - h) // 2 - top), text, font=font, fill=1)
+        except AttributeError:
+            # Older PIL
+            w, h = draw.textsize(text, font=font)
+            draw.text(((width - w) // 2, (height - h) // 2), text, font=font, fill=1)
+        
+        # Convert to list of lists
+        pixels = list(img.getdata())
+        matrix = []
+        for r in range(height):
+            matrix.append(pixels[r * width : (r + 1) * width])
+        return matrix
+    except Exception as e:
+        print(f"[DEBUG] text_to_dot_matrix error: {e}")
+        return None
+
 def image_to_ascii(image_data, width=40, height=20):
     """Converts image data (bytes or path) to ASCII art."""
     from PIL import Image

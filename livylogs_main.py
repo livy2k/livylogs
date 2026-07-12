@@ -922,6 +922,10 @@ class CombatLogApp:
         self.lbl_aux = create_ui_label("AUX", ax, ay, self.open_aux_mode, fg=afg, 
                                        font_obj=tkfont.Font(family="Lilita One", size=asz), anchor="center")
 
+        # Define radio dot parameters here if they don't exist yet for refresh_ui_only
+        if not hasattr(self, '_dot_rows'): self._dot_rows = 12
+        if not hasattr(self, '_dot_cols'): self._dot_cols = 78
+
         px, py, pfg, psz = get_pos("PLAY", 551, 30, "#d31a18", 10)
         self.lbl_play = create_ui_label("▶", px, py, lambda e: self.radio_mgr.pause() if self.radio_mgr else None, fg=pfg,
                                         font_obj=tkfont.Font(family="Lilita One", size=psz))
@@ -1054,13 +1058,35 @@ class CombatLogApp:
 
         # Radio 292, 130
         rax, ray, rafg, rasz = get_pos("RADIO", 233, 51, "#d31a18", 5)
-        radio_text = "OFF".center(26)
-        # For the radio text which is centered in design, we use center anchor
-        # UImaker width=155 in design. At 2x scale, it's 310.
-        # User wants to extend 40px either side -> total width 310 + 80 = 390.
-        # Centering remains at the same X coordinate relative to rax.
-        self.radio_toggle_id = self.main_canvas.create_text(rax + 155, ray + 30, text=radio_text, fill=rafg, 
-                                                         font=("Lilita One", 14, "bold"), anchor="center", tags="radio_toggle")
+        
+        # User wants a monochrome dot matrix display using the orange color (#CD853F used in refresh_ui_only)
+        # Bounding box: Design width 155, height 30. At 2x scale: 310x60.
+        # User extended 40px either side: 390x60.
+        # Background dot grid: 5x5 dots with 1px spacing?
+        dot_color_off = "#221100" # Very dark orange
+        self.radio_dots = []
+        self._dot_rows = 12
+        self._dot_cols = 78
+        dot_size = 4
+        dot_spacing = 5
+        
+        start_x = rax + 155 - 195 # Center - 195 (half of 390)
+        start_y = ray
+        
+        for r in range(self._dot_rows):
+            row_dots = []
+            for c in range(self._dot_cols):
+                dx = start_x + c * dot_spacing
+                dy = start_y + r * dot_spacing
+                dot_id = self.main_canvas.create_rectangle(dx, dy, dx + dot_size, dy + dot_size, 
+                                                         fill=dot_color_off, outline="", tags="radio_dot")
+                row_dots.append(dot_id)
+            self.radio_dots.append(row_dots)
+
+        # Invisible interaction layer
+        self.radio_toggle_id = self.main_canvas.create_rectangle(start_x, start_y, start_x + 390, start_y + 60,
+                                                              fill="", outline="", tags="radio_toggle")
+        
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: self.toggle_radio())
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Enter>", lambda e: self.main_canvas.config(cursor="hand2"))
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Leave>", lambda e: self.main_canvas.config(cursor=""))
@@ -2052,8 +2078,20 @@ class CombatLogApp:
             
             # Radio
             rax, ray, rafg, rasz = self.build_layout_get_pos("RADIO", 233, 51, "#d31a18", 5)
+            if hasattr(self, 'radio_dots'):
+                start_x = rax + 155 - 195
+                start_y = ray
+                dot_size = 4
+                dot_spacing = 5
+                for r in range(self._dot_rows):
+                    for c in range(self._dot_cols):
+                        dx = start_x + c * dot_spacing
+                        dy = start_y + r * dot_spacing
+                        self.main_canvas.coords(self.radio_dots[r][c], dx, dy, dx + dot_size, dy + dot_size)
+            
             if hasattr(self, 'radio_toggle_id'):
-                self.main_canvas.coords(self.radio_toggle_id, rax + 155, ray + 30)
+                start_x = rax + 155 - 195
+                self.main_canvas.coords(self.radio_toggle_id, start_x, ray, start_x + 390, ray + 60)
             
             return
         
@@ -2113,6 +2151,25 @@ class CombatLogApp:
         try:
             now_ts = time.time()
             is_adjusting_vol = (now_ts - getattr(self, 'last_interaction_time', 0) < 1.5)
+
+            # Dot matrix helper
+            def update_radio_dots(text, color="#CD853F"):
+                from utils import text_to_dot_matrix
+                # Dot matrix is 78 cols x 12 rows
+                matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=12)
+                if not matrix: return
+                
+                dot_color_on = color
+                dot_color_off = "#221100"
+                
+                for r in range(self._dot_rows):
+                    for c in range(self._dot_cols):
+                        is_on = matrix[r][c]
+                        dot_id = self.radio_dots[r][c]
+                        target_color = dot_color_on if is_on else dot_color_off
+                        # Optimize: only change color if needed
+                        if self.main_canvas.itemcget(dot_id, "fill") != target_color:
+                            self.main_canvas.itemconfig(dot_id, fill=target_color)
                 
             if is_adjusting_vol:
                 # Show LED volume bar: VOL [|||||     ] 11
@@ -2124,62 +2181,56 @@ class CombatLogApp:
                 vol_stage = vol_stage if vol_stage is not None else 0
                 bar = "|" * vol_stage + " " * (11 - vol_stage)
                 vol_display = f"VOL [{bar}] {vol_stage:02d}"
-                
-                # Check current display to avoid redundant updates
-                current_text = self.main_canvas.itemcget(self.radio_toggle_id, "text")
-                expected_text = vol_display.center(26)
-                if current_text != expected_text:
-                    self.main_canvas.itemconfig(self.radio_toggle_id, text=expected_text, fill="#00FF00")
+                update_radio_dots(vol_display, color="#00FF00")
             elif hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
                 if not hasattr(self, '_radio_station_cycle_start'): self._radio_station_cycle_start = now_ts
                 
-                # ASCII Art Display Logic
+                # ASCII Art / Image Display
                 if getattr(self.radio_mgr, "art_changed", False):
-                    # We have new art!
                     art_data = getattr(self.radio_mgr, "current_art_data", None)
-                    print(f"[DEBUG] Art changed detected, data present: {art_data is not None}")
                     if art_data:
-                        from utils import image_to_ascii
-                        self._radio_ascii_art = image_to_ascii(art_data, width=35, height=12) # Slightly smaller for radio display
-                        self._radio_ascii_display_start = now_ts # Show art for some time
+                        from PIL import Image
+                        import io
+                        try:
+                            img = Image.open(io.BytesIO(art_data)).convert("1").resize((self._dot_cols, self._dot_rows))
+                            pixels = list(img.getdata())
+                            self._radio_dot_art = []
+                            for r in range(self._dot_rows):
+                                self._radio_dot_art.append(pixels[r * self._dot_cols : (r + 1) * self._dot_cols])
+                            self._radio_art_display_start = now_ts
+                        except: pass
                     else:
-                        self._radio_ascii_art = None
+                        self._radio_dot_art = None
                     self.radio_mgr.art_changed = False
 
-                # Show ASCII art if it was recently updated (for 5 seconds)
-                show_ascii = False
-                if getattr(self, "_radio_ascii_art", None) and (now_ts - getattr(self, "_radio_ascii_display_start", 0) < 5.0):
-                    show_ascii = True
+                show_art = False
+                if getattr(self, "_radio_dot_art", None) and (now_ts - getattr(self, "_radio_art_display_start", 0) < 5.0):
+                    show_art = True
 
-                if show_ascii:
-                    # Clear scrolling text and show ASCII
-                    current_text = self.main_canvas.itemcget(self.radio_toggle_id, "text")
-                    if current_text != self._radio_ascii_art:
-                        # Use smaller font for ASCII if needed, but for now try current
-                        self.main_canvas.itemconfig(self.radio_toggle_id, text=self._radio_ascii_art, fill="#60fc17", font=tkfont.Font(family="Consolas", size=4))
-                    return # Skip scrolling while showing art
-                else:
-                    # Restore radio font if we were showing ASCII
-                    # Lilita One size 14
-                    self.main_canvas.itemconfig(self.radio_toggle_id, font=tkfont.Font(family="Lilita One", size=14))
+                if show_art:
+                    # Display bitmask art directly
+                    dot_color_on = "#60fc17"
+                    dot_color_off = "#221100"
+                    for r in range(self._dot_rows):
+                        for c in range(self._dot_cols):
+                            dot_id = self.radio_dots[r][c]
+                            target_color = dot_color_on if self._radio_dot_art[r][c] else dot_color_off
+                            if self.main_canvas.itemcget(dot_id, "fill") != target_color:
+                                self.main_canvas.itemconfig(dot_id, fill=target_color)
+                    return # Skip scrolling
 
                 # Scroll every 0.3 seconds for smooth LED look
                 if now_ts - self._radio_scroll_last_tick > 0.3:
                     self._radio_scroll_last_tick = now_ts
-                    
-                    # Cycle: 20 seconds song info, 5 seconds station name
                     cycle_time = (now_ts - self._radio_station_cycle_start) % 25
                     show_station = cycle_time >= 20
                     
                     if hasattr(self.radio_mgr, 'is_interrupting') and self.radio_mgr.is_interrupting:
                         text = "INTERRUPT: " + (os.path.splitext(self.radio_mgr.last_played_mp3)[0].upper() if self.radio_mgr.last_played_mp3 else "UNKNOWN")
                     elif self.radio_mgr.current_station in ["LOCAL AUX", "LOCAL PLAYLIST"]:
-                        if getattr(self.radio_mgr, 'current_song_name', None):
-                            text = self.radio_mgr.current_song_name.upper()
-                        else:
-                            text = self.radio_mgr.current_station.upper()
+                        text = (self.radio_mgr.current_song_name.upper() if getattr(self.radio_mgr, 'current_song_name', None) else self.radio_mgr.current_station.upper())
                     elif show_station:
                         text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "RNS 420AM"
                     elif getattr(self.radio_mgr, 'current_song_name', None):
@@ -2187,41 +2238,43 @@ class CombatLogApp:
                     else:
                         text = self.radio_mgr.current_station.upper() if self.radio_mgr.current_station else "PLAYING"
                     
-                    # If text changed, reset scroll pos
                     last_text = getattr(self, '_last_radio_text', "")
                     if text != last_text:
                         self._radio_scroll_pos = 0
                         self._last_radio_text = text
                     
-                    # Add padding for scroll loop
                     display_text = text + "   ***   "
-                    visible_len = 26 # LED display width in characters (increased by ~6 for 80px extra width)
+                    visible_len = 26
                     
                     if len(text) > visible_len:
                         self._radio_scroll_pos = (self._radio_scroll_pos + 1) % len(display_text)
-                        start = self._radio_scroll_pos
-                        marquee = (display_text * 2)[start:start+visible_len]
-                        
-                        if getattr(self.radio_mgr, 'is_interrupting', False):
-                            fg = "#ffcc00"
-                        elif self.radio_mgr.current_station == "X MINUS ONE":
-                            fg = "#FFFFFF"
-                        else:
-                            fg = "#CD853F"
-                        self.main_canvas.itemconfig(self.radio_toggle_id, text=marquee, fill=fg)
+                        marquee = (display_text * 2)[self._radio_scroll_pos : self._radio_scroll_pos + visible_len]
+                        final_text = marquee
                     else:
-                        # No scroll needed
-                        self._radio_scroll_pos = 0
-                        if getattr(self.radio_mgr, 'is_interrupting', False):
-                            fg = "#ffcc00"
-                        elif self.radio_mgr.current_station == "X MINUS ONE":
-                            fg = "#FFFFFF"
+                        final_text = text.center(visible_len)
+                        
+                    if getattr(self.radio_mgr, 'is_interrupting', False): fg = "#ffcc00"
+                    elif self.radio_mgr.current_station == "X MINUS ONE": fg = "#FFFFFF"
+                    else: fg = "#CD853F"
+                    
+                    update_radio_dots(final_text, color=fg)
+                else:
+                    # Even if not ticking, make sure dots match current text (e.g. if color changed)
+                    text = getattr(self, '_last_radio_text', "")
+                    if text:
+                        if getattr(self.radio_mgr, 'is_interrupting', False): fg = "#ffcc00"
+                        elif self.radio_mgr.current_station == "X MINUS ONE": fg = "#FFFFFF"
+                        else: fg = "#CD853F"
+                        
+                        visible_len = 26
+                        if len(text) > visible_len:
+                            display_text = text + "   ***   "
+                            marquee = (display_text * 2)[self._radio_scroll_pos : self._radio_scroll_pos + visible_len]
+                            update_radio_dots(marquee, color=fg)
                         else:
-                            fg = "#CD853F"
-                        self.main_canvas.itemconfig(self.radio_toggle_id, text=text.center(visible_len), fill=fg)
+                            update_radio_dots(text.center(visible_len), color=fg)
             else:
-                if hasattr(self, 'radio_toggle_id'):
-                    self.main_canvas.itemconfig(self.radio_toggle_id, text="OFF".center(26), fill="#ff4444")
+                update_radio_dots("OFF", color="#ff4444")
         except: pass
 
         try:

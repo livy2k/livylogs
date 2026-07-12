@@ -6,6 +6,7 @@ Licensed under the GNU General Public License v3.0.
 
 import tkinter as tk
 import time
+import os
 from datetime import datetime, timedelta
 from constants import (
     PANEL_DARK, TEXT_SECONDARY, TEXT_PRIMARY, ACCENT_BLUE, BORDER_COLOR,
@@ -21,9 +22,40 @@ class DamageMeterWindow(BasePopoutWindow):
         super().show(force_open)
         if not self.window: return
 
+    def _load_dynamic_labels(self):
+        self.dynamic_labels = []
+        labels_file = "ui_labels_damagemeterwindow.txt"
+        if os.path.exists(labels_file):
+            try:
+                with open(labels_file, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#"): continue
+                        parts = [p.strip() for p in line.split(",")]
+                        if len(parts) >= 3:
+                            try:
+                                ld = {
+                                    "name": parts[0],
+                                    "x": float(parts[1]),
+                                    "y": float(parts[2]),
+                                    "fg": parts[3] if len(parts) > 3 else "#FFFFFF",
+                                    "shape": parts[4] if len(parts) > 4 else "None",
+                                    "w": float(parts[5]) if len(parts) > 5 else 0,
+                                    "h": float(parts[6]) if len(parts) > 6 else 0,
+                                    "font": parts[7] if len(parts) > 7 else "Segoe UI",
+                                    "size": parts[8] if len(parts) > 8 else "9"
+                                }
+                                self.dynamic_labels.append(ld)
+                            except (ValueError, IndexError): continue
+            except Exception as e:
+                print(f"Error loading dynamic labels for DamageMeter: {e}")
+
     def refresh(self, force=False):
         if not self.window or not self.window.winfo_exists() or self.window.state() == "withdrawn": return
         
+        if force or not hasattr(self, 'dynamic_labels'):
+            self._load_dynamic_labels()
+
         # Ensure title bar exists
         if not hasattr(self, 'title_bar') or not self.title_bar.winfo_exists(): return
         
@@ -36,8 +68,20 @@ class DamageMeterWindow(BasePopoutWindow):
         do_full = force or (now - self.last_full_refresh >= 0.5)
         
         # Initialize labels if not existing
-        if not hasattr(self, 'lbl_dmg') or not self.lbl_dmg.winfo_exists():
+        if not hasattr(self, 'lbl_dmg') or not self.lbl_dmg.winfo_exists() or force:
             for widget in self.content_container.winfo_children(): widget.destroy()
+            
+            # Draw Dynamic Labels if they exist
+            if hasattr(self, 'dynamic_labels') and self.dynamic_labels:
+                for ld in self.dynamic_labels:
+                    try:
+                        f_fam = ld.get('font', 'Segoe UI')
+                        f_size = int(ld.get('size', 9))
+                        tk.Label(self.content_container, text=ld['name'], 
+                                 fg=ld.get('fg', TEXT_PRIMARY), bg=self.window["bg"],
+                                 font=(f_fam, f_size)).place(x=ld['x'], y=ld['y'])
+                    except: pass
+            
             grid = tk.Frame(self.content_container, bg=self.window["bg"])
             grid.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
             

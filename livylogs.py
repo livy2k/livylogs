@@ -4,11 +4,13 @@ Copyright (c) 2026 Livy
 Licensed under the GNU General Public License v3.0.
 """
 
+import sys
+import datetime
+import os
 import tkinter as tk
 from livylogs_main import CombatLogApp
 import ctypes
 from tkinter import messagebox
-import sys
 
 def main():
     kernel32 = ctypes.windll.kernel32
@@ -19,12 +21,6 @@ def main():
         # Since the C engine now kills old processes, if we hit this, it means 
         # another instance started VERY recently or we are being launched manually.
         sys.exit(0)
-
-    try:
-        with open("crash_log.txt", "a") as f:
-            import datetime
-            f.write(f"--- MAIN SCRIPT START {datetime.datetime.now()} ---\n")
-    except: pass
 
     try:
         root = tk.Tk()
@@ -55,7 +51,7 @@ def main():
                                capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
         except: pass
 
-        if mutex: kernel32.CloseHandle(mutex)
+        if 'mutex' in locals() and mutex: kernel32.CloseHandle(mutex)
         try:
             with open("crash_log.txt", "a") as f:
                 import datetime

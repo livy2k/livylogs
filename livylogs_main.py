@@ -62,6 +62,24 @@ class CombatLogApp:
         self.style = ttk.Style()
         self.style.theme_use('clam')
         
+        # Load Lilita One font if available
+        self.lilita_font_path = r"C:\Users\LivyC\Documents\UImaker\assets\fonts\LilitaOne\LilitaOne.ttf"
+        self.lilita_family = "Lilita One"
+        if os.path.exists(self.lilita_font_path):
+            try:
+                # Attempt to load font on Windows using ctypes
+                # gdi32.AddFontResourceExW
+                FR_PRIVATE = 0x10
+                res = ctypes.windll.gdi32.AddFontResourceExW(self.lilita_font_path, FR_PRIVATE, 0)
+                if res > 0:
+                     print(f"[DEBUG] Loaded custom font: {self.lilita_family} from {self.lilita_font_path}")
+                     # Refresh font list
+                     # ctypes.windll.user32.SendMessageW(0xFFFF, 0x001D, 0, 0)
+                else:
+                     print(f"[DEBUG] Failed to load font resource: {self.lilita_font_path}")
+            except Exception as e:
+                print(f"[DEBUG] Error loading font: {e}")
+        
         self.config = ConfigParser()
         self.config.read("settings.ini")
 
@@ -73,6 +91,11 @@ class CombatLogApp:
         initial_y = self.config.get("General", "y", fallback="92")
 
         self.root.geometry(f"{initial_width}x{initial_height}+{initial_x}+{initial_y}")
+        
+        # Override geometry if it doesn't match the design 700x400
+        # The user said the app "isn't close" so I'm ensuring it starts at 700x400
+        if initial_width != 700 or initial_height != 400:
+             self.root.geometry(f"700x400+{initial_x}+{initial_y}")
         
         # Set window icon
         try:
@@ -86,10 +109,7 @@ class CombatLogApp:
                 # Keep a reference to prevent garbage collection
                 self._icon_photo = icon_photo
         except Exception as e:
-            try:
-                with open("crash_log.txt", "a") as f:
-                    f.write(f"--- ICON ERROR {datetime.now()} ---\n{e}\n")
-            except: pass
+            print(f"[DEBUG] Error loading icon: {e}")
 
         if initial_alpha < 0.01: initial_alpha = 1.0
         self.target_alpha = initial_alpha
@@ -106,10 +126,18 @@ class CombatLogApp:
         try:
             GWL_EXSTYLE = -20
             WS_EX_TOOLWINDOW = 0x00000080
-            hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
-            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
-        except: pass
+            
+            # Map the window to ensure winfo_id is valid
+            self.root.update() 
+            wid = self.root.winfo_id()
+            
+            if wid > 0:
+                hwnd = ctypes.windll.user32.GetParent(wid)
+                if hwnd > 0:
+                    style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+                    ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
+        except Exception as e:
+            print(f"[DEBUG] Error setting toolwindow style: {e}")
         
         self.file_path_var = tk.StringVar(value=initial_log_path)
         self.disable_warnings = tk.BooleanVar(value=self.config.getboolean("General", "disable_warnings", fallback=False))
@@ -123,13 +151,25 @@ class CombatLogApp:
         self.test_thread = None
         self._last_test_toggle = 0
 
-        self.skimmers_win = SkimmersWindow(self)
-        self.damage_meter_win = DamageMeterWindow(self)
-        self.leaderboard_win = LeaderboardWindow(self)
-        self.details_win = DetailsWindow(self)
-        self.options_win = OptionsWindow(self)
-        self.alexa_win = AlexaWindow(self)
-        self.livius_win = LiviusWindow(self)
+        try:
+            self.skimmers_win = SkimmersWindow(self)
+            self.damage_meter_win = DamageMeterWindow(self)
+            self.leaderboard_win = LeaderboardWindow(self)
+            self.details_win = DetailsWindow(self)
+            self.options_win = OptionsWindow(self)
+            self.alexa_win = AlexaWindow(self)
+            self.livius_win = LiviusWindow(self)
+        except Exception as e:
+            print(f"[DEBUG] Error creating subwindows: {e}")
+            # Ensure defaults exist
+            if not hasattr(self, 'skimmers_win'): self.skimmers_win = None
+            if not hasattr(self, 'damage_meter_win'): self.damage_meter_win = None
+            if not hasattr(self, 'leaderboard_win'): self.leaderboard_win = None
+            if not hasattr(self, 'details_win'): self.details_win = None
+            if not hasattr(self, 'options_win'): self.options_win = None
+            if not hasattr(self, 'alexa_win'): self.alexa_win = None
+            if not hasattr(self, 'livius_win'): self.livius_win = None
+
         self.calc_win = None
         self.armor_win = None
         self.hitmiss_win = None
@@ -184,10 +224,22 @@ class CombatLogApp:
         self.load_class_configs()
 
         # Radio Manager
-        self.radio_mgr = RadioManager(status_callback=self._update_radio_ui)
-        self.killstreak_mgr = KillstreakManager(sfx_dir=os.path.join(os.getcwd(), "sfx"))
+        try:
+            self.radio_mgr = RadioManager(status_callback=self._update_radio_ui)
+        except Exception as e:
+            print(f"[DEBUG] Error initializing RadioManager: {e}")
+            self.radio_mgr = None
 
-        self.build_layout()
+        try:
+            self.killstreak_mgr = KillstreakManager(sfx_dir=os.path.join(os.getcwd(), "sfx"))
+        except Exception as e:
+            print(f"[DEBUG] Error initializing KillstreakManager: {e}")
+            self.killstreak_mgr = None
+
+        try:
+            self.build_layout()
+        except Exception as e:
+            print(f"[DEBUG] Error building layout: {e}")
         
         self.pulse_state = False
         self.last_pulse_time = 0
@@ -595,29 +647,98 @@ class CombatLogApp:
         t = threading.Thread(target=_bg_start, daemon=True)
         t.start()
 
+    def _load_dynamic_labels(self):
+        self.dynamic_labels = {}
+        labels_file = "ui_labels_map.txt"
+        if os.path.exists(labels_file):
+            try:
+                with open(labels_file, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#"): continue
+                        # Format: Name, X, Y, [FG], [Shape], [W], [H], [Font], [Size]
+                        parts = [p.strip() for p in line.split(",")]
+                        if len(parts) >= 3:
+                            name = parts[0]
+                            try:
+                                x = float(parts[1])
+                                y = float(parts[2])
+                                fg = parts[3] if len(parts) > 3 else None
+                                w = float(parts[5]) if len(parts) > 5 else 0
+                                h = float(parts[6]) if len(parts) > 6 else 0
+                                font_fam = parts[7] if len(parts) > 7 else None
+                                font_size = int(parts[8]) if len(parts) > 8 else None
+                                
+                                self.dynamic_labels[name.upper()] = {
+                                    "x": x, "y": y, "fg": fg, "w": w, "h": h,
+                                    "font": font_fam, "size": font_size
+                                }
+                            except ValueError: continue
+            except Exception as e:
+                print(f"Error loading dynamic labels: {e}")
+
     def build_layout(self):
+        self._load_dynamic_labels()
+        
+        # Clean up existing layout if it exists
+        if hasattr(self, 'main_canvas') and self.main_canvas.winfo_exists():
+            self.main_canvas.destroy()
+            
         # Load the radio base image
         try:
-            self.bg_image_raw = Image.open("realradioBASE.jpg")
+            self.bg_image_raw = Image.open(get_resource_path("uimaker_bg.jpg"))
             self.bg_photo = ImageTk.PhotoImage(self.bg_image_raw)
-            img_w, img_h = self.bg_image_raw.size
         except Exception as e:
-            print(f"Error loading background image: {e}")
-            img_w, img_h = 638, 154
-            self.bg_photo = None
+            # Try documents path if not in current dir
+            try:
+                self.bg_image_raw = Image.open(r"C:\Users\LivyC\Documents\UImaker\assets\images\8c032fb61d.jpg")
+                self.bg_photo = ImageTk.PhotoImage(self.bg_image_raw)
+            except:
+                print(f"Error loading background image: {e}")
+                self.bg_photo = None
 
-        # Set fixed window size based on image
+        # Set window size to match UImaker design exactly (700x400)
+        img_w, img_h = 700, 400
         self.root.geometry(f"{img_w}x{img_h}")
+        self.root.resizable(False, False)
         
-        self.root_border = tk.Frame(self.root, bg=BORDER_COLOR, padx=1, pady=1)
-        self.root_border.pack(fill=tk.BOTH, expand=True)
+        # Remove title bar for a clean UI look
+        try:
+            self.root.overrideredirect(True)
+        except: pass
         
-        self.main_canvas = tk.Canvas(self.root_border, width=img_w, height=img_h, 
+        self.main_canvas = tk.Canvas(self.root, width=img_w, height=img_h, 
                                      bg=WINDOW_BG, highlightthickness=0)
         self.main_canvas.pack(fill=tk.BOTH, expand=True)
         
         if self.bg_photo:
-            self.main_canvas.create_image(0, 0, image=self.bg_photo, anchor="nw")
+            # Match window size to background image size (typically 638x154)
+            bg_w, bg_h = self.bg_image_raw.size
+            if bg_w > 0 and bg_h > 0:
+                img_w, img_h = bg_w, bg_h
+                self.root.geometry(f"{img_w}x{img_h}")
+                self.main_canvas.config(width=img_w, height=img_h)
+                # Position image at (0, 0)
+                self.main_canvas.create_image(0, 0, image=self.bg_photo, anchor="nw")
+                
+                # UImaker design notes:
+                # The original design used a 700x400 canvas.
+                # The background image (638x154) was placed at (178, 107) with scale=0.5.
+                # This means it appeared as 319x77 in the design tool.
+                # Coordinates for labels were absolute to the 700x400 canvas.
+                # To achieve 1:1 parity on a full-sized 638x154 background:
+                # 1. We calculate position relative to the design image start (178, 107).
+                # 2. We scale that relative offset by 2x (since 638 / 319 = 2).
+                
+                self.coord_offset_x = 0 # Not used directly anymore, but kept for safety
+                self.coord_offset_y = 0
+            else:
+                self.main_canvas.create_image(178, 107, image=self.bg_photo, anchor="nw")
+                self.coord_offset_x = 0
+                self.coord_offset_y = 0
+        else:
+            self.coord_offset_x = 0
+            self.coord_offset_y = 0
             
         # Bind dragging to the entire canvas
         self.main_canvas.bind("<Button-1>", self.click_window)
@@ -625,12 +746,12 @@ class CombatLogApp:
         self.main_canvas.bind("<ButtonRelease-1>", self.release_window)
         self.root.bind("<Configure>", self.on_configure)
 
-        def create_ui_label(name, x, y, cmd=None, fg=TEXT_SECONDARY, font_obj=None, tags=None):
+        def create_ui_label(name, x, y, cmd=None, fg=TEXT_SECONDARY, font_obj=None, tags=None, anchor="nw"):
             if font_obj is None:
                 font_obj = self.font_small_obj
             
             # Use canvas text for "transparency"
-            text_id = self.main_canvas.create_text(x, y, text=name, fill=fg, font=font_obj, anchor="center", tags=tags)
+            text_id = self.main_canvas.create_text(x, y, text=name, fill=fg, font=font_obj, anchor=anchor, tags=tags)
             
             if cmd:
                 # Handle both types of callbacks: those that expect 'e' and those that don't
@@ -638,7 +759,12 @@ class CombatLogApp:
                     try:
                         cmd(e)
                     except TypeError:
-                        cmd()
+                        try: cmd()
+                        except Exception as ex:
+                            try:
+                                with open("crash_log.txt", "a") as f:
+                                    f.write(f"Label Command Error ({name}): {ex}\n")
+                            except: pass
                 self.main_canvas.tag_bind(text_id, "<Button-1>", safe_call)
                 
                 # Hover effects
@@ -654,59 +780,153 @@ class CombatLogApp:
             
             return text_id
 
-        # Place labels based on ui_labels_map.txt
-        # Alexa, 100, 120
-        self.btn_alexa = create_ui_label("ALEXA", 100, 120, self.alexa_win.show)
-        
-        # DMG METER 210, 120
-        self.lbl_dmg = create_ui_label("DMG METER", 210, 120, self.damage_meter_win.show)
-        
-        # Details 300, 120
-        self.lbl_det = create_ui_label("DETAILS", 300, 120, self.details_win.show)
-        
-        # Skimmers 380, 120
-        self.lbl_skm = create_ui_label("SKIMMERS", 380, 120, self.skimmers_win.show)
-        
-        # Loot 470, 120
-        self.lbl_loot = create_ui_label("LOOT", 470, 120, self.leaderboard_win.show)
-        
-        # Livius 550, 120
-        self.lbl_livius = create_ui_label("LIVIUS", 550, 120, self.livius_win.show)
-        
-        # Exit 590, 100
-        self.btn_exit = create_ui_label(" ✕ ", 590, 100, self.on_exit, fg="#ff4444", font_obj=("Segoe UI", 12))
-        
-        # Settings 110, 45
-        self.btn_settings = create_ui_label("SETTINGS", 110, 45, self.toggle_menu)
+        # Place labels based on UImaker coordinates
+        def get_pos(name, default_x, default_y, default_fg=TEXT_SECONDARY, default_size=9):
+            data = self.dynamic_labels.get(name.upper(), {})
+            raw_x = data.get("x", default_x) if data else default_x
+            raw_y = data.get("y", default_y) if data else default_y
+            fg = data.get("fg", default_fg) if data else default_fg
+            size = data.get("size", default_size) if data else default_size
+            
+            # The file now uses 1:1 coordinates relative to the 638x154 window.
+            # No transformation is needed.
+            
+            return raw_x, raw_y, fg, size
 
-        # ONTOP (Manual addition for functionality)
-        self.always_on_top = False
-        self.btn_ontop = create_ui_label("ONTOP: OFF", 40, 45, self.toggle_always_on_top, font_obj=("Segoe UI", 8, "bold"), tags="ontop_btn")
+        # In UImaker design, the background is 638x154 and placed at (178, 107).
+        # However, the window is 700x400.
+        # The user says "background isnt fitting our window size".
+        # Let's ensure the canvas is exactly 700x400 and background is centered if desired,
+        # but the design specifies absolute (178, 107).
+        # Actually, if the background image itself should be the window size (or vice versa), 
+        # but the user provided assets that are 638x154.
         
-        # VOLUME CONTROL (Inspired by Python-m3u-radio-player)
-        self.lbl_vol = create_ui_label("VOL: 100%", 180, 45, self.cycle_volume, font_obj=("Segoe UI", 8, "bold"), tags="vol_btn")
+        # Setup: 240, 129
+        sx, sy, sfg, ssz = get_pos("SETUP", 129, 49, "#d21a17", 7)
+        if "SETTINGS" in self.dynamic_labels: 
+             sx, sy, sfg, ssz = get_pos("SETTINGS", sx, sy, sfg, ssz)
+        self.btn_setup = create_ui_label("SETUP", sx, sy, self.toggle_menu, fg=sfg, 
+                                         font_obj=tkfont.Font(family="Lilita One", size=ssz))
+
+        # Alexa: 236, 151
+        ax, ay, afg, asz = get_pos("ALEXA", 121, 98, "#d21a18", 7)
+        self.btn_alexa = create_ui_label("ALEXA", ax, ay, self.alexa_win.show, fg=afg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=asz))
         
-        # RadioManager, 385, 72.5
+        # DMG METER: 292, 163
+        dx, dy, dfg, dsz = get_pos("DMG METER", 233, 123, "#d31a18", 5)
+        self.lbl_dmg = create_ui_label("DMG METER", dx, dy, self.damage_meter_win.show, fg=dfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=dsz))
+        
+        # Details: 342, 164
+        tx, ty, tfg, tsz = get_pos("DETAILS", 333, 123, "#d31a18", 5)
+        self.lbl_det = create_ui_label("DETAILS", tx, ty, self.details_win.show, fg=tfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=tsz))
+        
+        # Skimmers: 381, 162
+        kx, ky, kfg, ksz = get_pos("SKIMMERS", 411, 122, "#d31a18", 5)
+        self.lbl_skm = create_ui_label("SKIMMERS", kx, ky, self.skimmers_win.show, fg=kfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=ksz))
+
+        # Livius: 226, 164
+        lx, ly, lfg, lsz = get_pos("LIVIUS", 101, 124, "#bbbbbb", 7)
+        self.lbl_livius = create_ui_label("LIVIUS", lx, ly, self.livius_win.show, fg=lfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=lsz))
+
+        # JOG
+        jx, jy, jfg, jsz = get_pos("JOG", 595, -74, "#ececec", 5)
+        self.lbl_jog = create_ui_label("JOG", jx, jy, None, fg=jfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=jsz))
+
+        # ON
+        onx, ony, onfg, onsz = get_pos("ON", 29, 34, "#d31a18", 5)
+        self.lbl_on = create_ui_label("on", onx, ony, None, fg=onfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=onsz))
+
+        # Gharv
+        gx, gy, gfg, gsz = get_pos("GHARV", 139, 76, "#d21a18", 6)
+        self.lbl_gharv = create_ui_label("Gharv", gx, gy, None, fg=gfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=gsz))
+
+        # Icon_12 (c8ed355647.svg) at 202, 139 - This looks like a small icon next to Gharv
+        # In design it's a 12x12 icon. We'll use a bullet point.
+        ix12_x, ix12_y, _, _ = get_pos("ICON12", 53, 76)
+        self.main_canvas.create_text(ix12_x, ix12_y, text="●", fill="#bbbbbb", font=("Arial", 10), anchor="nw")
+        
+        # Text_6: Clock (411, 114) - design uses 'Clock' as header
+        # We'll skip the 'CLOCK' header label to avoid clutter, as the time value is displayed here.
+        # self.lbl_clock_header = create_ui_label("CLOCK", 411, 114, None, fg="#60fc17", 
+        #                                        font_obj=tkfont.Font(family="Lilita One", size=7))
+
+        # Item Link: 419, 165
+        ix, iy, ifg, isz = get_pos("ITEM LINK", 487, 124, "#d31a18", 5)
+        self.lbl_itemlink = create_ui_label("ITEM LINK", ix, iy, None, fg=ifg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=isz))
+
+        # Reset: 261, 163
+        rx, ry, rfg, rsz = get_pos("RESET", 171, 122, "#d31a18", 4)
+        self.btn_reset = create_ui_label("RESET", rx, ry, self.reset_session_data, fg=rfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=rsz))
+
+        # XP: 272, 117
+        xx, xy, xfg, xsz = get_pos("XP", 193, 30, "#60fc17", 7)
+        # self.lbl_xp = create_ui_label("XP", xx, xy, None, fg=xfg,
+        #                                 font_obj=tkfont.Font(family="Lilita One", size=xsz))
+
+        # XP/H: 364, 117
+        xhx, xhy, xhfg, xhsz = get_pos("XP/H", 377, 30, "#60fc17", 7)
+        # self.lbl_xph = create_ui_label("XP/H", xhx, xhy, None, fg=xhfg,
+        #                                 font_obj=tkfont.Font(family="Lilita One", size=xhsz))
+
+        # Damage: 218, 117
+        dmx, dmy, dmfg, dmsz = get_pos("DAMAGE", 85, 30, "#d31a17", 7)
+        # self.lbl_damage_header = create_ui_label("DAMAGE", dmx, dmy, None, fg=dmfg,
+        #                                 font_obj=tkfont.Font(family="Lilita One", size=dmsz))
+
+        # XP Labels - using coordinates from design (Damage: 218,117, XP: 272,117, XP/H: 364,117)
+        # In design these are headers. We'll place the values 14 pixels below (7 design px * 2).
+        self.lbl_damage = create_ui_label("0", dmx, dmy + 14, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=12))
+        xpx, xpy, _, _ = get_pos("XP", 193, 30)
+        xphx, xphy, _, _ = get_pos("XP/H", 377, 30)
+        self.lbl_xp_val = create_ui_label("0", xpx, xpy + 14, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=12))
+        self.lbl_xph_val = create_ui_label("0", xphx, xphy + 14, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=12))
+
+        # Text_6: Clock (411, 114) - design uses 'Clock' as header
+        clx, cly, clfg, clsz = get_pos("CLOCK", 466, 9, "#60fc17", 7)
+        # Position value below header in design space would be (411, 114 + 7 approx)
+        # Since we use NW anchor, we align with the header position or slightly below.
+        self.clock_id = self.main_canvas.create_text(clx, cly + 14, text="00:00:00", fill=clfg, 
+                                                     font=tkfont.Font(family="Lilita One", size=10), anchor="nw")
+        self.update_clock()
+
+        # Exit 590, 100
+        ex, ey, efg, esz = get_pos("EXIT", 829, -4, "#ff4444", 12)
+        # Check if EXIT is already in dynamic labels, if not, add it for compatibility
+        if "EXIT" not in self.dynamic_labels:
+            self.dynamic_labels["EXIT"] = {"x": 829, "y": -4, "fg": "#ff4444", "size": 12}
+        
+        self.btn_exit = create_ui_label(" ✕ ", ex, ey, self.on_exit, fg=efg, font_obj=("Segoe UI", esz))
+        
+        # Radio 292, 130
+        rax, ray, rafg, rasz = get_pos("RADIO", 233, 51, "#d31a18", 5)
         radio_text = "OFF".center(30)
-        self.radio_toggle_id = self.main_canvas.create_text(385, 72.5, text=radio_text, fill="#ff4444", 
-                                                         font=("Consolas", 14, "bold"), anchor="center", tags="radio_toggle")
+        # For the radio text which is centered in design, we use center anchor
+        # UImaker width=155 in design. At 2x scale, it's 310.
+        # height=30 in design. At 2x scale, it's 60.
+        self.radio_toggle_id = self.main_canvas.create_text(rax + 155, ray + 30, text=radio_text, fill=rafg, 
+                                                         font=("Consolas", rasz * 2, "bold"), anchor="center", tags="radio_toggle")
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-1>", lambda e: self.toggle_radio())
-        
-        # Radio hover effects
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Enter>", lambda e: self.main_canvas.config(cursor="hand2"))
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Leave>", lambda e: self.main_canvas.config(cursor=""))
         self.main_canvas.tag_bind(self.radio_toggle_id, "<Button-3>", self.show_radio_context_menu)
 
-        # Additional UI elements
-        self.clock_id = self.main_canvas.create_text(520, 25, text="00:00:00", fill="#00ff00", font=("Consolas", 9, "bold"), anchor="ne")
-        self.update_clock()
+        self.status_id = self.main_canvas.create_text(img_w - 38, 30, text="●", fill="#ff4444", font=("Segoe UI", 12, "bold"), anchor="ne")
 
-        self.status_id = self.main_canvas.create_text(600, 30, text="●", fill="#ff4444", font=("Segoe UI", 12, "bold"), anchor="ne")
+        # Radio controls - repositioned relative to scaled radio area
+        self.radio_up_id = create_ui_label("◄", rax + 10, ray + 14, self.prev_radio_station, font_obj=("Segoe UI", 12))
+        self.radio_down_id = create_ui_label("►", rax + 270, ray + 14, self.next_radio_station, font_obj=("Segoe UI", 12))
 
-        self.radio_up_id = create_ui_label("◄", 235, 77.5, self.prev_radio_station, font_obj=("Segoe UI", 16))
-        self.radio_down_id = create_ui_label("►", 585, 77.5, self.next_radio_station, font_obj=("Segoe UI", 16))
-
-        self.version_id = self.main_canvas.create_text(620, 140, text="1.0", fill=TEXT_SECONDARY, font=("Segoe UI", 8), anchor="center")
+        self.version_id = self.main_canvas.create_text(img_w - 18, img_h - 14, text="1.0", fill=TEXT_SECONDARY, font=("Segoe UI", 8), anchor="center")
 
     def create_stat_box(self, parent, title, value):
         f = tk.Frame(parent, bg=BORDER_COLOR, padx=1, pady=1); f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2)
@@ -1221,7 +1441,8 @@ class CombatLogApp:
             
             # Killstreak trigger: PvP XP (Faction)
             if xp_type.lower() == "faction" and source_for_logs.lower() == self.char_name.get().lower():
-                self.killstreak_mgr.record_kill()
+                if self.killstreak_mgr:
+                    self.killstreak_mgr.record_kill()
 
             if "xp_history" not in p: p["xp_history"] = []
             p["xp_history"].append({"amount": amount, "type": event.get("xp_type", "Unknown"), "time": time.time()})
@@ -1255,11 +1476,13 @@ class CombatLogApp:
             
             # Killstreak trigger: PvP Kill
             if source_for_logs.lower() == self.char_name.get().lower() and is_probable_player(target, self.bosses, self.known_npcs):
-                self.killstreak_mgr.record_kill()
+                if self.killstreak_mgr:
+                    self.killstreak_mgr.record_kill()
             
             # If our character dies
             if target.lower() == self.char_name.get().lower():
-                self.killstreak_mgr.record_death()
+                if self.killstreak_mgr:
+                    self.killstreak_mgr.record_death()
             
             # self.refresh_ui_only(force=True) -> REMOVED
             # FALL THROUGH
@@ -1602,13 +1825,14 @@ class CombatLogApp:
             self.root.after(500, self.start_ticker_loop) # Restore 500ms ticker for smoother marquee
 
     def refresh_ui_only(self, force=False):
+        if force:
+            self._load_dynamic_labels()
+            self.build_layout()
+            return
         try:
-            now_ts = time.time()
-            if now_ts - self.last_pulse_time > 0.3:
-                self.pulse_state = not self.pulse_state; self.last_pulse_time = now_ts
 
             # Update radio scrolling text if playing
-            if hasattr(self, 'radio_mgr') and self.radio_mgr.is_playing:
+            if hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
                 if not hasattr(self, '_radio_station_cycle_start'): self._radio_station_cycle_start = now_ts
@@ -1719,6 +1943,8 @@ class CombatLogApp:
 
     def cycle_volume(self):
         # Cycles volume: 100 -> 75 -> 50 -> 25 -> 0 -> 100
+        if not self.radio_mgr:
+            return
         current_vol = self.radio_mgr.volume
         if current_vol > 75: new_vol = 75
         elif current_vol > 50: new_vol = 50
@@ -1727,7 +1953,8 @@ class CombatLogApp:
         else: new_vol = 100
         
         self.radio_mgr.set_volume(new_vol)
-        self.main_canvas.itemconfig(self.lbl_vol, text=f"VOL: {new_vol}%")
+        if hasattr(self, 'lbl_vol'):
+            self.main_canvas.itemconfig(self.lbl_vol, text=f"VOL: {new_vol}%")
 
     def web_sync_loop(self):
         import urllib.request
@@ -2057,15 +2284,20 @@ class CombatLogApp:
         self.refresh_ui_only(force=True)
 
     def toggle_radio(self):
-        self.radio_mgr.toggle()
+        if self.radio_mgr:
+            self.radio_mgr.toggle()
 
     def next_radio_station(self):
-        self.radio_mgr.next_station()
+        if self.radio_mgr:
+            self.radio_mgr.next_station()
 
     def prev_radio_station(self):
-        self.radio_mgr.prev_station()
+        if self.radio_mgr:
+            self.radio_mgr.prev_station()
 
     def show_radio_context_menu(self, event):
+        if not self.radio_mgr:
+            return
         from radio_manager import SAFE_RAP_STATIONS
         menu = tk.Menu(self.root, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, 
                        activebackground=ACCENT_BLUE, activeforeground=TEXT_PRIMARY, font=("Segoe UI", 9))
@@ -2076,6 +2308,9 @@ class CombatLogApp:
         menu.post(event.x_root, event.y_root)
 
     def _update_radio_ui(self, is_playing):
+        if not self.radio_mgr:
+            self.main_canvas.itemconfig(self.radio_toggle_id, text="NO AUDIO".center(30), fill="#ff4444")
+            return
         if is_playing:
             st = self.radio_mgr.current_station if self.radio_mgr.current_station else "PLAYING"
             self.main_canvas.itemconfig(self.radio_toggle_id, text=st.center(30), fill="#00ff00")

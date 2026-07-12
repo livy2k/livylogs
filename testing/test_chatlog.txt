@@ -6340,3 +6340,1011 @@
 [Combat]  19:12:19 Fikiosa applies poison to Rebel Scum.
 [Combat]  19:12:19 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
 [Combat]  19:12:19 Imp Trooper hits Fikiosa for 1053 points of damage.
+[Groupchat]  03:23:18 You: 123
+[Groupchat]  03:23:18 Turd: 123
+[Groupchat]  03:23:18 Leloglo: 123
+[Groupchat]  03:23:18 Rehote: 123
+[Groupchat]  03:23:18 Ma-o: 123
+[Groupchat]  03:23:18 Fikiosa: 123
+[Groupchat]  03:23:18 Eliemau: 123
+[Combat]  03:23:19 Sith Lord hits Eliemau for 1512 points of damage.
+[Combat]  03:23:19 You hits Eliemau for 554 points of damage.
+[Combat]  03:23:19 Ma-o hits Eliemau for 1220 points of damage.
+[Combat]  03:23:19 Eliemau hits Ma-o for 588 points of damage.
+[Combat]  03:23:19 Eliemau hits Ma-o for 839 points of damage.
+[Combat]  03:23:19 Eliemau hits Imp Trooper for 1419 damage.
+[Combat]  03:23:19 Turd hits target for 5000 damage.
+[Combat]  03:23:19 Someone hits Bob for 10000 damage.
+[Combat]  03:23:20 A_Giant_Spider Intimidate Sith Lord for 0 points of damage.
+[Combat]  03:23:20 Leloglo hits Rebel Scum for 220 points of damage.
+[Combat]  03:23:20 Eliemau hits Leloglo for 1259 damage.
+[Combat]  03:23:20 Turd hits target for 5000 damage.
+[Combat]  03:23:20 Someone hits Bob for 10000 damage.
+[Combat]  03:23:20 You heals Ma-o for 135 points of damage.
+[Combat]  03:23:21 You looted Stun Baton from a Rancor.
+[Combat]  03:23:21 Bounty Hunter hits Bounty Hunter for 1087 damage.
+[Combat]  03:23:21 Turd hits target for 5000 damage.
+[Combat]  03:23:21 Someone hits Bob for 10000 damage.
+[Combat]  03:23:21 A_Giant_Spider Posture Change Dark Jedi for 0 points of damage.
+[Combat]  03:23:21 Leloglo heals Turd for 300 points of damage.
+[Combat]  03:23:21 A_Giant_Spider Intimidate Sith Lord for 0 points of damage.
+[Combat]  03:23:21 You looted Enhanced DH-17 Carbine from a senior SpecForce infiltrator.
+[Combat]  03:23:22 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:23:22 Eliemau has died.
+[Combat]  03:23:22 Turd has defeated Dark Jedi.
+[Combat]  03:23:22 Ma-o hits Imp Trooper for 1058 damage.
+[Combat]  03:23:22 Turd hits target for 5000 damage.
+[Combat]  03:23:22 Someone hits Bob for 10000 damage.
+[Combat]  03:23:22 A_Giant_Spider Intimidate Ma-o for 0 points of damage.
+[Combat]  03:23:22 You receive 450 points of General experience.
+[Combat]  03:23:22 Fikiosa hits Turd for 1261 damage.
+[Combat]  03:23:22 Turd hits target for 5000 damage.
+[Combat]  03:23:22 Someone hits Bob for 10000 damage.
+[Combat]  03:23:22 Ma-o hits Ma-o for 1069 points of damage.
+[Combat]  03:23:22 A_Giant_Spider Fire Knockdown Turd for 0 points of damage.
+[Combat]  03:23:22 You looted 391 credits from a senior SpecForce infiltrator.
+[Combat]  03:23:22 Rebel Scum hits You for 816 damage.
+[Combat]  03:23:22 Turd hits target for 5000 damage.
+[Combat]  03:23:22 Someone hits Bob for 10000 damage.
+[Combat]  03:23:23 A_Giant_Spider Intimidate Rebel Scum for 0 points of damage.
+[Combat]  03:23:23 Dark Jedi hits Turd for 1846 points of damage.
+[Combat]  03:23:23 You hits Turd for 769 points of damage.
+[Combat]  03:23:23 Rebel Scum hits Turd for 1434 points of damage.
+[Combat]  03:23:23 You looted 402 credits from a senior SpecForce infiltrator.
+[Combat]  03:23:23 Eliemau heals Fikiosa for 167 points of damage.
+[Combat]  03:23:23 Dark Jedi hits Dark Jedi for 700 damage.
+[Combat]  03:23:23 Turd hits target for 5000 damage.
+[Combat]  03:23:23 Someone hits Bob for 10000 damage.
+[Combat]  03:23:24 Ma-o hits Rehote for 874 points of damage.
+[Combat]  03:23:24 Sith Lord hits Rehote for 1723 points of damage.
+[Combat]  03:23:24 Ma-o hits Rehote for 1477 points of damage.
+[Combat]  03:23:24 Rehote has defeated a Rebel Colonel.
+[Combat]  03:23:24 Turd hits Dark Jedi for 1122 damage.
+[Combat]  03:23:24 Turd hits target for 5000 damage.
+[Combat]  03:23:24 Someone hits Bob for 10000 damage.
+[Combat]  03:23:24 A_Giant_Spider Posture Change Rehote for 0 points of damage.
+[Combat]  03:23:24 You hits Fikiosa for 255 points of damage.
+[Combat]  03:23:24 Rehote hits Dark Jedi for 909 damage.
+[Combat]  03:23:24 Turd hits target for 5000 damage.
+[Combat]  03:23:24 Someone hits Bob for 10000 damage.
+[Combat]  03:23:24 A_Giant_Spider Intimidate Rebel Scum for 0 points of damage.
+[Combat]  03:23:24 You receive 1332 points of General experience.
+[Combat]  03:23:25 A_Giant_Spider Intimidate Turd for 0 points of damage.
+[Combat]  03:23:25 Sith Lord hits Rehote for 633 points of damage.
+[Combat]  03:23:25 Ma-o hits Rehote for 962 points of damage.
+[Combat]  03:23:25 Rebel Scum hits Rehote for 1351 points of damage.
+[Combat]  03:23:25 Eliemau looted 98 credits from a SpecForce marine.
+[Combat]  03:23:25 Eliemau hits Imp Trooper for 859 damage.
+[Combat]  03:23:25 Turd hits target for 5000 damage.
+[Combat]  03:23:25 Someone hits Bob for 10000 damage.
+[Combat]  03:23:25 A_Giant_Spider Posture Change Rehote for 0 points of damage.
+[Combat]  03:23:25 Turd hits Leloglo for 818 points of damage.
+[Combat]  03:23:25 You hits Eliemau for 911 damage.
+[Combat]  03:23:25 Turd hits target for 5000 damage.
+[Combat]  03:23:25 Someone hits Bob for 10000 damage.
+[Combat]  03:23:25 Rehote hits Sith Lord for 861 points of damage.
+[Combat]  03:23:25 Bounty Hunter hits Sith Lord for 1025 points of damage.
+[Combat]  03:23:25 Rehote hits Sith Lord for 1754 points of damage.
+[Combat]  03:23:25 Ma-o looted 155 credits from an Imperial Stormtrooper.
+[Combat]  03:23:26 Turd has defeated a Rebel Major General.
+[Combat]  03:23:26 Turd hits Dark Jedi for 1527 points of damage.
+[Combat]  03:23:26 Sith Lord hits Dark Jedi for 1135 points of damage.
+[Combat]  03:23:26 Eliemau hits Dark Jedi for 910 points of damage.
+[Combat]  03:23:26 Rebel Scum has died.
+[Combat]  03:23:26 You hits Rehote for 1820 damage.
+[Combat]  03:23:26 Turd hits target for 5000 damage.
+[Combat]  03:23:26 Someone hits Bob for 10000 damage.
+[Combat]  03:23:26 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:23:26 Rehote hits Ma-o for 967 points of damage.
+[Combat]  03:23:26 Imp Trooper hits Ma-o for 1857 points of damage.
+[Combat]  03:23:26 Eliemau hits Ma-o for 996 points of damage.
+[Combat]  03:23:26 Rehote Scatter Shot Dark Jedi for 1114 points of damage.
+[Combat]  03:23:26 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:23:26 You looted T-21 Rifle from an Imperial Stormtrooper.
+[Combat]  03:23:26 You hits Rehote for 1685 damage.
+[Combat]  03:23:26 Turd hits target for 5000 damage.
+[Combat]  03:23:26 Someone hits Bob for 10000 damage.
+[Combat]  03:23:27 Rebel Scum has been incapacitated by something.
+[Combat]  03:23:27 You have been incapacitated by Imp Trooper.
+[Combat]  03:23:27 You hits Rebel Scum for 1144 points of damage.
+[Combat]  03:23:27 Dark Jedi hits Rebel Scum for 558 points of damage.
+[Combat]  03:23:27 Rebel Scum hits Rebel Scum for 1975 points of damage.
+[Combat]  03:23:27 You hits Imp Trooper for 573 points of damage.
+[Combat]  03:23:27 Sith Lord hits Turd for 1639 damage.
+[Combat]  03:23:27 Turd hits target for 5000 damage.
+[Combat]  03:23:27 Someone hits Bob for 10000 damage.
+[Combat]  03:23:27 A_Giant_Spider Posture Change Fikiosa for 0 points of damage.
+[Combat]  03:23:27 Imp Trooper hits Rehote for 948 points of damage.
+[Combat]  03:23:27 Leloglo hits Rehote for 714 points of damage.
+[Combat]  03:23:27 Sith Lord hits Rehote for 548 points of damage.
+[Combat]  03:23:27 You hits a Rebel Colonel for 613 points of damage.
+[Combat]  03:23:28 You receive 2673 points of Medicine experience.
+[Combat]  03:23:28 A_Giant_Spider Intimidate Sith Lord for 0 points of damage.
+[Combat]  03:23:28 Bounty Hunter hits Leloglo for 852 points of damage.
+[Combat]  03:23:28 Rehote hits Leloglo for 967 points of damage.
+[Combat]  03:23:28 Bounty Hunter hits Leloglo for 636 points of damage.
+[Combat]  03:23:28 a Krayt Dragon evades Eliemau's attack!
+[Combat]  03:23:28 Rehote applies poison to Dark Jedi.
+[Combat]  03:23:29 A_Giant_Spider Fire Knockdown Rehote for 0 points of damage.
+[Combat]  03:23:29 Dark Jedi has died.
+[Combat]  03:23:29 Imp Trooper hits Sith Lord for 1949 damage.
+[Combat]  03:23:29 Turd hits target for 5000 damage.
+[Combat]  03:23:29 Someone hits Bob for 10000 damage.
+[Combat]  03:23:29 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:23:29 Rebel Scum hits You for 1152 points of damage.
+[Combat]  03:23:29 Sith Lord hits You for 1170 points of damage.
+[Combat]  03:23:29 Rebel Scum hits You for 947 points of damage.
+[Combat]  03:23:29 Ma-o looted 294 credits from a Rebel Major General.
+[Combat]  03:23:29 A_Giant_Spider Intimidate Rebel Scum for 0 points of damage.
+[Combat]  03:23:29 Bounty Hunter hits Turd for 1722 points of damage.
+[Combat]  03:23:29 Leloglo hits Turd for 1792 points of damage.
+[Combat]  03:23:29 Eliemau hits Turd for 961 points of damage.
+[Combat]  03:23:29 Turd applies poison to Sith Lord.
+[Combat]  03:23:29 Fikiosa hits Turd for 1587 damage.
+[Combat]  03:23:29 Turd hits target for 5000 damage.
+[Combat]  03:23:29 Someone hits Bob for 10000 damage.
+[Combat]  03:23:29 A_Giant_Spider Posture Change Rehote for 0 points of damage.
+[Combat]  03:23:29 a Rebel Major General parries Rehote's attack!
+[Combat]  03:23:30 Bounty Hunter hits Fikiosa for 891 points of damage.
+[Combat]  03:23:30 A_Giant_Spider Intimidate Bounty Hunter for 0 points of damage.
+[Combat]  03:23:30 Ma-o Posture Change Imp Trooper for 953 points of damage.
+[Combat]  03:23:30 A_Giant_Spider Intimidate Dark Jedi for 0 points of damage.
+[Combat]  03:23:30 Turd hits a Rebel Colonel for 643 points of damage.
+[Combat]  03:23:30 Rehote hits Fikiosa for 556 damage.
+[Combat]  03:23:30 Turd hits target for 5000 damage.
+[Combat]  03:23:30 Someone hits Bob for 10000 damage.
+[Combat]  03:23:31 A_Giant_Spider Intimidate Bounty Hunter for 0 points of damage.
+[Combat]  03:23:31 You heals Rehote for 683 points of damage.
+[Combat]  03:23:31 A_Giant_Spider Fire Knockdown Imp Trooper for 0 points of damage.
+[Combat]  03:23:31 Ma-o hits Sith Lord for 1125 points of damage.
+[Combat]  03:23:31 Rehote hits Sith Lord for 716 points of damage.
+[Combat]  03:23:31 Rebel Scum hits Sith Lord for 1693 points of damage.
+[Combat]  03:23:31 Ma-o looted A Damaged Datapad from a Rancor.
+[Combat]  03:23:31 Rehote hits Fikiosa for 1854 damage.
+[Combat]  03:23:31 Turd hits target for 5000 damage.
+[Combat]  03:23:31 Someone hits Bob for 10000 damage.
+[Combat]  03:23:31 A_Giant_Spider Fire Knockdown You for 0 points of damage.
+[Combat]  03:23:31 Rehote has died.
+[Combat]  03:23:32 A_Giant_Spider Intimidate Rehote for 0 points of damage.
+[Combat]  03:23:32 Fikiosa looted Heavy Two-Handed Sword from a senior SpecForce infiltrator.
+[Combat]  03:23:32 Imp Trooper hits Turd for 967 points of damage.
+[Combat]  03:23:32 You hits Turd for 875 points of damage.
+[Combat]  03:23:32 Fikiosa hits Turd for 818 points of damage.
+[Combat]  03:23:32 Leloglo looted 103 credits from a senior SpecForce infiltrator.
+[Combat]  03:23:32 Rehote hits Eliemau for 893 damage.
+[Combat]  03:23:32 Turd hits target for 5000 damage.
+[Combat]  03:23:32 Someone hits Bob for 10000 damage.
+[Groupchat]  03:24:18 You: 123
+[Groupchat]  03:24:18 Turd: 123
+[Groupchat]  03:24:18 Leloglo: 123
+[Groupchat]  03:24:18 Rehote: 123
+[Groupchat]  03:24:18 Ma-o: 123
+[Groupchat]  03:24:18 Fikiosa: 123
+[Groupchat]  03:24:18 Eliemau: 123
+[Combat]  03:24:19 A_Giant_Spider Intimidate Imp Trooper for 0 points of damage.
+[Combat]  03:24:19 Sith Lord Melee Hit Rebel Scum for 1492 points of damage.
+[Combat]  03:24:19 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:24:19 Ma-o hits Dark Jedi for 955 points of damage.
+[Combat]  03:24:19 Sith Lord hits Dark Jedi for 1668 points of damage.
+[Combat]  03:24:19 Imp Trooper hits Dark Jedi for 1567 points of damage.
+[Combat]  03:24:19 Turd heals You for 722 points of damage.
+[Combat]  03:24:19 Leloglo has defeated a senior SpecForce infiltrator.
+[Combat]  03:24:20 Turd Fire Knockdown Dark Jedi for 1088 points of damage.
+[Combat]  03:24:20 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:24:20 You heals Turd for 220 points of damage.
+[Combat]  03:24:21 A_Giant_Spider Intimidate You for 0 points of damage.
+[Combat]  03:24:21 Leloglo has died.
+[Combat]  03:24:21 Leloglo has defeated Imp Trooper.
+[Combat]  03:24:21 A_Giant_Spider Fire Knockdown Dark Jedi for 0 points of damage.
+[Combat]  03:24:21 Leloglo hits Leloglo for 1962 points of damage.
+[Combat]  03:24:21 Fikiosa hits Leloglo for 661 points of damage.
+[Combat]  03:24:21 You hits Leloglo for 1117 points of damage.
+[Combat]  03:24:21 You receive 3641 points of General experience.
+[Combat]  03:24:21 Rehote Bleeding Shot a SpecForce marine for 1475 points of damage.
+[Combat]  03:24:21 Leloglo hits an Imperial Stormtrooper for 409 points of damage.
+[Combat]  03:24:21 Turd hits Rehote for 1246 damage.
+[Combat]  03:24:21 Turd hits target for 5000 damage.
+[Combat]  03:24:21 Someone hits Bob for 10000 damage.
+[Combat]  03:24:21 A_Giant_Spider Posture Change Eliemau for 0 points of damage.
+[Combat]  03:24:21 Ma-o hits Rehote for 781 points of damage.
+[Combat]  03:24:21 Imp Trooper hits Rehote for 1998 points of damage.
+[Combat]  03:24:21 Bounty Hunter hits Rehote for 1085 points of damage.
+[Combat]  03:24:21 Rehote has defeated a SpecForce marine.
+[Combat]  03:24:22 A_Giant_Spider Intimidate Eliemau for 0 points of damage.
+[Combat]  03:24:22 Eliemau has defeated an Imperial Stormtrooper.
+[Combat]  03:24:22 You hits Ma-o for 1907 damage.
+[Combat]  03:24:22 Turd hits target for 5000 damage.
+[Combat]  03:24:22 Someone hits Bob for 10000 damage.
+[Combat]  03:24:22 Turd has defeated a Rebel Colonel.
+[Combat]  03:24:22 Bounty Hunter Force Choke a Rebel Major General for 1254 points of damage.
+[Combat]  03:24:22 Rehote hits Sith Lord for 1881 damage.
+[Combat]  03:24:22 Turd hits target for 5000 damage.
+[Combat]  03:24:22 Someone hits Bob for 10000 damage.
+[Combat]  03:24:23 A_Giant_Spider Fire Knockdown Leloglo for 0 points of damage.
+[Combat]  03:24:23 Ma-o has been incapacitated by something.
+[Combat]  03:24:23 Sith Lord has been incapacitated by Imp Trooper.
+[Combat]  03:24:23 A_Giant_Spider Posture Change Dark Jedi for 0 points of damage.
+[Combat]  03:24:23 Leloglo hits Rebel Scum for 1337 points of damage.
+[Combat]  03:24:23 Fikiosa hits Rebel Scum for 1335 points of damage.
+[Combat]  03:24:23 Imp Trooper hits Rebel Scum for 912 points of damage.
+[Combat]  03:24:23 Bounty Hunter Mind Blast an Imperial Stormtrooper for 331 points of damage.
+[Combat]  03:24:23 A_Giant_Spider Fire Knockdown Eliemau for 0 points of damage.
+[Combat]  03:24:23 Dark Jedi hits Eliemau for 1815 points of damage.
+[Combat]  03:24:23 Ma-o hits Eliemau for 1213 points of damage.
+[Combat]  03:24:23 Ma-o hits Eliemau for 1904 points of damage.
+[Combat]  03:24:23 Ma-o Force Choke Sith Lord for 1385 points of damage.
+[Combat]  03:24:24 A_Giant_Spider Fire Knockdown Bounty Hunter for 0 points of damage.
+[Combat]  03:24:24 Dark Jedi hits Rebel Scum for 1805 points of damage.
+[Combat]  03:24:24 Rehote hits Rebel Scum for 1196 points of damage.
+[Combat]  03:24:24 Rebel Scum hits Rebel Scum for 1473 points of damage.
+[Combat]  03:24:24 You looted 232 credits from a Krayt Dragon.
+[Combat]  03:24:24 Rebel Scum hits Ma-o for 1982 points of damage.
+[Combat]  03:24:24 Imp Trooper hits Ma-o for 1803 points of damage.
+[Combat]  03:24:24 Eliemau hits Ma-o for 536 points of damage.
+[Combat]  03:24:24 Rebel Scum Mind Blast Eliemau for 700 points of damage.
+[Combat]  03:24:24 A_Giant_Spider Fire Knockdown Dark Jedi for 0 points of damage.
+[Combat]  03:24:24 Bounty Hunter hits Bounty Hunter for 573 points of damage.
+[Combat]  03:24:24 Leloglo hits Imp Trooper for 1915 damage.
+[Combat]  03:24:24 Turd hits target for 5000 damage.
+[Combat]  03:24:24 Someone hits Bob for 10000 damage.
+[Combat]  03:24:24 A_Giant_Spider Posture Change Turd for 0 points of damage.
+[Combat]  03:24:24 Fikiosa looted 278 credits from a SpecForce marine.
+[Combat]  03:24:25 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
+[Combat]  03:24:25 Ma-o has died.
+[Combat]  03:24:25 Rehote has defeated a SpecForce marine.
+[Combat]  03:24:25 Eliemau hits Rebel Scum for 866 damage.
+[Combat]  03:24:25 Turd hits target for 5000 damage.
+[Combat]  03:24:25 Someone hits Bob for 10000 damage.
+[Combat]  03:24:25 A_Giant_Spider Fire Knockdown You for 0 points of damage.
+[Combat]  03:24:25 You receive 1245 points of Weapon experience.
+[Combat]  03:24:25 Sith Lord hits Bounty Hunter for 1158 damage.
+[Combat]  03:24:25 Turd hits target for 5000 damage.
+[Combat]  03:24:25 Someone hits Bob for 10000 damage.
+[Combat]  03:24:26 A_Giant_Spider Intimidate Fikiosa for 0 points of damage.
+[Combat]  03:24:26 Fikiosa hits Bounty Hunter for 1108 points of damage.
+[Combat]  03:24:26 Imp Trooper hits Bounty Hunter for 1512 points of damage.
+[Combat]  03:24:26 Sith Lord hits Bounty Hunter for 762 points of damage.
+[Combat]  03:24:26 Leloglo looted Heavy Two-Handed Sword from a SpecForce marine.
+[Combat]  03:24:26 Bounty Hunter hits Eliemau for 1132 damage.
+[Combat]  03:24:26 Turd hits target for 5000 damage.
+[Combat]  03:24:26 Someone hits Bob for 10000 damage.
+[Combat]  03:24:26 Fikiosa looted A Damaged Datapad from a Rebel Colonel.
+[Combat]  03:24:26 A_Giant_Spider Fire Knockdown Dark Jedi for 0 points of damage.
+[Combat]  03:24:26 Turd hits Bounty Hunter for 1002 points of damage.
+[Combat]  03:24:27 a SpecForce marine parries Rehote's attack!
+[Combat]  03:24:27 A_Giant_Spider Fire Knockdown Leloglo for 0 points of damage.
+[Combat]  03:24:27 You Intimidate a senior SpecForce infiltrator for 429 points of damage.
+[Combat]  03:24:27 A_Giant_Spider Posture Change Imp Trooper for 0 points of damage.
+[Combat]  03:24:27 Bounty Hunter Force Choke a Krayt Dragon for 938 points of damage.
+[Combat]  03:24:27 Rebel Scum has died.
+[Combat]  03:24:27 Ma-o has defeated Dark Jedi.
+[Combat]  03:24:28 Rehote hits Bounty Hunter for 592 points of damage.
+[Combat]  03:24:28 Ma-o hits Bounty Hunter for 1745 points of damage.
+[Combat]  03:24:28 Dark Jedi hits Bounty Hunter for 1018 points of damage.
+[Combat]  03:24:28 Fikiosa Fire Knockdown a Rancor for 880 points of damage.
+[Combat]  03:24:28 Imp Trooper hits You for 683 damage.
+[Combat]  03:24:28 Turd hits target for 5000 damage.
+[Combat]  03:24:28 Someone hits Bob for 10000 damage.
+[Combat]  03:24:28 Bounty Hunter Power Shot Imp Trooper for 1169 points of damage.
+[Combat]  03:24:28 Leloglo hits Turd for 897 points of damage.
+[Combat]  03:24:28 Sith Lord hits Turd for 1439 points of damage.
+[Combat]  03:24:28 Leloglo hits Turd for 1498 points of damage.
+[Combat]  03:24:28 Bounty Hunter hits Eliemau for 744 points of damage.
+[Combat]  03:24:29 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:24:29 Fikiosa hits Bounty Hunter for 757 points of damage.
+[Combat]  03:24:29 Fikiosa hits Bounty Hunter for 901 points of damage.
+[Combat]  03:24:29 Leloglo hits Bounty Hunter for 1555 points of damage.
+[Combat]  03:24:29 You receive 1117 points of Weapon experience.
+[Combat]  03:24:29 A_Giant_Spider Intimidate Imp Trooper for 0 points of damage.
+[Combat]  03:24:29 Turd heals Fikiosa for 466 points of damage.
+[Combat]  03:24:29 Ma-o has defeated a SpecForce marine.
+[Combat]  03:24:29 Rebel Scum hits Bounty Hunter for 1199 points of damage.
+[Combat]  03:24:30 A_Giant_Spider Fire Knockdown Imp Trooper for 0 points of damage.
+[Combat]  03:24:30 Turd looted 383 credits from an Imperial Stormtrooper.
+[Combat]  03:24:30 A_Giant_Spider Intimidate Eliemau for 0 points of damage.
+[Combat]  03:24:30 Eliemau hits Rehote for 1211 points of damage.
+[Combat]  03:24:30 Ma-o hits Rehote for 626 points of damage.
+[Combat]  03:24:30 Eliemau hits Rehote for 1420 points of damage.
+[Combat]  03:24:30 Rebel Scum hits a Rancor for 310 points of damage.
+[Combat]  03:24:31 Turd hits a Rancor for 168 points of damage.
+[Combat]  03:24:31 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
+[Combat]  03:24:31 Eliemau hits Rehote for 1183 points of damage.
+[Combat]  03:24:31 You receive 4949 points of Surveying experience.
+[Combat]  03:24:31 Sith Lord hits Rehote for 1275 damage.
+[Combat]  03:24:31 Turd hits target for 5000 damage.
+[Combat]  03:24:31 Someone hits Bob for 10000 damage.
+[Combat]  03:24:32 A_Giant_Spider Intimidate Leloglo for 0 points of damage.
+[Combat]  03:24:32 You heals Rehote for 290 points of damage.
+[Combat]  03:24:32 Turd hits You for 1157 damage.
+[Combat]  03:24:32 Turd hits target for 5000 damage.
+[Combat]  03:24:32 Someone hits Bob for 10000 damage.
+[Combat]  03:24:32 You receive 1943 points of Medicine experience.
+[Combat]  03:24:32 Dark Jedi has died.
+[Combat]  03:24:32 You has defeated Bounty Hunter.
+[Combat]  03:24:33 A_Giant_Spider Intimidate You for 0 points of damage.
+[Combat]  03:24:33 You receive 2499 points of Combat experience.
+[Combat]  03:24:33 A_Giant_Spider Posture Change You for 0 points of damage.
+[Combat]  03:24:33 Leloglo looted 343 credits from a Krayt Dragon.
+[Combat]  03:24:33 You Fire Knockdown Eliemau for 316 points of damage.
+[Combat]  03:24:34 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:24:34 Eliemau has defeated a Rancor.
+[Combat]  03:24:34 A_Giant_Spider Fire Knockdown Turd for 0 points of damage.
+[Combat]  03:24:34 Eliemau hits Ma-o for 1168 points of damage.
+[Combat]  03:24:34 Fikiosa hits Ma-o for 1366 points of damage.
+[Combat]  03:24:34 Leloglo hits Ma-o for 707 points of damage.
+[Combat]  03:24:34 You heals Rehote for 293 points of damage.
+[Combat]  03:24:34 Rehote hits Leloglo for 1703 damage.
+[Combat]  03:24:34 Turd hits target for 5000 damage.
+[Combat]  03:24:34 Someone hits Bob for 10000 damage.
+[Combat]  03:24:34 A_Giant_Spider Posture Change Fikiosa for 0 points of damage.
+[Combat]  03:24:34 Eliemau looted 183 credits from a Krayt Dragon.
+[Combat]  03:24:34 A_Giant_Spider Posture Change Turd for 0 points of damage.
+[Combat]  03:24:34 You receive 2579 points of Medicine experience.
+[Combat]  03:24:35 A_Giant_Spider Intimidate Ma-o for 0 points of damage.
+[Combat]  03:24:35 Bounty Hunter hits Fikiosa for 1169 points of damage.
+[Combat]  03:24:35 Fikiosa hits Fikiosa for 1896 points of damage.
+[Combat]  03:24:35 Imp Trooper hits Fikiosa for 1534 points of damage.
+[Combat]  03:24:35 Turd looted A Damaged Datapad from a SpecForce marine.
+[Combat]  03:24:35 Sith Lord hits Dark Jedi for 1830 damage.
+[Combat]  03:24:35 Turd hits target for 5000 damage.
+[Combat]  03:24:35 Someone hits Bob for 10000 damage.
+[Combat]  03:24:35 A_Giant_Spider Fire Knockdown Eliemau for 0 points of damage.
+[Combat]  03:24:35 Bounty Hunter Melee Hit You for 383 points of damage.
+[Combat]  03:24:35 Bounty Hunter hits Dark Jedi for 815 damage.
+[Combat]  03:24:35 Turd hits target for 5000 damage.
+[Combat]  03:24:35 Someone hits Bob for 10000 damage.
+[Combat]  03:24:35 You hits Leloglo for 612 points of damage.
+[Combat]  03:24:35 Eliemau hits Leloglo for 924 points of damage.
+[Combat]  03:24:35 Rehote hits Leloglo for 569 points of damage.
+[Combat]  03:24:35 Rehote looted 289 credits from a SpecForce marine.
+[Combat]  03:24:35 Dark Jedi hits Imp Trooper for 964 damage.
+[Combat]  03:24:35 Turd hits target for 5000 damage.
+[Combat]  03:24:35 Someone hits Bob for 10000 damage.
+[Combat]  03:24:35 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:24:35 Ma-o heals Rehote for 474 points of damage.
+[Combat]  03:24:36 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:24:36 Turd hits Imp Trooper for 1923 points of damage.
+[Combat]  03:24:36 Sith Lord hits Imp Trooper for 1539 points of damage.
+[Combat]  03:24:36 Turd hits Imp Trooper for 1681 points of damage.
+[Combat]  03:24:36 Imp Trooper Mind Blast Rehote for 671 points of damage.
+[Combat]  03:24:36 You hits Rebel Scum for 1635 points of damage.
+[Combat]  03:24:36 Rehote hits Rebel Scum for 942 points of damage.
+[Combat]  03:24:36 Bounty Hunter hits Rebel Scum for 996 points of damage.
+[Combat]  03:24:36 Leloglo applies poison to Rebel Scum.
+[Combat]  03:24:37 Bounty Hunter Melee Hit a senior SpecForce infiltrator for 704 points of damage.
+[Combat]  03:24:37 Fikiosa hits You for 1050 points of damage.
+[Combat]  03:24:37 Rebel Scum hits You for 880 damage.
+[Combat]  03:24:37 Turd hits target for 5000 damage.
+[Combat]  03:24:37 Someone hits Bob for 10000 damage.
+[Combat]  03:24:37 A_Giant_Spider Fire Knockdown Fikiosa for 0 points of damage.
+[Combat]  03:24:37 Turd looted Heavy Two-Handed Sword from a Rancor.
+[Combat]  03:24:37 Dark Jedi hits Imp Trooper for 1497 damage.
+[Combat]  03:24:37 Turd hits target for 5000 damage.
+[Combat]  03:24:37 Someone hits Bob for 10000 damage.
+[Combat]  03:24:38 A_Giant_Spider Intimidate Rehote for 0 points of damage.
+[Combat]  03:24:38 Fikiosa Mind Blast a Rancor for 626 points of damage.
+[Combat]  03:24:38 A_Giant_Spider Fire Knockdown Rehote for 0 points of damage.
+[Combat]  03:24:38 You heals Leloglo for 392 points of damage.
+[Combat]  03:24:38 Leloglo looted CDEF Pistol from a Krayt Dragon.
+[Combat]  03:24:38 Imp Trooper hits Rehote for 706 damage.
+[Combat]  03:24:38 Turd hits target for 5000 damage.
+[Combat]  03:24:38 Someone hits Bob for 10000 damage.
+[Combat]  03:24:39 A_Giant_Spider Intimidate Imp Trooper for 0 points of damage.
+[Combat]  03:24:39 Leloglo heals You for 710 points of damage.
+[Combat]  03:24:39 a Rebel Major General dodges Eliemau's attack!
+[Combat]  03:24:40 A_Giant_Spider Fire Knockdown Leloglo for 0 points of damage.
+[Combat]  03:24:40 Leloglo hits Rebel Scum for 565 points of damage.
+[Combat]  03:24:40 Rebel Scum hits Rebel Scum for 1574 points of damage.
+[Combat]  03:24:40 Dark Jedi hits Rebel Scum for 858 points of damage.
+[Combat]  03:24:40 Imp Trooper hits Rehote for 405 points of damage.
+[Combat]  03:24:40 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
+[Combat]  03:24:40 Leloglo has defeated a Rebel Colonel.
+[Combat]  03:24:40 A_Giant_Spider Intimidate Fikiosa for 0 points of damage.
+[Combat]  03:24:40 Dark Jedi Force Choke an Imperial Stormtrooper for 570 points of damage.
+[Combat]  03:24:41 A_Giant_Spider Intimidate You for 0 points of damage.
+[Combat]  03:24:41 Rebel Scum Fire Knockdown You for 1310 points of damage.
+[Combat]  03:24:41 Bounty Hunter hits Rehote for 707 points of damage.
+[Combat]  03:24:41 Fikiosa hits Rehote for 1016 points of damage.
+[Combat]  03:24:41 Fikiosa hits Rehote for 1222 points of damage.
+[Combat]  03:24:41 Ma-o looted 222 credits from a Rebel Colonel.
+[Combat]  03:24:41 Leloglo hits Turd for 258 points of damage.
+[Combat]  03:24:41 A_Giant_Spider Fire Knockdown Rehote for 0 points of damage.
+[Combat]  03:24:41 Turd has defeated a Rebel Major General.
+[Combat]  03:24:42 Turd applies poison to Dark Jedi.
+[Combat]  03:24:42 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:24:42 Rehote Scatter Shot a Krayt Dragon for 531 points of damage.
+[Combat]  03:24:43 A_Giant_Spider Fire Knockdown Rehote for 0 points of damage.
+[Combat]  03:24:43 You receive 4456 points of General experience.
+[Combat]  03:24:43 Rebel Scum hits Sith Lord for 792 damage.
+[Combat]  03:24:43 Turd hits target for 5000 damage.
+[Combat]  03:24:43 Someone hits Bob for 10000 damage.
+[Combat]  03:24:43 You Force Choke Dark Jedi for 1153 points of damage.
+[Combat]  03:24:43 Bounty Hunter hits Rebel Scum for 1043 damage.
+[Combat]  03:24:43 Turd hits target for 5000 damage.
+[Combat]  03:24:43 Someone hits Bob for 10000 damage.
+[Combat]  03:24:43 A_Giant_Spider Posture Change Imp Trooper for 0 points of damage.
+[Combat]  03:24:43 Eliemau has defeated a Krayt Dragon.
+[Combat]  03:24:43 A_Giant_Spider Fire Knockdown Leloglo for 0 points of damage.
+[Combat]  03:24:43 Ma-o hits Fikiosa for 893 points of damage.
+[Combat]  03:24:43 Sith Lord hits Fikiosa for 759 points of damage.
+[Combat]  03:24:43 Turd hits Fikiosa for 743 points of damage.
+[Combat]  03:24:43 Rehote Intimidate Dark Jedi for 562 points of damage.
+[Combat]  03:24:44 A_Giant_Spider Posture Change Dark Jedi for 0 points of damage.
+[Combat]  03:24:44 Imp Trooper Melee Hit Rehote for 1086 points of damage.
+[Combat]  03:24:44 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:24:44 Dark Jedi hits an Imperial Stormtrooper for 413 points of damage.
+[Combat]  03:24:44 Sith Lord hits Sith Lord for 1075 points of damage.
+[Combat]  03:24:44 You hits Sith Lord for 1330 points of damage.
+[Combat]  03:24:44 Ma-o hits Sith Lord for 591 points of damage.
+[Combat]  03:24:44 Eliemau hits Bounty Hunter for 1074 points of damage.
+[Combat]  03:24:44 Imp Trooper hits Rebel Scum for 1799 damage.
+[Combat]  03:24:44 Turd hits target for 5000 damage.
+[Combat]  03:24:44 Someone hits Bob for 10000 damage.
+[Combat]  03:24:44 A_Giant_Spider Intimidate Leloglo for 0 points of damage.
+[Combat]  03:24:44 Turd looted Heavy Two-Handed Sword from a Rebel Major General.
+[Combat]  03:24:45 Rehote looted CDEF Pistol from a SpecForce marine.
+[Combat]  03:24:45 A_Giant_Spider Posture Change Imp Trooper for 0 points of damage.
+[Combat]  03:24:45 Turd hits Ma-o for 622 points of damage.
+[Combat]  03:24:45 Bounty Hunter hits Ma-o for 1338 points of damage.
+[Combat]  03:24:45 Turd hits Ma-o for 671 points of damage.
+[Combat]  03:24:45 Turd hits Dark Jedi for 867 points of damage.
+[Combat]  03:24:45 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:24:45 Bounty Hunter Mind Blast Leloglo for 1476 points of damage.
+[Combat]  03:24:45 Rehote hits Bounty Hunter for 1603 damage.
+[Combat]  03:24:45 Turd hits target for 5000 damage.
+[Combat]  03:24:45 Someone hits Bob for 10000 damage.
+[Combat]  03:24:46 Rehote Scatter Shot Eliemau for 970 points of damage.
+[Combat]  03:24:46 Leloglo hits Sith Lord for 712 damage.
+[Combat]  03:24:46 Turd hits target for 5000 damage.
+[Combat]  03:24:46 Someone hits Bob for 10000 damage.
+[Combat]  03:24:46 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
+[Combat]  03:24:46 Dark Jedi hits Sith Lord for 1775 points of damage.
+[Combat]  03:24:46 Dark Jedi hits Sith Lord for 1639 points of damage.
+[Combat]  03:24:46 Rebel Scum hits Sith Lord for 1686 points of damage.
+[Combat]  03:24:46 Rehote looted Enhanced DH-17 Carbine from a Rancor.
+[Combat]  03:24:47 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:24:47 Sith Lord hits Bounty Hunter for 1177 points of damage.
+[Combat]  03:24:47 Fikiosa hits Bounty Hunter for 1045 points of damage.
+[Combat]  03:24:47 Fikiosa hits Bounty Hunter for 1164 points of damage.
+[Combat]  03:24:47 Turd has defeated a Krayt Dragon.
+[Combat]  03:24:47 A_Giant_Spider Fire Knockdown Eliemau for 0 points of damage.
+[Combat]  03:24:47 Dark Jedi hits Eliemau for 499 points of damage.
+[Combat]  03:24:47 Sith Lord hits Eliemau for 216 points of damage.
+[Combat]  03:24:47 You heals You for 501 points of damage.
+[Combat]  03:24:47 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:24:47 Rehote heals You for 649 points of damage.
+[Combat]  03:24:48 A_Giant_Spider Fire Knockdown Rehote for 0 points of damage.
+[Combat]  03:24:48 You has been incapacitated by something.
+[Combat]  03:24:48 Rehote has been incapacitated by Imp Trooper.
+[Combat]  03:24:48 Bounty Hunter hits Dark Jedi for 1349 points of damage.
+[Combat]  03:24:48 You hits Dark Jedi for 1583 points of damage.
+[Combat]  03:24:48 Bounty Hunter hits Dark Jedi for 1596 points of damage.
+[Combat]  03:24:48 Eliemau Melee Hit Ma-o for 1470 points of damage.
+[Groupchat]  03:24:53 You: 123
+[Groupchat]  03:24:53 Turd: 123
+[Groupchat]  03:24:53 Leloglo: 123
+[Groupchat]  03:24:53 Rehote: 123
+[Groupchat]  03:24:53 Ma-o: 123
+[Groupchat]  03:24:53 Fikiosa: 123
+[Groupchat]  03:24:53 Eliemau: 123
+[Combat]  03:24:54 Sith Lord hits Bounty Hunter for 738 points of damage.
+[Combat]  03:24:54 Imp Trooper hits Bounty Hunter for 1595 points of damage.
+[Combat]  03:24:54 Ma-o hits Bounty Hunter for 1227 points of damage.
+[Combat]  03:24:54 Eliemau Posture Change Bounty Hunter for 529 points of damage.
+[Combat]  03:24:54 Ma-o looted 85 credits from a Rebel Colonel.
+[Combat]  03:24:55 Rehote heals Ma-o for 180 points of damage.
+[Combat]  03:24:55 Rebel Scum has been incapacitated by something.
+[Combat]  03:24:55 Rebel Scum has been incapacitated by Rebel Scum.
+[Combat]  03:24:56 You receive 4358 points of Medicine experience.
+[Combat]  03:24:56 Bounty Hunter hits Rehote for 831 points of damage.
+[Combat]  03:24:56 A_Giant_Spider Fire Knockdown Turd for 0 points of damage.
+[Combat]  03:24:56 Imp Trooper Intimidate a Rancor for 720 points of damage.
+[Combat]  03:24:56 a Rancor no longer intimidated.
+[Combat]  03:24:57 A_Giant_Spider Intimidate Leloglo for 0 points of damage.
+[Combat]  03:24:57 Bounty Hunter Posture Change Rebel Scum for 889 points of damage.
+[Combat]  03:24:58 A_Giant_Spider Fire Knockdown Bounty Hunter for 0 points of damage.
+[Combat]  03:24:58 Imp Trooper hits Turd for 1138 points of damage.
+[Combat]  03:24:58 Ma-o hits Turd for 1524 points of damage.
+[Combat]  03:24:58 Sith Lord hits Turd for 508 points of damage.
+[Combat]  03:24:58 Eliemau Bleeding Shot Leloglo for 694 points of damage.
+[Combat]  03:24:58 A_Giant_Spider Intimidate Ma-o for 0 points of damage.
+[Combat]  03:24:58 Turd heals Turd for 360 points of damage.
+[Combat]  03:24:58 Sith Lord hits Imp Trooper for 959 damage.
+[Combat]  03:24:58 Turd hits target for 5000 damage.
+[Combat]  03:24:58 Someone hits Bob for 10000 damage.
+[Combat]  03:24:58 You heals Leloglo for 100 points of damage.
+[Combat]  03:24:58 Rehote hits Eliemau for 752 damage.
+[Combat]  03:24:58 Turd hits target for 5000 damage.
+[Combat]  03:24:58 Someone hits Bob for 10000 damage.
+[Combat]  03:24:58 A_Giant_Spider Intimidate Fikiosa for 0 points of damage.
+[Combat]  03:24:58 You receive 4168 points of Medicine experience.
+[Combat]  03:24:58 Fikiosa hits Eliemau for 1155 damage.
+[Combat]  03:24:58 Turd hits target for 5000 damage.
+[Combat]  03:24:58 Someone hits Bob for 10000 damage.
+[Combat]  03:24:59 A_Giant_Spider Fire Knockdown Leloglo for 0 points of damage.
+[Combat]  03:24:59 Turd looted 164 credits from a Krayt Dragon.
+[Combat]  03:24:59 A_Giant_Spider Posture Change Bounty Hunter for 0 points of damage.
+[Combat]  03:24:59 Eliemau looted 327 credits from a Rebel Major General.
+[Combat]  03:24:59 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
+[Combat]  03:24:59 You receive 367 points of Medicine experience.
+[Combat]  03:25:00 Rehote heals Leloglo for 203 points of damage.
+[Combat]  03:25:00 A_Giant_Spider Intimidate Eliemau for 0 points of damage.
+[Combat]  03:25:00 Rehote hits You for 1908 points of damage.
+[Combat]  03:25:00 Rebel Scum hits You for 619 points of damage.
+[Combat]  03:25:00 Sith Lord hits You for 1352 points of damage.
+[Combat]  03:25:00 Turd has defeated a senior SpecForce infiltrator.
+[Combat]  03:25:00 Eliemau hits Dark Jedi for 1296 points of damage.
+[Combat]  03:25:00 Eliemau hits Dark Jedi for 798 points of damage.
+[Combat]  03:25:00 Ma-o hits Dark Jedi for 976 points of damage.
+[Combat]  03:25:00 Fikiosa Melee Hit a Rebel Colonel for 829 points of damage.
+[Combat]  03:25:01 A_Giant_Spider Intimidate Rehote for 0 points of damage.
+[Combat]  03:25:01 Sith Lord hits Fikiosa for 527 points of damage.
+[Combat]  03:25:01 Bounty Hunter hits Fikiosa for 1137 points of damage.
+[Combat]  03:25:01 Dark Jedi hits Fikiosa for 624 points of damage.
+[Combat]  03:25:01 Turd hits Eliemau for 818 points of damage.
+[Combat]  03:25:01 A_Giant_Spider Fire Knockdown You for 0 points of damage.
+[Combat]  03:25:01 Fikiosa has been incapacitated by something.
+[Combat]  03:25:01 Eliemau has been incapacitated by Ma-o.
+[Combat]  03:25:02 A_Giant_Spider Intimidate Bounty Hunter for 0 points of damage.
+[Combat]  03:25:02 Ma-o has defeated a Rebel Major General.
+[Combat]  03:25:02 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:25:02 Bounty Hunter Scatter Shot You for 1456 points of damage.
+[Combat]  03:25:02 A_Giant_Spider Intimidate Dark Jedi for 0 points of damage.
+[Combat]  03:25:02 Eliemau has defeated a Rebel Major General.
+[Combat]  03:25:02 Eliemau hits Turd for 736 damage.
+[Combat]  03:25:02 Turd hits target for 5000 damage.
+[Combat]  03:25:02 Someone hits Bob for 10000 damage.
+[Combat]  03:25:02 Bounty Hunter hits Rehote for 1321 points of damage.
+[Combat]  03:25:02 Eliemau hits Rehote for 1627 points of damage.
+[Combat]  03:25:02 Eliemau hits Rehote for 682 points of damage.
+[Combat]  03:25:02 Rebel Scum Melee Hit Imp Trooper for 901 points of damage.
+[Combat]  03:25:03 A_Giant_Spider Intimidate Rebel Scum for 0 points of damage.
+[Combat]  03:25:03 Imp Trooper hits Rehote for 544 points of damage.
+[Combat]  03:25:03 Bounty Hunter hits Rehote for 846 points of damage.
+[Combat]  03:25:03 Rehote hits Rehote for 1516 points of damage.
+[Combat]  03:25:03 You heals Rehote for 125 points of damage.
+[Combat]  03:25:03 You hits Rehote for 323 points of damage.
+[Combat]  03:25:04 Sith Lord Posture Change Leloglo for 521 points of damage.
+[Combat]  03:25:04 A_Giant_Spider Posture Change Rebel Scum for 0 points of damage.
+[Combat]  03:25:04 Fikiosa hits an Imperial Stormtrooper for 906 points of damage.
+[Combat]  03:25:04 Turd hits Turd for 1107 damage.
+[Combat]  03:25:04 Turd hits target for 5000 damage.
+[Combat]  03:25:04 Someone hits Bob for 10000 damage.
+[Combat]  03:25:04 Leloglo heals Eliemau for 496 points of damage.
+[Combat]  03:25:04 You hits Leloglo for 804 damage.
+[Combat]  03:25:04 Turd hits target for 5000 damage.
+[Combat]  03:25:04 Someone hits Bob for 10000 damage.
+[Combat]  03:25:05 Ma-o looted 449 credits from a Krayt Dragon.
+[Combat]  03:25:05 Rehote hits Rebel Scum for 774 points of damage.
+[Combat]  03:25:05 Dark Jedi hits Rebel Scum for 1294 points of damage.
+[Combat]  03:25:05 Leloglo hits Rebel Scum for 1301 points of damage.
+[Combat]  03:25:05 Eliemau looted 323 credits from a senior SpecForce infiltrator.
+[Combat]  03:25:05 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:25:05 Rehote Stun Imp Trooper for 471 points of damage.
+[Combat]  03:25:06 Eliemau hits a Krayt Dragon for 285 points of damage.
+[Combat]  03:25:06 Ma-o heals Eliemau for 319 points of damage.
+[Combat]  03:25:07 A_Giant_Spider Intimidate Ma-o for 0 points of damage.
+[Combat]  03:25:07 You looted CDEF Pistol from an Imperial Stormtrooper.
+[Combat]  03:25:07 A_Giant_Spider Intimidate Sith Lord for 0 points of damage.
+[Combat]  03:25:07 Leloglo hits Bounty Hunter for 1629 points of damage.
+[Combat]  03:25:07 Imp Trooper hits Bounty Hunter for 869 points of damage.
+[Combat]  03:25:07 Dark Jedi hits Bounty Hunter for 1527 points of damage.
+[Combat]  03:25:07 Ma-o has been incapacitated by something.
+[Combat]  03:25:07 Eliemau has been incapacitated by Sith Lord.
+[Combat]  03:25:07 A_Giant_Spider Posture Change Sith Lord for 0 points of damage.
+[Combat]  03:25:07 You hits Ma-o for 584 points of damage.
+[Combat]  03:25:07 Ma-o hits Ma-o for 1220 points of damage.
+[Combat]  03:25:07 Eliemau hits Ma-o for 1170 points of damage.
+[Combat]  03:25:07 Rebel Scum Stun a SpecForce marine for 1464 points of damage.
+[Combat]  03:25:08 Imp Trooper hits Rehote for 1134 points of damage.
+[Combat]  03:25:08 Turd hits Fikiosa for 501 damage.
+[Combat]  03:25:08 Turd hits target for 5000 damage.
+[Combat]  03:25:08 Someone hits Bob for 10000 damage.
+[Combat]  03:25:08 A_Giant_Spider Intimidate Dark Jedi for 0 points of damage.
+[Combat]  03:25:08 Leloglo hits Bounty Hunter for 1505 points of damage.
+[Combat]  03:25:08 Sith Lord hits Bounty Hunter for 1656 points of damage.
+[Combat]  03:25:08 Bounty Hunter hits Bounty Hunter for 558 points of damage.
+[Combat]  03:25:08 Leloglo has defeated a SpecForce marine.
+[Combat]  03:25:08 a Rancor parries Leloglo's attack!
+[Combat]  03:25:08 A_Giant_Spider Posture Change Rehote for 0 points of damage.
+[Combat]  03:25:08 Turd applies poison to Sith Lord.
+[Combat]  03:25:08 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:25:08 Turd hits Ma-o for 1229 points of damage.
+[Combat]  03:25:08 Turd hits Ma-o for 1302 points of damage.
+[Combat]  03:25:08 Dark Jedi hits Ma-o for 1540 points of damage.
+[Combat]  03:25:08 Fikiosa has defeated a senior SpecForce infiltrator.
+[Combat]  03:25:08 You hits Dark Jedi for 1525 damage.
+[Combat]  03:25:08 Turd hits target for 5000 damage.
+[Combat]  03:25:08 Someone hits Bob for 10000 damage.
+[Combat]  03:25:09 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:25:09 a Rancor dodges Eliemau's attack!
+[Combat]  03:25:09 Eliemau heals Eliemau for 566 points of damage.
+[Combat]  03:25:09 Rebel Scum hits Eliemau for 812 damage.
+[Combat]  03:25:09 Turd hits target for 5000 damage.
+[Combat]  03:25:09 Someone hits Bob for 10000 damage.
+[Combat]  03:25:09 A_Giant_Spider Intimidate You for 0 points of damage.
+[Combat]  03:25:09 Turd hits Rehote for 1364 points of damage.
+[Combat]  03:25:09 Turd hits Rehote for 929 points of damage.
+[Combat]  03:25:09 Leloglo hits Rehote for 1583 points of damage.
+[Combat]  03:25:09 Sith Lord hits Rebel Scum for 1139 points of damage.
+[Combat]  03:25:09 Leloglo hits Sith Lord for 511 damage.
+[Combat]  03:25:09 Turd hits target for 5000 damage.
+[Combat]  03:25:09 Someone hits Bob for 10000 damage.
+[Combat]  03:25:10 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:25:10 You receive 845 points of Medicine experience.
+[Combat]  03:25:10 Rehote hits Sith Lord for 1500 damage.
+[Combat]  03:25:10 Turd hits target for 5000 damage.
+[Combat]  03:25:10 Someone hits Bob for 10000 damage.
+[Combat]  03:25:10 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:25:10 Rehote hits a senior SpecForce infiltrator for 591 points of damage.
+[Combat]  03:25:10 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:25:10 Rebel Scum hits Bounty Hunter for 951 points of damage.
+[Combat]  03:25:10 Turd hits Bounty Hunter for 1303 points of damage.
+[Combat]  03:25:10 Ma-o hits Bounty Hunter for 1008 points of damage.
+[Combat]  03:25:10 Rehote has defeated a senior SpecForce infiltrator.
+[Combat]  03:25:10 Sith Lord hits Rehote for 889 points of damage.
+[Combat]  03:25:10 Rehote hits You for 1260 damage.
+[Combat]  03:25:10 Turd hits target for 5000 damage.
+[Combat]  03:25:10 Someone hits Bob for 10000 damage.
+[Combat]  03:25:10 A_Giant_Spider Posture Change Imp Trooper for 0 points of damage.
+[Combat]  03:25:10 Bounty Hunter Stun Ma-o for 851 points of damage.
+[Combat]  03:25:11 Eliemau hits Rebel Scum for 1538 points of damage.
+[Combat]  03:25:11 Turd hits Rebel Scum for 1352 points of damage.
+[Combat]  03:25:11 Rehote hits Rebel Scum for 999 points of damage.
+[Combat]  03:25:11 Rehote looted 217 credits from a Rancor.
+[Combat]  03:25:11 Fikiosa hits Sith Lord for 1937 damage.
+[Combat]  03:25:11 Turd hits target for 5000 damage.
+[Combat]  03:25:11 Someone hits Bob for 10000 damage.
+[Combat]  03:25:11 A_Giant_Spider Fire Knockdown Rehote for 0 points of damage.
+[Combat]  03:25:11 Dark Jedi hits Rebel Scum for 1659 points of damage.
+[Combat]  03:25:11 Bounty Hunter hits Rebel Scum for 544 points of damage.
+[Combat]  03:25:11 You hits Rebel Scum for 671 points of damage.
+[Combat]  03:25:11 Eliemau heals Eliemau for 635 points of damage.
+[Combat]  03:25:11 Dark Jedi hits Imp Trooper for 1022 points of damage.
+[Combat]  03:25:11 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:25:11 Turd Mind Blast Dark Jedi for 523 points of damage.
+[Combat]  03:25:12 Fikiosa hits Dark Jedi for 615 points of damage.
+[Combat]  03:25:12 Fikiosa hits Dark Jedi for 947 points of damage.
+[Combat]  03:25:12 Ma-o hits Dark Jedi for 1663 points of damage.
+[Combat]  03:25:12 Turd looted CDEF Pistol from a SpecForce marine.
+[Combat]  03:25:12 Eliemau hits Rehote for 1827 damage.
+[Combat]  03:25:12 Turd hits target for 5000 damage.
+[Combat]  03:25:12 Someone hits Bob for 10000 damage.
+[Combat]  03:25:12 Rehote heals Eliemau for 572 points of damage.
+[Combat]  03:25:12 A_Giant_Spider Fire Knockdown Leloglo for 0 points of damage.
+[Combat]  03:25:12 Leloglo heals Ma-o for 154 points of damage.
+[Combat]  03:25:13 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:25:13 Ma-o hits You for 1167 points of damage.
+[Combat]  03:25:13 Ma-o hits You for 524 points of damage.
+[Combat]  03:25:13 Ma-o hits You for 1472 points of damage.
+[Combat]  03:25:13 Eliemau heals Eliemau for 139 points of damage.
+[Combat]  03:25:13 Dark Jedi hits Imp Trooper for 1708 points of damage.
+[Combat]  03:25:13 Fikiosa hits Imp Trooper for 1631 points of damage.
+[Combat]  03:25:13 Imp Trooper hits Imp Trooper for 1104 points of damage.
+[Combat]  03:25:13 Leloglo looted A Damaged Datapad from a Rebel Major General.
+[Combat]  03:25:13 A_Giant_Spider Posture Change Bounty Hunter for 0 points of damage.
+[Combat]  03:25:13 Rehote hits Rebel Scum for 1595 points of damage.
+[Combat]  03:25:13 You hits Rebel Scum for 1547 points of damage.
+[Combat]  03:25:13 Dark Jedi hits Rebel Scum for 908 points of damage.
+[Combat]  03:25:13 Leloglo Scatter Shot You for 1214 points of damage.
+[Combat]  03:25:13 A_Giant_Spider Posture Change Rebel Scum for 0 points of damage.
+[Combat]  03:25:13 Ma-o heals Rehote for 302 points of damage.
+[Combat]  03:25:13 Leloglo hits Turd for 1760 damage.
+[Combat]  03:25:13 Turd hits target for 5000 damage.
+[Combat]  03:25:13 Someone hits Bob for 10000 damage.
+[Combat]  03:25:14 Rebel Scum hits Imp Trooper for 1899 points of damage.
+[Combat]  03:25:14 Fikiosa hits Imp Trooper for 1314 points of damage.
+[Combat]  03:25:14 You hits Imp Trooper for 1544 points of damage.
+[Combat]  03:25:14 You receive 3749 points of Medicine experience.
+[Combat]  03:25:14 Bounty Hunter hits Sith Lord for 594 damage.
+[Combat]  03:25:14 Turd hits target for 5000 damage.
+[Combat]  03:25:14 Someone hits Bob for 10000 damage.
+[Combat]  03:25:14 Ma-o looted Heavy Two-Handed Sword from a SpecForce marine.
+[Combat]  03:25:14 Ma-o hits Ma-o for 1112 damage.
+[Combat]  03:25:14 Turd hits target for 5000 damage.
+[Combat]  03:25:14 Someone hits Bob for 10000 damage.
+[Combat]  03:25:14 A_Giant_Spider Intimidate Leloglo for 0 points of damage.
+[Combat]  03:25:14 Imp Trooper hits Eliemau for 1693 points of damage.
+[Combat]  03:25:14 You hits Eliemau for 1420 points of damage.
+[Combat]  03:25:14 Fikiosa hits Eliemau for 956 points of damage.
+[Combat]  03:25:14 a SpecForce marine dodges You's attack!
+[Combat]  03:25:14 A_Giant_Spider Intimidate Bounty Hunter for 0 points of damage.
+[Combat]  03:25:14 Rehote hits Bounty Hunter for 530 points of damage.
+[Combat]  03:25:14 Eliemau hits Bounty Hunter for 1080 points of damage.
+[Combat]  03:25:14 Sith Lord hits Bounty Hunter for 970 points of damage.
+[Combat]  03:25:14 Fikiosa heals Fikiosa for 324 points of damage.
+[Combat]  03:25:15 Bounty Hunter hits You for 862 points of damage.
+[Combat]  03:25:15 Eliemau hits You for 893 points of damage.
+[Combat]  03:25:15 Ma-o hits You for 737 points of damage.
+[Combat]  03:25:15 Ma-o Force Choke Bounty Hunter for 624 points of damage.
+[Combat]  03:25:15 A_Giant_Spider Fire Knockdown You for 0 points of damage.
+[Combat]  03:25:15 Leloglo hits Imp Trooper for 656 points of damage.
+[Combat]  03:25:15 Rebel Scum hits Imp Trooper for 665 points of damage.
+[Combat]  03:25:15 Ma-o hits Imp Trooper for 1353 points of damage.
+[Combat]  03:25:15 You receive 2701 points of Combat experience.
+[Combat]  03:25:16 Leloglo looted Stun Baton from a SpecForce marine.
+[Combat]  03:25:16 A_Giant_Spider Posture Change Dark Jedi for 0 points of damage.
+[Combat]  03:25:16 Bounty Hunter hits Rebel Scum for 709 points of damage.
+[Combat]  03:25:16 Imp Trooper hits Fikiosa for 605 damage.
+[Combat]  03:25:16 Turd hits target for 5000 damage.
+[Combat]  03:25:16 Someone hits Bob for 10000 damage.
+[Combat]  03:25:16 A_Giant_Spider Intimidate Eliemau for 0 points of damage.
+[Combat]  03:25:16 Rebel Scum has been incapacitated by something.
+[Combat]  03:25:16 Sith Lord has been incapacitated by You.
+[Combat]  03:25:17 Rehote hits Turd for 1932 points of damage.
+[Combat]  03:25:17 Rehote hits Turd for 860 points of damage.
+[Combat]  03:25:17 Imp Trooper hits Turd for 1869 points of damage.
+[Combat]  03:25:17 Imp Trooper hits a Rebel Colonel for 535 points of damage.
+[Combat]  03:25:17 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:25:17 You hits Eliemau for 1141 points of damage.
+[Combat]  03:25:17 Turd hits Eliemau for 1111 points of damage.
+[Combat]  03:25:17 Dark Jedi hits Eliemau for 1163 points of damage.
+[Combat]  03:25:17 Ma-o looted 158 credits from a Rebel Major General.
+[Combat]  03:25:17 A_Giant_Spider Fire Knockdown Rehote for 0 points of damage.
+[Combat]  03:25:17 Bounty Hunter hits Dark Jedi for 530 points of damage.
+[Combat]  03:25:17 Eliemau hits Dark Jedi for 609 points of damage.
+[Combat]  03:25:17 Turd hits Dark Jedi for 502 points of damage.
+[Combat]  03:25:17 You receive 1004 points of Weapon experience.
+[Combat]  03:25:17 A_Giant_Spider Intimidate Leloglo for 0 points of damage.
+[Combat]  03:25:17 Eliemau Force Choke a senior SpecForce infiltrator for 890 points of damage.
+[Combat]  03:25:18 Rehote looted A Damaged Datapad from a Rebel Major General.
+[Combat]  03:25:18 Ma-o Force Choke Ma-o for 515 points of damage.
+[Combat]  03:25:18 A_Giant_Spider Posture Change Turd for 0 points of damage.
+[Combat]  03:25:18 Imp Trooper hits Rehote for 435 points of damage.
+[Combat]  03:25:19 You has defeated a senior SpecForce infiltrator.
+[Combat]  03:25:19 Bounty Hunter hits Rebel Scum for 781 points of damage.
+[Combat]  03:25:19 Eliemau hits Rebel Scum for 1194 points of damage.
+[Combat]  03:25:19 Dark Jedi hits Rebel Scum for 1710 points of damage.
+[Combat]  03:25:19 Sith Lord Mind Blast Dark Jedi for 401 points of damage.
+[Combat]  03:25:19 A_Giant_Spider Fire Knockdown Turd for 0 points of damage.
+[Combat]  03:25:19 Rehote looted 197 credits from a SpecForce marine.
+[Combat]  03:25:19 Eliemau hits a senior SpecForce infiltrator for 1163 points of damage.
+[Combat]  03:25:19 Fikiosa hits Rebel Scum for 1676 damage.
+[Combat]  03:25:19 Turd hits target for 5000 damage.
+[Combat]  03:25:19 Someone hits Bob for 10000 damage.
+[Combat]  03:25:20 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:25:20 Dark Jedi Health Shot II a SpecForce marine for 1236 points of damage.
+[Combat]  03:25:20 A_Giant_Spider Intimidate Ma-o for 0 points of damage.
+[Combat]  03:25:20 Sith Lord hits Sith Lord for 1270 points of damage.
+[Combat]  03:25:20 Dark Jedi hits Sith Lord for 1035 points of damage.
+[Combat]  03:25:20 Rebel Scum hits Sith Lord for 1373 points of damage.
+[Combat]  03:25:20 You hits Leloglo for 1067 points of damage.
+[Combat]  03:25:20 Dark Jedi hits Rebel Scum for 1807 damage.
+[Combat]  03:25:20 Turd hits target for 5000 damage.
+[Combat]  03:25:20 Someone hits Bob for 10000 damage.
+[Combat]  03:25:20 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:25:20 Ma-o Health Shot II a senior SpecForce infiltrator for 353 points of damage.
+[Combat]  03:25:20 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:25:20 Turd hits Bounty Hunter for 1704 points of damage.
+[Combat]  03:25:20 Leloglo hits Bounty Hunter for 930 points of damage.
+[Combat]  03:25:20 Fikiosa hits Bounty Hunter for 1497 points of damage.
+[Combat]  03:25:20 Ma-o has been incapacitated by something.
+[Combat]  03:25:20 Turd has been incapacitated by Turd.
+[Combat]  03:25:21 Turd heals Fikiosa for 639 points of damage.
+[Combat]  03:25:21 Rebel Scum hits Fikiosa for 534 damage.
+[Combat]  03:25:21 Turd hits target for 5000 damage.
+[Combat]  03:25:21 Someone hits Bob for 10000 damage.
+[Combat]  03:25:21 Rehote Scatter Shot Sith Lord for 711 points of damage.
+[Combat]  03:25:21 Turd has died.
+[Combat]  03:25:21 Rehote hits Sith Lord for 659 damage.
+[Combat]  03:25:21 Turd hits target for 5000 damage.
+[Combat]  03:25:21 Someone hits Bob for 10000 damage.
+[Combat]  03:25:21 Dark Jedi hits Turd for 1932 points of damage.
+[Combat]  03:25:21 Bounty Hunter hits Turd for 1465 points of damage.
+[Combat]  03:25:21 Fikiosa hits Turd for 1758 points of damage.
+[Combat]  03:25:21 Turd applies poison to Dark Jedi.
+[Combat]  03:25:22 Rehote heals Turd for 458 points of damage.
+[Combat]  03:25:22 A_Giant_Spider Posture Change Fikiosa for 0 points of damage.
+[Combat]  03:25:22 a SpecForce marine dodges You's attack!
+[Combat]  03:25:22 Bounty Hunter hits Rehote for 1051 damage.
+[Combat]  03:25:22 Turd hits target for 5000 damage.
+[Combat]  03:25:22 Someone hits Bob for 10000 damage.
+[Combat]  03:25:23 A_Giant_Spider Fire Knockdown Eliemau for 0 points of damage.
+[Combat]  03:25:23 Bounty Hunter hits You for 1145 points of damage.
+[Combat]  03:25:23 Dark Jedi hits You for 930 points of damage.
+[Combat]  03:25:23 Fikiosa hits You for 677 points of damage.
+[Combat]  03:25:23 Turd Force Choke Eliemau for 318 points of damage.
+[Combat]  03:25:23 Ma-o hits Bounty Hunter for 1337 points of damage.
+[Combat]  03:25:23 Eliemau hits Bounty Hunter for 1626 points of damage.
+[Combat]  03:25:23 Ma-o hits Bounty Hunter for 519 points of damage.
+[Combat]  03:25:23 Leloglo hits a Rebel Colonel for 1017 points of damage.
+[Combat]  03:25:23 Leloglo hits Imp Trooper for 1571 points of damage.
+[Combat]  03:25:23 Eliemau hits Imp Trooper for 798 points of damage.
+[Combat]  03:25:23 Leloglo hits Imp Trooper for 824 points of damage.
+[Combat]  03:25:23 Fikiosa heals Fikiosa for 490 points of damage.
+[Combat]  03:25:23 A_Giant_Spider Intimidate Rehote for 0 points of damage.
+[Combat]  03:25:23 Rebel Scum hits Fikiosa for 1373 points of damage.
+[Combat]  03:25:23 Leloglo hits Fikiosa for 1147 points of damage.
+[Combat]  03:25:23 Imp Trooper hits Fikiosa for 1089 points of damage.
+[Combat]  03:25:23 Turd hits Eliemau for 222 points of damage.
+[Combat]  03:25:23 Fikiosa hits Dark Jedi for 1774 damage.
+[Combat]  03:25:23 Turd hits target for 5000 damage.
+[Combat]  03:25:23 Someone hits Bob for 10000 damage.
+[Combat]  03:25:24 A_Giant_Spider Intimidate Turd for 0 points of damage.
+[Combat]  03:25:24 Bounty Hunter hits an Imperial Stormtrooper for 377 points of damage.
+[Combat]  03:25:24 Turd has defeated an Imperial Stormtrooper.
+[Combat]  03:25:25 Turd applies poison to Rebel Scum.
+[Combat]  03:25:25 A_Giant_Spider Fire Knockdown Eliemau for 0 points of damage.
+[Combat]  03:25:25 Leloglo hits Turd for 899 points of damage.
+[Combat]  03:25:25 Rebel Scum hits Turd for 1144 points of damage.
+[Combat]  03:25:25 Rehote hits Turd for 953 points of damage.
+[Combat]  03:25:25 Leloglo heals You for 733 points of damage.
+[Combat]  03:25:25 Eliemau heals Eliemau for 686 points of damage.
+[Combat]  03:25:26 You hits Ma-o for 759 points of damage.
+[Combat]  03:25:26 A_Giant_Spider Intimidate Leloglo for 0 points of damage.
+[Combat]  03:25:26 Imp Trooper hits Sith Lord for 1313 points of damage.
+[Combat]  03:25:26 Bounty Hunter hits Sith Lord for 651 points of damage.
+[Combat]  03:25:26 Imp Trooper hits Sith Lord for 1969 points of damage.
+[Combat]  03:25:26 Eliemau looted 383 credits from a SpecForce marine.
+[Combat]  03:25:26 Eliemau hits Turd for 1958 damage.
+[Combat]  03:25:26 Turd hits target for 5000 damage.
+[Combat]  03:25:26 Someone hits Bob for 10000 damage.
+[Combat]  03:25:26 You Stun a Rebel Major General for 1184 points of damage.
+[Combat]  03:25:27 You Power Shot a SpecForce marine for 526 points of damage.
+[Combat]  03:25:27 Rebel Scum has been incapacitated by something.
+[Combat]  03:25:27 Leloglo has been incapacitated by Ma-o.
+[Combat]  03:25:27 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
+[Combat]  03:25:27 Sith Lord Melee Hit Rebel Scum for 557 points of damage.
+[Combat]  03:25:28 Turd Power Shot Ma-o for 661 points of damage.
+[Combat]  03:25:28 Dark Jedi has been incapacitated by something.
+[Combat]  03:25:28 Imp Trooper has been incapacitated by Imp Trooper.
+[Combat]  03:25:28 A_Giant_Spider Posture Change Sith Lord for 0 points of damage.
+[Combat]  03:25:28 Eliemau Bleeding Shot a Rancor for 1411 points of damage.
+[Combat]  03:25:29 Rehote looted 140 credits from a SpecForce marine.
+[Combat]  03:25:29 A_Giant_Spider Intimidate Dark Jedi for 0 points of damage.
+[Combat]  03:25:29 Fikiosa has defeated a Rebel Colonel.
+[Combat]  03:25:29 A_Giant_Spider Intimidate Rehote for 0 points of damage.
+[Combat]  03:25:29 Eliemau applies poison to Bounty Hunter.
+[Combat]  03:25:29 A_Giant_Spider Posture Change Dark Jedi for 0 points of damage.
+[Combat]  03:25:29 Rehote hits Leloglo for 948 points of damage.
+[Combat]  03:25:29 Ma-o hits Leloglo for 712 points of damage.
+[Combat]  03:25:29 Rehote hits Leloglo for 666 points of damage.
+[Combat]  03:25:29 Ma-o Intimidate a Rebel Major General for 331 points of damage.
+[Combat]  03:25:30 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:25:30 Fikiosa hits Bounty Hunter for 1579 points of damage.
+[Combat]  03:25:30 Rehote hits Bounty Hunter for 1900 points of damage.
+[Combat]  03:25:30 Fikiosa hits Bounty Hunter for 1343 points of damage.
+[Combat]  03:25:30 Eliemau looted 268 credits from a Rancor.
+[Combat]  03:25:30 Dark Jedi hits Rehote for 1875 damage.
+[Combat]  03:25:30 Turd hits target for 5000 damage.
+[Combat]  03:25:30 Someone hits Bob for 10000 damage.
+[Combat]  03:25:30 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:25:30 Turd hits Ma-o for 1014 points of damage.
+[Combat]  03:25:30 Dark Jedi hits Rehote for 920 damage.
+[Combat]  03:25:30 Turd hits target for 5000 damage.
+[Combat]  03:25:30 Someone hits Bob for 10000 damage.
+[Combat]  03:25:30 A_Giant_Spider Posture Change Eliemau for 0 points of damage.
+[Combat]  03:25:30 Fikiosa hits a SpecForce marine for 258 points of damage.
+[Combat]  03:25:30 Eliemau hits Leloglo for 1127 damage.
+[Combat]  03:25:30 Turd hits target for 5000 damage.
+[Combat]  03:25:30 Someone hits Bob for 10000 damage.
+[Combat]  03:25:30 A_Giant_Spider Fire Knockdown Imp Trooper for 0 points of damage.
+[Combat]  03:25:30 Fikiosa looted 208 credits from a Rebel Colonel.
+[Combat]  03:25:30 Leloglo hits Eliemau for 1031 damage.
+[Combat]  03:25:30 Turd hits target for 5000 damage.
+[Combat]  03:25:30 Someone hits Bob for 10000 damage.
+[Combat]  03:25:31 A_Giant_Spider Intimidate Eliemau for 0 points of damage.
+[Combat]  03:25:31 Rebel Scum Power Shot a Rancor for 518 points of damage.
+[Combat]  03:25:31 Fikiosa has defeated a senior SpecForce infiltrator.
+[Combat]  03:25:31 Ma-o hits Bounty Hunter for 1473 damage.
+[Combat]  03:25:31 Turd hits target for 5000 damage.
+[Combat]  03:25:31 Someone hits Bob for 10000 damage.
+[Combat]  03:25:32 Fikiosa hits Turd for 1426 points of damage.
+[Combat]  03:25:32 Imp Trooper hits Turd for 1707 points of damage.
+[Combat]  03:25:32 Ma-o hits Turd for 1670 points of damage.
+[Combat]  03:25:32 Fikiosa Health Shot II Turd for 1221 points of damage.
+[Combat]  03:25:32 A_Giant_Spider Fire Knockdown Fikiosa for 0 points of damage.
+[Combat]  03:25:32 You receive 3058 points of Medicine experience.
+[Combat]  03:25:32 Ma-o hits Leloglo for 836 damage.
+[Combat]  03:25:32 Turd hits target for 5000 damage.
+[Combat]  03:25:32 Someone hits Bob for 10000 damage.
+[Combat]  03:25:32 Fikiosa looted Heavy Two-Handed Sword from a Rebel Major General.
+[Combat]  03:25:33 Dark Jedi hits Leloglo for 1397 points of damage.
+[Combat]  03:25:33 Fikiosa hits Leloglo for 1215 points of damage.
+[Combat]  03:25:33 Turd hits Leloglo for 1838 points of damage.
+[Combat]  03:25:33 Ma-o has defeated a Rancor.
+[Combat]  03:25:33 Rehote hits Turd for 597 damage.
+[Combat]  03:25:33 Turd hits target for 5000 damage.
+[Combat]  03:25:33 Someone hits Bob for 10000 damage.
+[Combat]  03:25:33 Rehote looted T-21 Rifle from a Rebel Major General.
+[Combat]  03:25:33 Ma-o Power Shot Turd for 980 points of damage.
+[Combat]  03:25:34 A_Giant_Spider Intimidate Eliemau for 0 points of damage.
+[Combat]  03:25:34 Turd looted 436 credits from a Rancor.
+[Combat]  03:25:34 Fikiosa looted T-21 Rifle from a Rebel Colonel.
+[Combat]  03:25:34 A_Giant_Spider Posture Change Leloglo for 0 points of damage.
+[Combat]  03:25:34 Fikiosa hits Leloglo for 1662 points of damage.
+[Combat]  03:25:34 Dark Jedi hits Leloglo for 1707 points of damage.
+[Combat]  03:25:34 Dark Jedi hits Leloglo for 1949 points of damage.
+[Combat]  03:25:34 Imp Trooper hits a Rebel Major General for 369 points of damage.
+[Combat]  03:25:34 A_Giant_Spider Intimidate Rebel Scum for 0 points of damage.
+[Combat]  03:25:34 Turd looted 369 credits from a Krayt Dragon.
+[Combat]  03:25:35 Ma-o looted 270 credits from a SpecForce marine.
+[Combat]  03:25:35 A_Giant_Spider Fire Knockdown Rebel Scum for 0 points of damage.
+[Combat]  03:25:35 Leloglo hits a Rancor for 1196 points of damage.
+[Combat]  03:25:35 A_Giant_Spider Posture Change Sith Lord for 0 points of damage.
+[Combat]  03:25:35 Eliemau hits Dark Jedi for 1985 points of damage.
+[Combat]  03:25:35 Bounty Hunter hits Dark Jedi for 1005 points of damage.
+[Combat]  03:25:35 Ma-o hits Dark Jedi for 945 points of damage.
+[Combat]  03:25:35 Fikiosa has defeated a senior SpecForce infiltrator.
+[Combat]  03:25:36 Fikiosa heals Rehote for 759 points of damage.
+[Combat]  03:25:36 Fikiosa heals Ma-o for 112 points of damage.
+[Combat]  03:25:36 Turd looted 144 credits from a Krayt Dragon.
+[Combat]  03:25:36 You hits Rehote for 1653 damage.
+[Combat]  03:25:36 Turd hits target for 5000 damage.
+[Combat]  03:25:36 Someone hits Bob for 10000 damage.
+[Combat]  03:25:37 A_Giant_Spider Intimidate Imp Trooper for 0 points of damage.
+[Combat]  03:25:37 Leloglo applies poison to Imp Trooper.
+[Combat]  03:25:37 Ma-o hits Imp Trooper for 1054 damage.
+[Combat]  03:25:37 Turd hits target for 5000 damage.
+[Combat]  03:25:37 Someone hits Bob for 10000 damage.
+[Combat]  03:25:37 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:25:37 Bounty Hunter hits Leloglo for 892 points of damage.
+[Combat]  03:25:37 Rebel Scum hits Leloglo for 1785 points of damage.
+[Combat]  03:25:37 Imp Trooper hits Leloglo for 1009 points of damage.
+[Combat]  03:25:37 Fikiosa looted Broken Electrobinoculars from a Rebel Colonel.
+[Combat]  03:25:37 Fikiosa hits Turd for 525 damage.
+[Combat]  03:25:37 Turd hits target for 5000 damage.
+[Combat]  03:25:37 Someone hits Bob for 10000 damage.
+[Combat]  03:25:37 A_Giant_Spider Posture Change Ma-o for 0 points of damage.
+[Combat]  03:25:37 You Intimidate Bounty Hunter for 446 points of damage.
+[Combat]  03:25:37 Bounty Hunter no longer intimidated.
+[Combat]  03:25:38 Fikiosa looted Heavy Two-Handed Sword from a SpecForce marine.
+[Combat]  03:25:38 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:25:38 Turd Stun Sith Lord for 356 points of damage.
+[Combat]  03:25:39 A_Giant_Spider Posture Change Fikiosa for 0 points of damage.
+[Combat]  03:25:39 Ma-o hits You for 1710 points of damage.
+[Combat]  03:25:39 Rebel Scum hits You for 628 points of damage.
+[Combat]  03:25:39 Eliemau hits You for 977 points of damage.
+[Combat]  03:25:39 Turd has been incapacitated by something.
+[Combat]  03:25:39 Sith Lord has been incapacitated by Imp Trooper.
+[Combat]  03:25:39 A_Giant_Spider Fire Knockdown Sith Lord for 0 points of damage.
+[Combat]  03:25:39 Imp Trooper hits a Rebel Major General for 160 points of damage.
+[Combat]  03:25:39 Bounty Hunter hits Rehote for 1662 damage.
+[Combat]  03:25:39 Turd hits target for 5000 damage.
+[Combat]  03:25:39 Someone hits Bob for 10000 damage.
+[Combat]  03:25:39 A_Giant_Spider Fire Knockdown Ma-o for 0 points of damage.
+[Combat]  03:25:39 Turd hits Bounty Hunter for 1508 points of damage.
+[Combat]  03:25:39 Leloglo hits Bounty Hunter for 857 points of damage.
+[Combat]  03:25:39 Fikiosa hits Bounty Hunter for 762 points of damage.
+[Combat]  03:25:39 Bounty Hunter hits a Rebel Colonel for 362 points of damage.
+[Combat]  03:25:40 A_Giant_Spider Intimidate Rebel Scum for 0 points of damage.
+[Combat]  03:25:40 You hits Eliemau for 1942 points of damage.
+[Combat]  03:25:40 Fikiosa hits Eliemau for 1095 points of damage.
+[Combat]  03:25:40 You hits Eliemau for 1617 points of damage.
+[Combat]  03:25:40 Ma-o applies poison to Dark Jedi.
+[Combat]  03:25:40 Rehote looted 211 credits from a Krayt Dragon.
+[Combat]  03:25:40 Leloglo hits Turd for 880 points of damage.
+[Combat]  03:25:40 Rehote hits Fikiosa for 720 points of damage.
+[Combat]  03:25:40 Turd hits Fikiosa for 1315 points of damage.
+[Combat]  03:25:40 Eliemau hits Fikiosa for 978 points of damage.
+[Combat]  03:25:40 Leloglo Force Choke a Krayt Dragon for 1336 points of damage.
+[Combat]  03:25:40 Bounty Hunter hits Sith Lord for 1268 damage.
+[Combat]  03:25:40 Turd hits target for 5000 damage.
+[Combat]  03:25:40 Someone hits Bob for 10000 damage.
+[Combat]  03:25:41 A_Giant_Spider Posture Change Eliemau for 0 points of damage.
+[Combat]  03:25:41 Fikiosa applies poison to Dark Jedi.
+[Combat]  03:25:41 You heals Eliemau for 566 points of damage.
+[Combat]  03:25:41 Rebel Scum hits Bounty Hunter for 1016 damage.
+[Combat]  03:25:41 Turd hits target for 5000 damage.
+[Combat]  03:25:41 Someone hits Bob for 10000 damage.
+[Groupchat]  13:14:51 You: 123
+[Groupchat]  13:14:51 Turd: 123
+[Groupchat]  13:14:51 Leloglo: 123
+[Groupchat]  13:14:51 Rehote: 123
+[Groupchat]  13:14:51 Ma-o: 123
+[Groupchat]  13:14:51 Fikiosa: 123
+[Groupchat]  13:14:51 Eliemau: 123
+[Groupchat]  13:14:56 You: 123
+[Groupchat]  13:14:56 Turd: 123
+[Groupchat]  13:14:56 Leloglo: 123
+[Groupchat]  13:14:56 Rehote: 123
+[Groupchat]  13:14:56 Ma-o: 123
+[Groupchat]  13:14:56 Fikiosa: 123
+[Groupchat]  13:14:56 Eliemau: 123
+[Groupchat]  13:15:04 You: 123
+[Groupchat]  13:15:04 Turd: 123
+[Groupchat]  13:15:04 Leloglo: 123
+[Groupchat]  13:15:04 Rehote: 123
+[Groupchat]  13:15:04 Ma-o: 123
+[Groupchat]  13:15:04 Fikiosa: 123
+[Groupchat]  13:15:04 Eliemau: 123

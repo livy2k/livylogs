@@ -88,7 +88,7 @@ class DamageMeterWindow(BasePopoutWindow):
             # Use fixed widths to prevent resizing jumps
             # Increased widths slightly to handle longer numbers/duration strings
             # and set fixed font for value labels to ensure character width consistency
-            VAL_WIDTH = 12
+            VAL_WIDTH = 15
             VAL_FONT = ("Consolas", 10, "bold") # Monospaced font for values
             
             # Configure columns to be uniform with enough minsize for 12-char labels

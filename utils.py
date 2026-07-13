@@ -13,7 +13,9 @@ def text_to_dot_matrix(text, width, height, font_family="Consolas", font_size=10
             # On Windows, fonts are usually in C:\Windows\Fonts
             # We try to find LilitaOne.ttf in our assets first if possible
             import os
-            font_path = os.path.join("UImaker", "assets", "fonts", "LilitaOne", "LilitaOne.ttf")
+            font_path = get_resource_path("LilitaOne.ttf")
+            if not os.path.exists(font_path):
+                 font_path = os.path.join("UImaker", "assets", "fonts", "LilitaOne", "LilitaOne.ttf")
             if not os.path.exists(font_path):
                  font_path = font_family + ".ttf"
             font = ImageFont.truetype(font_path, font_size)

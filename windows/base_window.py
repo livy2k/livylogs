@@ -44,7 +44,13 @@ class BasePopoutWindow:
             self.close()
             return
 
-        self.window = tk.Toplevel(self.app.root)
+        # Use a hidden dummy parent to hide from taskbar
+        if not hasattr(self.app, '_taskbar_dummy'):
+            self.app._taskbar_dummy = tk.Toplevel(self.app.root)
+            self.app._taskbar_dummy.withdraw()
+            self.app._taskbar_dummy.overrideredirect(True)
+
+        self.window = tk.Toplevel(self.app._taskbar_dummy)
         self.window.title(self.title)
         
         w = self.app.config.getint(self.config_key, "width", fallback=self.default_w)
@@ -71,14 +77,17 @@ class BasePopoutWindow:
                 self.window.iconphoto(False, self.app._icon_photo)
         except: pass
 
-        # Ensure it doesn't show in taskbar by setting it as a tool window
+        # Explicitly hide from taskbar using ToolWindow style if parent trick didn't suffice
         try:
             GWL_EXSTYLE = -20
             WS_EX_TOOLWINDOW = 0x00000080
-            hwnd = __import__("ctypes").windll.user32.GetParent(self.window.winfo_id())
-            style = __import__("ctypes").windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            __import__("ctypes").windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
+            hwnd = self.window.winfo_id()
+            if hwnd:
+                import ctypes
+                style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+                ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
         except: pass
+        
         self.window.attributes("-alpha", self.app.current_alpha)
         if self.app.always_on_top:
             self.window.attributes("-topmost", True)
@@ -242,6 +251,7 @@ class BasePopoutWindow:
 
     def show_context_menu(self, event):
         if not hasattr(self, 'context_menu'):
+            from constants import PANEL_DARK, TEXT_PRIMARY, ACCENT_BLUE
             self.context_menu = tk.Menu(self.window, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, activebackground=ACCENT_BLUE, borderwidth=1)
             self.context_menu.add_command(label="Copy", command=self._on_global_copy, accelerator="Ctrl+C")
             self.context_menu.add_command(label="Select All", command=self._on_global_select_all, accelerator="Ctrl+A")
@@ -257,12 +267,19 @@ class BasePopoutWindow:
         def force_top():
             try:
                 from constants import HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE, SWP_SHOWWINDOW, user32
-                # Get the handle of the menu window. 
-                # Note: tk.Menu.winfo_id() might not be the actual window handle on some systems/versions,
-                # but on Windows it usually corresponds to the menu's popup window.
-                hwnd = self.context_menu.winfo_id()
-                if hwnd:
-                    user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                import ctypes
+                
+                def enum_callback(hwnd, lparam):
+                    class_name = ctypes.create_unicode_buffer(256)
+                    user32.GetClassNameW(hwnd, class_name, 256)
+                    if class_name.value == "#32768":
+                        if user32.IsWindowVisible(hwnd):
+                            user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, 
+                                               SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                    return True
+
+                enum_proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(enum_callback)
+                user32.EnumWindows(enum_proc, 0)
             except: pass
             
             # Also ensure focus
@@ -271,7 +288,8 @@ class BasePopoutWindow:
             except: pass
 
         self.window.after(1, force_top)
-        self.window.after(50, force_top) # Second attempt slightly later for insurance
+        self.window.after(50, force_top)
+        self.window.after(100, force_top)
 
     def _draw_title_gradient(self, event=None):
         if not self.title_bar: return

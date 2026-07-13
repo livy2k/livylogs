@@ -43,6 +43,7 @@ from windows.options import OptionsWindow
 from windows.alexa import AlexaWindow
 from windows.equalizer import EqualizerWindow
 from windows.livius import LiviusWindow
+from windows.gharv import GharvWindow
 from radio_manager import RadioManager, SAFE_RAP_STATIONS
 from killstreak_manager import KillstreakManager
 
@@ -64,10 +65,15 @@ class CombatLogApp:
         self.style.theme_use('clam')
         
         # Load Lilita One font if available
-        self.lilita_font_path = r"C:\Users\LivyC\Documents\UImaker\assets\fonts\LilitaOne\LilitaOne.ttf"
+        self.lilita_font_path = get_resource_path("LilitaOne.ttf")
         self.lilita_family = "Lilita One"
+        if not os.path.exists(self.lilita_font_path):
+             # Fallback to absolute dev path
+             self.lilita_font_path = r"C:\Users\LivyC\Documents\UImaker\assets\fonts\LilitaOne\LilitaOne.ttf"
+        
         if os.path.exists(self.lilita_font_path):
             try:
+                import ctypes
                 # Attempt to load font on Windows using ctypes
                 # gdi32.AddFontResourceExW
                 FR_PRIVATE = 0x10
@@ -133,10 +139,10 @@ class CombatLogApp:
             wid = self.root.winfo_id()
             
             if wid > 0:
-                hwnd = ctypes.windll.user32.GetParent(wid)
-                if hwnd > 0:
-                    style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-                    ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
+                # Use the window handle itself, not its parent
+                import ctypes
+                style = ctypes.windll.user32.GetWindowLongW(wid, GWL_EXSTYLE)
+                ctypes.windll.user32.SetWindowLongW(wid, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW)
         except Exception as e:
             print(f"[DEBUG] Error setting toolwindow style: {e}")
         
@@ -161,6 +167,7 @@ class CombatLogApp:
             self.alexa_win = AlexaWindow(self)
             self.eq_win = EqualizerWindow(self)
             self.livius_win = LiviusWindow(self)
+            self.gharv_win = GharvWindow(self)
         except Exception as e:
             print(f"[DEBUG] Error creating subwindows: {e}")
             # Ensure defaults exist
@@ -171,6 +178,7 @@ class CombatLogApp:
             if not hasattr(self, 'options_win'): self.options_win = None
             if not hasattr(self, 'alexa_win'): self.alexa_win = None
             if not hasattr(self, 'livius_win'): self.livius_win = None
+            if not hasattr(self, 'gharv_win'): self.gharv_win = None
 
         self.calc_win = None
         self.armor_win = None
@@ -184,7 +192,8 @@ class CombatLogApp:
         
         self._managed_windows = [
             self.skimmers_win, self.damage_meter_win, self.leaderboard_win, 
-            self.details_win, self.options_win, self.alexa_win, self.livius_win, None, None # placeholders for calc_win, armor_win
+            self.details_win, self.options_win, self.alexa_win, self.livius_win,
+            self.gharv_win, None, None # placeholders for calc_win, armor_win
         ]
         
         self.is_interacting = False
@@ -193,6 +202,10 @@ class CombatLogApp:
         self.actual_app_start_time = datetime.now()
         self.last_reset_time = self.actual_app_start_time
         self.running = True
+        
+        self.compact_mode = self.config.getboolean("General", "compact_mode", fallback=False)
+        self._last_mode = self.compact_mode
+        self.target_game_hwnd = None
         
         # Combat State
         self.player_data = {}
@@ -266,6 +279,7 @@ class CombatLogApp:
         self.skimmer_search_query = tk.StringVar()
         self.always_on_top = True
         self.is_dialog_open = False
+        self.full_geometry = f"{initial_width}x{initial_height}+{initial_x}+{initial_y}"
         self.target_game_hwnd = None
 
         # self.radio_mgr = RadioManager(status_callback=self._update_radio_ui) # Moved up
@@ -651,7 +665,7 @@ class CombatLogApp:
 
     def _load_dynamic_labels(self):
         self.dynamic_labels = {}
-        labels_file = "ui_labels_map.txt"
+        labels_file = get_resource_path("ui_labels_map.txt")
         if os.path.exists(labels_file):
             try:
                 with open(labels_file, "r") as f:
@@ -731,11 +745,20 @@ class CombatLogApp:
             # Match window size to background image size (typically 638x154)
             bg_w, bg_h = self.bg_image_raw.size
             if bg_w > 0 and bg_h > 0:
-                img_w, img_h = bg_w, bg_h
+                if self.compact_mode:
+                    img_w, img_h = bg_w, 35 # Compact bar height
+                else:
+                    img_w, img_h = bg_w, bg_h
+                
                 self.root.geometry(f"{img_w}x{img_h}")
                 self.main_canvas.config(width=img_w, height=img_h)
+                
                 # Position image at (0, 0)
-                self.main_canvas.create_image(0, 0, image=self.bg_photo, anchor="nw", tags="bg_image")
+                if not self.compact_mode:
+                    self.main_canvas.create_image(0, 0, image=self.bg_photo, anchor="nw", tags="bg_image")
+                else:
+                    # Optional: small dark bar for compact mode
+                    self.main_canvas.create_rectangle(0, 0, img_w, img_h, fill="#0A0500", outline="#CD853F", tags="bg_rect")
                 
                 # UImaker design notes:
                 # The original design used a 700x400 canvas.
@@ -822,71 +845,67 @@ class CombatLogApp:
         
         # Setup: 240, 129
         sx, sy, sfg, ssz = get_pos("SETUP", 129, 49, "#d21a17", 7)
+        if self.compact_mode: sx, sy = 10, 10
         if "SETTINGS" in self.dynamic_labels: 
-             sx, sy, sfg, ssz = get_pos("SETTINGS", sx, sy, sfg, ssz)
-        self.btn_setup = create_ui_label("SETUP", sx, sy, self.toggle_menu, fg=sfg, 
+             ds = self.dynamic_labels["SETTINGS"]
+             sx, sy = (ds.get("x", sx), ds.get("y", sy)) if not self.compact_mode else (sx, sy)
+             sfg, ssz = ds.get("fg", sfg), ds.get("size", ssz)
+        self.lbl_setup = create_ui_label("SETUP", sx, sy, self.toggle_menu, fg=sfg, 
                                          font_obj=tkfont.Font(family="Lilita One", size=ssz))
 
         # Alexa: 236, 151
         ax, ay, afg, asz = get_pos("ALEXA", 121, 98, "#d21a18", 7)
-        self.btn_alexa = create_ui_label("ALEXA", ax, ay, self.alexa_win.show, fg=afg,
+        if self.compact_mode: ax, ay = 70, 10
+        self.lbl_alexa = create_ui_label("ALEXA", ax, ay, self.alexa_win.show, fg=afg,
                                          font_obj=tkfont.Font(family="Lilita One", size=asz))
         
         # DMG METER: 292, 163
         dx, dy, dfg, dsz = get_pos("DMG METER", 233, 123, "#d31a18", 5)
-        self.lbl_dmg = create_ui_label("DMG METER", dx, dy, self.damage_meter_win.show, fg=dfg,
+        if self.compact_mode: dx, dy = 130, 10
+        self.lbl_dmm = create_ui_label("DMG METER", dx, dy, self.damage_meter_win.show, fg=dfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=dsz))
         
         # Details: 342, 164
         tx, ty, tfg, tsz = get_pos("DETAILS", 333, 123, "#d31a18", 5)
+        if self.compact_mode: tx, ty = 210, 10
         self.lbl_det = create_ui_label("DETAILS", tx, ty, self.details_win.show, fg=tfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=tsz))
         
         # Skimmers: 381, 162
         kx, ky, kfg, ksz = get_pos("SKIMMERS", 411, 124, "#d31a18", 5)
+        if self.compact_mode: kx, ky = 280, 10
         self.lbl_skm = create_ui_label("SKIMMERS", kx, ky, self.skimmers_win.show, fg=kfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=ksz))
 
         # Livius: 226, 164
         lx, ly, lfg, lsz = get_pos("LIVIUS", 101, 124, "#bbbbbb", 7)
+        if self.compact_mode: lx, ly = 360, 10
         self.lbl_livius = create_ui_label("LIVIUS", lx, ly, self.livius_win.show, fg=lfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=lsz))
-
-        # JOG
-        jx, jy, jfg, jsz = get_pos("JOG", 595, -74, "#ececec", 5)
-        self.lbl_jog = create_ui_label("JOG", jx, jy, None, fg=jfg,
-                                         font_obj=tkfont.Font(family="Lilita One", size=jsz))
-
-        # RADIO_LBL - Power Button Icon
-        rlx, rly, rlfg, rlsz = get_pos("RADIO_LBL", 31, 35, "#d31a18", 20)
-        self.lbl_radio = create_ui_label("⏻", rlx, rly, self.toggle_radio, fg="#d31a18",
-                                         font_obj=tkfont.Font(family="Lilita One", size=rlsz, weight="bold"), anchor="center")
-
+        
         # Gharv
         gx, gy, gfg, gsz = get_pos("GHARV", 139, 76, "#d21a18", 6)
-        self.lbl_gharv = create_ui_label("GHARV", gx, gy, None, fg=gfg,
-                                         font_obj=tkfont.Font(family="Lilita One", size=gsz))
-
-        
-        # Text_6: Clock (411, 114) - design uses 'Clock' as header
-        # We'll skip the 'CLOCK' header label to avoid clutter, as the time value is displayed here.
-        # self.lbl_clock_header = create_ui_label("CLOCK", 411, 114, None, fg="#60fc17", 
-        #                                        font_obj=tkfont.Font(family="Lilita One", size=7))
-
-        # Item Link: 419, 165
-        ix, iy, ifg, isz = get_pos("ITEM LINK", 487, 124, "#d31a18", 5)
-        self.lbl_itemlink = create_ui_label("ITEM LINK", ix, iy, None, fg=ifg,
-                                         font_obj=tkfont.Font(family="Lilita One", size=isz))
+        if self.compact_mode: gx, gy = 425, 10
+        self.lbl_gharv = create_ui_label("GHARV", gx, gy, lambda e: [self.gharv_win.show(), "break"][-1], fg=gfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=gsz, weight="bold"))
 
         # Bass Boost: Bottom Left
         bbx, bby, bbfg, bbsz = get_pos("BASS BOOST", 25, 129, "#d21a17", 5)
-        self.lbl_bassboost = create_ui_label("BASS\nBOOST", bbx, bby, self.open_equalizer, fg=bbfg,
+        if self.compact_mode: bbx, bby = 490, 10
+        self.lbl_bassboost = create_ui_label("BASS BOOST" if self.compact_mode else "BASS\nBOOST", bbx, bby, self.open_equalizer, fg=bbfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=bbsz))
 
-        # Reset: 261, 163
-        rx, ry, rfg, rsz = get_pos("RESET", 171, 122, "#d31a18", 4)
-        self.btn_reset = create_ui_label("RESET", rx, ry, self.reset_session_data, fg=rfg,
-                                         font_obj=tkfont.Font(family="Lilita One", size=rsz))
+        # MIN/MAX button in compact mode
+        mx, my, mfg, msz = get_pos("MIN", 615, 10, "#ffffff", 8)
+        if self.compact_mode: mx, my = 580, 10
+        self.btn_min = create_ui_label("MAX" if self.compact_mode else "MIN", mx, my, self.toggle_compact_mode, fg=mfg,
+                                        font_obj=tkfont.Font(family="Lilita One", size=msz))
+
+        if self.compact_mode:
+             # In compact mode, we only want these window-opening buttons.
+             # We skip building the rest of the UI elements to keep it clean.
+             # Ensure we update item mappings in refresh_ui_only list if needed
+             return
 
         # XP: 272, 117
         xx, xy, xfg, xsz = get_pos("XP", 200, 23, "#60fc17", 10)
@@ -1055,6 +1074,11 @@ class CombatLogApp:
         self.main_canvas.tag_bind("vol_knob_area", "<B1-Motion>", on_knob_drag)
         self.main_canvas.tag_bind("vol_knob_area", "<Button-1>", on_knob_drag)
         self.main_canvas.tag_bind("vol_knob_area", "<ButtonRelease-1>", lambda e: setattr(self, 'last_interaction_time', time.time()))
+
+        # Radio Toggle / Power Button
+        rlx, rly, rlfg, rlsz = get_pos("RADIO_LBL", 18, 15, "#d31a18", 20)
+        self.lbl_radio = create_ui_label("⏻", rlx, rly, self.toggle_radio, fg=rlfg,
+                                         font_obj=tkfont.Font(family="Lilita One", size=rlsz, weight="bold"))
 
         # Radio 292, 130
         rax, ray, rafg, rasz = get_pos("RADIO", 233, 51, "#d31a18", 5)
@@ -2031,6 +2055,12 @@ class CombatLogApp:
                 self.build_layout()
                 return
             
+            # If we are switching modes, force a full rebuild
+            if getattr(self, "_last_mode", None) != self.compact_mode:
+                self._last_mode = self.compact_mode
+                self.build_layout()
+                return
+
             # Optimization: Try to just move existing items instead of destroying canvas
             # This significantly reduces flashing.
             img_w, img_h = self.root.winfo_width(), self.root.winfo_height()
@@ -2039,6 +2069,8 @@ class CombatLogApp:
             def update_pos(name, item_attr):
                 if hasattr(self, item_attr):
                     item = getattr(self, item_attr)
+                    if not self.main_canvas.winfo_exists() or not self.main_canvas.find_withtag(item):
+                        return
                     data = self.dynamic_labels.get(name.upper())
                     if data:
                         self.main_canvas.coords(item, data['x'], data['y'])
@@ -2057,7 +2089,7 @@ class CombatLogApp:
             for name, attr in label_map.items():
                 update_pos(name, attr)
 
-            if hasattr(self, 'lbl_radio'):
+            if hasattr(self, 'lbl_radio') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.lbl_radio):
                 update_pos("RADIO_LBL", "lbl_radio")
                 if hasattr(self, 'radio_mgr') and self.radio_mgr:
                     if self.radio_mgr.is_playing:
@@ -2065,24 +2097,24 @@ class CombatLogApp:
                     else:
                         self.main_canvas.itemconfig(self.lbl_radio, fill="#d31a18")
 
-            if hasattr(self, 'lbl_bassboost'):
+            if hasattr(self, 'lbl_bassboost') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.lbl_bassboost):
                 bbx, bby, bbfg, bbsz = self.build_layout_get_pos("BASS BOOST", 25, 129, "#d21a17", 5)
                 self.main_canvas.coords(self.lbl_bassboost, bbx, bby)
             
             # Special cases
-            if hasattr(self, 'clock_id'):
+            if hasattr(self, 'clock_id') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.clock_id):
                 clx, cly, _, _ = self.build_layout_get_pos("CLOCK", 471, 9)
                 self.main_canvas.coords(self.clock_id, clx, cly + 14)
             
-            if hasattr(self, 'lbl_damage'):
+            if hasattr(self, 'lbl_damage') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.lbl_damage):
                 dmx, dmy, _, _ = self.build_layout_get_pos("DAMAGE", 80, 23)
                 self.main_canvas.coords(self.lbl_damage, dmx + 60, dmy)
             
-            if hasattr(self, 'lbl_xp_val'):
+            if hasattr(self, 'lbl_xp_val') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.lbl_xp_val):
                 xpx, xpy, _, _ = self.build_layout_get_pos("XP", 200, 23)
                 self.main_canvas.coords(self.lbl_xp_val, xpx + 40, xpy)
             
-            if hasattr(self, 'lbl_xph_val'):
+            if hasattr(self, 'lbl_xph_val') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.lbl_xph_val):
                 xphx, xphy, _, _ = self.build_layout_get_pos("XP/H", 380, 23)
                 self.main_canvas.coords(self.lbl_xph_val, xphx + 50, xphy)
 
@@ -2097,77 +2129,92 @@ class CombatLogApp:
             vx, vy, vfg, vsz = self.build_layout_get_pos("VOL_DOT", 51, 74, "#ffffff", 5)
             self.knob_cx = vx + 10
             self.knob_cy = vy + 5
-            if hasattr(self, 'knob_area_id'):
+            if hasattr(self, 'knob_area_id') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.knob_area_id):
                 self.main_canvas.coords(self.knob_area_id, self.knob_cx - 40, self.knob_cy - 40, self.knob_cx + 40, self.knob_cy + 40)
             
             # Reposition the volume line start/end if it's being forced
-            if hasattr(self, 'vol_knob_id'):
+            if hasattr(self, 'vol_knob_id') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.vol_knob_id):
                 self.update_knob_visual(getattr(self, '_last_knob_angle', 90))
             
             # Radio
             rax, ray, rafg, rasz = self.build_layout_get_pos("RADIO", 233, 51, "#d31a18", 5)
-            if hasattr(self, 'radio_image_id'):
+            if hasattr(self, 'radio_image_id') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.radio_image_id):
                 start_x = rax + 155 - 149
                 self.main_canvas.coords("radio_dot_bg", start_x, ray + 4)
                 self.main_canvas.coords(self.radio_image_id, start_x, ray + 4)
             
-            if hasattr(self, 'radio_toggle_id'):
+            if hasattr(self, 'radio_toggle_id') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.radio_toggle_id):
                 start_x = rax + 155 - 149
                 self.main_canvas.coords(self.radio_toggle_id, start_x, ray + 4, start_x + 298, ray + 51 + 4)
             
-            return
-        
-        # Update Combat Stats
-        try:
-            you = self.player_data.get("You", {})
-            dmg = you.get("damage", 0)
-            xp = sum(item.get("amount", 0) for item in you.get("xp_history", []))
+            if hasattr(self, 'btn_min') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.btn_min):
+                mx, my, _, _ = self.build_layout_get_pos("MIN", 615, 10)
+                if self.compact_mode: mx, my = 580, 10
+                self.main_canvas.coords(self.btn_min, mx, my)
+                self.main_canvas.itemconfig(self.btn_min, text="MAX" if self.compact_mode else "MIN")
+
+            # Update Combat Stats
+            if self.compact_mode:
+                # Ensure buttons are on top in compact mode
+                for attr in ["lbl_setup", "lbl_alexa", "lbl_dmm", "lbl_det", "lbl_skm", "lbl_livius", "lbl_gharv", "lbl_bassboost"]:
+                    if hasattr(self, attr):
+                        item = getattr(self, attr)
+                        if self.main_canvas.find_withtag(item):
+                            self.main_canvas.tag_raise(item)
+                return # Skip stats and radio updates in compact mode
             
-            # Calculate XP/H
-            xph = 0
-            if "xp_history" in you and you["xp_history"]:
-                first_ts = you["xp_history"][0].get("time", time.time())
-                elapsed_hours = (time.time() - first_ts) / 3600.0
-                if elapsed_hours > 0:
-                    xph = int(xp / elapsed_hours)
+            try:
+                you = self.player_data.get("You", {})
+                dmg = you.get("damage", 0)
+                xp = sum(item.get("amount", 0) for item in you.get("xp_history", []))
+            
+                # Calculate XP/H
+                xph = 0
+                if "xp_history" in you and you["xp_history"]:
+                    first_ts = you["xp_history"][0].get("time", time.time())
+                    elapsed_hours = (time.time() - first_ts) / 3600.0
+                    if elapsed_hours > 0:
+                        xph = int(xp / elapsed_hours)
 
-            def format_val(val):
-                if val >= 1000000:
-                    return f"{val/1000000:.1f}m"
-                elif val >= 1000:
-                    return f"{val/1000:.1f}k"
-                return str(val)
+                def format_val(val):
+                    if val >= 1000000000:
+                        return f"{val/1000000000:.1f}b"
+                    elif val >= 1000000:
+                        return f"{val/1000000:.1f}m"
+                    elif val >= 1000:
+                        return f"{val/1000:.1f}k"
+                    return str(val)
 
-            new_dmg_text = format_val(dmg)
-            new_xp_text = format_val(xp)
-            new_xph_text = format_val(xph)
+                new_dmg_text = format_val(dmg)
+                new_xp_text = format_val(xp)
+                new_xph_text = format_val(xph)
 
-            if hasattr(self, 'lbl_damage'):
-                if self.main_canvas.itemcget(self.lbl_damage, "text") != new_dmg_text:
-                    self.main_canvas.itemconfig(self.lbl_damage, text=new_dmg_text)
-            if hasattr(self, 'lbl_xp_val'):
-                if self.main_canvas.itemcget(self.lbl_xp_val, "text") != new_xp_text:
-                    self.main_canvas.itemconfig(self.lbl_xp_val, text=new_xp_text)
-            if hasattr(self, 'lbl_xph_val'):
-                if self.main_canvas.itemcget(self.lbl_xph_val, "text") != new_xph_text:
-                    self.main_canvas.itemconfig(self.lbl_xph_val, text=new_xph_text)
+                if hasattr(self, 'lbl_damage'):
+                    if self.main_canvas.itemcget(self.lbl_damage, "text") != new_dmg_text:
+                        self.main_canvas.itemconfig(self.lbl_damage, text=new_dmg_text)
+                if hasattr(self, 'lbl_xp_val'):
+                    if self.main_canvas.itemcget(self.lbl_xp_val, "text") != new_xp_text:
+                        self.main_canvas.itemconfig(self.lbl_xp_val, text=new_xp_text)
+                if hasattr(self, 'lbl_xph_val'):
+                    if self.main_canvas.itemcget(self.lbl_xph_val, "text") != new_xph_text:
+                        self.main_canvas.itemconfig(self.lbl_xph_val, text=new_xph_text)
 
-            # Update Volume Knob visual
-            if hasattr(self, 'radio_mgr') and self.radio_mgr:
-                # If user is currently dragging the knob, don't override the position from manager
-                # to prevent "snapping" due to integer volume rounding or network delay
-                now_t = time.time()
-                is_interacting = (now_t - getattr(self, 'last_interaction_time', 0) < 3.0)
-                if not is_interacting:
-                    # Map volume 0-100 back to 0-11 stages, then to 0-330 degrees relative to 90
-                    # Use float for more precision during mapping back
-                    vol_stage = int((self.radio_mgr.volume / 100.0) * 11)
-                    angle = (vol_stage * 30.0) + 90
-                    self.update_knob_visual(angle)
-                    self._last_knob_angle = angle
-                    self._last_vol_stage = vol_stage
-                    self._last_adj_angle = vol_stage * 30.0
-        except: pass
+                # Update Volume Knob visual
+                if hasattr(self, 'radio_mgr') and self.radio_mgr:
+                    # If user is currently dragging the knob, don't override the position from manager
+                    # to prevent "snapping" due to integer volume rounding or network delay
+                    now_t = time.time()
+                    is_interacting = (now_t - getattr(self, 'last_interaction_time', 0) < 3.0)
+                    if not is_interacting:
+                        # Map volume 0-100 back to 0-11 stages, then to 0-330 degrees relative to 90
+                        # Use float for more precision during mapping back
+                        vol_stage = int((self.radio_mgr.volume / 100.0) * 11)
+                        angle = (vol_stage * 30.0) + 90
+                        self.update_knob_visual(angle)
+                        self._last_knob_angle = angle
+                        self._last_vol_stage = vol_stage
+                        self._last_adj_angle = vol_stage * 30.0
+            except: pass
 
         # Update radio scrolling text if playing
         try:
@@ -2243,7 +2290,17 @@ class CombatLogApp:
                     vol_stage = int((self.radio_mgr.volume / 100.0) * 11)
                 
                 vol_stage = vol_stage if vol_stage is not None else 0
-                update_radio_dots("", color="#CD853F", is_volume=True, vol_stage=vol_stage)
+                
+                # IF we just turned the radio on (is_playing and current_station is "Radio Starting...")
+                # we should prioritize the "Radio Starting..." message over the volume bar
+                # unless the user is REALLY adjusting volume (dragging knob)
+                is_dragging = (now_ts - getattr(self, 'last_interaction_time', 0) < 3.0) and hasattr(self, '_dragging_allowed') and self._dragging_allowed
+                
+                if hasattr(self, 'radio_mgr') and self.radio_mgr.is_playing and self.radio_mgr.current_station == "Radio Starting..." and not is_dragging:
+                    # Show "Radio Starting..." instead of volume
+                    update_radio_dots("RADIO STARTING...")
+                else:
+                    update_radio_dots("", color="#CD853F", is_volume=True, vol_stage=vol_stage)
             elif hasattr(self, 'radio_mgr') and self.radio_mgr and self.radio_mgr.is_playing:
                 if not hasattr(self, '_radio_scroll_pos'): self._radio_scroll_pos = 0
                 if not hasattr(self, '_radio_scroll_last_tick'): self._radio_scroll_last_tick = 0
@@ -2541,9 +2598,11 @@ class CombatLogApp:
         try:
             # Save all window positions
             for win_attr in ['skimmers_win', 'damage_meter_win', 'leaderboard_win', 
-                            'details_win', 'options_win', 'alexa_win', 'eq_win', 'livius_win']:
+                            'details_win', 'options_win', 'alexa_win', 'eq_win', 'livius_win', 'gharv_win']:
                 win = getattr(self, win_attr, None)
                 if win: win.save_config()
+            if hasattr(self, 'gharv_win'):
+                self.gharv_win.close()
         except: pass
         if hasattr(self, '_exiting') and self._exiting:
             return
@@ -2621,7 +2680,8 @@ class CombatLogApp:
             "x": str(self.root.winfo_x()),
             "y": str(self.root.winfo_y()),
             "disable_warnings": str(self.disable_warnings.get()),
-            "show_class_colors": str(self.show_class_colors.get())
+            "show_class_colors": str(self.show_class_colors.get()),
+            "compact_mode": str(self.compact_mode)
         })
         
         # Save popout positions/sizes
@@ -2679,18 +2739,36 @@ class CombatLogApp:
             self.context_menu.add_command(label="Copy", command=self._on_global_copy, accelerator="Ctrl+C")
             self.context_menu.add_command(label="Select All", command=self._on_global_select_all, accelerator="Ctrl+A")
             self.context_menu.add_separator()
+            self.context_menu.add_command(label="Toggle Compact Mode", command=self.toggle_compact_mode)
+            self.context_menu.add_separator()
             self.context_menu.add_command(label="LIVIUS", command=lambda: self.livius_win.show())
         
         self.context_menu.unpost()
         self.context_menu.post(event.x_root, event.y_root)
 
-        # Win32 call to force menu to the very top
+        # Standard Windows menu class is #32768
         def force_top():
             try:
                 from constants import HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE, SWP_SHOWWINDOW, user32
-                hwnd = self.context_menu.winfo_id()
-                if hwnd:
-                    user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                import ctypes
+                
+                # We need to find the specific menu that just opened.
+                # EnumWindows to find all #32768 windows and pick the most recent one.
+                # Or just use FindWindow if there is likely only one.
+                # But to be safer, we can try to find the one near the mouse or just top-level ones.
+                
+                def enum_callback(hwnd, lparam):
+                    class_name = ctypes.create_unicode_buffer(256)
+                    user32.GetClassNameW(hwnd, class_name, 256)
+                    if class_name.value == "#32768":
+                        # If it's visible, apply topmost
+                        if user32.IsWindowVisible(hwnd):
+                            user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, 
+                                               SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                    return True
+
+                enum_proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(enum_callback)
+                user32.EnumWindows(enum_proc, 0)
             except: pass
             try:
                 self.context_menu.focus_set()
@@ -2698,6 +2776,7 @@ class CombatLogApp:
 
         self.root.after(1, force_top)
         self.root.after(50, force_top)
+        self.root.after(100, force_top)
 
     def drag_window(self, event):
         if not getattr(self, "_dragging_allowed", False):
@@ -2739,14 +2818,24 @@ class CombatLogApp:
         self.refresh_ui_only(force=True)
 
     def toggle_radio(self):
+        # Update last interaction time to avoid showing volume bar if just turning on
+        self.last_interaction_time = time.time() - 2.0 # Force it past the 1.5s threshold
+        
         if self.radio_mgr:
-            self.radio_mgr.toggle()
+            try:
+                self.radio_mgr.toggle()
+            except Exception as e:
+                print(f"[DEBUG] Radio toggle failed: {e}")
+                return
+                
             # The screen/dot matrix will reflect the state.
             # We also update the power icon color to reflect the state.
-            if self.radio_mgr.is_playing:
-                self.main_canvas.itemconfig(self.lbl_radio, fill="#00ff00")
-            else:
-                self.main_canvas.itemconfig(self.lbl_radio, fill="#d31a18")
+            if self.main_canvas.winfo_exists():
+                if hasattr(self, 'lbl_radio') and self.main_canvas.find_withtag(self.lbl_radio):
+                    if self.radio_mgr.is_playing:
+                        self.main_canvas.itemconfig(self.lbl_radio, fill="#00ff00")
+                    else:
+                        self.main_canvas.itemconfig(self.lbl_radio, fill="#d31a18")
 
     def show_full_art(self):
         """Displays the current cover art in a popup window with app theme."""
@@ -2992,6 +3081,13 @@ class CombatLogApp:
     def open_equalizer(self):
         if hasattr(self, 'eq_win') and self.eq_win:
             self.eq_win.show()
+
+    def toggle_compact_mode(self, event=None):
+        self.compact_mode = not self.compact_mode
+        self.save_config()
+        self.build_layout()
+        self.refresh_ui_only(force=True)
+        return "break"
 
     def open_aux_mode(self, event=None):
         """Allows users to select and play local audio files/playlists."""

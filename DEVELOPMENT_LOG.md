@@ -35,6 +35,27 @@ To compile the `parser.exe` using the tools provided by CLion:
 - `livylogs_main.py`: The main Python logic (window management modified).
 - `livylogs.py`: The Python entry script (launched by C).
 
+## Distribution & Build Optimization (2026-07-12)
+To avoid full rebuilds during testing, use the `build.ps1` script:
+
+1. **Incremental Build** (Default):
+   ```powershell
+   .\build.ps1
+   ```
+   Uses PyInstaller cache for faster updates. Use this after code changes.
+
+2. **Quick Update** (Assets Only):
+   ```powershell
+   .\build.ps1 -Quick
+   ```
+   Instantly copies `ui_labels_map.txt`, `custom_stations.txt`, and background assets to the `dist/LivyLogs` folder without rebuilding the EXE.
+
+3. **Full Build** (Clean):
+   ```powershell
+   .\build.ps1 -Full
+   ```
+   Cleans the cache and performs a fresh build. Use this for final releases or when dependency issues occur.
+
 ## Summary of C Engine Logic
 - XOR-obfuscated strings to hide logic from static analysis.
 - Multi-threaded: One thread handles the combat log pipe, the main thread handles window visibility.

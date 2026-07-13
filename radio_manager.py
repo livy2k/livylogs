@@ -345,21 +345,38 @@ class RadioManager:
             self.status_callback(True)
 
         # Play stoner SFX
-        channel = self.stoner_lib.play_next_sequential()
+        channel = None
+        try:
+            channel = self.stoner_lib.play_next_sequential()
+        except Exception as e:
+            print(f"[DEBUG] Error playing startup sound: {e}")
         
+        # Fallback if SFX fails or is missing
+        if not channel:
+            print("[DEBUG] No startup sound channel, skipping wait.")
+            station_name = list(self.stations.keys())[0]
+            self.play(station_name)
+            return
+
         # We need to simulate the worker thread for the radio UI to think something is playing
         # or we just transition to a station after the sound ends.
         def _wait_and_play_station():
-            if channel:
-                while channel.get_busy() and not self._stop_event.is_set():
-                    time.sleep(0.1)
+            try:
+                if channel:
+                    while channel.get_busy() and not self._stop_event.is_set():
+                        time.sleep(0.1)
+            except Exception as e:
+                print(f"[DEBUG] Error in startup sound wait thread: {e}")
             
             if self._stop_event.is_set():
                 return
 
             # Now play a real station
-            station_name = list(self.stations.keys())[0]
-            self.play(station_name)
+            try:
+                station_name = list(self.stations.keys())[0]
+                self.play(station_name)
+            except Exception as e:
+                print(f"[DEBUG] Error starting station after sound: {e}")
 
         self._stop_event.clear()
         self._worker_thread = threading.Thread(target=_wait_and_play_station, daemon=True)
@@ -438,7 +455,10 @@ class RadioManager:
             self.player.audio_set_volume(self.volume)
             
             if self.equalizer:
-                self.player.audio_set_equalizer(self.equalizer)
+                if hasattr(self.player, 'audio_set_equalizer'):
+                    self.player.audio_set_equalizer(self.equalizer)
+                elif hasattr(self.player, 'set_equalizer'):
+                    self.player.set_equalizer(self.equalizer)
                 
             if self.status_callback:
                 self.status_callback(True)
@@ -506,7 +526,10 @@ class RadioManager:
                 self.current_song_name = os.path.basename(file_path)
                 
                 if self.equalizer:
-                    self.player.audio_set_equalizer(self.equalizer)
+                    if hasattr(self.player, 'audio_set_equalizer'):
+                        self.player.audio_set_equalizer(self.equalizer)
+                    elif hasattr(self.player, 'set_equalizer'):
+                        self.player.set_equalizer(self.equalizer)
                     
                 if self.status_callback:
                     self.status_callback(True)
@@ -642,7 +665,12 @@ class RadioManager:
                 
                 # IMPORTANT: Apply to active player if it exists
                 if hasattr(self, 'player') and self.player:
-                    self.player.audio_set_equalizer(self.equalizer)
+                    if hasattr(self.player, 'audio_set_equalizer'):
+                        self.player.audio_set_equalizer(self.equalizer)
+                    elif hasattr(self.player, 'set_equalizer'):
+                        self.player.set_equalizer(self.equalizer)
+                    else:
+                        print("[DEBUG] MediaPlayer has no equalizer support")
             except Exception as e:
                 print(f"[DEBUG] Error setting EQ: {e}")
 
@@ -669,7 +697,10 @@ class RadioManager:
         # Apply equalizer if set
         if self.equalizer:
             try:
-                self.player.audio_set_equalizer(self.equalizer)
+                if hasattr(self.player, 'audio_set_equalizer'):
+                    self.player.audio_set_equalizer(self.equalizer)
+                elif hasattr(self.player, 'set_equalizer'):
+                    self.player.set_equalizer(self.equalizer)
             except Exception as e:
                 print(f"[DEBUG] Failed to apply EQ to new player: {e}")
 

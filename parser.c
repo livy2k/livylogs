@@ -61,6 +61,7 @@ unsigned char s_resists[] = {0x8, 0x1f, 0x9, 0x13, 0x9, 0xe, 0x9, 0x00};
 unsigned char s_incapacitated[] = {0x13, 0x14, 0x19, 0x1b, 0x1a, 0x1b, 0x19, 0x13, 0xe, 0x1b, 0xe, 0x1f, 0x1e, 0x00};
 unsigned char s_you_have_been[] = {0x3, 0x15, 0xf, 0x5a, 0x12, 0x1b, 0x2c, 0x1f, 0x5a, 0x18, 0x1f, 0x1f, 0x14, 0x00};
 unsigned char s_has_been[] = {0x12, 0x1b, 0x9, 0x5a, 0x18, 0x1f, 0x1f, 0x14, 0x00};
+unsigned char s_kill[] = {0x11, 0x13, 0x16, 0x16, 0x00};
 
 // State structures
 typedef struct {
@@ -196,6 +197,8 @@ char* s_i_s(const char* s1, const char* s2) {
 
 void p_l(HANDLE h, char* l) {
     if (!l || strlen(l) < 10) return;
+    // Guard against excessively long lines (over 4096 chars)
+    if (strlen(l) > 4096) return;
 
     char* clean = l;
     if (l[0] == '[') {
@@ -381,6 +384,8 @@ void p_l(HANDLE h, char* l) {
                     char* p_cred = strstr(item, " credits");
                     if (p_cred) {
                         sscanf(item, "%lf", &credits);
+                        // Filter erroneous data (over 1 billion as requested)
+                        if (credits >= 1000000000.0) return;
                     }
 
                     char j[BUFFER_SIZE];
@@ -410,6 +415,9 @@ void p_l(HANDLE h, char* l) {
         if (p_xp) {
             double amount = 0;
             if (sscanf(clean + (p_xp - lower) + 12, "%lf", &amount) == 1) {
+                // Filter erroneous data (over 1 billion as requested)
+                if (amount >= 1000000000.0) return;
+
                 PlayerStats* ps = get_player("You");
                 if (ps) {
                     ps->total_xp += amount;
@@ -560,6 +568,9 @@ void p_l(HANDLE h, char* l) {
             char* p_for = s_i_s(p_act, s_f);
             if (p_for) {
             if (sscanf(p_for + 4, "%lf", &amount) == 1) {
+                // Filter erroneous data (over 1 billion as requested)
+                if (amount >= 1000000000.0) return;
+
                 strcpy(s_o, (char*)s_on); d(s_o);
                 strcpy(s_t, (char*)s_to); d(s_t);
                 char* p_on = s_i_s(p_act, s_o);

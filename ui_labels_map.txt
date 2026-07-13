@@ -29,6 +29,6 @@ JOG, 595.0, -74.0, #ececec, None, 86, 159, LilitaOne, 5
 GHARV, 139.0, 76.0, #d21a18, None, 20, 16, LilitaOne, 6
 LIVIUS, 101.0, 124.0, #bbbbbb, None, 26, 12, LilitaOne, 7
 RESET, 171.0, 122.0, #d31a18, None, 28, 15, LilitaOne, 4
-RADIO_LBL, 31.0, 35.0, #d31a18, None, 10, 10, LilitaOne, 20
+RADIO_LBL, 18.0, 15.0, #d31a18, None, 10, 10, LilitaOne, 20
 VOL_DOT, 51.0, 74.0, #ffffff, None, 10, 10, LilitaOne, 5
 EXIT, 829.0, -4.0, #ff4444, None, 12, 12, Segoe UI, 12

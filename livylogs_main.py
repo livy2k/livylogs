@@ -120,8 +120,8 @@ class CombatLogApp:
 
         if initial_alpha < 0.01: initial_alpha = 1.0
         self.target_alpha = initial_alpha
-        self.current_alpha = initial_alpha
-        self.root.attributes("-alpha", initial_alpha)
+        self.current_alpha = 0.0
+        self.root.attributes("-alpha", 0.0)
         self.root.overrideredirect(True)
         
         # Enable basic copy/select all globally for the main window
@@ -380,13 +380,38 @@ class CombatLogApp:
 
     def initial_show(self):
         try:
-            # self.current_alpha = 0.0
-            # self.root.attributes("-alpha", 0.0)
+            self.current_alpha = 0.0
+            self.root.attributes("-alpha", 0.0)
             self.root.overrideredirect(True)
             self.root.deiconify()
             if self.always_on_top:
                 self.root.attributes("-topmost", True)
+            
+            # Start waiting for SWG client to be in foreground before fading in
+            self.root.after(100, self.wait_for_swg_and_fade_in)
         except: pass
+
+    def wait_for_swg_and_fade_in(self):
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            fg_hwnd = user32.GetForegroundWindow()
+            if fg_hwnd:
+                length = user32.GetWindowTextLengthW(fg_hwnd)
+                buff = ctypes.create_unicode_buffer(length + 1)
+                user32.GetWindowTextW(fg_hwnd, buff, length + 1)
+                fg_title = buff.value.lower()
+                
+                if any(s in fg_title for s in ["swgclient", "star wars galaxies"]):
+                    # print(f"[DEBUG] Found target window: {fg_title}")
+                    self.fade_in()
+                    return
+            
+            # Check again in 500ms if not found
+            self.root.after(500, self.wait_for_swg_and_fade_in)
+        except Exception as e:
+            # Fallback to immediate fade in if error
+            self.fade_in()
 
     def _get_managed_windows(self):
         managed = [self.root]

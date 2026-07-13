@@ -702,16 +702,21 @@ class CombatLogApp:
             
         # Load the radio base image
         try:
-            self.bg_image_raw = Image.open(get_resource_path("uimaker_bg.jpg"))
+            self.bg_image_raw = Image.open(get_resource_path("liviusbackground.png"))
             self.bg_photo = ImageTk.PhotoImage(self.bg_image_raw)
         except Exception as e:
-            # Try documents path if not in current dir
+            # Fallback to previous default if not found
             try:
-                self.bg_image_raw = Image.open(r"C:\Users\LivyC\Documents\UImaker\assets\images\8c032fb61d.jpg")
+                self.bg_image_raw = Image.open(get_resource_path("uimaker_bg.jpg"))
                 self.bg_photo = ImageTk.PhotoImage(self.bg_image_raw)
             except:
-                print(f"Error loading background image: {e}")
-                self.bg_photo = None
+                # Try documents path if not in current dir
+                try:
+                    self.bg_image_raw = Image.open(r"C:\Users\LivyC\Documents\UImaker\assets\images\8c032fb61d.jpg")
+                    self.bg_photo = ImageTk.PhotoImage(self.bg_image_raw)
+                except:
+                    print(f"Error loading background image: {e}")
+                    self.bg_photo = None
 
         # Set window size to match UImaker design exactly (700x400)
         img_w, img_h = 700, 400
@@ -852,54 +857,77 @@ class CombatLogApp:
              sfg, ssz = ds.get("fg", sfg), ds.get("size", ssz)
         self.lbl_setup = create_ui_label("SETUP", sx, sy, self.toggle_menu, fg=sfg, 
                                          font_obj=tkfont.Font(family="Lilita One", size=ssz))
+        self.main_canvas.tag_raise(self.lbl_setup)
 
         # Alexa: 236, 151
         ax, ay, afg, asz = get_pos("ALEXA", 121, 98, "#d21a18", 7)
         if self.compact_mode: ax, ay = 70, 10
         self.lbl_alexa = create_ui_label("ALEXA", ax, ay, self.alexa_win.show, fg=afg,
                                          font_obj=tkfont.Font(family="Lilita One", size=asz))
+        self.main_canvas.tag_raise(self.lbl_alexa)
         
         # DMG METER: 292, 163
         dx, dy, dfg, dsz = get_pos("DMG METER", 233, 123, "#d31a18", 5)
         if self.compact_mode: dx, dy = 130, 10
         self.lbl_dmm = create_ui_label("DMG METER", dx, dy, self.damage_meter_win.show, fg=dfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=dsz))
+        self.main_canvas.tag_raise(self.lbl_dmm)
         
         # Details: 342, 164
         tx, ty, tfg, tsz = get_pos("DETAILS", 333, 123, "#d31a18", 5)
         if self.compact_mode: tx, ty = 210, 10
         self.lbl_det = create_ui_label("DETAILS", tx, ty, self.details_win.show, fg=tfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=tsz))
+        self.main_canvas.tag_raise(self.lbl_det)
         
         # Skimmers: 381, 162
         kx, ky, kfg, ksz = get_pos("SKIMMERS", 411, 124, "#d31a18", 5)
         if self.compact_mode: kx, ky = 280, 10
         self.lbl_skm = create_ui_label("SKIMMERS", kx, ky, self.skimmers_win.show, fg=kfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=ksz))
+        self.main_canvas.tag_raise(self.lbl_skm)
 
         # Livius: 226, 164
         lx, ly, lfg, lsz = get_pos("LIVIUS", 101, 124, "#bbbbbb", 7)
         if self.compact_mode: lx, ly = 360, 10
         self.lbl_livius = create_ui_label("LIVIUS", lx, ly, self.livius_win.show, fg=lfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=lsz))
+        self.main_canvas.tag_raise(self.lbl_livius)
+
+        # Reset: 300, 164
+        rx, ry, rfg, rsz = get_pos("RESET", 171, 122, "#d31a18", 4)
+        if not self.compact_mode:
+            self.lbl_reset = create_ui_label("RESET", rx, ry, self.reset_all_data_manual, fg=rfg,
+                                              font_obj=tkfont.Font(family="Lilita One", size=rsz))
+            self.main_canvas.tag_raise(self.lbl_reset)
         
         # Gharv
         gx, gy, gfg, gsz = get_pos("GHARV", 139, 76, "#d21a18", 6)
         if self.compact_mode: gx, gy = 425, 10
-        self.lbl_gharv = create_ui_label("GHARV", gx, gy, lambda e: [self.gharv_win.show(), "break"][-1], fg=gfg,
+        self.lbl_gharv = create_ui_label("GHARV", gx, gy, self.gharv_win.show, fg=gfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=gsz, weight="bold"))
-
+        self.main_canvas.tag_raise(self.lbl_gharv)
+        
         # Bass Boost: Bottom Left
         bbx, bby, bbfg, bbsz = get_pos("BASS BOOST", 25, 129, "#d21a17", 5)
         if self.compact_mode: bbx, bby = 490, 10
         self.lbl_bassboost = create_ui_label("BASS BOOST" if self.compact_mode else "BASS\nBOOST", bbx, bby, self.open_equalizer, fg=bbfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=bbsz))
+        self.main_canvas.tag_raise(self.lbl_bassboost)
+
+        # Item Link
+        ilx, ily, ilfg, ilsz = get_pos("ITEM LINK", 487, 124, "#d31a18", 5)
+        if self.compact_mode: ilx, ily = 530, 10
+        self.lbl_itemlink = create_ui_label("ITEM LINK", ilx, ily, None, fg=ilfg,
+                                             font_obj=tkfont.Font(family="Lilita One", size=ilsz))
+        self.main_canvas.tag_raise(self.lbl_itemlink)
 
         # MIN/MAX button in compact mode
         mx, my, mfg, msz = get_pos("MIN", 615, 10, "#ffffff", 8)
         if self.compact_mode: mx, my = 580, 10
         self.btn_min = create_ui_label("MAX" if self.compact_mode else "MIN", mx, my, self.toggle_compact_mode, fg=mfg,
                                         font_obj=tkfont.Font(family="Lilita One", size=msz))
+        self.main_canvas.tag_raise(self.btn_min)
 
         if self.compact_mode:
              # In compact mode, we only want these window-opening buttons.
@@ -911,35 +939,43 @@ class CombatLogApp:
         xx, xy, xfg, xsz = get_pos("XP", 200, 23, "#60fc17", 10)
         self.lbl_xp = create_ui_label("XP", xx, xy, None, fg=xfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=xsz))
+        self.main_canvas.tag_raise(self.lbl_xp)
 
         # XP/H: 364, 117
         xhx, xhy, xhfg, xhsz = get_pos("XP/H", 380, 23, "#60fc17", 10)
         self.lbl_xph = create_ui_label("XP/H", xhx, xhy, None, fg=xhfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=xhsz))
+        self.main_canvas.tag_raise(self.lbl_xph)
 
         # Damage: 218, 117
         dmx, dmy, dmfg, dmsz = get_pos("DAMAGE", 80, 23, "#d31a17", 10)
         self.lbl_damage_header = create_ui_label("DAMAGE", dmx, dmy, None, fg=dmfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=dmsz))
+        self.main_canvas.tag_raise(self.lbl_damage_header)
 
         # XP Labels - values aligned horizontally to the right of headers
         self.lbl_damage = create_ui_label("0", dmx + 60, dmy, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=10))
+        self.main_canvas.tag_raise(self.lbl_damage)
         xpx, xpy, _, _ = get_pos("XP", 200, 23)
         xphx, xphy, _, _ = get_pos("XP/H", 380, 23)
         self.lbl_xp_val = create_ui_label("0", xpx + 40, xpy, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=10))
+        self.main_canvas.tag_raise(self.lbl_xp_val)
         self.lbl_xph_val = create_ui_label("0", xphx + 50, xphy, None, fg="#ffffff", font_obj=tkfont.Font(family="Lilita One", size=10))
+        self.main_canvas.tag_raise(self.lbl_xph_val)
 
         # Text_6: Clock (411, 114) - design uses 'Clock' as header
         clx, cly, clfg, clsz = get_pos("CLOCK", 471, 9, "#60fc17", 7)
         # Clock value remains 14px below the header position as per previous layout
         self.clock_id = self.main_canvas.create_text(clx, cly + 14, text="00:00:00", fill=clfg, 
                                                      font=tkfont.Font(family="Lilita One", size=10), anchor="nw")
+        self.main_canvas.tag_raise(self.clock_id)
         self.update_clock()
 
         # AUX Label - positioned right of Clock
         ax, ay, afg, asz = get_pos("AUX", 573.5, 17, "#bbbbbb", 10)
         self.lbl_aux = create_ui_label("AUX", ax, ay, self.open_aux_mode, fg=afg, 
                                        font_obj=tkfont.Font(family="Lilita One", size=asz), anchor="center")
+        self.main_canvas.tag_raise(self.lbl_aux)
 
         # Define radio dot parameters here if they don't exist yet for refresh_ui_only
         if not hasattr(self, '_dot_rows'): self._dot_rows = 12
@@ -948,17 +984,28 @@ class CombatLogApp:
         px, py, pfg, psz = get_pos("PLAY", 551, 30, "#d31a18", 10)
         self.lbl_play = create_ui_label("▶", px, py, lambda e: self.radio_mgr.pause() if self.radio_mgr else None, fg=pfg,
                                         font_obj=tkfont.Font(family="Lilita One", size=psz))
+        self.main_canvas.tag_raise(self.lbl_play)
         
         pax, pay, pafg, pasz = get_pos("PAUSE", 566, 30, "#d31a18", 10)
         self.lbl_pause = create_ui_label("||", pax, pay, lambda e: self.radio_mgr.pause() if self.radio_mgr else None, fg=pafg,
                                          font_obj=tkfont.Font(family="Lilita One", size=pasz))
+        self.main_canvas.tag_raise(self.lbl_pause)
         
         stx, sty, stfg, stsz = get_pos("STOP", 581, 30, "#d31a18", 10)
         self.lbl_stop = create_ui_label("■", stx, sty, lambda e: self.radio_mgr.stop() if self.radio_mgr else None, fg=stfg,
                                         font_obj=tkfont.Font(family="Lilita One", size=stsz))
+        self.main_canvas.tag_raise(self.lbl_stop)
         
         skx, sky, skfg, sksz = get_pos("SKIP", 596, 30, "#d31a18", 10)
         self.lbl_skip = create_ui_label("⏭", skx, sky, lambda e: self.radio_mgr.next_track() if self.radio_mgr else None, skfg, sksz)
+        self.main_canvas.tag_raise(self.lbl_skip)
+
+        # Jog Wheel (Decorative or Indicator)
+        jx, jy, jfg, jsz = get_pos("JOG", 595, -74, "#ececec", 5)
+        if not self.compact_mode:
+            self.lbl_jog = create_ui_label("JOG", jx, jy, None, fg=jfg,
+                                            font_obj=tkfont.Font(family="Lilita One", size=jsz))
+            self.main_canvas.tag_raise(self.lbl_jog)
 
         # Exit 590, 100
         ex, ey, efg, esz = get_pos("EXIT", 829, -4, "#ff4444", 12)
@@ -967,6 +1014,7 @@ class CombatLogApp:
             self.dynamic_labels["EXIT"] = {"x": 829, "y": -4, "fg": "#ff4444", "size": 12}
         
         self.btn_exit = create_ui_label(" ✕ ", ex, ey, self.on_exit, fg=efg, font_obj=("Segoe UI", esz))
+        self.main_canvas.tag_raise(self.btn_exit)
         
         # Volume Knob Line (Rotating Knob)
         vx, vy, vfg, vsz = get_pos("VOL_DOT", 51, 74, "#ffffff", 5)
@@ -1079,6 +1127,7 @@ class CombatLogApp:
         rlx, rly, rlfg, rlsz = get_pos("RADIO_LBL", 18, 15, "#d31a18", 20)
         self.lbl_radio = create_ui_label("⏻", rlx, rly, self.toggle_radio, fg=rlfg,
                                          font_obj=tkfont.Font(family="Lilita One", size=rlsz, weight="bold"))
+        self.main_canvas.tag_raise(self.lbl_radio)
 
         # Radio 292, 130
         rax, ray, rafg, rasz = get_pos("RADIO", 233, 51, "#d31a18", 5)
@@ -1694,6 +1743,10 @@ class CombatLogApp:
             credits = event.get("credits", 0)
             item = event.get("item", "Unknown")
             
+            # Mapping: %TO from a gundark -> Gundark Blood
+            if item == "%TO" and target and "gundark" in target.lower():
+                item = "Gundark Blood"
+            
             if credits > 0:
                 p["total_credits"] += credits
                 p["logs"].append({"msg": f"Looted {credits:,.0f}cr", "time": timestamp, "type": "loot"})
@@ -1763,6 +1816,13 @@ class CombatLogApp:
                     p["dm_damage"] = p.get("dm_damage", 0) + damage
                 else:
                     p["dm_damage"] = 0
+                
+                # Increment counters for hit/miss stats
+                if damage > 0:
+                    p["dm_hits"] = p.get("dm_hits", 0) + 1
+                if is_mitigated:
+                    p["dm_misses"] = p.get("dm_misses", 0) + 1
+                
                 if target not in p["targets"]: p["targets"][target] = 0
                 p["targets"][target] += damage
                 # Simplified format: "damage ability target"
@@ -1794,6 +1854,14 @@ class CombatLogApp:
                     p["dm_taken"] = p.get("dm_taken", 0) + damage
                 else:
                     p["dm_taken"] = 0
+                
+                # Increment counters for evasion/miss stats
+                if damage > 0:
+                    p["dm_taken_hits"] = p.get("dm_taken_hits", 0) + 1
+                if is_mitigated:
+                    p["dm_avoided"] = p.get("dm_avoided", 0) + 1
+                
+                attacker = event.get("source", "Unknown")
                 norm_attacker = normalize_name(attacker)
                 log_msg = f"{damage:,.0f} {norm_attacker}"
                 log_type = "taken"
@@ -2075,6 +2143,8 @@ class CombatLogApp:
                     if data:
                         self.main_canvas.coords(item, data['x'], data['y'])
                         if 'fg' in data: self.main_canvas.itemconfig(item, fill=data['fg'])
+                    # Always ensure interactive labels are above the background
+                    self.main_canvas.tag_raise(item)
 
             # List of standard labels to update
             label_map = {
@@ -2084,7 +2154,8 @@ class CombatLogApp:
                 "STOP": "lbl_stop", "SKIP": "lbl_skip",
                 "DAMAGE": "lbl_damage_header", "XP": "lbl_xp", "XP/H": "lbl_xph",
                 "GHARV": "lbl_gharv", "LIVIUS": "lbl_livius", "RESET": "lbl_reset",
-                "EXIT": "btn_exit", "ITEM LINK": "lbl_itemlink"
+                "EXIT": "btn_exit", "ITEM LINK": "lbl_itemlink", "BASS BOOST": "lbl_bassboost",
+                "JOG": "lbl_jog"
             }
             for name, attr in label_map.items():
                 update_pos(name, attr)
@@ -2096,6 +2167,7 @@ class CombatLogApp:
                         self.main_canvas.itemconfig(self.lbl_radio, fill="#00ff00")
                     else:
                         self.main_canvas.itemconfig(self.lbl_radio, fill="#d31a18")
+                self.main_canvas.tag_raise(self.lbl_radio)
 
             if hasattr(self, 'lbl_bassboost') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.lbl_bassboost):
                 bbx, bby, bbfg, bbsz = self.build_layout_get_pos("BASS BOOST", 25, 129, "#d21a17", 5)
@@ -2153,13 +2225,12 @@ class CombatLogApp:
                 self.main_canvas.coords(self.btn_min, mx, my)
                 self.main_canvas.itemconfig(self.btn_min, text="MAX" if self.compact_mode else "MIN")
 
-            # Update Combat Stats
             if self.compact_mode:
                 # Ensure buttons are on top in compact mode
-                for attr in ["lbl_setup", "lbl_alexa", "lbl_dmm", "lbl_det", "lbl_skm", "lbl_livius", "lbl_gharv", "lbl_bassboost"]:
+                for attr in ["lbl_setup", "lbl_alexa", "lbl_dmm", "lbl_det", "lbl_skm", "lbl_livius", "lbl_gharv", "lbl_bassboost", "lbl_itemlink"]:
                     if hasattr(self, attr):
                         item = getattr(self, attr)
-                        if self.main_canvas.find_withtag(item):
+                        if item and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(item):
                             self.main_canvas.tag_raise(item)
                 return # Skip stats and radio updates in compact mode
             

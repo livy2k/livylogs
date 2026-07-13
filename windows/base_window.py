@@ -31,6 +31,10 @@ class BasePopoutWindow:
         except: pass
 
     def show(self, force_open=False):
+        # If force_open is an event object (from tkinter bind), treat it as False
+        if not isinstance(force_open, bool):
+            force_open = False
+            
         if self.window and self.window.winfo_exists():
             if self.window.state() == "withdrawn":
                 self.window.deiconify()
@@ -127,10 +131,16 @@ class BasePopoutWindow:
             close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#ff4444"))
             close_btn.bind("<Leave>", lambda e: close_btn.config(fg=TEXT_SECONDARY))
             
-            # If title is empty or not provided, we just have the bar
-            if self.title and self.title != "LIVIUS":
-                self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=TITLE_GRADIENT_START, fg=TEXT_PRIMARY, font=("Segoe UI", 8, "bold"))
-                self.title_bar.create_window(10, 10, window=self.title_label, anchor="w", tags="title_label")
+            # If title is provided, show it
+            if self.title:
+                # Special case for LIVIUS as requested: centered, Lilita One, size 10, color #d31a17
+                if self.title == "LIVIUS":
+                    self.title_label = tk.Label(self.title_bar, text="LIVIUS", bg=TITLE_GRADIENT_START, fg="#d31a17", font=("Lilita One", 10, "bold"))
+                    self.title_bar.create_window(self.default_w // 2, 10, window=self.title_label, anchor="center", tags="title_label")
+                else:
+                    self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=TITLE_GRADIENT_START, fg=TEXT_PRIMARY, font=("Segoe UI", 8, "bold"))
+                    self.title_bar.create_window(10, 10, window=self.title_label, anchor="w", tags="title_label")
+                
                 self.title_label.bind("<Button-1>", self.click_window)
                 self.title_label.bind("<B1-Motion>", self.drag_window)
                 self.title_label.bind("<ButtonRelease-1>", self.release_window)
@@ -316,10 +326,14 @@ class BasePopoutWindow:
         # Reposition title label
         if hasattr(self, "title_label"):
             try:
-                self.title_bar.coords(self.title_bar.find_withtag("title_label"), 10, h // 2)
+                # If LIVIUS, center it
+                if self.title == "LIVIUS":
+                    self.title_bar.coords("title_label", w // 2, h // 2)
+                else:
+                    self.title_bar.coords("title_label", 10, h // 2)
             except:
-                # If finding by tag fails, try using the widget itself or its window item
                 pass
         
         # Update label background to match gradient start
-        self.title_label.config(bg=TITLE_GRADIENT_START)
+        if hasattr(self, "title_label"):
+            self.title_label.config(bg=TITLE_GRADIENT_START)

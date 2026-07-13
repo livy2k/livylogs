@@ -147,11 +147,13 @@ class LiviusWindow(BasePopoutWindow):
         friendly_focus = getattr(self.app, 'current_focus_target', {}).get('friendly')
         enemy_focus = getattr(self.app, 'current_focus_target', {}).get('enemy')
 
-        friendlies_list = [p for p in arrival_order if p in friendlies_set]
+        friendlies_list = [p for p in arrival_order if p in friendlies_set or p == "You"]
         enemies_list = [p for p in arrival_order if p in enemies_set]
         
         # Any players not in arrival order but in sets (fallback)
         f_fallback = [p for p in friendlies_set if p not in friendlies_list]
+        if "You" not in friendlies_list:
+            f_fallback.append("You")
         e_fallback = [p for p in enemies_set if p not in enemies_list]
         friendlies_list += sorted(f_fallback)
         enemies_list += sorted(e_fallback)

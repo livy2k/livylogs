@@ -80,6 +80,7 @@ Licensed under the GNU General Public License v3.0.
 """
 
 import ctypes
+import os
 from ctypes import wintypes
 from datetime import datetime
 from constants import user32, SNAP_THRESHOLD
@@ -337,6 +338,53 @@ def get_dynamic_text_color(alpha):
     # Interpolate from 220 to 255
     val = int(220 + (255 - 220) * factor)
     return f"#{val:02x}{val:02x}{val:02x}"
+
+def split_file(file_path, chunk_size_mb=50):
+    """Splits a large file into chunks of chunk_size_mb."""
+    if not os.path.exists(file_path):
+        return []
+    
+    file_size = os.path.getsize(file_path)
+    chunk_size = chunk_size_mb * 1024 * 1024
+    chunks = []
+    
+    with open(file_path, 'rb') as f:
+        chunk_num = 0
+        while True:
+            data = f.read(chunk_size)
+            if not data:
+                break
+            chunk_name = f"{file_path}.part{chunk_num}"
+            with open(chunk_name, 'wb') as chunk_file:
+                chunk_file.write(data)
+            chunks.append(chunk_name)
+            chunk_num += 1
+            
+    print(f"[Splitter] {file_path} split into {len(chunks)} parts.")
+    return chunks
+
+def join_files(base_path, output_path=None):
+    """Joins file chunks (base_path.part0, base_path.part1, etc.) into a single file."""
+    if output_path is None:
+        output_path = base_path
+        
+    chunk_num = 0
+    found_any = False
+    
+    with open(output_path, 'wb') as output_file:
+        while True:
+            chunk_name = f"{base_path}.part{chunk_num}"
+            if not os.path.exists(chunk_name):
+                break
+            with open(chunk_name, 'rb') as chunk_file:
+                output_file.write(chunk_file.read())
+            found_any = True
+            chunk_num += 1
+            
+    if found_any:
+        print(f"[Joiner] Reconstructed {output_path} from {chunk_num} parts.")
+        return output_path
+    return None
 
 def save_log_segment(original_log_path, duration_minutes):
     """Saves the last duration_minutes of combat log to a new file in a 'saved_logs' directory."""

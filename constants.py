@@ -28,22 +28,40 @@ SWP_NOACTIVATE = 0x0010
 SWP_SHOWWINDOW = 0x0040
 SWP_HIDEWINDOW = 0x0080
 
-# UI Colors and Styling
+# UI Colors and Styling - Star Wars Theme
 WINDOW_BG = "#0a0b0d"
 PANEL_BG = "#14171c"
 PANEL_DARK = "#0d0f12"
 ACCENT_BLUE = "#00a2ff"
+ACCENT_RED = "#d31a17"   # Empire Red
+ACCENT_ORANGE = "#ff8c00" # Rebel Orange
 ACCENT_GLOW = "#005a8e"
 BORDER_COLOR = "#2a2e35"
 BORDER_HIGHLIGHT = "#3f444d"
 TEXT_PRIMARY = "#e1e4e8"
 TEXT_SECONDARY = "#8b949e"
-TEXT_ACCENT = "#00a2ff"
+TEXT_ACCENT = "#d31a17" # Switched to Empire Red for theme
 TEXT_DISABLED = "#555555"
 BUTTON_BG = "#1f242d"
 BUTTON_HOVER = "#2a2e35"
 ENTRY_BG = "#090a0c"
 COLOR_DEFAULT_CLASS = "#00a2ff" # Default blue for unidentified classes
+
+# Bot / Relay API
+CENTRAL_BOT_API_URL = "http://localhost:8080" # Change this to your hosted bot URL
+
+# AI Agent Configuration (Uncle Recon)
+# Now using ZERO-COST Cloud Intelligence (Google Gemini)
+# This provides maximum intelligence with zero local RAM usage.
+AI_MODEL = "gemini-flash-latest"
+# Prefunded developer key for immediate use
+SECURE_AI_KEY = "DRh4GC53FR1pGxIGGyIJfWY4PHg+ZXIBNw4IARg5FyotfCtiJzNyczoEDwonKh8LchA8IiI="
+AI_API_KEY = "" # Decrypted at runtime
+AI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+
+# Local Fallback Model
+LOCAL_MODEL_NAME = "HuggingFaceTB/SmolLM-135M-Instruct"
+LOCAL_MODEL_PATH = "models/recon-local"
 
 # New Sophisticated Graphics Constants
 TITLE_GRADIENT_START = "#1a1d23"

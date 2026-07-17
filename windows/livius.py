@@ -22,6 +22,8 @@ class LiviusWindow(BasePopoutWindow):
         self.last_full_refresh = 0
         self.bg_textures = {} # Cache for panel textures
         self.icon_images = {} # Cache for custom icons
+        self.version = "v4.0"
+        self.tactical_mode = True
 
     def _get_icon(self, name, size=(24, 24)):
         if name in self.icon_images:
@@ -184,10 +186,17 @@ class LiviusWindow(BasePopoutWindow):
             
             # Main panels with a "brushed" look
             self.left_panel = tk.Frame(self.main_container, bg=PANEL_DARK, bd=1, relief=tk.RIDGE)
-            self.left_panel.place(relx=0.005, rely=0.005, relwidth=0.49, relheight=0.99)
+            self.left_panel.place(relx=0.005, rely=0.005, relwidth=0.49, relheight=0.94)
             
             self.right_panel = tk.Frame(self.main_container, bg=PANEL_DARK, bd=1, relief=tk.RIDGE)
-            self.right_panel.place(relx=0.505, rely=0.005, relwidth=0.49, relheight=0.99)
+            self.right_panel.place(relx=0.505, rely=0.005, relwidth=0.49, relheight=0.94)
+
+            # Version/Status Footer
+            self.footer = tk.Frame(self.main_container, bg=WINDOW_BG, height=20)
+            self.footer.place(relx=0, rely=0.95, relwidth=1, relheight=0.05)
+            
+            tk.Label(self.footer, text=f"LIVIUS TACTICAL OVERLAY {self.version} // SECTOR LOGISTICS", 
+                     bg=WINDOW_BG, fg=TEXT_DISABLED, font=("Arial", 7, "bold")).pack(side=tk.LEFT, padx=10)
             
             self.friendly_list_frame = tk.Frame(self.left_panel, bg=PANEL_DARK)
             self.friendly_list_frame.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
@@ -380,6 +389,10 @@ class LiviusWindow(BasePopoutWindow):
                 size = mvp_icon_base_size + int(duration / 30) * int(4 * scale)
                 size = min(int(36 * scale), size)
                 right_active.append(("top_dps", "top_dps", "", "#00FFFF", size))
+            
+            # 4.5. Tactical Priority (New in v4.0)
+            if is_focus:
+                 right_active.append(("priority", "priority", "PRIO", "#FF4444", status_icon_base_size))
  
             # 5. Top Tank (Sheep) (Right)
             is_top_tank = (player == self.app.current_top_tank['friendly'] or player == self.app.current_top_tank['enemy'])
@@ -430,7 +443,8 @@ class LiviusWindow(BasePopoutWindow):
                     "kills": "🏋️",
                     "top_dps": "🏋️",
                     "top_tank": "🐑",
-                    "top_healing": "✚"
+                    "top_healing": "✚",
+                    "priority": "⚠️"
                 }
                 
                 # Label Mapping for abbreviations
@@ -443,7 +457,8 @@ class LiviusWindow(BasePopoutWindow):
                     "kills": "KB",
                     "top_dps": "MVP",
                     "top_tank": "TNK",
-                    "top_healing": "ems"
+                    "top_healing": "ems",
+                    "priority": "!!"
                 }
 
                 for j, s_widget in enumerate(widgets):

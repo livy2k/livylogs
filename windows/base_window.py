@@ -126,7 +126,8 @@ class BasePopoutWindow:
             
             # Close Button on the far right
             close_btn = tk.Label(self.title_bar, text="✕", bg=TITLE_GRADIENT_END, fg=TEXT_SECONDARY, font=("Segoe UI", 10), cursor="hand2", padx=8)
-            self.title_bar.create_window(self.window.winfo_width() - 5 if self.window else self.default_w - 5, 10, window=close_btn, anchor="e", tags="close_btn")
+            # Use place to ensure it stays on the right regardless of window size
+            close_btn.place(relx=0.99, rely=0.5, anchor="e")
             close_btn.bind("<Button-1>", lambda e: self.close())
             close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#ff4444"))
             close_btn.bind("<Leave>", lambda e: close_btn.config(fg=TEXT_SECONDARY))
@@ -136,10 +137,10 @@ class BasePopoutWindow:
                 # Special case for LIVIUS as requested: centered, Lilita One, size 10, color #d31a17
                 if self.title == "LIVIUS":
                     self.title_label = tk.Label(self.title_bar, text="LIVIUS", bg=TITLE_GRADIENT_START, fg="#d31a17", font=("Lilita One", 10, "bold"))
-                    self.title_bar.create_window(self.default_w // 2, 10, window=self.title_label, anchor="center", tags="title_label")
+                    self.title_label.place(relx=0.5, rely=0.5, anchor="center")
                 else:
                     self.title_label = tk.Label(self.title_bar, text=self.title.upper(), bg=TITLE_GRADIENT_START, fg=TEXT_PRIMARY, font=("Segoe UI", 8, "bold"))
-                    self.title_bar.create_window(10, 10, window=self.title_label, anchor="w", tags="title_label")
+                    self.title_label.place(relx=0.01, rely=0.5, anchor="w")
                 
                 self.title_label.bind("<Button-1>", self.click_window)
                 self.title_label.bind("<B1-Motion>", self.drag_window)

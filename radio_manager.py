@@ -70,7 +70,8 @@ class BufferedStreamSource:
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, # Capture stderr for better error reporting
-                bufsize=2 * 10**6 # Even larger pipe buffer (2MB)
+                bufsize=2 * 10**6, # Even larger pipe buffer (2MB)
+                creationflags=0x08 | 0x08000000
             )
             
             while not self.stop_event.is_set():

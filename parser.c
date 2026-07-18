@@ -482,7 +482,7 @@ void p_l(HANDLE h, char* l) {
             char e_t[256], e_s[256];
             e_j(target, e_t);
             e_j(source, e_s);
-            sprintf(j, "{\"type\": \"status\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
+            sprintf(j, "{\"type\": \"incapacitated\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
             send_raw_event(h, j);
         }
     }
@@ -561,7 +561,7 @@ void p_l(HANDLE h, char* l) {
             char e_t[256], e_s[256];
             e_j(target, e_t);
             e_j(source, e_s);
-            sprintf(j, "{\"type\": \"status\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
+            sprintf(j, "{\"type\": \"cooldown\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
             send_raw_event(h, j);
         }
     }
@@ -688,7 +688,8 @@ void p_l(HANDLE h, char* l) {
                     }
 
                     char j[BUFFER_SIZE];
-                    sprintf(j, "{\"type\": \"loot\", \"source\": \"%s\", \"item\": \"%s\", \"credits\": %.2f, \"target\": \"%s\"}\n", name, item, credits, target);
+                    time_t now_ts = time(NULL);
+                    sprintf(j, "{\"type\": \"loot\", \"source\": \"%s\", \"item\": \"%s\", \"credits\": %.2f, \"target\": \"%s\", \"log_ts\": %ld}\n", name, item, credits, target, (long)now_ts);
                     send_raw_event(h, j);
                     
                     // Also send as a stat update to ensure it shows up in basic counters
@@ -796,7 +797,7 @@ void p_l(HANDLE h, char* l) {
             
             strcpy(s_ac, (char*)s_activity); d(s_ac);
             strcpy(s_di, (char*)s_died); d(s_di);
-            s_e(h, s_ac, name, "Unknown", 0, 0, "", s_di, 0);
+            s_e(h, "death", name, "Unknown", 0, 0, "", s_di, 0);
 
             // If an NPC died, find who hit them last and give them the credit
             // OR if it's "You have defeated...", source is "You"
@@ -822,7 +823,12 @@ void p_l(HANDLE h, char* l) {
             if (ps) {
                 ps->mob_count++;
                 char s_ki[64]; strcpy(s_ki, (char*)s_kill); d(s_ki);
-                s_e(h, s_ki, "You", "", 0, 0, "", "", 0);
+                // Extract target name from the log line (after "You have defeated ")
+                char* p_def_target = clean + 18; // skip "You have defeated "
+                char* p_excl = strchr(p_def_target, '!');
+                if (p_excl) *p_excl = '\0';
+                while(*p_def_target == ' ') p_def_target++;
+                s_e(h, s_ki, "You", p_def_target, 0, 0, "", "", 0);
             }
         }
     }
@@ -841,7 +847,12 @@ void p_l(HANDLE h, char* l) {
             ps->mob_count++;
             // Notify Python about the kill
             char s_ki[64]; strcpy(s_ki, (char*)s_kill); d(s_ki);
-            s_e(h, s_ki, name, "", 0, 0, "", "", 0);
+            // Extract target name from the log line (after " has defeated ")
+            char* p_def_target = p_has_def + 14; // skip " has defeated "
+            char* p_excl = strchr(p_def_target, '!');
+            if (p_excl) *p_excl = '\0';
+            while(*p_def_target == ' ') p_def_target++;
+            s_e(h, s_ki, name, p_def_target, 0, 0, "", "", 0);
         }
     }
 

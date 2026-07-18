@@ -1073,15 +1073,35 @@ void e_t(void* arg) {
     }
 }
 
-int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
-    int a = __argc;
-    char** v = __argv;
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     c_o();
     
-    if (a >= 2) {
-        printf("[DEBUG] Engine starting pipeline for log: %s\n", v[1]);
+    // Parse command line arguments
+    int argc = 0;
+    LPWSTR* argv_w = CommandLineToArgvW(GetCommandLineW(), &argc);
+    char** argv = NULL;
+    if (argv_w) {
+        argv = (char**)malloc(argc * sizeof(char*));
+        for (int i = 0; i < argc; i++) {
+            int len = WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, NULL, 0, NULL, NULL);
+            argv[i] = (char*)malloc(len);
+            WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, argv[i], len, NULL, NULL);
+        }
+        LocalFree(argv_w);
+    }
+    
+    if (argc >= 2) {
+        printf("[DEBUG] Engine starting pipeline for log: %s\n", argv[1]);
         fflush(stdout);
-        e_t(v[1]);
+        e_t(argv[1]);
+    }
+    
+    // Free allocated memory
+    if (argv) {
+        for (int i = 0; i < argc; i++) {
+            free(argv[i]);
+        }
+        free(argv);
     }
 
     while (1) {

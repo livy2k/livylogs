@@ -22,13 +22,6 @@ def show_splash():
     config = ConfigParser()
     config.read("settings.ini")
     
-    width = max(MIN_WIDTH, config.getint("General", "width", fallback=400))
-    height = max(MIN_HEIGHT, config.getint("General", "height", fallback=50))
-    # Match the 700x400 forced geometry in main app
-    width, height = 700, 400
-    x = config.get("General", "x", fallback="971")
-    y = config.get("General", "y", fallback="92")
-
     # Attempt to use VLC for video splash if available
     vlc_available = False
     vlc_path = r'C:\Program Files\VideoLAN\VLC'
@@ -43,10 +36,25 @@ def show_splash():
             pass
 
     splash = tk.Tk()
+    splash.withdraw()  # Hide it while we do setup
+    
+    # Center the splash screen on the monitor
+    width, height = 700, 400
+    
+    # Get screen dimensions from the splash window itself
+    screen_width = splash.winfo_screenwidth()
+    screen_height = splash.winfo_screenheight()
+    
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
     splash.overrideredirect(True)
     splash.configure(bg="black")
-    
     splash.geometry(f"{width}x{height}+{x}+{y}")
+    
+    # Use -topmost to ensure it's visible during engine load
+    splash.attributes("-topmost", True)
+    splash.deiconify() # Show it
+    splash.update() # Ensure window is created/mapped before VLC attaches
 
     video_played = False
     if vlc_available:
@@ -63,6 +71,11 @@ def show_splash():
             if video_path:
                 instance = vlc.Instance("--no-xlib", "--quiet", "--no-video-title-show")
                 player = instance.media_player_new()
+                
+                # Keep references to prevent GC
+                splash.vlc_instance = instance
+                splash.vlc_player = player
+
                 player.video_set_aspect_ratio(f"{width}:{height}")
                 
                 # Embed VLC in Tkinter window
@@ -77,15 +90,23 @@ def show_splash():
                 player.set_media(media)
                 player.play()
                 
-                # Wait for video to finish or 5 seconds max
+                # Small wait to let it start
+                time.sleep(0.1)
+                
+                # Wait for video to finish or 6 seconds max
                 start_time = time.time()
-                while time.time() - start_time < 5:
+                while time.time() - start_time < 6:
                     splash.update()
                     state = player.get_state()
-                    if state in [vlc.State.Ended, vlc.State.Error]:
+                    if state == vlc.State.Ended:
+                        print("[DEBUG] Splash video ended.")
+                        break
+                    if state == vlc.State.Error:
+                        print("[DEBUG] VLC State Error during playback")
                         break
                     time.sleep(0.01)
                 
+                print("[DEBUG] Splash video finished or timed out.")
                 video_played = True
                 player.stop()
         except Exception as e:
@@ -106,24 +127,30 @@ def show_splash():
                 label.image = photo
                 label.place(x=0, y=0, relwidth=1, relheight=1)
                 splash.update()
-                time.sleep(2)
+                time.sleep(3)
             else:
-                tk.Label(splash, text="LivyLogs", fg="#00a2ff", bg="black", font=("Segoe UI", 30, "bold")).pack(expand=True, fill=tk.BOTH)
+                tk.Label(splash, text="LivyLogs Loading...", fg="#d31a17", bg="black", font=("Lilita One", 30, "bold")).pack(expand=True, fill=tk.BOTH)
                 splash.update()
-                time.sleep(2)
+                time.sleep(3)
         except Exception as e:
             pass
 
     try:
         splash.destroy()
+        # Small sleep to ensure Tcl processes the destruction
+        time.sleep(0.1)
     except: pass
 
 def main():
+    print("[DEBUG] Main entry point reached.")
     # Show splash screen first
-    try:
-        show_splash()
-    except Exception as e:
-        print(f"Splash error: {e}")
+    # Splash disabled by user request
+    # try:
+    #     show_splash()
+    # except Exception as e:
+    #     print(f"Splash error: {e}")
+    
+    print("[DEBUG] Splash screen finished, initializing application.")
     kernel32 = ctypes.windll.kernel32
     mutex_name = "LivyLogs_SingleInstance_Mutex"
     mutex = kernel32.CreateMutexW(None, False, mutex_name)

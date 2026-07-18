@@ -295,9 +295,12 @@ void p_l(HANDLE h, char* l) {
             while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
             if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
             
-            char e_buf[512];
-            sprintf(e_buf, "{\"type\": \"status\", \"target\": \"%s\", \"status\": \"knockdown\", \"offset\": 0}", target);
-            send_raw_event(h, e_buf);
+            // Ensure target is not a fragment
+            if (strlen(target) > 0 && strcmp(target, "Unknown") != 0) {
+                char e_buf[512];
+                sprintf(e_buf, "{\"type\": \"cooldown\", \"target\": \"%s\", \"source\": \"Unknown\", \"status\": \"knockdown\", \"message\": \"%s\"}\n", target, clean);
+                send_raw_event(h, e_buf);
+            }
             return;
         }
     }
@@ -479,6 +482,23 @@ void p_l(HANDLE h, char* l) {
             if (_stricmp(source, "you") == 0) strcpy(source, "You");
             if (_stricmp(source, "by you") == 0) strcpy(source, "You");
             if (_stricmp(source, "by You") == 0) strcpy(source, "You");
+
+            // Ensure target is not a fragment
+            if (strlen(target) > 0 && strcmp(target, "Unknown") != 0 && strcmp(target, "You") != 0) {
+                // Check if target is a known fragment
+                char* fragment_words[] = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!"};
+                int is_fragment = 0;
+                for (int k=0; k<14; k++) {
+                    if (_stricmp(target, fragment_words[k]) == 0) {
+                        is_fragment = 1;
+                        break;
+                    }
+                }
+                if (is_fragment) {
+                    // Skip sending this event
+                    return;
+                }
+            }
 
             char j[BUFFER_SIZE];
             char e_t[256], e_s[256];

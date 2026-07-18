@@ -32,6 +32,7 @@ class CentralRelayBot(discord.Client):
         # Start web server for app-to-bot communication
         app = web.Application()
         app.add_routes([
+            web.get('/', self.handle_root),
             web.post('/verify', self.handle_app_verify),
             web.post('/relay', self.handle_app_relay)
         ])
@@ -56,6 +57,9 @@ class CentralRelayBot(discord.Client):
                     self.verified_links = json.load(f)
             except:
                 self.verified_links = {}
+
+    async def handle_root(self, request):
+        return web.Response(text="LivyLogs Bot Relay is active and alive! 🚀", content_type='text/html')
 
     async def handle_app_verify(self, request):
         try:

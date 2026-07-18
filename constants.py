@@ -49,7 +49,8 @@ ENTRY_BG = "#090a0c"
 COLOR_DEFAULT_CLASS = "#00a2ff" # Default blue for unidentified classes
 
 # Bot / Relay API
-CENTRAL_BOT_API_URL = os.environ.get("CENTRAL_BOT_API_URL", "http://localhost:8080")
+# Note: Use a production URL when deploying. localhost is for dev only.
+CENTRAL_BOT_API_URL = os.environ.get("CENTRAL_BOT_API_URL", "https://livylogs-relay.onrender.com")
 
 # AI Agent Configuration (Uncle Recon)
 # Now using ZERO-COST Cloud Intelligence (Google Gemini)

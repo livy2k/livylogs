@@ -96,6 +96,12 @@ class OptionsWindow(BasePopoutWindow):
         id_label = tk.Label(self.content_container, text=getattr(self.app, 'app_id', 'N/A'), bg=PANEL_DARK, fg=TEXT_SECONDARY, font=("Consolas", 8), pady=5)
         id_label.pack(fill=tk.X, pady=(0, 5))
 
+        tk.Label(self.content_container, text="Relay API URL:", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Segoe UI", 7)).pack(anchor="w")
+        url_entry = tk.Entry(self.content_container, textvariable=self.app.discord_relay_url, bg=PANEL_DARK, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY, borderwidth=0, font=("Consolas", 8))
+        url_entry.pack(fill=tk.X, pady=(2, 5))
+        url_entry.bind("<FocusOut>", lambda e: self.app.save_config())
+        url_entry.bind("<Return>", lambda e: self.app.save_config())
+
         # Web Sync Section
         tk.Frame(self.content_container, height=1, bg=BORDER_COLOR).pack(fill=tk.X, pady=10)
         tk.Label(self.content_container, text="WEB SYNC", bg=WINDOW_BG, fg="#888888", font=("Lilita One", 8)).pack(anchor="w", pady=(0, 5))
@@ -192,6 +198,11 @@ class OptionsWindow(BasePopoutWindow):
         if not self.app.config.has_section("Discord"):
             self.app.config.add_section("Discord")
         self.app.config.set("Discord", "relay_enabled", str(self.app.discord_relay_enabled.get()))
+        
+        # Sync Relay URL to config
+        if not self.app.config.has_section("DiscordRelay"):
+            self.app.config.add_section("DiscordRelay")
+        self.app.config.set("DiscordRelay", "relay_url", self.app.discord_relay_url.get())
         
         if not self.window or not self.window.winfo_exists():
             return

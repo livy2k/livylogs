@@ -194,6 +194,8 @@ class CombatLogApp:
         self.discord_channel_id = tk.StringVar(value=self.config.get("Discord", "channel_id", fallback=""))
         self.discord_relay_enabled = tk.BooleanVar(value=self.config.getboolean("Discord", "relay_enabled", fallback=False))
         self._last_discord_pulse = 0
+        from constants import CENTRAL_BOT_API_URL
+        self.discord_relay_url = tk.StringVar(value=self.config.get("DiscordRelay", "relay_url", fallback=CENTRAL_BOT_API_URL))
         
         self.api_url = tk.StringVar(value=self.config.get("General", "api_url", fallback="https://livy.logs/sync"))
         self.enable_sync = tk.BooleanVar(value=self.config.getboolean("General", "enable_sync", fallback=False))
@@ -214,6 +216,14 @@ class CombatLogApp:
         self.app_id = self.config.get("DiscordRelay", "app_id", fallback=str(uuid.uuid4()))
         if "DiscordRelay" not in self.config: self.config.add_section("DiscordRelay")
         self.config.set("DiscordRelay", "app_id", self.app_id)
+
+        # Migration: If relay_url is localhost, reset it to default production URL
+        current_relay_url = self.config.get("DiscordRelay", "relay_url", fallback="")
+        if "localhost" in current_relay_url or not current_relay_url:
+            from constants import CENTRAL_BOT_API_URL
+            self.config.set("DiscordRelay", "relay_url", CENTRAL_BOT_API_URL)
+            self.discord_relay_url.set(CENTRAL_BOT_API_URL)
+            self.save_config()
         
         # Backward compatibility: Migrating from old bot token to relay
         if self.config.has_section("Discord"):

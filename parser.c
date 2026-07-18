@@ -523,14 +523,26 @@ void p_l(HANDLE h, char* l) {
             // Ensure target is not a fragment
             if (strlen(target) > 0 && strcmp(target, "Unknown") != 0 && strcmp(target, "You") != 0) {
                 // Check if target is a known fragment
-                char* fragment_words[] = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!"};
+                char* fragment_words[] = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!", "down", "while", "being", "center", "nter", "of", "being while", "nter of being while", "down!", "knocked", "knocked down", "knockdown"};
                 int is_fragment = 0;
-                for (int k=0; k<14; k++) {
+                for (int k=0; k<22; k++) {
                     if (_stricmp(target, fragment_words[k]) == 0) {
                         is_fragment = 1;
                         break;
                     }
                 }
+                
+                // Also check if target contains any status verb fragments
+                if (!is_fragment) {
+                    char* status_verbs[] = {" knocked ", " knocked down", " knockdown", " while ", " being ", " center ", " nter ", " of ", " down!", " down "};
+                    for (int k=0; k<10; k++) {
+                        if (strstr(target, status_verbs[k]) != NULL) {
+                            is_fragment = 1;
+                            break;
+                        }
+                    }
+                }
+                
                 if (is_fragment) {
                     // Skip sending this event
                     return;

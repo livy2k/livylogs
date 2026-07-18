@@ -253,15 +253,16 @@ void p_l(HANDLE h, char* l) {
     for(int i=0; clean[i]; i++) lower[i] = tolower(clean[i]);
     lower[strlen(clean)] = '\0';
 
+    // Skip any line containing "cannot" (not actual status events)
+    // This must be checked BEFORE any status tracking or combat parsing
+    if (strstr(lower, "cannot")) {
+        return;
+    }
+
     char s_ap[32], s_lt[32], s_fr[32], s_hd[32], s_ar[32], s_l_key[32], s_ac[32], s_he[32], s_de[32], s_tk[32], s_od[32], s_di[32], s_f[32], s_o[32], s_t[32], s_y[32], s_nli[64], s_poi[32], s_res[32], s_inc[32], s_yhb[32], s_hb[32], s_b[32], s_kn[32], s_kn_d[32], s_knl[32], s_knlg[32], s_prn[32], s_intm[32];
 
     unsigned char s_stands_up[] = {0x19, 0x0e, 0x1b, 0x14, 0x1e, 0x9, 0x5a, 0x0f, 0x1a, 0x00}; // stands up
     unsigned char s_falls_down[] = {0x1c, 0x1b, 0x16, 0x16, 0x9, 0x5a, 0x1e, 0x15, 0x0d, 0x14, 0x00}; // falls down
-    
-    // Skip any line containing "cannot" (not actual status events)
-    if (strstr(lower, "cannot")) {
-        return;
-    }
 
     // Status tracking: knockdown, kneel, prone, intimidated
     strcpy(s_kn, (char*)s_knockdown); d(s_kn);

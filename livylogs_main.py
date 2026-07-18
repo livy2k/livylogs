@@ -2220,8 +2220,9 @@ class CombatLogApp:
 
             elif event_type == "cooldown":
                 ability = event.get("ability")
-                if target and ability:
-                    self._trigger_status_effect(target, ability)
+                status = event.get("status")
+                if target and (ability or status):
+                    self._trigger_status_effect(target, ability or status)
                 return
 
             elif event_type == "incapacitated":

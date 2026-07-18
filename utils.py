@@ -351,8 +351,14 @@ def normalize_name(name):
     ]:
         return "You"
     
-    # Guard: if the result is empty or just a fragment like "use" or "is", keep original or return Unknown
-    if not name or name.lower() in ["use", "is", "has", "was"]:
+    # Guard: if the result is empty or just a fragment like "use" or "is", return Unknown
+    if not name or name.lower() in ["use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage you"]:
+        return "Unknown"
+    
+    # Final check: if the name is a single word that is a known fragment, return Unknown
+    lower_name = name.lower()
+    fragment_words = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!"}
+    if lower_name in fragment_words:
         return "Unknown"
     
     return name.strip()
@@ -362,6 +368,7 @@ def is_probable_player(name, bosses=None, known_npcs=None, known_players=None):
     
     # Normalize before checking heuristics
     name = normalize_name(name)
+    if name == "Unknown": return False
     if name == "You": return True
     
     # Check if we've already confirmed this as a player
@@ -382,6 +389,11 @@ def is_probable_player(name, bosses=None, known_npcs=None, known_players=None):
     for kw in npc_keywords:
         if kw in lower_name:
             return False
+
+    # Reject pure fragments (single word that is a known fragment)
+    fragment_words = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!"}
+    if lower_name in fragment_words:
+        return False
 
     # Heuristic: Players usually don't have spaces in SWG (unless they have a surname)
     # but NPCs often have multiple words like "SpecForce marine".

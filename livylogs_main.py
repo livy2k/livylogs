@@ -1824,6 +1824,13 @@ class CombatLogApp:
                          # NORMALIZE NAME FIRST
                          p = normalize_name(p)
                          
+                         if p == "Unknown":
+                             continue
+                         # Skip pure fragments
+                         fragment_words = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!"}
+                         if p.lower() in fragment_words:
+                             continue
+                         
                          # UNIFY: Map character name or "yourself" to "You"
                          if p.lower() == self.char_name.get().lower() or p.lower() == "yourself":
                              p = "You"
@@ -1841,6 +1848,12 @@ class CombatLogApp:
                  for p in [source, target]:
                      if p and p != "Unknown":
                          p = normalize_name(p)
+                         if p == "Unknown":
+                             continue
+                         # Skip pure fragments
+                         fragment_words = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!"}
+                         if p.lower() in fragment_words:
+                             continue
                          if p not in self.player_arrival_order:
                              self.player_arrival_order.append(p)
                          if p == "You":

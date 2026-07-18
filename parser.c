@@ -318,11 +318,22 @@ void p_l(HANDLE h, char* l) {
             while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
             if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
             
-            char e_buf[512];
-            sprintf(e_buf, "{\"type\": \"status\", \"target\": \"%s\", \"status\": \"posture\", \"offset\": 0}", target);
-            send_raw_event(h, e_buf);
+            // Ensure target is not a fragment
+            if (strlen(target) > 0 && strcmp(target, "Unknown") != 0) {
+                char e_buf[512];
+                sprintf(e_buf, "{\"type\": \"cooldown\", \"target\": \"%s\", \"source\": \"Unknown\", \"status\": \"posture\", \"message\": \"%s\"}\n", target, clean);
+                send_raw_event(h, e_buf);
+            }
             return;
         }
+    }
+
+    // New triggers for "You have been forced to kneeling" and "You kneel"
+    if (strstr(lower, "you have been forced to kneeling") || strstr(lower, "you kneel")) {
+        char e_buf[512];
+        sprintf(e_buf, "{\"type\": \"cooldown\", \"target\": \"You\", \"source\": \"Unknown\", \"status\": \"posture\", \"message\": \"%s\"}\n", clean);
+        send_raw_event(h, e_buf);
+        return;
     }
 
     if (strstr(lower, s_kn) || strstr(lower, s_kn_d) || strstr(lower, s_knl) || strstr(lower, s_knlg) || strstr(lower, s_prn) || strstr(lower, s_intm)) {

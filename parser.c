@@ -5,6 +5,8 @@
  */
 
 #include <windows.h>
+#include <shellapi.h>
+#include <winnls.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

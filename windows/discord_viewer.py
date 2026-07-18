@@ -36,6 +36,10 @@ class DiscordViewerWindow(BasePopoutWindow):
         main_frame = tk.Frame(self.content_container, bg=WINDOW_BG)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
+        # Force refresh verification status from config just in case it changed elsewhere
+        self.is_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
+        self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
+
         if not self.is_verified:
             # Verification UI
             tk.Label(main_frame, text="LINK DISCORD RELAY", bg=WINDOW_BG, fg=ACCENT_RED, font=("Lilita One", 14)).pack(pady=(0, 10))
@@ -119,15 +123,17 @@ class DiscordViewerWindow(BasePopoutWindow):
             self._start_polling()
 
     def _start_polling(self):
-        if not self.is_verified:
+        if not self.is_verified or getattr(self, '_polling_started', False):
             return
             
+        self._polling_started = True
         def _poll_loop():
             while self.window and self.window.winfo_exists() and self.is_verified:
                 try:
                     self._fetch_messages()
                 except: pass
                 time.sleep(5) # Poll every 5 seconds
+            self._polling_started = False
 
         threading.Thread(target=_poll_loop, daemon=True).start()
 
@@ -300,6 +306,10 @@ class DiscordViewerWindow(BasePopoutWindow):
         self.log_text.see(tk.END)
         self.log_text.config(state=tk.DISABLED)
 
+        # Force message polling to start if it hasn't already (and we are verified)
+        if self.is_verified and not getattr(self, '_polling_started', False):
+            self._start_polling()
+
     def _setup_entry_bindings(self, entry):
         def show_menu(event):
             menu = tk.Menu(self.window, tearoff=0, bg=PANEL_DARK, fg="white", activebackground=ACCENT_BLUE)
@@ -367,7 +377,11 @@ class DiscordViewerWindow(BasePopoutWindow):
                         
                     self.app.save_config()
                     # Rebuild to show the Linked UI
-                    self.window.after(0, lambda: [self._finalize_ui_state(), self._build_ui()])
+                    self.window.after(0, lambda: [
+                        self._finalize_ui_state(), 
+                        self.refresh(force=True),
+                        self.chat_entry.focus_set() if hasattr(self, 'chat_entry') else None
+                    ])
                 else:
                     try:
                         msg = resp.json().get("message", "Invalid code.")
@@ -431,8 +445,10 @@ class DiscordViewerWindow(BasePopoutWindow):
 
     def refresh(self, force=True):
         if self.window and self.window.winfo_exists():
-            # Only rebuild if verified state changed or explicitly forced and UI empty
-            if getattr(self, '_last_built_verified', None) != self.is_verified or not self.content_container.winfo_children():
+            # Check if verified status changed since last build
+            current_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
+            if force or getattr(self, '_last_built_verified', None) != current_verified or not self.content_container.winfo_children():
+                self.is_verified = current_verified
                 self._build_ui()
 
     def save_config(self):

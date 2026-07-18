@@ -29,6 +29,13 @@ class SkimmersWindow(BasePopoutWindow):
         
         # Ensure title bar exists
         if not hasattr(self, 'title_bar') or not self.title_bar.winfo_exists(): return
+        
+        # Guard against accessing destroyed scrollable_frame
+        if not hasattr(self, 'scrollable_frame') or not self.scrollable_frame.winfo_exists():
+            # If scrollable_frame doesn't exist yet, we need to build it
+            # But we can't build it here because the window might be in a bad state.
+            # Just return and let the next refresh call build it.
+            return
 
         # Ensure search button exists
         if not self.search_btn or not self.search_btn.winfo_exists():

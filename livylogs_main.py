@@ -338,6 +338,10 @@ class CombatLogApp:
             self.player_arrival_order.append("You")
         self.friendly_players.add("You")
         
+        # Prompt for character name if not set
+        if not self.char_name.get():
+            self.root.after(500, self._prompt_for_character_name)
+        
         self.load_bosses()
         self.load_filters()
         self.load_class_configs()
@@ -3942,6 +3946,31 @@ class CombatLogApp:
             else:
                 # Play multiple files (playlist)
                 self.radio_mgr.play_local_playlist(list(files))
+
+    def _prompt_for_character_name(self):
+        from ui_base import ThemedInputDialog
+        def on_submit(name):
+            if name:
+                self.char_name.set(name)
+                self.save_config()
+                # Map "You" to this name in player_data
+                if "You" in self.player_data and name != "You":
+                    self.player_data[name] = self.player_data.pop("You")
+                if "You" in self.status_cooldowns and name != "You":
+                    self.status_cooldowns[name] = self.status_cooldowns.pop("You")
+                if "You" in self.friendly_players:
+                    self.friendly_players.remove("You")
+                    self.friendly_players.add(name)
+                if "You" in self.player_arrival_order:
+                    self.player_arrival_order.remove("You")
+                    self.player_arrival_order.append(name)
+        self.is_dialog_open = True
+        input_win = ThemedInputDialog(self.root, "Character Name", "Enter your character name:", 
+                                      initial_value="", on_submit=on_submit)
+        if input_win:
+            input_win.attributes("-topmost", True)
+            input_win.lift()
+            input_win.focus_force()
 
     def _init_player_data(self, name, died=False):
         if not name or name == "Unknown": return {}

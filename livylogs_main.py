@@ -57,6 +57,14 @@ from window_manager import WindowManager
 class CombatLogApp:
     def __init__(self, root):
         self.root = root
+        
+        # --- CRITICAL TIMING INITIALIZATION ---
+        self.last_top_stats_check = time.time()
+        self._last_ui_tick = time.time()
+        self.last_ui_update_time = time.time()
+        self.last_combat_time = time.time()
+        self._ui_update_pending = False
+        
         self.root.title("Combat Log Analyzer")
         self.root.geometry("400x50")
         self.root.configure(bg=WINDOW_BG)
@@ -254,9 +262,9 @@ class CombatLogApp:
         self.current_focus_target = {'friendly': None, 'enemy': None}
         self.is_pvp_active = False
         self.last_discord_pulse_time = 0
-        self.last_top_stats_check = time.time()
-        self._last_ui_tick = time.time()
-        self.last_ui_update_time = time.time()
+        # self.last_top_stats_check = time.time() # MOVED TO START OF INIT
+        # self._last_ui_tick = time.time() # MOVED TO START OF INIT
+        # self.last_ui_update_time = time.time() # MOVED TO START OF INIT
         self.relay_events = [] # [(timestamp, type, source, target, label)]
         self.permanent_drops = {} # { "item_name": ["dropper1", "dropper2"] }
         self.load_permanent_drops()
@@ -265,12 +273,17 @@ class CombatLogApp:
         self.player_name_alias = {} # { "RealName": "You" }
 
         # Uncle ReCoN Database
+        print("[DEBUG] Loading Uncle ReCoN Database...")
         self.rico_db = load_rico_to_ram()
+        print("[DEBUG] Uncle ReCoN Database loaded.")
 
         # Initialize WindowManager
+        print("[DEBUG] Initializing WindowManager...")
         self.window_manager = WindowManager(self)
+        print("[DEBUG] WindowManager initialized.")
 
         try:
+            print("[DEBUG] Registering subwindows...")
             self.skimmers_win = SkimmersWindow(self)
             self.window_manager.register("skimmers", self.skimmers_win)
             self.damage_meter_win = DamageMeterWindow(self)
@@ -296,6 +309,7 @@ class CombatLogApp:
             self.window_manager.register("fax", self.fax_win)
             self.discord_viewer_win = DiscordViewerWindow(self)
             self.window_manager.register("discord_viewer", self.discord_viewer_win)
+            print("[DEBUG] All subwindows registered.")
         except Exception as e:
             print(f"[DEBUG] Error creating subwindows: {e}")
             # Ensure defaults exist
@@ -1012,15 +1026,22 @@ class CombatLogApp:
         # but the user provided assets that are 638x154.
         
         # Setup: 240, 129
-        sx, sy, sfg, ssz = get_pos("SETUP", 129, 49, "#d21a17", 7)
+        sx, sy, sfg, ssz = get_pos("SETUP", 129, 35, "#d21a17", 7)
         if self.compact_mode: sx, sy = 10, 10
-        if "SETTINGS" in self.dynamic_labels: 
-             ds = self.dynamic_labels["SETTINGS"]
+        if "SETUP" in self.dynamic_labels: 
+             ds = self.dynamic_labels["SETUP"]
              sx, sy = (ds.get("x", sx), ds.get("y", sy)) if not self.compact_mode else (sx, sy)
              sfg, ssz = ds.get("fg", sfg), ds.get("size", ssz)
         self.lbl_setup = create_ui_label("SETUP", sx, sy, self.toggle_menu, fg=sfg, 
                                          font_obj=tkfont.Font(family="Lilita One", size=ssz))
         self.main_canvas.tag_raise(self.lbl_setup)
+
+        # BROWSE Label for log selection
+        bx, by, bfg, bsz = get_pos("BROWSE", 129, 65, "#d21a17", 7)
+        if self.compact_mode: bx, by = 600, 10
+        self.lbl_browse = create_ui_label("BROWSE", bx, by, self.change_log_path, fg=bfg,
+                                           font_obj=tkfont.Font(family="Lilita One", size=bsz))
+        self.main_canvas.tag_raise(self.lbl_browse)
 
         # Alexa: 236, 151
         ax, ay, afg, asz = get_pos("ALEXA", 121, 98, "#d21a18", 7)
@@ -1091,6 +1112,7 @@ class CombatLogApp:
         self.lbl_discord_viewer = create_ui_label("DISCORD VIEWER", dvx, dvy, self.open_discord_viewer, fg=dvfg,
                                                    font_obj=tkfont.Font(family="Lilita One", size=dvsz))
         self.main_canvas.tag_raise(self.lbl_discord_viewer)
+
 
         # MIN/MAX button in compact mode
         mx, my, mfg, msz = get_pos("MIN", 595, 10, "#ffffff", 8)
@@ -1543,6 +1565,72 @@ class CombatLogApp:
                         f.write(f"--- WATCHDOG ERROR {datetime.now()} ---\n{e}\n")
                 except: pass
 
+    def _trigger_status_effect(self, target, ability_text, status_type_override=None, offset_override=None):
+        """Centralized handler for status effects like knockdown, posture, and intimidate."""
+        if not target or (not ability_text and not status_type_override):
+            return
+
+        # Double check normalization to prevent fragmented names from appearing as targets
+        from utils import normalize_name
+        target = normalize_name(target)
+        char_name_curr = self.char_name.get()
+        if char_name_curr and target.lower() == char_name_curr.lower(): 
+            target = "You"
+
+        cur_time = time.time()
+        status_type = status_type_override
+        
+        if not status_type and ability_text:
+            ability_lower = ability_text.lower()
+            if "knockdown" in ability_lower or "knocked down" in ability_lower or "stands up" in ability_lower or "falls down" in ability_lower:
+                status_type = "knockdown"
+            elif "posture" in ability_lower or "kneel" in ability_lower or "prone" in ability_lower or "kneeling" in ability_lower:
+                status_type = "posture"
+            elif "intimidate" in ability_lower or "intimidated" in ability_lower:
+                status_type = "intimidate"
+            elif "incapacitated" in ability_lower or "incapacitate" in ability_lower:
+                status_type = "incapacitated"
+
+        if status_type:
+            self._init_player_data(target)
+            if target not in self.status_cooldowns:
+                self.status_cooldowns[target] = {}
+
+            # 28s immunity window for most; incapacitated uses state_duration (usually 28s)
+            duration = 28
+            if offset_override is not None:
+                duration = offset_override
+            elif status_type == "incapacitated":
+                duration = getattr(self, 'state_duration', 28)
+
+            last_time = self.status_cooldowns[target].get(status_type, 0)
+            if cur_time - last_time > duration:
+                self.status_cooldowns[target][status_type] = cur_time
+                self.player_data[target]["status_effects"][status_type] = cur_time
+
+                # Cumulative session tracking
+                count_key = f"{status_type}_count"
+                if status_type == "knockdown": count_key = "knockdown_count"
+                elif status_type == "posture": count_key = "posture_count"
+                elif status_type == "intimidate": count_key = "intimidate_count"
+                elif status_type == "incapacitated": count_key = "incapacitated_count"
+
+                self.player_data[target][count_key] = self.player_data[target].get(count_key, 0) + 1
+
+                # Force refresh to show new status immediately
+                if hasattr(self, 'livius_win') and self.livius_win:
+                    self.livius_win.refresh(force=True)
+
+                # If it's a new player, track them
+                if target != "You" and target not in self.friendly_players and target not in self.enemy_players:
+                    # Default to enemy unless we are in a group with them (SWG logic)
+                    self.enemy_players.add(target)
+                    if target not in self.player_arrival_order:
+                        self.player_arrival_order.append(target)
+                elif target == "You":
+                    if "You" not in self.player_arrival_order:
+                        self.player_arrival_order.append("You")
+
     def process_external_event(self, event, is_last=False):
         try:
             import json
@@ -1577,10 +1665,13 @@ class CombatLogApp:
             event_type = event.get("type")
             
             # --- NORMALIZE PLAYER IDENTITY ---
-            char_name_curr = self.char_name.get().lower()
+            char_name_curr = self.char_name.get().lower() if hasattr(self, 'char_name') else ""
+            from utils import normalize_name
             for key in ["name", "source", "target", "looter"]:
                 val = event.get(key)
                 if val:
+                    # Initial normalize to catch verb fragments like "has been"
+                    val = normalize_name(val)
                     old_val = val
                     low_val = val.lower()
                     
@@ -1590,7 +1681,7 @@ class CombatLogApp:
                         low_val = val.lower()
                         event[key] = val
                     
-                    # Ensure normalize_name is called first for consistent mapping
+                    # Ensure normalize_name is called again after prefix stripping
                     norm_val = normalize_name(val)
                     low_norm = norm_val.lower()
                     
@@ -1598,21 +1689,29 @@ class CombatLogApp:
                     if char_name_curr and low_norm == char_name_curr:
                         norm_val = "You"
                         low_norm = "you"
+                        event[key] = "You"
                     
                     # 123 logic support: if a player typed 123 in group chat and it matches our configured name, record it
                     if event.get("type") == "chat" and event.get("channel") == "group":
                         msg = event.get("message", "").strip()
                         if msg == "123" and low_norm != "you":
                              # We just saw ourselves type 123
-                             self.char_name.set(norm_val) # auto-configure name
+                             if hasattr(self, 'char_name'): self.char_name.set(norm_val) # auto-configure name
                              char_name_curr = norm_val.lower()
                              norm_val = "You"
                              low_norm = "you"
+                             event[key] = "You"
 
                     # FILTER: Remove corrupted names and merge character identity
-                    if low_norm in ["you", "yourself", "s you", "s yourself", "s ii i i i i i i", "damage you", "you have completely", char_name_curr]:
+                    if char_name_curr and low_norm == char_name_curr.lower():
                         event[key] = "You"
                         norm_val = "You"
+                        low_norm = "you"
+                    elif low_norm == "you":
+                        event[key] = "You"
+                        norm_val = "You"
+                    elif norm_val == "You":
+                        event[key] = "You"
                         low_norm = "you"
                         
                         # MERGE GUARD: If data exists under the old name, move it to 'You'
@@ -1624,11 +1723,24 @@ class CombatLogApp:
                                     self._init_player_data("You")
                                 for k, v in old_data.items():
                                     if isinstance(v, (int, float)):
-                                        self.player_data["You"][k] = max(self.player_data["You"].get(k, 0), v)
+                                        self.player_data["You"][k] = self.player_data["You"].get(k, 0) + v
                                     elif k == "logs":
                                         self.player_data["You"]["logs"].extend(v)
                                         if len(self.player_data["You"]["logs"]) > 200:
                                             self.player_data["You"]["logs"] = self.player_data["You"]["logs"][-200:]
+                                    elif k == "status_effects":
+                                        if "status_effects" not in self.player_data["You"]: self.player_data["You"]["status_effects"] = {}
+                                        self.player_data["You"]["status_effects"].update(v)
+                                    elif k == "targets":
+                                        if "targets" not in self.player_data["You"]: self.player_data["You"]["targets"] = {}
+                                        for t_name, t_val in v.items():
+                                            self.player_data["You"]["targets"][t_name] = self.player_data["You"]["targets"].get(t_name, 0) + t_val
+                        
+                            # Cleanup status_cooldowns
+                            if old_val in self.status_cooldowns:
+                                old_cds = self.status_cooldowns.pop(old_val)
+                                if "You" not in self.status_cooldowns: self.status_cooldowns["You"] = {}
+                                self.status_cooldowns["You"].update(old_cds)
                             
                             # Cleanup lists
                             if old_val in self.player_arrival_order:
@@ -1702,13 +1814,16 @@ class CombatLogApp:
                             self.save_config()
                 return
 
-            if event_type in ["poison", "incapacitated", "status_removed", "cooldown", "death", "kill"]:
+            if event_type in ["poison", "incapacitated", "status_removed", "cooldown", "death", "kill", "status"]:
                  # Update combat timer for these events as they are activity
                  self.last_combat_time = global_time.time()
                  
                  # Discovery: Add target/source to display lists if they aren't already there
                  for p in [source, target]:
                      if p and p != "Unknown":
+                         # NORMALIZE NAME FIRST
+                         p = normalize_name(p)
+                         
                          # UNIFY: Map character name or "yourself" to "You"
                          if p.lower() == self.char_name.get().lower() or p.lower() == "yourself":
                              p = "You"
@@ -1725,6 +1840,7 @@ class CombatLogApp:
             if event_type in ["dealt", "taken", "healing"]:
                  for p in [source, target]:
                      if p and p != "Unknown":
+                         p = normalize_name(p)
                          if p not in self.player_arrival_order:
                              self.player_arrival_order.append(p)
                          if p == "You":
@@ -1739,14 +1855,14 @@ class CombatLogApp:
             ev_damage = event.get("damage", 0)
             ev_healing = event.get("healing", 0)
             
-            is_damage = (ev_damage > 0 and event_type in ["dealt", "taken", "other_dealt", "armor_reduction"])
+            is_damage = (ev_damage > 0 and event_type in ["dealt", "taken", "other_dealt", "other_taken", "armor_reduction"])
             is_healing = (ev_healing > 0 and event_type == "healing")
             is_cooldown = event_type == "cooldown"
             is_armor = event_type == "armor_reduction"
             
             # Duration should stop after 15 seconds of no events.
             # We treat damage, healing, status effects, and incapacitation as activity.
-            is_activity = is_damage or is_healing or is_cooldown or is_armor or (event_type == "incapacitated")
+            is_activity = is_damage or is_healing or is_cooldown or is_armor or (event_type in ["incapacitated", "death", "kill", "status_removed", "status"])
             
             # Continue to ensure session timing and display list updates are performed.
 
@@ -1779,9 +1895,9 @@ class CombatLogApp:
                     self.player_data[p_name]["dm_hits"] = 0
                     self.player_data[p_name]["dm_misses"] = 0
                     self.player_data[p_name]["dm_avoided"] = 0
-                    # DO NOT CLEAR status_effects on combat timeout - keep them for full session visibility
-                    # if "status_effects" in self.player_data[p_name]:
-                    #     self.player_data[p_name]["status_effects"].clear()
+                    # DO NOT CLEAR status_effects or knockdown/posture counts on combat timeout - keep them for full session visibility
+                    # p = self.player_data[p_name]
+                    # p["knockdown_count"] = 0 # NO! Keep for session
                 self.last_ui_update_time = 0 # Force immediate update on timeout
                 is_last = True # Force UI refresh on reset
                 
@@ -2050,49 +2166,53 @@ class CombatLogApp:
                                 self.livius_win.refresh(force=True)
                 return
 
+            elif event_type == "status":
+                status_val = event.get("status")
+                msg = event.get("message", "")
+                src = event.get("source", "Unknown")
+                offset = event.get("offset")
+                
+                # Check for state keywords inside the target name itself (User suggestion)
+                # If target contains "has been", "is", "intimidated", etc., it's a fragment.
+                # We normalize it to find the REAL identity.
+                target = normalize_name(target)
+                src = normalize_name(src)
+                
+                # Check character identity
+                char_name_curr = self.char_name.get()
+                if char_name_curr and target.lower() == char_name_curr.lower(): target = "You"
+                if char_name_curr and src.lower() == char_name_curr.lower(): src = "You"
+
+                if target and target != "Unknown" and status_val:
+                    # ENSURE TARGET IS CLEAN AND TRACKED
+                    norm_target = normalize_name(target)
+                    if char_name_curr and norm_target.lower() == char_name_curr.lower(): norm_target = "You"
+                    if not norm_target or norm_target == "Unknown": return
+
+                    self._trigger_status_effect(norm_target, msg, status_type_override=status_val, offset_override=offset)
+                    self._init_player_data(norm_target)
+                    
+                    # Also ensure the clean target is in the arrival order, NOT the raw fragmented one
+                    if norm_target not in self.player_arrival_order:
+                        self.player_arrival_order.append(norm_target)
+                        if norm_target == "You": self.friendly_players.add(norm_target)
+                        else: self.enemy_players.add(norm_target)
+                    
+                    log_msg = f"Status: {status_val.title()}"
+                    if src and src != "Unknown":
+                        log_msg += f" by {src}"
+                    
+                    self.player_data[norm_target]["logs"].append({"msg": log_msg, "time": timestamp, "type": "status"})
+                return
+
             elif event_type == "cooldown":
                 ability = event.get("ability")
                 if target and ability:
-                    self._init_player_data(target)
-                    if "status_effects" not in self.player_data[target]: self.player_data[target]["status_effects"] = {}
-                    cur_time = global_time.time()
-                    if target not in self.status_cooldowns: self.status_cooldowns[target] = {}
-                    
-                    is_immune = False
-                    if ability in ["knockdown", "posture"]:
-                        last_time = self.status_cooldowns[target].get(ability, 0)
-                        if cur_time - last_time <= self.state_duration: is_immune = True
-                    
-                    if not is_immune:
-                        self.status_cooldowns[target][ability] = cur_time
-                        self.player_data[target]["status_effects"][ability] = cur_time
-                        
-                        # Cumulative tracking for relay/leaderboards
-                        if ability == "knockdown":
-                            self.player_data[target]["knockdown_count"] = self.player_data[target].get("knockdown_count", 0) + 1
-                        elif ability == "posture":
-                            self.player_data[target]["posture_count"] = self.player_data[target].get("posture_count", 0) + 1
-                        elif ability == "intimidate":
-                            self.player_data[target]["intimidate_count"] = self.player_data[target].get("intimidate_count", 0) + 1
-                        if target != "You" and target not in self.friendly_players and target not in self.enemy_players:
-                            self.enemy_players.add(target)
-                            if target not in self.player_arrival_order: self.player_arrival_order.append(target)
+                    self._trigger_status_effect(target, ability)
                 return
 
             elif event_type == "incapacitated":
-                self._init_player_data(target)
-                if "status_effects" not in self.player_data[target]: self.player_data[target]["status_effects"] = {}
-                cur_time = global_time.time()
-                if target not in self.status_cooldowns: self.status_cooldowns[target] = {}
-                last_time = self.status_cooldowns[target].get("incapacitated", 0)
-                if cur_time - last_time > self.state_duration:
-                    self.status_cooldowns[target]["incapacitated"] = cur_time
-                    self.player_data[target]["status_effects"]["incapacitated"] = cur_time
-                    self.player_data[target]["incapacitated_count"] += 1
-                    if target != "You" and target not in self.friendly_players and target not in self.enemy_players:
-                        self.enemy_players.add(target)
-                        if target not in self.player_arrival_order: self.player_arrival_order.append(target)
-                # self.player_data[target]["incapacitated_count"] += 1  # Moved inside 28s check
+                self._trigger_status_effect(target, "incapacitated")
                 self.player_data[target]["logs"].append({"msg": "Incapacitated!", "time": timestamp, "type": "status"})
                 return
 
@@ -2104,6 +2224,9 @@ class CombatLogApp:
                             del self.player_data[target]["status_effects"][status_to_rem]
                             if status_to_rem == "intimidate" and target in self.status_cooldowns:
                                 if status_to_rem in self.status_cooldowns[target]: del self.status_cooldowns[target][status_to_rem]
+                
+                if hasattr(self, 'livius_win') and self.livius_win:
+                    self.livius_win.refresh(force=True)
                 return
 
             elif event_type == "poison":
@@ -2130,21 +2253,12 @@ class CombatLogApp:
                         target_death = normalize_name(target_death)
 
                 if target_death and target_death != "Unknown":
-                    # When a player dies, clear their active status effects but NOT their 30s immunity window
-                    if target_death not in self.player_data:
-                        self._init_player_data(target_death, died=True)
-                    else:
-                        self.player_data[target_death]["died"] = True
-                        if "status_effects" in self.player_data[target_death]:
-                            self.player_data[target_death]["status_effects"].clear()
-                        
-                        # Ensure fields exist for the UI
-                        if "poison_hits" not in self.player_data[target_death]:
-                            self.player_data[target_death]["poison_hits"] = 0
-                        if "incapacitated_count" not in self.player_data[target_death]:
-                            self.player_data[target_death]["incapacitated_count"] = 0
-                        if "kill_count" not in self.player_data[target_death]:
-                            self.player_data[target_death]["kill_count"] = 0
+                    # When a player dies, clear their active status effects but NOT their 28s immunity window
+                    self._init_player_data(target_death, died=True)
+                    tp_death = self.player_data[target_death]
+                    tp_death["died"] = True
+                    if "status_effects" in tp_death:
+                        tp_death["status_effects"].clear()
                 
                 # Increment kill count for the source if it was a kill event
                 # FILTER: Only count it if the target is a probable player (PvP Kill)
@@ -2419,6 +2533,10 @@ class CombatLogApp:
                 if event_type == "dealt" or event_type == "other_dealt":
                     p["damage"] = p.get("damage", 0) + damage
                     
+                    # Check for status effects in the ability name (e.g., "Fire Knockdown")
+                    if ability:
+                        self._trigger_status_effect(target, ability)
+                    
                     # Update Damage Meter stats if combat is active
                     if self.app_start_time:
                         # Re-verify p matches source_for_timing to avoid split data
@@ -2443,8 +2561,7 @@ class CombatLogApp:
                     self.leaderboard_data[source] = p["damage"]
 
                     if is_probable_player(target, self.bosses, self.known_npcs):
-                        if target not in self.player_data:
-                            self.player_data[target] = {"damage": 0, "healing": 0, "logs": [], "died": False, "dm_damage": 0, "dm_healing": 0, "lb_loot": 0, "lb_mobs": 0, "lb_xp": 0, "targets": {}, "aoe_hits": 0, "dm_hits": 0, "dm_misses": 0, "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0, "xp_history": [], "looted_items": [], "total_credits": 0, "status_effects": {}, "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0}
+                        self._init_player_data(target)
                         tp = self.player_data[target]
                         # dm_taken already incremented in pre-event timing block
                         # Already simplified format for taken
@@ -2462,6 +2579,22 @@ class CombatLogApp:
                     else:
                         p["dm_taken"] = 0
                     
+                    # Check if "You" were knocked down/intimidated/etc based on message/ability
+                    # The message might contain "You have been knocked down"
+                    msg = event.get("message", "")
+                    if msg:
+                        self._trigger_status_effect("You", msg)
+                    if ability:
+                        self._trigger_status_effect("You", ability)
+                    
+                    # Also check for other players being affected in "taken" events
+                    # if target is not You, and it's a taken event with a status message
+                    if target != "You" and target != "Unknown":
+                         if msg:
+                             self._trigger_status_effect(target, msg)
+                         if ability:
+                             self._trigger_status_effect(target, ability)
+
                     # Increment counters for evasion/miss stats
                     if damage > 0:
                         p["dm_taken_hits"] = p.get("dm_taken_hits", 0) + 1
@@ -2867,7 +3000,7 @@ class CombatLogApp:
             
             try:
                 you = self.player_data.get("You", {})
-                dmg = you.get("damage", 0)
+                dmg = you.get("dm_damage", 0)
                 xp = sum(item.get("amount", 0) for item in you.get("xp_history", []))
             
                 # Calculate XP/H
@@ -3532,6 +3665,11 @@ class CombatLogApp:
             top.overrideredirect(True) # Frameless like other secondary windows
             top.attributes("-topmost", True)
             
+            # Layering: bring to front on click
+            top.bind("<Button-1>", lambda e: (top.lift(), top.focus_force()), add="+")
+            top.lift()
+            top.focus_force()
+            
             # Make it draggable
             def start_move(e):
                 top.x = e.x
@@ -3717,6 +3855,11 @@ class CombatLogApp:
                 # User clicked YES and finished - close options window
                 if hasattr(self, 'options_win') and self.options_win and self.options_win.window and self.options_win.window.winfo_exists():
                     self.options_win.close()
+        
+                # Bring main window to front
+                self.root.lift()
+                self.root.focus_force()
+        
                 self.refresh_ui_only(force=True)
 
             if skip_prompt or (not self.char_name.get() and self.disable_warnings.get()):
@@ -3792,8 +3935,20 @@ class CombatLogApp:
                 "dm_taken": 0, "dm_taken_hits": 0, "dm_avoided": 0,
                 "xp_history": [], "looted_items": [], "total_credits": 0,
                 "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0,
+                "knockdown_count": 0, "posture_count": 0, "intimidate_count": 0,
                 "status_effects": {}, "taken_damage_history": [], "last_911_time": 0
             }
+        else:
+            # Ensure new tactical fields exist for existing players
+            p = self.player_data[name]
+            if "knockdown_count" not in p: p["knockdown_count"] = 0
+            if "posture_count" not in p: p["posture_count"] = 0
+            if "intimidate_count" not in p: p["intimidate_count"] = 0
+            if "poison_hits" not in p: p["poison_hits"] = 0
+            if "incapacitated_count" not in p: p["incapacitated_count"] = 0
+            if "kill_count" not in p: p["kill_count"] = 0
+            if "status_effects" not in p: p["status_effects"] = {}
+            if "died" not in p: p["died"] = False
         return self.player_data[name]
 
     def reset_session_data(self):
@@ -3819,13 +3974,6 @@ class CombatLogApp:
         self.current_top_healing = {'friendly': None, 'enemy': None}
         self.current_focus_target = {'friendly': None, 'enemy': None}
         self.is_pvp_active = False
-        for p in self.player_data.values():
-            p["poison_hits"] = 0
-            p["incapacitated_count"] = 0
-            p["kill_count"] = 0
-            p["died"] = False
-            p["taken_damage_history"] = []
-            p["last_911_time"] = 0
         self.app_start_time = None
         self._encounter_start_stats = {}
         self.session_start_time = datetime.now()

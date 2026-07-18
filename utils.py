@@ -240,9 +240,10 @@ def normalize_name(name):
     # Remove leading/trailing spaces
     name = name.strip()
     
-    # Remove anything in parentheses ( )
+    # Remove anything in parentheses ( ) or brackets [ ]
     import re
-    name = re.sub(r"\(.*?\)", "", name).strip()
+    name = re.sub(r"\(.*?\)", "", name)
+    name = re.sub(r"\[.*?\]", "", name).strip()
     
     # Remove NPC articles (prefixes) and "unknown" suffixes repeatedly
     # until no more matching prefixes/suffixes are found
@@ -258,10 +259,25 @@ def normalize_name(name):
         # Strip common accidental suffixes
         name = name.strip()
         lower_name = name.lower()
-        suffixes = [" melee", " ranged", " unarmed", " polearm", " 1h", " 2h", " unknown", " unknown", "unknown"]
+        suffixes = [
+            " melee", " ranged", " unarmed", " polearm", " 1h", " 2h", 
+            " unknown", "unknown", 
+            " looks very", " looks", " has been", " have been", 
+            " is", " was", " use", " used", " using", 
+            " [combat]", " [spatial]", " [group]", " [chat]", " [tell]"
+        ]
         for s in suffixes:
             if lower_name.endswith(s):
                 name = name[:-len(s)].strip()
+                lower_name = name.lower()
+                break
+        
+        # Verb fragments in the middle or end
+        verbs = [" looks very ", " looks ", " has been ", " have been ", " is ", " was "]
+        for v in verbs:
+            v_idx = lower_name.find(v)
+            if v_idx != -1:
+                name = name[:v_idx].strip()
                 lower_name = name.lower()
                 break
         
@@ -285,9 +301,61 @@ def normalize_name(name):
             break
 
     # Normalize "You" variations
-    if name.lower() in ["you", "damage you"]:
+    if name.lower() in [
+        "you", "damage you", "yourself", "s you", "s yourself", 
+        "you have completely", "you have been", "you have", 
+        "you use", "by you", "you are", "you're", "you intimidate", 
+        "you use", "you!", "has been", "stands up", "falls down", "kneels",
+        "by you!", "intimidated by you", "intimidated by you!", "ou", "ou!", "you "
+    ]:
         return "You"
-    return name
+    
+    # Aggressive stripping of descriptive fragments from NPC names
+    lower_n = name.lower()
+    # Expanded list of status verbs and fragments common in SWG logs
+    # We check if these are in the name; if so, we assume they are state fragments
+    # and strip everything from that point onwards.
+    status_frags = [
+        " looks very intimidated by you", " looks very", " has been ", " have been ", 
+        " is ", " was ", " looks ", " by ", 
+        " used ", " uses ", " intimidated", " kneeling", " prone", 
+        " incapacitated", " knocked down", " kneel", " has defeated ",
+        " use ", " attacks ", " deals ", " heals ", " hits ", " apply ",
+        " resist ", " no longer ", " incapacitated by ", " intimidated by ",
+        " knocked down by ", " kneels ", " prone by ", " stands up", " falls down", " on a "
+    ]
+    
+    # If we see a state keyword, it confirms this name is a log fragment
+    # We strip it to reveal the actual actor/victim name.
+    for frag in status_frags:
+        if frag in lower_n:
+            name = name[:lower_n.find(frag)].strip()
+            lower_n = name.lower()
+            
+    # Cleanup articles
+    if lower_n.startswith("a "): name = name[2:]
+    elif lower_n.startswith("an "): name = name[3:]
+    elif lower_n.startswith("the "): name = name[4:]
+    
+    # Final check for common prefixes like "by " (independent of being a fragment)
+    lower_n = name.lower()
+    if lower_n.startswith("by "): name = name[3:]
+
+    # RE-CHECK for "You" after article/prefix cleanup
+    if name.lower() in [
+        "you", "damage you", "yourself", "s you", "s yourself", 
+        "you have completely", "you have been", "you have", 
+        "you use", "by you", "you are", "you're", "you intimidate", 
+        "you use", "you!", "has been", "stands up", "falls down", "kneels",
+        "by you!", "intimidated by you", "intimidated by you!", "ou", "ou!", "you "
+    ]:
+        return "You"
+    
+    # Guard: if the result is empty or just a fragment like "use" or "is", keep original or return Unknown
+    if not name or name.lower() in ["use", "is", "has", "was"]:
+        return "Unknown"
+    
+    return name.strip()
 
 def is_probable_player(name, bosses=None, known_npcs=None, known_players=None):
     if not name or name == "Unknown": return False
@@ -305,15 +373,16 @@ def is_probable_player(name, bosses=None, known_npcs=None, known_players=None):
     if bosses and lower_name in bosses: return False
     if known_npcs and lower_name in known_npcs: return False
     
+    # Heuristic: NPCs often start with "a " or "an " or "the "
+    if lower_name.startswith("a ") or lower_name.startswith("an ") or lower_name.startswith("the "):
+        return False
+    
     # Specific filter for common NPCs that don't start with articles
-    npc_keywords = ["trooper", "guard", "scout", "officer", "droid"]
+    npc_keywords = ["trooper", "guard", "scout", "officer", "droid", "gundark", "krayt", "dragon", "mandalorian"]
     for kw in npc_keywords:
         if kw in lower_name:
             return False
 
-    # Heuristic: NPCs often start with "a " or "an " or "the "
-    if lower_name.startswith("a ") or lower_name.startswith("an ") or lower_name.startswith("the "):
-        return False
     # Heuristic: Players usually don't have spaces in SWG (unless they have a surname)
     # but NPCs often have multiple words like "SpecForce marine".
     # This is tricky because players CAN have surnames.

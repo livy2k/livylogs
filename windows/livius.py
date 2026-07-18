@@ -17,13 +17,12 @@ from windows.base_window import BasePopoutWindow
 class LiviusWindow(BasePopoutWindow):
     def __init__(self, app):
         super().__init__(app, "LIVIUS", "LiviusWindow", 750, 600, show_title=True)
+        self._is_broken = False
         self.friendlies = set()
         self.enemies = set()
         self.last_full_refresh = 0
         self.bg_textures = {} # Cache for panel textures
         self.icon_images = {} # Cache for custom icons
-        self.version = "v4.0"
-        self.tactical_mode = True
 
     def _get_icon(self, name, size=(24, 24)):
         if name in self.icon_images:
@@ -99,6 +98,8 @@ class LiviusWindow(BasePopoutWindow):
             return None
 
     def refresh(self, force=False):
+        if self._is_broken:
+            return
         if not self.window or not self.window.winfo_exists():
             return
             
@@ -116,8 +117,8 @@ class LiviusWindow(BasePopoutWindow):
             return
 
         now = time.time()
-        # Refresh every 1 second
-        if not force and (now - self.last_full_refresh < 1.0):
+        # Refresh every 0.2 seconds for smooth countdown
+        if not force and (now - self.last_full_refresh < 0.2):
             return
         
         self.last_full_refresh = now
@@ -145,25 +146,71 @@ class LiviusWindow(BasePopoutWindow):
         enemies_set = getattr(self.app, 'enemy_players', set())
         arrival_order = getattr(self.app, 'player_arrival_order', [])
         
-        # Sort by arrival order, but PRIORITIZE focus targets at the top
+        # Sort by arrival order, but PRIORITIZE focus targets and You at the top
         friendly_focus = getattr(self.app, 'current_focus_target', {}).get('friendly')
         enemy_focus = getattr(self.app, 'current_focus_target', {}).get('enemy')
 
-        friendlies_list = [p for p in arrival_order if p in friendlies_set or p == "You"]
-        enemies_list = [p for p in arrival_order if p in enemies_set]
+        friendlies_list = []
+        for p in arrival_order:
+            if p in friendlies_set or p == "You":
+                friendlies_list.append(p)
+        
+        enemies_list = []
+        for p in arrival_order:
+            if p in enemies_set and p != "You":
+                enemies_list.append(p)
         
         # Any players not in arrival order but in sets (fallback)
         f_fallback = [p for p in friendlies_set if p not in friendlies_list]
-        if "You" not in friendlies_list:
+        if "You" not in friendlies_list and "You" not in f_fallback:
             f_fallback.append("You")
-        e_fallback = [p for p in enemies_set if p not in enemies_list]
-        friendlies_list += sorted(f_fallback)
-        enemies_list += sorted(e_fallback)
+        
+        for p in sorted(f_fallback):
+            if p not in friendlies_list:
+                friendlies_list.append(p)
+        
+        e_fallback = [p for p in enemies_set if p not in enemies_list and p != "You"]
+        for p in sorted(e_fallback):
+            if p not in enemies_list:
+                enemies_list.append(p)
 
-        # Move Focus Targets to the TOP
+        # Helper to calculate recent damage taken
+        def get_recent_dmg(p_name):
+            p_data = self.app.player_data.get(p_name, {})
+            history = p_data.get("taken_damage_history", [])
+            now = time.time()
+            return sum(amt for ts, amt in history if now - ts < 4)
+
+        # Helper to get 911 priority
+        def get_911_priority(p_name):
+            p_data = self.app.player_data.get(p_name, {})
+            last_911 = p_data.get("last_911_time", 0)
+            # If typed 911 in the last 30 seconds, they get priority
+            if time.time() - last_911 < 30:
+                return last_911
+            return 0
+
+        # Sort friendlies: 911 priority first, then recent damage taken
+        friendlies_list.sort(key=lambda p: (get_911_priority(p), get_recent_dmg(p)), reverse=True)
+
+        # Move 'You' and Focus Targets to the TOP (Overriding the damage-taken sort if necessary)
         if friendly_focus and friendly_focus in friendlies_list:
             friendlies_list.remove(friendly_focus)
             friendlies_list.insert(0, friendly_focus)
+        
+        # 'You' should be at top unless someone else has 911
+        if "You" in friendlies_list:
+            friendlies_list.remove("You")
+            # Find the first index that is NOT a 911 player
+            insert_idx = 0
+            for i, p in enumerate(friendlies_list):
+                # Only put "You" below others if they have 911 AND "You" does not
+                if get_911_priority(p) > 0 and get_911_priority("You") == 0:
+                    insert_idx = i + 1
+                else:
+                    break
+            friendlies_list.insert(insert_idx, "You")
+            
         if enemy_focus and enemy_focus in enemies_list:
             enemies_list.remove(enemy_focus)
             enemies_list.insert(0, enemy_focus)
@@ -174,6 +221,11 @@ class LiviusWindow(BasePopoutWindow):
                 if friendlies_list: f.write(f"  F_LIST: {friendlies_list}\n")
                 if enemies_list: f.write(f"  E_LIST: {enemies_list}\n")
         except: pass
+
+        # DIAGNOSTIC: Force "You" into friendlies if it's missing but we have data
+        if "You" not in friendlies_list and "You" in self.app.player_data:
+             friendlies_list.append("You")
+
         if not hasattr(self, 'main_container'):
             for widget in self.content_container.winfo_children():
                 try:
@@ -186,17 +238,10 @@ class LiviusWindow(BasePopoutWindow):
             
             # Main panels with a "brushed" look
             self.left_panel = tk.Frame(self.main_container, bg=PANEL_DARK, bd=1, relief=tk.RIDGE)
-            self.left_panel.place(relx=0.005, rely=0.005, relwidth=0.49, relheight=0.94)
+            self.left_panel.place(relx=0, rely=0, relwidth=0.5, relheight=1)
             
             self.right_panel = tk.Frame(self.main_container, bg=PANEL_DARK, bd=1, relief=tk.RIDGE)
-            self.right_panel.place(relx=0.505, rely=0.005, relwidth=0.49, relheight=0.94)
-
-            # Version/Status Footer
-            self.footer = tk.Frame(self.main_container, bg=WINDOW_BG, height=20)
-            self.footer.place(relx=0, rely=0.95, relwidth=1, relheight=0.05)
-            
-            tk.Label(self.footer, text=f"LIVIUS TACTICAL OVERLAY {self.version} // SECTOR LOGISTICS", 
-                     bg=WINDOW_BG, fg=TEXT_DISABLED, font=("Arial", 7, "bold")).pack(side=tk.LEFT, padx=10)
+            self.right_panel.place(relx=0.5, rely=0, relwidth=0.5, relheight=1)
             
             self.friendly_list_frame = tk.Frame(self.left_panel, bg=PANEL_DARK)
             self.friendly_list_frame.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
@@ -216,302 +261,157 @@ class LiviusWindow(BasePopoutWindow):
         if force:
             self.window.lift()
 
+    def save_config(self):
+        """Save window position/size to app config. Safe to call even if window is not open."""
+        if not self.window or not self.window.winfo_exists():
+            return
+        try:
+            if self.config_key not in self.app.config:
+                self.app.config[self.config_key] = {}
+            self.app.config[self.config_key].update({
+                "width": str(self.window.winfo_width()),
+                "height": str(self.window.winfo_height()),
+                "x": str(self.window.winfo_x()),
+                "y": str(self.window.winfo_y())
+            })
+        except:
+            pass
+
+    def close(self):
+        self._is_broken = False
+        super().close()
+
     def _update_list(self, frame, players, color):
         current_widgets = frame.winfo_children()
         now = time.time()
         
         # Determine panel dimensions based on scaling
-        # Original: width=340, height=80
         scale_x = getattr(self, 'scale_x', 1.0)
         scale_y = getattr(self, 'scale_y', 1.0)
         scale = getattr(self, 'scale', 1.0)
         
-        panel_width = int(340 * scale_x)
-        panel_height = int(40 * scale_y)
+        panel_height = int(70 * scale_y)
         
         # Scaling for fonts
-        name_font_size = max(6, int(10 * scale))
-        timer_font_size = max(5, int(6 * scale))
-        status_icon_base_size = int(14 * scale)
-        mvp_icon_base_size = int(18 * scale)
+        name_font_size = max(10, int(14 * scale))
+        status_label_font_size = max(12, int(16 * scale))
+        timer_font_size = max(10, int(14 * scale))
         
         # Adjust number of rows
         while len(current_widgets) < len(players):
-            # Row container
             row = tk.Frame(frame, bg=PANEL_DARK, height=panel_height)
             row.pack(fill=tk.X, pady=2)
             row.pack_propagate(False)
-            
-            # Label for background texture
-            bg_label = tk.Label(row, name="bg_label", bg=PANEL_DARK)
-            bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-            
-            # Content container
-            content = tk.Frame(row, name="content_frame", bg=PANEL_DARK)
-            content.place(x=0, y=0, relwidth=1, relheight=1)
-            
-            # LEFT part: Status icons (KD, PD, Int, DOT, KB)
-            status_outer = tk.Frame(content, name="status_outer", bg=PANEL_DARK)
-            status_outer.pack(side=tk.LEFT, fill=tk.Y)
-            
-            status_frame = tk.Frame(status_outer, name="status_frame", bg=PANEL_DARK)
-            status_frame.pack(side=tk.LEFT, fill=tk.Y, padx=2)
-            
-            # RIGHT part: Player Name and Special icons
-            right_container = tk.Frame(content, name="right_container", bg=PANEL_DARK)
-            right_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-            
-            # Player name - RIGHT ALIGNED
-            lbl_name = tk.Label(right_container, name="player_name", bg=PANEL_DARK, font=("Arial", name_font_size, "bold"), anchor="e")
-            lbl_name.pack(side=tk.RIGHT, fill=tk.Y, padx=2)
-            
-            # Special icons Frame (MV, Sheep, Incap, Death) - Just LEFT of the name
-            achievement_frame = tk.Frame(right_container, name="achievement_frame", bg=PANEL_DARK)
-            achievement_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=1)
-            
-            # Use lift for ALL child widgets to be safe
-            bg_label.lower()
-            content.lift()
-            status_outer.lift()
-            right_container.lift()
-            achievement_frame.lift()
-            lbl_name.lift()
-            
             current_widgets = frame.winfo_children()
             
         # Hide extra rows
         for i in range(len(players), len(current_widgets)):
             current_widgets[i].pack_forget()
             
-        # Update existing rows
-        for i, player in enumerate(players):
+        # Update rows
+        for i, player_name in enumerate(players):
+            from utils import normalize_name
+            p_norm = normalize_name(player_name)
+            if p_norm == "Unknown":
+                current_widgets[i].pack_forget()
+                continue
+                
             row = current_widgets[i]
-            row.config(height=panel_height)
             row.pack(fill=tk.X, pady=2)
             
-            bg_label = row.nametowidget("bg_label")
-            content = row.nametowidget("content_frame")
-            status_outer = content.nametowidget("status_outer")
-            status_frame = status_outer.nametowidget("status_frame")
+            # 1. Row Configuration
+            row_bg = "#1a1d23" if i % 2 == 0 else "#24272d"
+            row.config(bg=row_bg, height=panel_height)
             
-            right_container = content.nametowidget("right_container")
-            achievement_frame = right_container.nametowidget("achievement_frame")
-            
-            # Robust lookup for lbl_name
-            try:
-                lbl_name = right_container.nametowidget("player_name")
-            except:
-                lbl_name = None
-                for child in right_container.winfo_children():
-                    if child.winfo_name() == "player_name":
-                        lbl_name = child
-                        break
-            
-            if not lbl_name:
-                continue
-                
-            # Set background texture
-            texture = self._get_panel_texture(panel_width, panel_height, is_alternate=(i % 2 == 0))
-            
-            # Focus Target Flashing Logic
+            # Check if focus target
             is_focus = False
-            if color == "#00FF00" and player == getattr(self.app, 'current_focus_target', {}).get('friendly'):
+            if color == "#00FF00" and player_name == getattr(self.app, 'current_focus_target', {}).get('friendly'):
                 is_focus = True
-            elif color == "#FF0000" and player == getattr(self.app, 'current_focus_target', {}).get('enemy'):
+            elif color == "#FF0000" and player_name == getattr(self.app, 'current_focus_target', {}).get('enemy'):
                 is_focus = True
-                
-            pulse = getattr(self.app, 'pulse_state', False)
-            if is_focus and pulse:
-                row_bg = "#880000" # Flashing Red
-            else:
-                row_bg = "#24272d" if i % 2 == 0 else "#1a1d23"
-            
-            try:
-                if texture:
-                    bg_label.config(image=texture, bg=row_bg)
-                    bg_label.image = texture 
-                    
-                    content.config(bg=row_bg) 
-                    status_outer.config(bg=row_bg)
-                    status_frame.config(bg=row_bg)
-                    right_container.config(bg=row_bg)
-                    achievement_frame.config(bg=row_bg)
-                    lbl_name.config(bg=row_bg)
-                else:
-                    bg_label.config(bg=row_bg, image="")
-                    content.config(bg=row_bg)
-                    status_outer.config(bg=row_bg)
-                    status_frame.config(bg=row_bg)
-                    right_container.config(bg=row_bg)
-                    achievement_frame.config(bg=row_bg)
-                    lbl_name.config(bg=row_bg)
-                
-                # Double ensure they are correctly layered every refresh
-                bg_label.lower()
-                content.lift()
-            except (tk.TclError, RuntimeError) as e:
-                try:
-                    with open("livius_debug.log", "a") as f:
-                        f.write(f"[{time.strftime('%H:%M:%S')}] ROW CONFIG ERROR for {player}: {e}\n")
-                except: pass
-                continue
-            
-            # Update Statuses - REUSE WIDGETS TO PREVENT FLICKER
-            # Split into Left (Status) and Right (Achievement)
-            left_active = []
-            right_active = []
-            
-            # 1. Immunity Cooldowns (Left)
-            player_statuses = self.app.status_cooldowns.get(player, {})
-            for status_type, start_time in player_statuses.items():
+    
+            if is_focus and getattr(self.app, 'pulse_state', False):
+                row_bg = "#880000"
+                row.config(bg=row_bg)
+
+            # Clear old content
+            for child in row.winfo_children():
+                child.destroy()
+
+            # Main content frame
+            content = tk.Frame(row, bg=row_bg)
+            content.pack(fill=tk.BOTH, expand=True, padx=5)
+
+            # LEFT SIDE: Status Blocks (KD, PD, INT, INC)
+            status_container = tk.Frame(content, bg=row_bg)
+            status_container.pack(side=tk.LEFT, fill=tk.Y)
+
+            p_data = self.app.player_data.get(player_name, {})
+            player_statuses = self.app.status_cooldowns.get(player_name, {})
+            status_effects_start = p_data.get("status_effects", {})
+    
+            tracked = [
+                ("knockdown", "KD"),
+                ("posture", "PD"),
+                ("intimidate", "INT"),
+                ("incapacitated", "INC")
+            ]
+
+            for st_type, st_label in tracked:
+                st_frame = tk.Frame(status_container, bg=row_bg, width=int(55 * scale_x))
+                st_frame.pack(side=tk.LEFT, fill=tk.Y, padx=1)
+                st_frame.pack_propagate(False)
+
+                start_time = player_statuses.get(st_type, 0)
                 elapsed = now - start_time
-                if elapsed < 30:
-                    remaining = int(30 - elapsed)
-                    left_active.append(("cooldown", status_type, f"{remaining:02d}", "#FFFF00"))
+        
+                st_col = "#444444" # Default greyed out
+                timer_text = ""
+        
+                if start_time > 0 and elapsed < 28:
+                    remaining = int(28 - elapsed)
+                    timer_text = f"{remaining:02d}"
             
-            p_data = self.app.player_data.get(player, {})
-            
-            # 2. Poison (Left)
-            poison_hits = p_data.get("poison_hits", 0)
-            if poison_hits > 0:
-                left_active.append(("poison", "poison", f"{poison_hits:02d}", "#00FF00"))
-
-            # 3. Kills (Flex) (Left)
-            kills = p_data.get("kill_count", 0)
-            if kills > 0:
-                left_active.append(("kills", "kills", f"{kills:02d}", "#FFFF00")) # Yellow
-
-            # 4. Top DPS (MV) (Right)
-            is_top_dps = (player == self.app.current_top_dps['friendly'] or player == self.app.current_top_dps['enemy'])
-            if is_top_dps:
-                duration = self.app.top_dps_durations.get(player, 0)
-                # MVP is the most important, starts bigger and grows larger
-                size = mvp_icon_base_size + int(duration / 30) * int(4 * scale)
-                size = min(int(36 * scale), size)
-                right_active.append(("top_dps", "top_dps", "", "#00FFFF", size))
-            
-            # 4.5. Tactical Priority (New in v4.0)
-            if is_focus:
-                 right_active.append(("priority", "priority", "PRIO", "#FF4444", status_icon_base_size))
- 
-            # 5. Top Tank (Sheep) (Right)
-            is_top_tank = (player == self.app.current_top_tank['friendly'] or player == self.app.current_top_tank['enemy'])
-            if is_top_tank:
-                duration = self.app.top_tank_durations.get(player, 0)
-                # Grow size similar to Top DPS
-                size = status_icon_base_size + int(duration / 30) * int(3 * scale)
-                size = min(int(30 * scale), size)
-                right_active.append(("top_tank", "top_tank", "", "#FFFFFF", size))
- 
-            # 6. Top Healing (EMS) (Right)
-            is_top_heal = (player == self.app.current_top_healing['friendly'] or player == self.app.current_top_healing['enemy'])
-            if is_top_heal:
-                duration = self.app.top_healing_durations.get(player, 0)
-                # Grow size similar to Top DPS
-                size = status_icon_base_size + int(duration / 30) * int(3 * scale)
-                size = min(int(30 * scale), size)
-                right_active.append(("top_healing", "top_healing", "", "#00FF00", size))
-
-            # 7. Incap (Right)
-            incap_count = p_data.get("incapacitated_count", 0)
-            if incap_count > 0:
-                right_active.append(("incap", "incap", f"{incap_count:02d}", "#FFA500"))
-
-            # 7. Death (Right)
-            if p_data.get("died"):
-                right_active.append(("death", "death", "", ""))
-
-            def sync_status_widgets(parent_frame, active_list):
-                widgets = parent_frame.winfo_children()
-                while len(widgets) < len(active_list):
-                    s_sub = tk.Frame(parent_frame, bg=row_bg)
-                    s_sub.pack(side=tk.LEFT, padx=1)
-                    tk.Label(s_sub, name="text", bg=row_bg, font=("Arial", timer_font_size, "bold")).pack(side=tk.TOP)
-                    icon_cont = tk.Frame(s_sub, name="icon_cont", bg=row_bg)
-                    icon_cont.pack(side=tk.TOP)
-                    tk.Canvas(icon_cont, name="canvas", bg=row_bg, highlightthickness=0).pack()
-                    widgets = parent_frame.winfo_children()
-                
-                # Status Mapping for Unicode Icons
-                icon_map = {
-                    "knockdown": "🎯",
-                    "posture": "🧎",
-                    "intimidate": "!!!",
-                    "poison": "🧪",
-                    "incap": "🥴",
-                    "death": "💀",
-                    "kills": "🏋️",
-                    "top_dps": "🏋️",
-                    "top_tank": "🐑",
-                    "top_healing": "✚",
-                    "priority": "⚠️"
-                }
-                
-                # Label Mapping for abbreviations
-                label_map = {
-                    "knockdown": "DB",
-                    "posture": "PD",
-                    "intimidate": "Int",
-                    "poison": "DOT",
-                    "incap": "inc",
-                    "kills": "KB",
-                    "top_dps": "MVP",
-                    "top_tank": "TNK",
-                    "top_healing": "ems",
-                    "priority": "!!"
-                }
-
-                for j, s_widget in enumerate(widgets):
-                    if j >= len(active_list):
-                        s_widget.pack_forget()
-                        continue
-                    
-                    s_widget.config(bg=row_bg)
-                    status_info = active_list[j]
-                    st_cat, st_type, st_val, st_col = status_info[0], status_info[1], status_info[2], status_info[3]
-                    st_size = status_info[4] if len(status_info) > 4 else status_icon_base_size
-                    
-                    icon_cont = s_widget.nametowidget("icon_cont")
-                    icon_canvas = icon_cont.nametowidget("canvas")
-                    text_lbl = s_widget.nametowidget("text")
-                    
-                    icon_canvas.config(bg=row_bg)
-                    # For larger MVP icon, ensure canvas is wide enough
-                    canvas_size = int(36 * scale)
-                    if st_size > (canvas_size - 4):
-                        icon_canvas.config(width=st_size + 4, height=st_size + 4)
+                    # Active phase check
+                    active_start = status_effects_start.get(st_type, 0)
+                    active_dur = 28 if st_type in ["intimidate", "incapacitated"] else 8
+                    if now - active_start < active_dur:
+                        st_col = "#FF0000" # Red Active
                     else:
-                        icon_canvas.config(width=canvas_size, height=canvas_size)
-                        
-                    unicode_char = icon_map.get(st_type)
-                    if unicode_char:
-                        icon_canvas.delete("all")
-                        # Center based on current canvas size
-                        cw = int(icon_canvas.cget("width"))
-                        ch = int(icon_canvas.cget("height"))
-                        cx, cy = cw // 2, ch // 2
-                        
-                        icon_canvas.create_text(cx, cy, text=unicode_char, font=("Segoe UI Emoji", st_size), fill="white", tags="icon")
-                        abbr_text = label_map.get(st_type, "")
-                        if abbr_text:
-                            abbr_font_size = max(6, int(9 * scale)) if st_size <= (30 * scale) else max(8, int(11 * scale))
-                            for dx, dy in [(-1,-1), (-1,1), (1,-1), (1,1)]:
-                                icon_canvas.create_text(cx+dx, cy+dy, text=abbr_text, font=("Arial", abbr_font_size, "bold"), fill="black", tags="label_bg")
-                            icon_canvas.create_text(cx, cy, text=abbr_text, font=("Arial", abbr_font_size, "bold"), fill=st_col, tags="label")
-                        
-                        text_lbl.config(text=st_val, fg=st_col, bg=row_bg, font=("Arial", timer_font_size, "bold"))
-                        text_lbl.lift()
-                        s_widget.pack(side=tk.LEFT, padx=1)
-                    else:
-                        s_widget.pack_forget()
+                        st_col = "#FFFF00" # Yellow Immunity
+        
+                # Big Label with Glow/Outline simulation using shadows or just bold
+                tk.Label(st_frame, text=st_label, fg=st_col, bg=row_bg, 
+                         font=("Arial", status_label_font_size, "bold")).pack(side=tk.TOP, pady=(5,0))
+                # Timer
+                if timer_text:
+                    tk.Label(st_frame, text=timer_text, fg=st_col, bg=row_bg, 
+                             font=("Consolas", timer_font_size, "bold")).pack(side=tk.TOP)
 
-            sync_status_widgets(status_frame, left_active)
-            sync_status_widgets(achievement_frame, right_active)
-            
-            # Player Name
-            display_color = color
-            if p_data.get("died"):
-                display_color = TEXT_DISABLED
-            
-            if lbl_name:
-                lbl_name.config(text=player, fg=display_color)
+            # RIGHT SIDE: Achievements and Name
+            right_side = tk.Frame(content, bg=row_bg)
+            right_side.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+            # Achievements (MVP, TNK, EMS)
+            ach_frame = tk.Frame(right_side, bg=row_bg)
+            ach_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5)
+
+            # Top DPS (MVP)
+            if player_name == self.app.current_top_dps.get('friendly') or player_name == self.app.current_top_dps.get('enemy'):
+                tk.Label(ach_frame, text="MVP", fg="#00FFFF", bg=row_bg, font=("Arial", name_font_size, "bold")).pack(side=tk.LEFT, padx=2)
+    
+            # Top Tank (TNK)
+            if player_name == self.app.current_top_tank.get('friendly') or player_name == self.app.current_top_tank.get('enemy'):
+                tk.Label(ach_frame, text="TNK", fg="#FFFFFF", bg=row_bg, font=("Arial", name_font_size, "bold")).pack(side=tk.LEFT, padx=2)
+    
+            # Top EMS
+            if player_name == self.app.current_top_healing.get('friendly') or player_name == self.app.current_top_healing.get('enemy'):
+                tk.Label(ach_frame, text="EMS", fg="#00FF00", bg=row_bg, font=("Arial", name_font_size, "bold")).pack(side=tk.LEFT, padx=2)
+
+            # Name - Cyan for You, Right Aligned
+            is_you = (player_name == "You")
+            name_col = "#00FFFF" if is_you else color
+            if p_data.get("died"): name_col = "#666666"
+
+            tk.Label(right_side, text=player_name.upper(), fg=name_col, bg=row_bg,
+                     font=("Arial", name_font_size, "bold"), anchor="e").pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)

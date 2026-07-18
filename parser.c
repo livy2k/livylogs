@@ -61,7 +61,14 @@ unsigned char s_resists[] = {0x8, 0x1f, 0x9, 0x13, 0x9, 0xe, 0x9, 0x00};
 unsigned char s_incapacitated[] = {0x13, 0x14, 0x19, 0x1b, 0x1a, 0x1b, 0x19, 0x13, 0xe, 0x1b, 0xe, 0x1f, 0x1e, 0x00};
 unsigned char s_you_have_been[] = {0x3, 0x15, 0xf, 0x5a, 0x12, 0x1b, 0x2c, 0x1f, 0x5a, 0x18, 0x1f, 0x1f, 0x14, 0x00};
 unsigned char s_has_been[] = {0x12, 0x1b, 0x9, 0x5a, 0x18, 0x1f, 0x1f, 0x14, 0x00};
+unsigned char s_by[] = {0x18, 0x03, 0x00}; // by
 unsigned char s_kill[] = {0x11, 0x13, 0x16, 0x16, 0x00};
+unsigned char s_knockdown[] = {0x11, 0x14, 0x15, 0x19, 0x11, 0x1e, 0x15, 0xd, 0x14, 0x00}; // knockdown
+unsigned char s_kneel[] = {0x11, 0x14, 0x1f, 0x1f, 0x16, 0x00}; // kneel
+unsigned char s_intimidated[] = {0x13, 0x14, 0xe, 0x13, 0x17, 0x13, 0x1e, 0x1b, 0xe, 0x1f, 0x1e, 0x00}; // intimidated
+unsigned char s_prone[] = {0xa, 0x8, 0x15, 0x14, 0x1f, 0x00}; // prone
+unsigned char s_knocked_down[] = {0x11, 0x14, 0x15, 0x19, 0x11, 0x1f, 0x1e, 0x5a, 0x1e, 0x15, 0xd, 0x14, 0x00}; // knocked down
+unsigned char s_kneeling[] = {0x11, 0x14, 0x1f, 0x1f, 0x16, 0x13, 0x14, 0x1d, 0x00}; // kneeling
 
 // State structures
 typedef struct {
@@ -197,33 +204,46 @@ char* s_i_s(const char* s1, const char* s2) {
 
 void p_l(HANDLE h, char* l) {
     if (!l || strlen(l) < 10) return;
-    // Guard against excessively long lines (over 4096 chars)
     if (strlen(l) > 4096) return;
 
     char* clean = l;
-    if (l[0] == '[') {
-        char* end_bracket = strchr(l, ']');
-        if (end_bracket) clean = end_bracket + 1;
-        // Check for double bracket format [Spatial] [00:00:00] [GROUP]
-        if (clean[0] == ' ' && clean[1] == '[') {
-            char* second_bracket = strchr(clean + 1, ']');
-            if (second_bracket) clean = second_bracket + 1;
-            if (clean[0] == ' ' && clean[1] == '[') {
-                char* third_bracket = strchr(clean + 1, ']');
-                if (third_bracket) clean = third_bracket + 1;
+    
+    // SWG logs: skip ALL bracketed tags at the start recursively
+    // e.g. [Spatial] [Combat] [03:20:00] ...
+    while (*clean == '[' || *clean == ' ') {
+        if (*clean == '[') {
+            char* end_bracket = strchr(clean, ']');
+            if (end_bracket) {
+                clean = end_bracket + 1;
+            } else {
+                break; // Malformed bracket
             }
+        } else {
+            clean++;
         }
     }
     while(*clean == ' ') clean++;
-    // SWG logs often have a timestamp like 03:20:00 without brackets
-    if (isdigit(clean[0]) && isdigit(clean[1]) && clean[2] == ':') {
-        clean += 9;
+
+    // SWG logs: skip timestamp if present at the start (14:56:36)
+    if (isdigit(clean[0]) && isdigit(clean[1]) && clean[2] == ':' && 
+        isdigit(clean[3]) && isdigit(clean[4]) && clean[5] == ':' &&
+        isdigit(clean[6]) && isdigit(clean[7])) {
+        clean += 8;
+        while(*clean == ' ') clean++;
     }
-    while(*clean == ' ') clean++;
-    // Check for [GROUP] after timestamp if not caught by bracket logic
-    if (clean[0] == '[') {
-        char* group_bracket = strchr(clean, ']');
-        if (group_bracket) clean = group_bracket + 1;
+
+    // After skipping timestamp, there might be MORE bracketed tags like [Spatial]
+    while (*clean == '[' || *clean == ' ') {
+        if (*clean == '[') {
+            char* end_bracket = strchr(clean, ']');
+            if (end_bracket) {
+                clean = end_bracket + 1;
+            } else {
+                break; 
+            }
+        } else {
+            clean++;
+        }
     }
     while(*clean == ' ') clean++;
 
@@ -231,17 +251,260 @@ void p_l(HANDLE h, char* l) {
     for(int i=0; clean[i]; i++) lower[i] = tolower(clean[i]);
     lower[strlen(clean)] = '\0';
 
-    char s_ap[32], s_lt[32], s_fr[32], s_hd[32], s_ar[32], s_l_key[32], s_ac[32], s_he[32], s_de[32], s_tk[32], s_od[32], s_di[32], s_f[32], s_o[32], s_t[32], s_y[32], s_nli[64], s_poi[32], s_res[32], s_inc[32], s_yhb[32], s_hb[32];
+    char s_ap[32], s_lt[32], s_fr[32], s_hd[32], s_ar[32], s_l_key[32], s_ac[32], s_he[32], s_de[32], s_tk[32], s_od[32], s_di[32], s_f[32], s_o[32], s_t[32], s_y[32], s_nli[64], s_poi[32], s_res[32], s_inc[32], s_yhb[32], s_hb[32], s_b[32], s_kn[32], s_kn_d[32], s_knl[32], s_knlg[32], s_prn[32], s_intm[32];
 
-    // Incapacitated tracking
+    unsigned char s_stands_up[] = {0x19, 0x0e, 0x1b, 0x14, 0x1e, 0x9, 0x5a, 0x0f, 0x1a, 0x00}; // stands up
+    unsigned char s_falls_down[] = {0x1c, 0x1b, 0x16, 0x16, 0x9, 0x5a, 0x1e, 0x15, 0x0d, 0x14, 0x00}; // falls down
+    
+    // Status tracking: knockdown, kneel, prone, intimidated
+    strcpy(s_kn, (char*)s_knockdown); d(s_kn);
+    strcpy(s_kn_d, (char*)s_knocked_down); d(s_kn_d);
+    strcpy(s_knl, (char*)s_kneel); d(s_knl);
+    strcpy(s_knlg, (char*)s_kneeling); d(s_knlg);
+    strcpy(s_prn, (char*)s_prone); d(s_prn);
+    strcpy(s_intm, (char*)s_intimidated); d(s_intm);
+    strcpy(s_b, (char*)s_by); d(s_b);
+    
+    char s_su[32], s_fd[32];
+    strcpy(s_su, (char*)s_stands_up); d(s_su);
+    strcpy(s_fd, (char*)s_falls_down); d(s_fd);
+
+    // New triggers for KD and Posture
+    if (strstr(lower, s_su) || strstr(lower, " stands up") || strstr(lower, s_fd) || strstr(lower, " falls down")) {
+        char target[128] = "Unknown";
+        char* p_end = NULL;
+        if (strstr(lower, s_su)) p_end = strstr(lower, s_su);
+        else if (strstr(lower, " stands up")) p_end = strstr(lower, " stands up");
+        else if (strstr(lower, s_fd)) p_end = strstr(lower, s_fd);
+        else p_end = strstr(lower, " falls down");
+        
+        if (p_end) {
+            int t_len = p_end - lower;
+            
+            // SPECIAL CASE: "is so dizzy that he falls down"
+            if (strstr(lower, "is so dizzy that he falls down")) {
+                 char* p_dizzy = strstr(lower, " is so dizzy that he");
+                 if (p_dizzy) t_len = p_dizzy - lower;
+            }
+
+            if (t_len > 127) t_len = 127;
+            if (t_len < 0) t_len = 0;
+            strncpy(target, clean, t_len); target[t_len] = '\0';
+            while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+            if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
+            
+            char e_buf[512];
+            sprintf(e_buf, "{\"type\": \"status\", \"target\": \"%s\", \"status\": \"knockdown\", \"offset\": 0}", target);
+            send_raw_event(h, e_buf);
+            return;
+        }
+    }
+    
+    if (strstr(lower, s_knl) || strstr(lower, " kneels") || strstr(lower, " kneel")) {
+        // Simple "Name kneels." or "Name kneel." trigger
+        char target[128] = "Unknown";
+        char* p_kneels = strstr(lower, " kneels");
+        if (!p_kneels) p_kneels = strstr(lower, " kneel");
+        
+        if (p_kneels && !strstr(lower, " kneeling") && !strstr(lower, " has been")) {
+            int t_len = p_kneels - lower;
+            if (t_len > 127) t_len = 127;
+            strncpy(target, clean, t_len); target[t_len] = '\0';
+            while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+            if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
+            
+            char e_buf[512];
+            sprintf(e_buf, "{\"type\": \"status\", \"target\": \"%s\", \"status\": \"posture\", \"offset\": 0}", target);
+            send_raw_event(h, e_buf);
+            return;
+        }
+    }
+
+    if (strstr(lower, s_kn) || strstr(lower, s_kn_d) || strstr(lower, s_knl) || strstr(lower, s_knlg) || strstr(lower, s_prn) || strstr(lower, s_intm)) {
+        char target[128] = "Unknown";
+        char source[128] = "Unknown";
+        char status[32] = "Unknown";
+        int found = 0;
+
+        if (strstr(lower, s_kn) || strstr(lower, s_kn_d)) strcpy(status, "knockdown");
+        else if (strstr(lower, s_knl) || strstr(lower, s_knlg) || strstr(lower, s_prn)) strcpy(status, "posture");
+        else if (strstr(lower, s_intm)) strcpy(status, "intimidate");
+
+            // BIDIRECTIONAL PARSING
+            // Case 1: "You have been ... by [NPC]"
+            strcpy(s_yhb, (char*)s_you_have_been); d(s_yhb);
+            if (strstr(lower, s_yhb) || strstr(lower, "you have been")) {
+                strcpy(target, "You");
+                char* p_by = strstr(lower, " by ");
+                if (p_by) {
+                    int by_off = (p_by - lower) + 4;
+                    strncpy(source, clean + by_off, 127); source[127] = '\0';
+                    // Strip trailing period/spaces
+                    while(strlen(source) > 0 && (source[strlen(source)-1] == '.' || source[strlen(source)-1] == ' ' || source[strlen(source)-1] == '!')) source[strlen(source)-1] = '\0';
+                }
+                found = 1;
+            } else {
+                // Case 2: "[Target] has been ... by [Source]"
+                strcpy(s_hb, (char*)s_has_been); d(s_hb);
+                char* p_hb = s_i_s(clean, s_hb);
+                if (p_hb) {
+                    int t_len = p_hb - clean;
+                    if (t_len > 127) t_len = 127;
+                    
+                    // AVOID capturing trailing fragments in the name
+                    char* junk_f[] = {" looks very", " looks", " has been", " have been", " is", " was", " intimidated", " kneeling", " prone", " incapacitated", " knocked down", " kneel", " no longer", " stands up", " falls down"};
+                    for (int k=0; k<15; k++) {
+                        char* p_junk = s_i_s(clean, junk_f[k]);
+                        if (p_junk && p_junk < clean + t_len) {
+                            t_len = p_junk - clean;
+                        }
+                    }
+
+                    if (t_len > 0) {
+                        strncpy(target, clean, t_len); target[t_len] = '\0';
+                        while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+
+                        // Look for source after "by"
+                        char* p_by = strstr(lower, " by ");
+                        if (p_by) {
+                            int by_off = (p_by - lower) + 4;
+                            strncpy(source, clean + by_off, 127); source[127] = '\0';
+                            if (strlen(source) > 0 && source[strlen(source)-1] == '.') source[strlen(source)-1] = '\0';
+                            while(strlen(source) > 0 && isspace(source[strlen(source)-1])) source[strlen(source)-1] = '\0';
+                        }
+                        found = 1;
+                    }
+                } else {
+                    // Case 3: "[Source] [Status] [Target]" (e.g. "You intimidate A Gundark")
+                    // Handle "You use [Ability] on [Target]"
+                    if (strstr(lower, "use ") && strstr(lower, " on ")) {
+                        char* p_use = strstr(lower, "use ");
+                        char* p_on = strstr(lower, " on ");
+                        if (p_use && p_on && p_on > p_use) {
+                            int s_len = p_use - lower;
+                            if (s_len > 127) s_len = 127;
+                            if (s_len > 0) {
+                                strncpy(source, clean, s_len); source[s_len] = '\0';
+                                while(strlen(source) > 0 && isspace(source[strlen(source)-1])) source[strlen(source)-1] = '\0';
+                            } else {
+                                strcpy(source, "You"); // If "use" is at the start
+                            }
+                            
+                            // Check if status is in the ability part
+                            char abil[128];
+                            int a_len = p_on - (p_use + 4);
+                            if (a_len > 127) a_len = 127;
+                            strncpy(abil, clean + (p_use - lower) + 4, a_len); abil[a_len] = '\0';
+                            
+            // Does ability imply a status?
+            if (s_i_s(abil, s_kn) || s_i_s(abil, s_kn_d)) strcpy(status, "knockdown");
+            else if (s_i_s(abil, s_knl) || s_i_s(abil, s_knlg) || s_i_s(abil, s_prn)) strcpy(status, "posture");
+            else if (s_i_s(abil, s_intm)) strcpy(status, "intimidate");
+                            
+                            char* p_after_on = p_on + 4;
+                            strncpy(target, clean + (p_after_on - lower), 127); target[127] = '\0';
+                            char* p_for = strstr(target, " for ");
+                            if (p_for) *p_for = '\0';
+                            if (strlen(target) > 0 && target[strlen(target)-1] == '!') target[strlen(target)-1] = '\0';
+                            if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
+                            while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+                            found = 1;
+                        }
+                    } else {
+                        // Case 4: "[Source] [Status] [Target]" (e.g. "A Gundark attacks you")
+                        char* p_st = NULL;
+                        if (strstr(lower, s_kn)) p_st = s_i_s(clean, s_kn);
+                        else if (strstr(lower, s_kn_d)) p_st = s_i_s(clean, s_kn_d);
+                        else if (strstr(lower, s_knl)) p_st = s_i_s(clean, s_knl);
+                        else if (strstr(lower, s_knlg)) p_st = s_i_s(clean, s_knlg);
+                        else if (strstr(lower, s_prn)) p_st = s_i_s(clean, s_prn);
+                        else if (strstr(lower, s_intm)) p_st = s_i_s(clean, s_intm);
+
+                        if (p_st) {
+                            // If it's a simple "[Target] knocked down" or "[Target] is knocked down"
+                            // without "use" or "on", then Source is likely the actor before the status,
+                            // or Target is the actor before the status if it's passive.
+                            
+                            int pre_len = p_st - clean;
+                            if (pre_len > 127) pre_len = 127;
+                            char actor[128] = "Unknown";
+                            if (pre_len > 0) {
+                                strncpy(actor, clean, pre_len); actor[pre_len] = '\0';
+                                while(strlen(actor) > 0 && isspace(actor[strlen(actor)-1])) actor[strlen(actor)-1] = '\0';
+                            }
+                            
+                            // Passive check: "[Target] is knocked down"
+                            if (strstr(lower, " is ") && strstr(lower, " is ") < p_st) {
+                                char* p_is = strstr(lower, " is ");
+                                int t_len = p_is - lower;
+                                strncpy(target, clean, t_len); target[t_len] = '\0';
+                                while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+                                strcpy(source, "Unknown");
+                            } else {
+                                // Default: "[Source] [Status] [Target]"
+                                strcpy(source, actor);
+                                char* p_after = p_st;
+                                while(*p_after && !isspace(*p_after)) p_after++; // skip verb
+                                while(*p_after && isspace(*p_after)) p_after++; // skip space
+                                if (*p_after) {
+                                    strncpy(target, p_after, 127); target[127] = '\0';
+                                    if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
+                                    while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+                                }
+                            }
+                            found = 1;
+                        }
+                    }
+                }
+            }
+
+        if (found) {
+            // Final Cleanup for known junk fragments
+            char* junk[] = {" looks very intimidated by you", " looks very", " looks", " has been", " have been", " is", " was", " intimidated", " kneeling", " prone", " incapacitated", " knocked down", " kneel", " no longer", " stands up", " falls down", " used", " uses", " attacks", " deals", " heals", " hits", " apply", " resist", " [Spatial]", " [Combat]", " [Group]", " [Chat]"};
+            for (int k=0; k<26; k++) {
+                char* p_j = s_i_s(target, junk[k]);
+                if (p_j) *p_j = '\0';
+                p_j = s_i_s(source, junk[k]);
+                if (p_j) *p_j = '\0';
+            }
+            
+            while(strlen(target) > 0 && (isspace(target[strlen(target)-1]) || target[strlen(target)-1] == '.' || target[strlen(target)-1] == '!')) target[strlen(target)-1] = '\0';
+            while(strlen(source) > 0 && (isspace(source[strlen(source)-1]) || source[strlen(source)-1] == '.' || source[strlen(source)-1] == '!')) source[strlen(source)-1] = '\0';
+
+            if (_stricmp(target, "ou") == 0 || _stricmp(target, "ou!") == 0 || _stricmp(target, "You have been") == 0 || _stricmp(target, "You have") == 0 || _stricmp(target, "A") == 0 || _stricmp(target, "An") == 0 || _stricmp(target, "The") == 0 || _stricmp(target, "You use") == 0 || _stricmp(target, "You intimidate") == 0 || _stricmp(target, "You're") == 0 || _stricmp(target, "You are") == 0) strcpy(target, "You");
+            if (_stricmp(source, "ou") == 0 || _stricmp(source, "ou!") == 0 || _stricmp(source, "You have been") == 0 || _stricmp(source, "You have") == 0 || _stricmp(source, "A") == 0 || _stricmp(source, "An") == 0 || _stricmp(source, "The") == 0 || _stricmp(source, "You use") == 0 || _stricmp(source, "You intimidate") == 0 || _stricmp(source, "You're") == 0 || _stricmp(source, "You are") == 0) strcpy(source, "You");
+            if (_stricmp(target, "you") == 0) strcpy(target, "You");
+            if (_stricmp(source, "you") == 0) strcpy(source, "You");
+            if (_stricmp(source, "by you") == 0) strcpy(source, "You");
+            if (_stricmp(source, "by You") == 0) strcpy(source, "You");
+
+            char j[BUFFER_SIZE];
+            char e_t[256], e_s[256];
+            e_j(target, e_t);
+            e_j(source, e_s);
+            sprintf(j, "{\"type\": \"status\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
+            send_raw_event(h, j);
+        }
+    }
+
+    // Incapacitated tracking (Bidirectional)
     strcpy(s_inc, (char*)s_incapacitated); d(s_inc);
     if (strstr(lower, s_inc)) {
         char target[128] = "Unknown";
+        char source[128] = "Unknown";
+        char status[32] = "incapacitated";
         int found = 0;
         
         strcpy(s_yhb, (char*)s_you_have_been); d(s_yhb);
         if (strstr(lower, s_yhb)) {
             strcpy(target, "You");
+            char* p_by = strstr(lower, " by ");
+            if (p_by) {
+                int by_off = (p_by - lower) + 4;
+                strncpy(source, clean + by_off, 127); source[127] = '\0';
+                if (strlen(source) > 0 && source[strlen(source)-1] == '.') source[strlen(source)-1] = '\0';
+                while(strlen(source) > 0 && isspace(source[strlen(source)-1])) source[strlen(source)-1] = '\0';
+            }
             found = 1;
         } else {
             strcpy(s_hb, (char*)s_has_been); d(s_hb);
@@ -249,21 +512,57 @@ void p_l(HANDLE h, char* l) {
             if (p_hb) {
                 int t_len = p_hb - clean;
                 if (t_len > 127) t_len = 127;
+                
+                // Strip status filler at C level
+                char* junk_f[] = {" looks very intimidated by you", " looks very", " looks", " has been", " have been", " is", " was", " intimidated", " kneeling", " prone", " incapacitated", " knocked down", " kneel", " no longer", " used", " uses", " attacks", " deals", " heals", " hits", " apply", " resist"};
+                for (int k=0; k<22; k++) {
+                    char* p_junk = strstr(lower, junk_f[k]);
+                    if (p_junk && p_junk < lower + t_len) {
+                        t_len = p_junk - lower;
+                    }
+                }
+
                 if (t_len > 0) {
                     strncpy(target, clean, t_len); target[t_len] = '\0';
-                    while(strlen(target) > 0 && target[strlen(target)-1] == ' ') target[strlen(target)-1] = '\0';
+                    while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+                    
+                    char* p_by = strstr(lower, " by ");
+                    if (p_by) {
+                        int by_off = (p_by - lower) + 4;
+                        strncpy(source, clean + by_off, 127); source[127] = '\0';
+                        if (strlen(source) > 0 && source[strlen(source)-1] == '.') source[strlen(source)-1] = '\0';
+                        while(strlen(source) > 0 && isspace(source[strlen(source)-1])) source[strlen(source)-1] = '\0';
+                    }
                     found = 1;
                 }
             }
         }
         
         if (found) {
+            if (_stricmp(target, "ou") == 0 || _stricmp(target, "ou!") == 0 || _stricmp(target, "You have been") == 0 || _stricmp(target, "You have") == 0 || _stricmp(target, "A") == 0 || _stricmp(target, "An") == 0 || _stricmp(target, "The") == 0 || _stricmp(target, "You use") == 0 || _stricmp(target, "You intimidate") == 0 || _stricmp(target, "You're") == 0 || _stricmp(target, "You are") == 0) strcpy(target, "You");
+            if (_stricmp(source, "ou") == 0 || _stricmp(source, "ou!") == 0 || _stricmp(source, "You have been") == 0 || _stricmp(source, "You have") == 0 || _stricmp(source, "A") == 0 || _stricmp(source, "An") == 0 || _stricmp(source, "The") == 0 || _stricmp(source, "You use") == 0 || _stricmp(source, "You intimidate") == 0 || _stricmp(source, "You're") == 0 || _stricmp(source, "You are") == 0) strcpy(source, "You");
+            if (_stricmp(target, "you") == 0) strcpy(target, "You");
+            if (_stricmp(source, "you") == 0) strcpy(source, "You");
+            if (_stricmp(source, "by you") == 0) strcpy(source, "You");
+            if (_stricmp(source, "by You") == 0) strcpy(source, "You");
+            
+            // Aggressive Fragment Stripping
+            char* junk[] = {" looks very intimidated by you", " looks very", " looks", " has been", " have been", " is", " was", " intimidated", " kneeling", " prone", " incapacitated", " knocked down", " kneel", " no longer", " used", " uses", " attacks", " deals", " heals", " hits", " apply", " resist"};
+            for (int k=0; k<22; k++) {
+                char* p_junk = strstr(lower, junk[k]);
+                if (p_junk && strstr(target, junk[k])) {
+                    int junk_off = strstr(target, junk[k]) - target;
+                    target[junk_off] = '\0';
+                }
+            }
+            while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+            
             char j[BUFFER_SIZE];
-            char e_n[256];
-            e_j(target, e_n);
-            sprintf(j, "{\"type\": \"incapacitated\", \"target\": \"%s\"}\n", e_n);
+            char e_t[256], e_s[256];
+            e_j(target, e_t);
+            e_j(source, e_s);
+            sprintf(j, "{\"type\": \"status\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
             send_raw_event(h, j);
-            // Don't return, might also be a death or other event in some logs
         }
     }
 

@@ -258,6 +258,11 @@ void p_l(HANDLE h, char* l) {
     unsigned char s_stands_up[] = {0x19, 0x0e, 0x1b, 0x14, 0x1e, 0x9, 0x5a, 0x0f, 0x1a, 0x00}; // stands up
     unsigned char s_falls_down[] = {0x1c, 0x1b, 0x16, 0x16, 0x9, 0x5a, 0x1e, 0x15, 0x0d, 0x14, 0x00}; // falls down
     
+    // Skip lines that are "You cannot ..." (not actual status events)
+    if (strstr(lower, "you cannot")) {
+        return;
+    }
+
     // Status tracking: knockdown, kneel, prone, intimidated
     strcpy(s_kn, (char*)s_knockdown); d(s_kn);
     strcpy(s_kn_d, (char*)s_knocked_down); d(s_kn_d);

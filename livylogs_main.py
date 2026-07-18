@@ -2236,7 +2236,9 @@ class CombatLogApp:
                         self._init_player_data(target)
                         self.player_data[target]["logs"].append({"msg": f"{ability} on {target}", "time": timestamp, "type": "status"})
                         return
-                    self._trigger_status_effect(target, ability or status)
+                    # Use status field if available (engine sends it), otherwise fall back to ability text
+                    status_text = status if status else ability
+                    self._trigger_status_effect(target, status_text)
                 return
 
             elif event_type == "incapacitated":

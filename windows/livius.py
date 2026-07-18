@@ -327,6 +327,11 @@ class LiviusWindow(BasePopoutWindow):
             if hasattr(self.app, 'combat_spam_filters') and p_norm.lower() in self.app.combat_spam_filters:
                 current_widgets[i].pack_forget()
                 continue
+            
+            # Skip combat spam filter names (ability names that appear as player names)
+            if hasattr(self.app, 'combat_spam_filters') and p_norm.lower() in self.app.combat_spam_filters:
+                current_widgets[i].pack_forget()
+                continue
                 
             row = current_widgets[i]
             row.pack(fill=tk.X, pady=2)

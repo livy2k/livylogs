@@ -346,6 +346,9 @@ void p_l(HANDLE h, char* l) {
                     strncpy(source, clean + by_off, 127); source[127] = '\0';
                     // Strip trailing period/spaces
                     while(strlen(source) > 0 && (source[strlen(source)-1] == '.' || source[strlen(source)-1] == ' ' || source[strlen(source)-1] == '!')) source[strlen(source)-1] = '\0';
+                } else {
+                    // No "by" found, source is Unknown
+                    strcpy(source, "Unknown");
                 }
                 found = 1;
             } else {

@@ -341,6 +341,10 @@ class CombatLogApp:
         self.load_bosses()
         self.load_filters()
         self.load_class_configs()
+        
+        # Load combat spam filters from Lua command files
+        from combat_spam_filters import load_combat_spam_filters
+        self.combat_spam_filters = load_combat_spam_filters()
 
         # Radio Manager
         try:
@@ -2226,6 +2230,12 @@ class CombatLogApp:
                 ability = event.get("ability")
                 status = event.get("status")
                 if target and (ability or status):
+                    # Check if this ability is a combat spam filter (skip for Livius but still process for Details)
+                    if ability and ability.lower() in self.combat_spam_filters:
+                        # Still process for Details (logs, etc.) but don't trigger status effect for Livius
+                        self._init_player_data(target)
+                        self.player_data[target]["logs"].append({"msg": f"{ability} on {target}", "time": timestamp, "type": "status"})
+                        return
                     self._trigger_status_effect(target, ability or status)
                 return
 

@@ -165,6 +165,12 @@ def main():
         app = CombatLogApp(root)
         root.protocol("WM_DELETE_WINDOW", app.on_exit)
         root.mainloop()
+    except KeyboardInterrupt:
+        # Graceful shutdown on Ctrl+C
+        try:
+            app.on_exit()
+        except Exception:
+            pass
     except Exception as e:
         import traceback
         import os

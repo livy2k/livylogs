@@ -484,7 +484,7 @@ void p_l(HANDLE h, char* l) {
             char e_t[256], e_s[256];
             e_j(target, e_t);
             e_j(source, e_s);
-            sprintf(j, "{\"type\": \"incapacitated\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
+            sprintf(j, "{\"type\": \"cooldown\", \"target\": \"%s\", \"source\": \"%s\", \"status\": \"%s\", \"message\": \"%s\"}\n", e_t, e_s, status, clean);
             send_raw_event(h, j);
         }
     }

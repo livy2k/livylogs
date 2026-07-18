@@ -226,6 +226,7 @@ class LiviusWindow(BasePopoutWindow):
         if "You" not in friendlies_list and "You" in self.app.player_data:
              friendlies_list.append("You")
 
+        # Build main container ONCE
         if not hasattr(self, 'main_container'):
             for widget in self.content_container.winfo_children():
                 try:
@@ -340,17 +341,40 @@ class LiviusWindow(BasePopoutWindow):
                 row_bg = "#880000"
                 row.config(bg=row_bg)
 
-            # Clear old content
+            # Get or create content frame
+            content = None
             for child in row.winfo_children():
-                child.destroy()
-
-            # Main content frame
-            content = tk.Frame(row, bg=row_bg)
-            content.pack(fill=tk.BOTH, expand=True, padx=5)
+                if isinstance(child, tk.Frame) and child.winfo_children():
+                    content = child
+                    break
+            
+            if content is None:
+                content = tk.Frame(row, bg=row_bg)
+                content.pack(fill=tk.BOTH, expand=True, padx=5)
+            else:
+                content.config(bg=row_bg)
 
             # LEFT SIDE: Status Blocks (KD, PD, INT, INC)
-            status_container = tk.Frame(content, bg=row_bg)
-            status_container.pack(side=tk.LEFT, fill=tk.Y)
+            status_container = None
+            for child in content.winfo_children():
+                if isinstance(child, tk.Frame) and child.winfo_children():
+                    # Check if it's the status container (has KD/PD/INT/INC labels)
+                    for sub in child.winfo_children():
+                        if isinstance(sub, tk.Frame) and sub.winfo_children():
+                            for lbl in sub.winfo_children():
+                                if isinstance(lbl, tk.Label) and lbl.cget("text") in ["KD", "PD", "INT", "INC"]:
+                                    status_container = child
+                                    break
+                        if status_container:
+                            break
+                if status_container:
+                    break
+            
+            if status_container is None:
+                status_container = tk.Frame(content, bg=row_bg)
+                status_container.pack(side=tk.LEFT, fill=tk.Y)
+            else:
+                status_container.config(bg=row_bg)
 
             p_data = self.app.player_data.get(player_name, {})
             player_statuses = self.app.status_cooldowns.get(player_name, {})
@@ -363,10 +387,17 @@ class LiviusWindow(BasePopoutWindow):
                 ("incapacitated", "INC")
             ]
 
-            for st_type, st_label in tracked:
+            # Ensure we have enough status frames
+            status_frames = status_container.winfo_children()
+            while len(status_frames) < len(tracked):
                 st_frame = tk.Frame(status_container, bg=row_bg, width=int(55 * scale_x))
                 st_frame.pack(side=tk.LEFT, fill=tk.Y, padx=1)
                 st_frame.pack_propagate(False)
+                status_frames = status_container.winfo_children()
+            
+            for idx, (st_type, st_label) in enumerate(tracked):
+                st_frame = status_frames[idx]
+                st_frame.config(bg=row_bg, width=int(55 * scale_x))
 
                 start_time = player_statuses.get(st_type, 0)
                 elapsed = now - start_time
@@ -386,38 +417,102 @@ class LiviusWindow(BasePopoutWindow):
                     else:
                         st_col = "#FFFF00" # Yellow Immunity
         
-                # Big Label with Glow/Outline simulation using shadows or just bold
-                tk.Label(st_frame, text=st_label, fg=st_col, bg=row_bg, 
-                         font=("Arial", status_label_font_size, "bold")).pack(side=tk.TOP, pady=(5,0))
-                # Timer
+                # Update label widgets inside st_frame
+                st_children = st_frame.winfo_children()
+                # First child should be the label (KD/PD/INT/INC)
+                if len(st_children) >= 1:
+                    lbl = st_children[0]
+                    if isinstance(lbl, tk.Label):
+                        lbl.config(text=st_label, fg=st_col, bg=row_bg, 
+                                   font=("Arial", status_label_font_size, "bold"))
+                else:
+                    lbl = tk.Label(st_frame, text=st_label, fg=st_col, bg=row_bg, 
+                                   font=("Arial", status_label_font_size, "bold"))
+                    lbl.pack(side=tk.TOP, pady=(5,0))
+                
+                # Second child should be the timer label
                 if timer_text:
-                    tk.Label(st_frame, text=timer_text, fg=st_col, bg=row_bg, 
-                             font=("Consolas", timer_font_size, "bold")).pack(side=tk.TOP)
+                    if len(st_children) >= 2:
+                        timer_lbl = st_children[1]
+                        if isinstance(timer_lbl, tk.Label):
+                            timer_lbl.config(text=timer_text, fg=st_col, bg=row_bg, 
+                                             font=("Consolas", timer_font_size, "bold"))
+                    else:
+                        timer_lbl = tk.Label(st_frame, text=timer_text, fg=st_col, bg=row_bg, 
+                                             font=("Consolas", timer_font_size, "bold"))
+                        timer_lbl.pack(side=tk.TOP)
+                else:
+                    # Remove timer label if it exists
+                    if len(st_children) >= 2:
+                        st_children[1].destroy()
 
             # RIGHT SIDE: Achievements and Name
-            right_side = tk.Frame(content, bg=row_bg)
-            right_side.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+            right_side = None
+            for child in content.winfo_children():
+                if isinstance(child, tk.Frame) and child != status_container:
+                    right_side = child
+                    break
+            
+            if right_side is None:
+                right_side = tk.Frame(content, bg=row_bg)
+                right_side.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+            else:
+                right_side.config(bg=row_bg)
 
             # Achievements (MVP, TNK, EMS)
-            ach_frame = tk.Frame(right_side, bg=row_bg)
-            ach_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5)
+            ach_frame = None
+            for child in right_side.winfo_children():
+                if isinstance(child, tk.Frame):
+                    ach_frame = child
+                    break
+            
+            if ach_frame is None:
+                ach_frame = tk.Frame(right_side, bg=row_bg)
+                ach_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5)
+            else:
+                ach_frame.config(bg=row_bg)
 
-            # Top DPS (MVP)
+            # Update achievement labels
+            ach_labels = ach_frame.winfo_children()
+            expected_ach = []
             if player_name == self.app.current_top_dps.get('friendly') or player_name == self.app.current_top_dps.get('enemy'):
-                tk.Label(ach_frame, text="MVP", fg="#00FFFF", bg=row_bg, font=("Arial", name_font_size, "bold")).pack(side=tk.LEFT, padx=2)
-    
-            # Top Tank (TNK)
+                expected_ach.append(("MVP", "#00FFFF"))
             if player_name == self.app.current_top_tank.get('friendly') or player_name == self.app.current_top_tank.get('enemy'):
-                tk.Label(ach_frame, text="TNK", fg="#FFFFFF", bg=row_bg, font=("Arial", name_font_size, "bold")).pack(side=tk.LEFT, padx=2)
-    
-            # Top EMS
+                expected_ach.append(("TNK", "#FFFFFF"))
             if player_name == self.app.current_top_healing.get('friendly') or player_name == self.app.current_top_healing.get('enemy'):
-                tk.Label(ach_frame, text="EMS", fg="#00FF00", bg=row_bg, font=("Arial", name_font_size, "bold")).pack(side=tk.LEFT, padx=2)
+                expected_ach.append(("EMS", "#00FF00"))
+            
+            # Remove extra labels
+            while len(ach_labels) > len(expected_ach):
+                ach_labels[-1].destroy()
+                ach_labels = ach_frame.winfo_children()
+            
+            # Update existing or create new
+            for idx, (text, fg) in enumerate(expected_ach):
+                if idx < len(ach_labels):
+                    lbl = ach_labels[idx]
+                    if isinstance(lbl, tk.Label):
+                        lbl.config(text=text, fg=fg, bg=row_bg, font=("Arial", name_font_size, "bold"))
+                else:
+                    lbl = tk.Label(ach_frame, text=text, fg=fg, bg=row_bg, font=("Arial", name_font_size, "bold"))
+                    lbl.pack(side=tk.LEFT, padx=2)
 
             # Name - Cyan for You, Right Aligned
             is_you = (player_name == "You")
             name_col = "#00FFFF" if is_you else color
             if p_data.get("died"): name_col = "#666666"
 
-            tk.Label(right_side, text=player_name.upper(), fg=name_col, bg=row_bg,
-                     font=("Arial", name_font_size, "bold"), anchor="e").pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+            # Find or create name label
+            name_lbl = None
+            for child in right_side.winfo_children():
+                if isinstance(child, tk.Label) and child != ach_frame:
+                    name_lbl = child
+                    break
+            
+            if name_lbl is None:
+                name_lbl = tk.Label(right_side, text=player_name.upper(), fg=name_col, bg=row_bg,
+                                    font=("Arial", name_font_size, "bold"), anchor="e")
+                name_lbl.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+            else:
+                name_lbl.config(text=player_name.upper(), fg=name_col, bg=row_bg,
+                                font=("Arial", name_font_size, "bold"))

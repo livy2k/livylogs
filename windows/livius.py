@@ -316,9 +316,9 @@ class LiviusWindow(BasePopoutWindow):
                 current_widgets[i].pack_forget()
                 continue
             
-            # Skip pure fragments
+            # Skip pure fragments (but not "You")
             fragment_words = {"use", "is", "has", "was", "by", "a", "an", "the", "you", "yourself", "damage", "you!", "ou", "ou!"}
-            if p_norm.lower() in fragment_words:
+            if p_norm != "You" and p_norm.lower() in fragment_words:
                 current_widgets[i].pack_forget()
                 continue
                 

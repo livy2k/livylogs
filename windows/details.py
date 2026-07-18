@@ -36,17 +36,25 @@ class DetailsWindow(BasePopoutWindow):
         # Determine if we should do a full data calculation
         is_empty = True
         if hasattr(self, 'player_list_frame') and self.player_list_frame.winfo_exists():
-            children = self.player_list_frame.winfo_children()
-            if children:
-                for w in children:
-                    if isinstance(w, tk.Label):
-                        text = w.cget("text")
-                        if "No " not in text:
+            try:
+                children = self.player_list_frame.winfo_children()
+                if children:
+                    for w in children:
+                        if isinstance(w, tk.Label):
+                            text = w.cget("text")
+                            if "No " not in text:
+                                is_empty = False
+                                break
+                        else:
                             is_empty = False
                             break
-                    else:
-                        is_empty = False
-                        break
+            except (tk.TclError, AttributeError):
+                is_empty = True
+                # Force reconstruction if we hit a bad path
+                if hasattr(self, 'scroll_canvas'):
+                    try: self.scroll_canvas.destroy()
+                    except: pass
+                    delattr(self, 'scroll_canvas')
         
         # Determine frequency based on state
         if is_empty:
@@ -195,15 +203,23 @@ class DetailsWindow(BasePopoutWindow):
             except: pass
 
         # Player List View
-        from utils import is_probable_player
-        players = sorted([n for n in self.app.player_data.keys() if is_probable_player(n, self.app.bosses)])
-        current_widgets = self.player_list_frame.winfo_children()
+        players = []
+        for n in sorted([name for name in self.app.player_data.keys() if name != "Unknown"]):
+            data_n = self.app.player_data.get(n, {})
+            has_output = (data_n.get('damage', 0) > 0 or data_n.get('healing', 0) > 0 or
+                          data_n.get('dm_damage', 0) > 0 or data_n.get('dm_healing', 0) > 0)
+            is_123_friendly = n in getattr(self.app, 'groupchat_123_players', set())
+            is_friendly = (n in getattr(self.app, 'friendly_players', set())) or n == "You"
+            is_enemy = n in getattr(self.app, 'enemy_players', set())
+
+            if n == "You" or (is_friendly and (has_output or is_123_friendly)) or (is_enemy and has_output):
+                players.append(n)
 
         if is_drill:
-            if hasattr(self, 'top_view'): self.top_view.pack_forget()
-            if hasattr(self, 'detail_view'): self.detail_view.pack(fill=tk.BOTH, expand=True)
+            if hasattr(self, 'top_view') and self.top_view.winfo_exists(): self.top_view.pack_forget()
+            if hasattr(self, 'detail_view') and self.detail_view.winfo_exists(): self.detail_view.pack(fill=tk.BOTH, expand=True)
         else:
-            if hasattr(self, 'detail_view'): self.detail_view.pack_forget()
+            if hasattr(self, 'detail_view') and self.detail_view.winfo_exists(): self.detail_view.pack_forget()
             if hasattr(self, 'top_view') and self.top_view.winfo_exists():
                 self.top_view.pack(fill=tk.BOTH, expand=True)
 
@@ -211,6 +227,13 @@ class DetailsWindow(BasePopoutWindow):
         self.last_full_refresh = now
 
         # Surgical update for top player list
+        if not hasattr(self, 'player_list_frame') or not self.player_list_frame.winfo_exists():
+            return
+            
+        try:
+            current_widgets = self.player_list_frame.winfo_children()
+        except (tk.TclError, AttributeError):
+            return
         last_players = getattr(self, '_last_players', [])
         
         if not players:
@@ -231,6 +254,7 @@ class DetailsWindow(BasePopoutWindow):
 
         # Reorder and update
         for p in players:
+            data = self.app.player_data.get(p, {})
             if p not in self._row_frames:
                 f = tk.Frame(self.player_list_frame, bg=WINDOW_BG)
                 self._row_frames[p] = f
@@ -257,8 +281,8 @@ class DetailsWindow(BasePopoutWindow):
             f.pack(fill=tk.X, pady=1)
             
             data = self.app.player_data.get(p, {})
-            self.update_if_changed(self._row_widgets[f"{p}_dmg"], f"{data.get('damage', 0):,}")
-            self.update_if_changed(self._row_widgets[f"{p}_heal"], f"{data.get('healing', 0):,}")
+            self.update_if_changed(self._row_widgets[f"{p}_dmg"], f"{data.get('dm_damage', 0):,}")
+            self.update_if_changed(self._row_widgets[f"{p}_heal"], f"{data.get('dm_healing', 0):,}")
 
         # Cleanup old rows
         current_names = set(players)
@@ -292,8 +316,8 @@ class DetailsWindow(BasePopoutWindow):
             
             self.player_header.config(text=f"COMBAT LOG: {p.upper()}", fg="#00ffff" if (p == "You" or p == self.app.char_name.get()) else ACCENT_BLUE)
 
-            self.update_if_changed(self.lbl_det_dmg, f"DAMAGE: {data.get('damage', 0):,}")
-            self.update_if_changed(self.lbl_det_heal, f"HEALING: {data.get('healing', 0):,}")
+            self.update_if_changed(self.lbl_det_dmg, f"DAMAGE: {data.get('dm_damage', 0):,}")
+            self.update_if_changed(self.lbl_det_heal, f"HEALING: {data.get('dm_healing', 0):,}")
             self.lbl_det_dmg.config(font=("Consolas", 9, "bold"))
             self.lbl_det_heal.config(font=("Consolas", 9, "bold"))
 
@@ -396,8 +420,8 @@ class DetailsWindow(BasePopoutWindow):
             lines = ["PLAYER\tDAMAGE\tHEALING"]
             for p in players:
                 data = self.app.player_data.get(p, {})
-                dmg = data.get('damage', 0)
-                heal = data.get('healing', 0)
+                dmg = data.get('dm_damage', 0)
+                heal = data.get('dm_healing', 0)
                 lines.append(f"{p}\t{dmg:,}\t{heal:,}")
             
             self.window.clipboard_clear()

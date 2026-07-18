@@ -152,16 +152,32 @@ class LiviusWindow(BasePopoutWindow):
 
         friendlies_list = []
         for p in arrival_order:
-            if p in friendlies_set or p == "You":
+            p_data = self.app.player_data.get(p, {})
+            has_output = (p_data.get("damage", 0) > 0 or p_data.get("healing", 0) > 0 or
+                          p_data.get("dm_damage", 0) > 0 or p_data.get("dm_healing", 0) > 0)
+            is_123_friendly = p in getattr(self.app, "groupchat_123_players", set())
+            if p == "You" or ((p in friendlies_set) and (has_output or is_123_friendly)):
                 friendlies_list.append(p)
         
         enemies_list = []
         for p in arrival_order:
-            if p in enemies_set and p != "You":
+            p_data = self.app.player_data.get(p, {})
+            has_output = (p_data.get("damage", 0) > 0 or p_data.get("healing", 0) > 0 or
+                          p_data.get("dm_damage", 0) > 0 or p_data.get("dm_healing", 0) > 0)
+            if p in enemies_set and p != "You" and has_output:
                 enemies_list.append(p)
         
         # Any players not in arrival order but in sets (fallback)
-        f_fallback = [p for p in friendlies_set if p not in friendlies_list]
+        f_fallback = []
+        for p in friendlies_set:
+            if p in friendlies_list:
+                continue
+            p_data = self.app.player_data.get(p, {})
+            has_output = (p_data.get("damage", 0) > 0 or p_data.get("healing", 0) > 0 or
+                          p_data.get("dm_damage", 0) > 0 or p_data.get("dm_healing", 0) > 0)
+            is_123_friendly = p in getattr(self.app, "groupchat_123_players", set())
+            if has_output or is_123_friendly or p == "You":
+                f_fallback.append(p)
         if "You" not in friendlies_list and "You" not in f_fallback:
             f_fallback.append("You")
         
@@ -169,7 +185,15 @@ class LiviusWindow(BasePopoutWindow):
             if p not in friendlies_list:
                 friendlies_list.append(p)
         
-        e_fallback = [p for p in enemies_set if p not in enemies_list and p != "You"]
+        e_fallback = []
+        for p in enemies_set:
+            if p in enemies_list or p == "You":
+                continue
+            p_data = self.app.player_data.get(p, {})
+            has_output = (p_data.get("damage", 0) > 0 or p_data.get("healing", 0) > 0 or
+                          p_data.get("dm_damage", 0) > 0 or p_data.get("dm_healing", 0) > 0)
+            if has_output:
+                e_fallback.append(p)
         for p in sorted(e_fallback):
             if p not in enemies_list:
                 enemies_list.append(p)
@@ -415,8 +439,12 @@ class LiviusWindow(BasePopoutWindow):
                 st_col = "#444444" # Default greyed out
                 timer_text = ""
         
-                if start_time > 0 and elapsed < 28:
-                    remaining = int(28 - elapsed)
+                cooldown_duration = getattr(self.app, "status_cooldown_duration", 29)
+                if st_type == "incapacitated":
+                    cooldown_duration = getattr(self.app, "state_duration", 28)
+
+                if start_time > 0 and elapsed < cooldown_duration:
+                    remaining = int(cooldown_duration - elapsed)
                     timer_text = f"{remaining:02d}"
             
                     # Active phase check

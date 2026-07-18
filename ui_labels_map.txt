@@ -8,7 +8,7 @@
 # Note: Positions use (x,y) as top-left (NW) anchor.
 # Note: 'ON' has been repurposed as the 'Status Dot' coordinate.
 
-SETUP, 129.0, 49.0, #d21a17, None, 26, 12, LilitaOne, 7
+SETUP, 129.0, 35.0, #d21a17, None, 26, 12, LilitaOne, 7
 ALEXA, 121.0, 98.0, #d21a18, None, 20, 16, LilitaOne, 7
 DMG METER, 233.0, 123.0, #d31a18, None, 28, 15, LilitaOne, 5
 DETAILS, 333.0, 123.0, #d31a18, None, 19, 13, LilitaOne, 5
@@ -33,3 +33,4 @@ RADIO_LBL, 18.0, 15.0, #d31a18, None, 10, 10, LilitaOne, 20
 VOL_DOT, 51.0, 74.0, #ffffff, None, 10, 10, LilitaOne, 5
 EXIT, 615.0, 5.0, #ff4444, None, 12, 12, Segoe UI, 12
 MIN, 595.0, 10.0, #ffffff, None, 10, 10, LilitaOne, 8
+BROWSE, 129.0, 60.0, #d21a17, None, 26, 12, LilitaOne, 7

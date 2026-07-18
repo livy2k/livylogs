@@ -21,6 +21,10 @@ class ThemedMessagebox(tk.Toplevel):
     def __init__(self, parent, title, message, icon="info", on_close=None, extra_button_text=None, extra_button_callback=None):
         super().__init__(parent)
         self.title(title)
+        
+        # Bring to front on click
+        self.bind("<Button-1>", lambda e: (self.lift(), self.focus_force()), add="+")
+
         self.configure(bg=WINDOW_BG)
         self.attributes("-alpha", 0.0)
         self.overrideredirect(True)

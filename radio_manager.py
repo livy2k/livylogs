@@ -934,6 +934,12 @@ class RadioManager:
             self.art_changed = True
             return
 
+        # Track the latest request ID to ignore stale ones
+        if not hasattr(self, "_art_request_id"):
+            self._art_request_id = 0
+        self._art_request_id += 1
+        current_id = self._art_request_id
+
         def _fetch_art():
             try:
                 data = None
@@ -947,11 +953,13 @@ class RadioManager:
                 elif art_url.startswith("http"):
                     # Use a standard User-Agent to avoid being blocked by some CDNs
                     headers = {"User-Agent": "LivyLogs/1.0 (https://github.com/LivyC/LivyLogs)"}
-                    resp = requests.get(art_url, timeout=5, headers=headers)
+                    # Explicit session or short timeout
+                    resp = requests.get(art_url, timeout=(2, 5), headers=headers)
                     if resp.status_code == 200:
                         data = resp.content
                 
-                if data:
+                # Only update if this is still the latest request
+                if data and current_id == getattr(self, "_art_request_id", 0):
                     self.current_art_data = data
                     self.art_changed = True
             except Exception as e:
@@ -971,13 +979,21 @@ class RadioManager:
         if song_name in self._art_cache:
             return self._art_cache[song_name]
             
+        # If we are on the main thread, we should NOT do a synchronous network call.
+        # However, RadioManager is mostly used in threads. 
+        # But just in case, let's log it.
+        if threading.current_thread() is threading.main_thread():
+            print(f"[WARNING] _lookup_cover_art called on MAIN THREAD for: {song_name}")
+            # We return None now, and the next tick (from a thread) will handle it.
+            return None
+
         try:
             # We'll use the iTunes Search API as it's very fast, free, and doesn't require an API key
             # It's much lighter than MusicBrainz for simple cover art.
             query = urllib.parse.quote(song_name)
             api_url = f"https://itunes.apple.com/search?term={query}&entity=song&limit=1"
             
-            resp = requests.get(api_url, timeout=3)
+            resp = requests.get(api_url, timeout=(2, 3))
             if resp.status_code == 200:
                 data = resp.json()
                 if data.get("resultCount", 0) > 0:

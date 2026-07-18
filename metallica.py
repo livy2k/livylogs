@@ -125,7 +125,10 @@ metallica_dataset = [
         "trivia": "This riff is fast and cold, based on a track Kirk brought over from his old band, Exodus. I know a thing or two about being trapped, mostly by the passing of time and bad coaching decisions. If they let me play the solo on this, it would’ve melted the ice instantly.",
         "main_riff_tab": {
             "tuning": "Standard (E A D G B E)",
-import json
+            "notation": "E|---------------------------------|\nB|---------------------------------|\nG|---------------------------------|\nD|---------9-------------7-----5---|\nA|---------7-------------5-----3---|\nE|-0-0-0-0---0-0-0-0-0-0---0-0-----|"
+        }
+    }
+]
 
 # Secondary dataset of 30 additional Metallica songs with Uncle Rico style trivia and tabs
 metallica_dataset_part2 = [
@@ -252,7 +255,10 @@ metallica_dataset_part2 = [
         "trivia": "The title track for their documentary. The main riff is a heavily down-tuned, looping pattern that sounds like a big engine idling. Reminds me of my custom van when I’ve got the heat blasting in the winter. Just a pure beast waiting to be unleashed.",
         "main_riff_tab": {
             "tuning": "Drop C (C G C F A D)",
-import json
+            "notation": "C|---------------------------------|\nG|---------------------------------|\nF|---------------------------------|\nC|---------0---------------0-------|\nG|---------0---------------0-------|\nC|--0-0-0----0-0-0--0-0-0----0-0-0-|"
+        }
+    }
+]
 
 # Master dataset of 50 Megadeth songs with Uncle Rico style trivia and tabs
 megadeth_dataset = [
@@ -369,7 +375,11 @@ megadeth_dataset = [
         "album": "So Far, So Good... So What!",
         "trivia": "This was the very first song Dave Mustaine wrote immediately after leaving his former band, penned on a survival leaflet while riding a bus home. Talk about motivation. If I had written down my sports strategies on a napkin back in '82, it would've revolutionized the game. This riff absolutely roars.",
         "main_riff_tab": {
-import json
+            "tuning": "Standard (E A D G B E)",
+            "notation": "E|---------------------------------|\nB|---------------------------------|\nG|---------------------------------|\nD|---------4-------------5---------|\nA|---------2-------------3---------|\nE|--0-0-0-0---0-0-0-0-0-0---0-0----|"
+        }
+    }
+]
 
 # Master dataset of 50 Ozzy Osbourne / Black Sabbath tracks with Uncle Rico style trivia and tabs
 ozzy_sabbath_dataset = [
@@ -487,7 +497,10 @@ ozzy_sabbath_dataset = [
         "trivia": "Frank Zappa and John Bonham both called this their favorite track of all time. It’s got a real bouncy, hyper-rhythmic groove that makes you want to move. I used to do a real flashy shuffle behind the line of scrimmage that had the same kind of swagger. The defense was completely mesmerized, man.",
         "main_riff_tab": {
             "tuning": "Standard (E A D G B E)",
-import json
+            "notation": "E|---------------------------------|\nB|---------------------------------|\nG|---------------------------------|\nD|-----5---5/7-7---10\9-10\9-10\5-5|\nA|--2--3---3/5-5----8\7--8\7--8\3-3|\nE|--0------------------------------|"
+        }
+    }
+]
 
 # Master dataset of 50 Ozzy Osbourne SOLO ERA tracks with Uncle Rico style trivia and tabs
 ozzy_solo_dataset = [
@@ -611,3 +624,10 @@ ozzy_solo_dataset = [
     {
         "song_title": "Little Dolls",
         "album": "Diary of a Madman",
+        "trivia": "A driving, spooky track about voodoo dolls and mental control. The drumming is absolutely tribal. I know a thing or two about feeling like someone else is pulling the strings, especially when I think about that 1982 roster. If Coach had just let me be the puppet master, we'd have won it all.",
+        "main_riff_tab": {
+            "tuning": "Standard (E A D G B E)",
+            "notation": "E|---------------------------------|\nB|---------------------------------|\nG|---------------------------------|\nD|--4--4---4--4---4--4---4--4------|\nA|--4--4---4--4---4--4---4--4------|\nE|--2--2---2--2---2--2---2--2------|"
+        }
+    }
+]

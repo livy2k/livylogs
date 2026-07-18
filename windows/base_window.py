@@ -36,14 +36,14 @@ class BasePopoutWindow:
             force_open = False
             
         if self.window and self.window.winfo_exists():
+            self.window.lift()
+            self.window.focus_force()
             if self.window.state() == "withdrawn":
                 self.window.deiconify()
                 if self.window.attributes("-alpha") != self.app.current_alpha:
                     self.window.attributes("-alpha", self.app.current_alpha)
-                self.window.lift()
                 return
             if force_open:
-                self.window.lift()
                 return
             self.close()
             return
@@ -96,6 +96,9 @@ class BasePopoutWindow:
         if self.app.always_on_top:
             self.window.attributes("-topmost", True)
         
+        self.window.lift()
+        self.window.focus_force()
+        
         if not self.fixed_size:
             self.window.bind("<Configure>", self.on_configure)
         
@@ -112,6 +115,9 @@ class BasePopoutWindow:
         # Reduced padding to 0,0 for maximum space
         self.content_container = tk.Frame(self.inner, bg=WINDOW_BG, padx=0, pady=0)
         self.content_container.pack(fill=tk.BOTH, expand=True)
+        
+        # Bring to front on click anywhere in the window
+        self.window.bind("<Button-1>", lambda e: (self.window.lift(), self.window.focus_force()), add="+")
 
         # Gradient Title Bar
         if self.show_title:
@@ -198,8 +204,12 @@ class BasePopoutWindow:
             self.window = None
 
     def click_window(self, event):
-        self.app.is_interacting = True
-        self.app.last_interaction_time = tk.time.time() if hasattr(tk, "time") else __import__("time").time()
+        self.window.lift()
+        self.window.focus_force()
+        if hasattr(self.app, 'is_interacting'):
+            self.app.is_interacting = True
+        if hasattr(self.app, 'last_interaction_time'):
+            self.app.last_interaction_time = __import__("time").time()
         self._offsetx = event.x
         self._offsety = event.y
 

@@ -52,3 +52,4 @@ desktop.ini
 !BUILD_ENGINE.md
 !DEVELOPMENT_LOG.md
 sync_server.py
+.aider*

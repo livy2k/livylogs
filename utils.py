@@ -239,6 +239,11 @@ def normalize_name(name):
     if not name: return "Unknown"
     # Remove leading/trailing spaces
     name = name.strip()
+    # Collapse repeated internal whitespace to make fragment detection reliable
+    name = " ".join(name.split())
+    lowered_compact = name.lower()
+    if lowered_compact.startswith("you ") and (" enter of being " in lowered_compact or " of being " in lowered_compact):
+        return "Unknown"
     
     # Remove anything in parentheses ( ) or brackets [ ]
     import re
@@ -323,6 +328,7 @@ def normalize_name(name):
         " use ", " attacks ", " deals ", " heals ", " hits ", " apply ",
         " resist ", " no longer ", " incapacitated by ", " intimidated by ",
         " knocked down by ", " kneels ", " prone by ", " stands up", " falls down", " on a "
+        , " enter of being ", " of being "
     ]
     
     # If we see a state keyword, it confirms this name is a log fragment
@@ -362,6 +368,53 @@ def normalize_name(name):
         return "Unknown"
     
     return name.strip()
+
+def resolve_cooldown_target(target, source, status_text, char_name_curr=""):
+    """Resolve who should receive a cooldown/status marker for cooldown events."""
+    import re
+
+    norm_target = normalize_name(target)
+    norm_source = normalize_name(source)
+    status_text_clean = (status_text or "").strip()
+    # Some events can include a chat/combat prefix, e.g.:
+    # "[Combat] 19:47:42 IiIiIiIi looks very intimidated by you!"
+    status_text_parse = re.sub(
+        r"^\[[^\]]+\]\s+\d{1,2}:\d{2}:\d{2}\s+",
+        "",
+        status_text_clean,
+        flags=re.IGNORECASE,
+    )
+    status_lower = status_text_clean.lower()
+
+    # Directly parse victim-forward intimidate text regardless of incoming target/source fields.
+    # Example: "IiIiIiIi looks very intimidated by you!"
+    m = re.match(r"^(.+?)\s+looks\s+very\s+intimidated\s+by\s+you!?$", status_text_parse, flags=re.IGNORECASE)
+    if m:
+        candidate = normalize_name(m.group(1).strip(" .!,:;\t\r\n"))
+        if candidate not in ["Unknown", "You"]:
+            return candidate
+
+    if char_name_curr:
+        char_lower = char_name_curr.lower()
+        if norm_target.lower() == char_lower:
+            norm_target = "You"
+        if norm_source.lower() == char_lower:
+            norm_source = "You"
+
+    # For self-cast intimidate lines, some logs incorrectly carry target as "You".
+    # Try to recover the real victim from the status text.
+    is_intimidate = "intimidate" in status_lower or "intimidated" in status_lower
+    if is_intimidate and norm_source == "You" and norm_target == "You":
+        m = re.match(r"^you\s+intimidate\s+(.+)$", status_text_parse, flags=re.IGNORECASE)
+        if m:
+            candidate = normalize_name(m.group(1).strip(" .!,:;\t\r\n"))
+            if candidate not in ["Unknown", "You"]:
+                return candidate
+
+        # Better to drop ambiguous self-cast intimidate than show it incorrectly on "You".
+        return "Unknown"
+
+    return norm_target
 
 def is_probable_player(name, bosses=None, known_npcs=None, known_players=None):
     if not name or name == "Unknown": return False

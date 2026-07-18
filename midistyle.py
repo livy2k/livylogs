@@ -81,6 +81,15 @@ def play_16bit_distorted_tab(steps, tempo_bpm=120):
         print(f"MIDI Playback Error: {e}")
 
 
+def play_tab_midi(tab_str, tempo_bpm=120):
+    """Wrapper for external calls to play a tab string."""
+    steps = parse_tab_to_midi_steps(tab_str)
+    if steps:
+        import threading
+        # Run in a separate thread to avoid blocking the UI
+        threading.Thread(target=play_16bit_distorted_tab, args=(steps, tempo_bpm), daemon=True).start()
+
+
 if __name__ == "__main__":
     midi_timeline = parse_tab_to_midi_steps(TAB_DATA)
     play_16bit_distorted_tab(midi_timeline, tempo_bpm=110)

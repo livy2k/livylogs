@@ -12,6 +12,7 @@ class AIHandler:
         self.app = app
         self.history = []
         self.is_loading_local = False # Keep for compatibility
+        self.seen_metallica = set()
         self.rico_quotes = [
             "How about that? I bet I could throw a football over those mountains.",
             "Back in '82, I could find any spawn in the galaxy... probably throw a football over those mountains too.",
@@ -73,6 +74,27 @@ class AIHandler:
                 filler_words = ["where", "can", "i", "get", "how", "to", "find", "is", "loot", "drop", "from", "location", "what", "does", "the", "a", "an"]
                 tokens = [w for w in user_input.lower().split() if w not in filler_words and len(w) > 2]
                 if not tokens: tokens = [user_input.lower()]
+
+                # Handle Metallica specific song queries
+                metallica_song = None
+                from metallica import metallica_dataset
+                
+                # Check for direct song titles
+                for s in metallica_dataset:
+                    if s["song_title"].lower() in user_input.lower():
+                        metallica_song = s
+                        break
+                
+                if metallica_song:
+                    response = f"UNCLE RICO: Oh, man! '{metallica_song['song_title']}' from {metallica_song['album']}! {metallica_song['trivia']}\n\nCheck out this riff I've been working on..."
+                    sync_data = {
+                        "type": "metallica",
+                        "title": metallica_song['song_title'],
+                        "tab": metallica_song['main_riff_tab']['notation']
+                    }
+                    response += f"\n---METALLICA_SYNC---\n{json.dumps(sync_data)}"
+                    if callback: callback(response)
+                    return
 
                 # 1. Anchor Matching & Fuzzy Correction
                 corrected_tokens = []
@@ -274,13 +296,37 @@ class AIHandler:
         elif choice < 0.7: # 35% chance of Metallica
             try:
                 from metallica import metallica_dataset
-                song = random.choice(metallica_dataset)
+                # Filter out seen songs
+                available = [s for s in metallica_dataset if s['song_title'] not in self.seen_metallica]
+                if not available:
+                    self.seen_metallica.clear()
+                    available = metallica_dataset
+                
+                song = random.choice(available)
+                self.seen_metallica.add(song['song_title'])
+                
                 trivia = song['trivia']
                 if len(trivia) > 200: trivia = trivia[:200] + "..."
                 return f"I was just thinking about that Metallica song '{song['song_title']}'. {trivia} I bet Lars and James would've loved my arm back in '82."
             except: pass
         
         return random.choice(self.rico_quotes)
+
+    def get_metallica_opening(self):
+        """Returns a unique Metallica comment for window openings."""
+        try:
+            from metallica import metallica_dataset
+            available = [s for s in metallica_dataset if s['song_title'] not in self.seen_metallica]
+            if not available:
+                self.seen_metallica.clear()
+                available = metallica_dataset
+            
+            song = random.choice(available)
+            self.seen_metallica.add(song['song_title'])
+            
+            return f"Welcome to the Archives. I was just listening to '{song['song_title']}' in the van. {song['trivia'][:150]}... Back in '82, this would've been the soundtrack to our championship run."
+        except:
+            return "Welcome to the Imperial Archives. Uncle Rico at your service. What are we looking for?"
 
     def _generate_response(self, user_input, context_data):
         user_input_lower = user_input.lower().strip()
@@ -314,6 +360,18 @@ class AIHandler:
         # 4. Use Context Data from Alexa (RAG) if available
         if (context_data and "IMPERIAL ARCHIVE" in context_data) or learned_context:
             combined_context = (context_data or "") + "\n" + learned_context
+            
+            # Filter out lines with 0/0.0 values in contextual results
+            filtered_lines = []
+            for line in combined_context.split("\n"):
+                # Matches patterns like ": 0", ": 0.0", ": 0%", "(0)", etc.
+                # But careful not to filter out things like "Armor Rating: 0" if it's meaningful? 
+                # The user said "if a field is 0 dont include".
+                if re.search(r':\s*0(\.0)?\b', line) or re.search(r'\(0(\.0)?\)', line):
+                    continue
+                filtered_lines.append(line)
+            combined_context = "\n".join(filtered_lines)
+
             # IMPROVED: If we have direct loot sources, prioritize them
             if "LOOT SOURCES" in combined_context:
                  return self._format_rico_response(user_input, combined_context, prioritize_loot=True)
@@ -425,7 +483,15 @@ class AIHandler:
     def _handle_music_query(self, query):
         try:
             from metallica import metallica_dataset
-            song = random.choice(metallica_dataset)
+            
+            # Filter out seen songs
+            available = [s for s in metallica_dataset if s['song_title'] not in self.seen_metallica]
+            if not available:
+                self.seen_metallica.clear()
+                available = metallica_dataset
+                
+            song = random.choice(available)
+            self.seen_metallica.add(song['song_title'])
             
             rico_intro = f"Music? Man, I used to blast this in my van back in '82. "
             answer = f"{rico_intro}{song['trivia']}"
@@ -646,7 +712,15 @@ class AIHandler:
         if random.random() < 0.15:
             try:
                 from metallica import metallica_dataset
-                song = random.choice(metallica_dataset)
+                # Filter out seen songs
+                available = [s for s in metallica_dataset if s['song_title'] not in self.seen_metallica]
+                if not available:
+                    self.seen_metallica.clear()
+                    available = metallica_dataset
+                
+                song = random.choice(available)
+                self.seen_metallica.add(song['song_title'])
+                
                 riff_injection = f"\n\nSpeaking of heavy hits, check out this riff from '{song['song_title']}':\n{song['main_riff_tab']['notation']}\n{song['trivia'][:120]}..."
             except: pass
 

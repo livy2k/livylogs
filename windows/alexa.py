@@ -438,6 +438,25 @@ class AlexaWindow(BasePopoutWindow):
         self.rico_title_label = tk.Label(top_frame, text="UNCLE RICO SEARCH", bg=PANEL_DARK, fg=ACCENT_RED, font=("Lilita One", 10))
         self.rico_title_label.pack(side=tk.LEFT)
 
+        # Mute Button
+        self.mute_btn = tk.Label(top_frame, text="🔇" if getattr(self, '_is_muted', False) else "🔊", 
+                               bg=PANEL_DARK, fg=ACCENT_RED if getattr(self, '_is_muted', False) else TEXT_SECONDARY, 
+                               font=("Segoe UI", 12), cursor="hand2")
+        self.mute_btn.pack(side=tk.RIGHT, padx=15)
+        
+        def toggle_mute(e):
+            self._is_muted = not getattr(self, '_is_muted', False)
+            if self._is_muted:
+                self.mute_btn.config(text="🔇", fg=ACCENT_RED)
+                if hasattr(self.app, 'radio_mgr'):
+                    self.app.radio_mgr.stop()
+            else:
+                self.mute_btn.config(text="🔊", fg=TEXT_SECONDARY)
+        
+        self.mute_btn.bind("<Button-1>", toggle_mute)
+        self.mute_btn.bind("<Enter>", lambda e: self.mute_btn.config(fg=TEXT_PRIMARY if not getattr(self, '_is_muted', False) else "#ff6666"))
+        self.mute_btn.bind("<Leave>", lambda e: self.mute_btn.config(fg=TEXT_SECONDARY if not getattr(self, '_is_muted', False) else ACCENT_RED))
+
         # Main Interaction Area
         main_area = tk.Frame(self.content_container, bg=WINDOW_BG)
         main_area.pack(fill=tk.BOTH, expand=True)
@@ -568,12 +587,9 @@ class AlexaWindow(BasePopoutWindow):
 
         if not self.ai_messages:
             # Uncle Rico Greeting (Modern Styled)
-            tk.Label(scroll_frame, text="UNCLE RICO:", bg=WINDOW_BG, fg=ACCENT_RED, font=("Lilita One", 10), anchor="w").pack(fill=tk.X, pady=(40, 0), padx=40)
-            
-            greeting_text = "Archives are ONLINE. I bet I could find any spawn in the galaxy... probably throw a football over those mountains too. Ask me anything, like 'where is janta blood' or 'how to make a dxr6'."
-            
-            tk.Label(scroll_frame, text=greeting_text, 
-                     bg=WINDOW_BG, fg=TEXT_PRIMARY, font=("Segoe UI", 10, "italic"), wraplength=200, justify="center").pack(fill=tk.X, pady=(10, 40), padx=40)
+            greeting_text = self.ai_agent.get_metallica_opening()
+            self.ai_messages.append(("assistant", greeting_text))
+            self.update_rico_content(force=True)
         else:
             self.update_rico_content(force=True)
 
@@ -609,15 +625,19 @@ class AlexaWindow(BasePopoutWindow):
         
         # Display tab if present
         if sync_data and "tab" in sync_data:
+            # Check if muted before playing
+            is_muted = getattr(self, '_is_muted', False)
+
             tab_msg = f"\n--- {sync_data['title'].upper()} GUITAR TAB ---\n{sync_data['tab']}"
             self.ai_messages.append(("assistant", tab_msg))
             
-            # Start MIDI playback
-            try:
-                import midistyle
-                midistyle.play_tab_midi(sync_data['tab'])
-            except Exception as e:
-                print(f"[MIDI] Error triggering playback: {e}")
+            # Start MIDI playback if not muted
+            if not is_muted:
+                try:
+                    import midistyle
+                    midistyle.play_tab_midi(sync_data['tab'])
+                except Exception as e:
+                    print(f"[MIDI] Error triggering playback: {e}")
 
         if self.view_state == "rico":
             def update():
@@ -637,91 +657,103 @@ class AlexaWindow(BasePopoutWindow):
         if not hasattr(self, 'rico_scroll_frame') or not self.rico_scroll_frame.winfo_exists():
             return
         
-        # Performance: Only rebuild if there's actually a change in message count or content
-        # Include thinking animation state in key
-        thinking_dots = getattr(self, '_thinking_dots', "...")
-        rico_key = f"rico_{len(self.ai_messages)}_{thinking_dots}"
-        
-        if not force and hasattr(self, '_last_rico_key') and self._last_rico_key == rico_key:
+        # Only rebuild if forced or if we don't have enough widgets for our messages
+        current_widgets = [w for w in self.rico_scroll_frame.winfo_children() if hasattr(w, '_msg_idx')]
+        if not force and len(current_widgets) == len(self.ai_messages):
+            # Just update the thinking label if it changed, but don't rebuild
+            thinking_dots = getattr(self, '_thinking_dots', "...")
+            if hasattr(self, '_thinking_label') and self._thinking_label.winfo_exists():
+                try:
+                    self._thinking_label.config(text=thinking_dots)
+                except: pass
             return
-        self._last_rico_key = rico_key
 
+        # If we have existing widgets and just need to add the LATEST message:
+        if not force and len(current_widgets) > 0 and len(self.ai_messages) == len(current_widgets) + 1:
+            self._add_single_message(self.ai_messages[-1], len(self.ai_messages)-1)
+            return
+
+        # Fallback to full rebuild for state changes (e.g. view switch, first load)
         for widget in self.rico_scroll_frame.winfo_children(): widget.destroy()
 
-        canvas_width = self.rico_scroll_frame.master.winfo_width()
-        wrap_val = max(100, canvas_width - 120)
-
         if not self.ai_messages:
-            greeting_text = "Archives are ONLINE. I bet I could find any spawn in the galaxy... probably throw a football over those mountains too.\n\nAsk me anything, like 'where is janta blood' or 'how to make a dxr6'."
-            
-            welcome_bubble = tk.Frame(self.rico_scroll_frame, bg=PANEL_DARK, padx=20, pady=20, 
-                                     highlightthickness=1, highlightbackground=BORDER_COLOR)
-            welcome_bubble.pack(pady=40, padx=50)
-            
-            tk.Label(welcome_bubble, text=greeting_text, 
-                     bg=PANEL_DARK, fg=TEXT_PRIMARY, font=("Segoe UI", 11, "italic"), 
-                     wraplength=350, justify="center").pack()
+            # Welcome message handling
+            greeting_text = self.ai_agent.get_metallica_opening()
+            self.ai_messages.append(("assistant", greeting_text))
+            self._add_single_message(("assistant", greeting_text), 0)
         else:
             # Spacer at top
             tk.Frame(self.rico_scroll_frame, bg=WINDOW_BG, height=10).pack()
-            
-            for role, text in self.ai_messages:
-                is_user = role == "user"
-                is_thinking = role == "rico_thinking"
-                
-                # Container for alignment
-                bubble_container = tk.Frame(self.rico_scroll_frame, bg=WINDOW_BG, pady=8)
-                bubble_container.pack(fill=tk.X, padx=20)
-                
-                # Role Label (Small)
-                role_name = "YOU" if is_user else "UNCLE RICO"
-                role_label = tk.Label(bubble_container, text=role_name, 
-                                     bg=WINDOW_BG, fg=ACCENT_RED if not is_user else TEXT_SECONDARY, 
-                                     font=("Lilita One", 8))
-                role_label.pack(side=tk.RIGHT if is_user else tk.LEFT, padx=5)
-                
-                # Bubble Layout
-                bg_color = "#1c1f24" if is_user else PANEL_DARK
-                border_color = "#3a3f4b" if is_user else BORDER_COLOR
-                
-                bubble_outer = tk.Frame(bubble_container, bg=WINDOW_BG)
-                bubble_outer.pack(side=tk.RIGHT if is_user else tk.LEFT, fill=tk.X, expand=True)
-                
-                bubble = tk.Frame(bubble_outer, bg=bg_color, padx=15, pady=10, 
-                                 highlightthickness=1, highlightbackground=border_color)
-                bubble.pack(side=tk.RIGHT if is_user else tk.LEFT)
-                
-                # Context menu for copying
-                def show_context_menu(e, content=text):
-                    m = tk.Menu(self.window, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, activebackground=ACCENT_RED)
-                    m.add_command(label="COPY MESSAGE", command=lambda: (self.window.clipboard_clear(), self.window.clipboard_append(content)))
-                    m.post(e.x_root, e.y_root)
-
-                bubble.bind("<Button-3>", show_context_menu)
-                
-                msg_font = ("Segoe UI", 10) if is_user else ("Consolas", 10)
-                msg_fg = TEXT_PRIMARY if is_user else "#aeb7c0"
-                
-                display_text = text
-                if is_thinking:
-                    display_text = getattr(self, '_thinking_dots', "...")
-                    # Tag this label so we can update it in animation
-                    self._thinking_label = tk.Label(bubble, text=display_text, bg=bg_color, fg=msg_fg, font=msg_font, 
-                                                  wraplength=wrap_val, justify="left", anchor="w")
-                    self._thinking_label.pack()
-                    
-                    # Trigger animation if not already running
-                    if not hasattr(self, '_thinking_anim_id'):
-                        self._animate_thinking()
-                else:
-                    tk.Label(bubble, text=display_text, bg=bg_color, fg=msg_fg, font=msg_font, 
-                             wraplength=wrap_val, justify="left", anchor="w").pack()
+            for i, msg in enumerate(self.ai_messages):
+                self._add_single_message(msg, i)
             
             # Spacer at bottom
             tk.Frame(self.rico_scroll_frame, bg=WINDOW_BG, height=20).pack()
-            # Initial scroll to bottom if force
-            if force:
-                self.window.after(50, lambda: self.rico_canvas.yview_moveto(1.0))
+        
+        if force:
+            self.window.after(50, lambda: self.rico_canvas.yview_moveto(1.0))
+
+    def _add_single_message(self, msg, idx):
+        role, text = msg
+        is_user = role == "user"
+        is_thinking = role == "rico_thinking"
+        
+        canvas_width = self.rico_canvas.winfo_width()
+        if canvas_width < 100: canvas_width = 300 # Fallback
+        wrap_val = max(100, canvas_width - 120)
+
+        # Container for alignment
+        bubble_container = tk.Frame(self.rico_scroll_frame, bg=WINDOW_BG, pady=4) # Reduced pady
+        bubble_container.pack(fill=tk.X, padx=20)
+        bubble_container._msg_idx = idx # Mark it for tracking
+        
+        # Consistent Height Role Label to prevent bouncing
+        role_frame = tk.Frame(bubble_container, bg=WINDOW_BG, width=80, height=20)
+        role_frame.pack_propagate(False)
+        role_frame.pack(side=tk.RIGHT if is_user else tk.LEFT, padx=5)
+
+        role_name = "YOU" if is_user else "UNCLE RICO"
+        role_label = tk.Label(role_frame, text=role_name, 
+                             bg=WINDOW_BG, fg=ACCENT_RED if not is_user else TEXT_SECONDARY, 
+                             font=("Lilita One", 8))
+        role_label.pack(expand=True)
+        
+        # Bubble Layout
+        bg_color = "#1c1f24" if is_user else PANEL_DARK
+        border_color = "#3a3f4b" if is_user else BORDER_COLOR
+        
+        bubble_outer = tk.Frame(bubble_container, bg=WINDOW_BG)
+        bubble_outer.pack(side=tk.RIGHT if is_user else tk.LEFT, fill=tk.X, expand=True)
+        
+        bubble = tk.Frame(bubble_outer, bg=bg_color, padx=15, pady=10, 
+                         highlightthickness=1, highlightbackground=border_color)
+        bubble.pack(side=tk.RIGHT if is_user else tk.LEFT)
+        
+        # Context menu for copying
+        def show_context_menu(e, content=text):
+            m = tk.Menu(self.window, tearoff=0, bg=PANEL_DARK, fg=TEXT_PRIMARY, activebackground=ACCENT_RED)
+            m.add_command(label="COPY MESSAGE", command=lambda: (self.window.clipboard_clear(), self.window.clipboard_append(content)))
+            m.post(e.x_root, e.y_root)
+
+        bubble.bind("<Button-3>", show_context_menu)
+        
+        msg_font = ("Segoe UI", 10) if is_user else ("Consolas", 10)
+        msg_fg = TEXT_PRIMARY if is_user else "#aeb7c0"
+        
+        display_text = text
+        if is_thinking:
+            display_text = getattr(self, '_thinking_dots', "...")
+            self._thinking_label = tk.Label(bubble, text=display_text, bg=bg_color, fg=msg_fg, font=msg_font, 
+                                          wraplength=wrap_val, justify="left", anchor="w")
+            self._thinking_label.pack()
+            if not hasattr(self, '_thinking_anim_id'):
+                self._animate_thinking()
+        else:
+            tk.Label(bubble, text=display_text, bg=bg_color, fg=msg_fg, font=msg_font, 
+                     wraplength=wrap_val, justify="left", anchor="w").pack()
+        
+        # Auto-scroll on new message
+        self.window.after(10, lambda: self.rico_canvas.yview_moveto(1.0))
 
     def _animate_thinking(self):
         if not hasattr(self, '_thinking_dots'): self._thinking_dots = "."
@@ -732,7 +764,7 @@ class AlexaWindow(BasePopoutWindow):
         else: self._thinking_dots = "."
         
         # Update the thinking label directly if it exists
-        if hasattr(self, '_thinking_label'):
+        if hasattr(self, '_thinking_label') and self._thinking_label.winfo_exists():
             try:
                 self._thinking_label.config(text=self._thinking_dots)
             except: pass

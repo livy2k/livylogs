@@ -33,7 +33,7 @@ class OptionsWindow(BasePopoutWindow):
     def build_ui(self):
         # Update window height to accommodate new fields
         if self.window:
-            self.window.geometry("300x700")
+            self.window.geometry("500x900")
 
         # Clear existing content just in case
         for child in self.content_container.winfo_children():

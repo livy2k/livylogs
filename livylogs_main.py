@@ -204,6 +204,7 @@ class CombatLogApp:
         self.compact_mode = self.config.getboolean("General", "compact_mode", fallback=False)
         self._last_mode = self.compact_mode
         self.state_duration = self.config.getint("General", "state_duration", fallback=25)
+        self.status_cooldown_duration = self.config.getint("General", "status_cooldown_duration", fallback=29)
         self.priority_911_duration = self.config.getint("General", "911_duration", fallback=30)
         from constants import AI_API_KEY
         import constants
@@ -248,6 +249,7 @@ class CombatLogApp:
         self.known_players = set()
         self.friendly_players = set()
         self.enemy_players = set()
+        self.groupchat_123_players = set()
         self.player_arrival_order = [] # List to track order of first appearance
         self.status_cooldowns = {} # {player_name: {status_type: timestamp}}
         self.damage_history = {} # {player_name: [(timestamp, damage)]}
@@ -1569,7 +1571,23 @@ class CombatLogApp:
                         f.write(f"--- WATCHDOG ERROR {datetime.now()} ---\n{e}\n")
                 except: pass
 
-    def _trigger_status_effect(self, target, ability_text, status_type_override=None, offset_override=None):
+    def _coerce_event_time_seconds(self, event_time):
+        """Convert heterogeneous event timestamp values to epoch seconds."""
+        if isinstance(event_time, (int, float)):
+            return float(event_time)
+        if isinstance(event_time, datetime):
+            try:
+                return event_time.timestamp()
+            except Exception:
+                pass
+        if isinstance(event_time, str):
+            try:
+                return float(event_time)
+            except Exception:
+                pass
+        return time.time()
+
+    def _trigger_status_effect(self, target, ability_text, status_type_override=None, offset_override=None, event_time=None):
         """Centralized handler for status effects like knockdown, posture, and intimidate."""
         if not target or (not ability_text and not status_type_override):
             return
@@ -1581,7 +1599,7 @@ class CombatLogApp:
         if char_name_curr and target.lower() == char_name_curr.lower(): 
             target = "You"
 
-        cur_time = time.time()
+        cur_time = self._coerce_event_time_seconds(event_time)
         status_type = status_type_override
         
         if not status_type and ability_text:
@@ -1600,8 +1618,8 @@ class CombatLogApp:
             if target not in self.status_cooldowns:
                 self.status_cooldowns[target] = {}
 
-            # 28s immunity window for most; incapacitated uses state_duration (usually 28s)
-            duration = 28
+            # Default immunity window for most; incapacitated uses state_duration.
+            duration = getattr(self, 'status_cooldown_duration', 29)
             if offset_override is not None:
                 duration = offset_override
             elif status_type == "incapacitated":
@@ -2179,6 +2197,8 @@ class CombatLogApp:
                     self._init_player_data(source)
                     
                     msg_clean = message.strip()
+                    if msg_clean == "123":
+                        self.groupchat_123_players.add(source)
                     if msg_clean == "911":
                         if source in self.friendly_players or source == "You":
                             self._init_player_data(source)
@@ -2192,6 +2212,7 @@ class CombatLogApp:
                 msg = event.get("message", "")
                 src = event.get("source", "Unknown")
                 offset = event.get("offset")
+                from utils import resolve_cooldown_target
                 
                 # Check for state keywords inside the target name itself (User suggestion)
                 # If target contains "has been", "is", "intimidated", etc., it's a fragment.
@@ -2205,12 +2226,15 @@ class CombatLogApp:
                 if char_name_curr and src.lower() == char_name_curr.lower(): src = "You"
 
                 if target and target != "Unknown" and status_val:
-                    # ENSURE TARGET IS CLEAN AND TRACKED
-                    norm_target = normalize_name(target)
-                    if char_name_curr and norm_target.lower() == char_name_curr.lower(): norm_target = "You"
+                    # Resolve status target from message directionality before applying.
+                    status_text = msg if msg else status_val
+                    resolved_target = resolve_cooldown_target(target, src, status_text, char_name_curr)
+                    norm_target = normalize_name(resolved_target)
+                    if char_name_curr and norm_target.lower() == char_name_curr.lower():
+                        norm_target = "You"
                     if not norm_target or norm_target == "Unknown": return
 
-                    self._trigger_status_effect(norm_target, msg, status_type_override=status_val, offset_override=offset)
+                    self._trigger_status_effect(norm_target, msg, status_type_override=status_val, offset_override=offset, event_time=timestamp)
                     self._init_player_data(norm_target)
                     
                     # Also ensure the clean target is in the arrival order, NOT the raw fragmented one
@@ -2230,6 +2254,7 @@ class CombatLogApp:
                 ability = event.get("ability")
                 status = event.get("status")
                 if target and (ability or status):
+                    from utils import resolve_cooldown_target
                     # Check if this ability is a combat spam filter (skip for Livius but still process for Details)
                     if ability and ability.lower() in self.combat_spam_filters:
                         # Still process for Details (logs, etc.) but don't trigger status effect for Livius
@@ -2238,11 +2263,13 @@ class CombatLogApp:
                         return
                     # Use status field if available (engine sends it), otherwise fall back to ability text
                     status_text = status if status else ability
-                    self._trigger_status_effect(target, status_text)
+                    resolved_target = resolve_cooldown_target(target, source, status_text, self.char_name.get())
+                    if resolved_target and resolved_target != "Unknown":
+                        self._trigger_status_effect(resolved_target, status_text, event_time=timestamp)
                 return
 
             elif event_type == "incapacitated":
-                self._trigger_status_effect(target, "incapacitated")
+                self._trigger_status_effect(target, "incapacitated", event_time=timestamp)
                 self.player_data[target]["logs"].append({"msg": "Incapacitated!", "time": timestamp, "type": "status"})
                 return
 
@@ -2565,7 +2592,7 @@ class CombatLogApp:
                     
                     # Check for status effects in the ability name (e.g., "Fire Knockdown")
                     if ability:
-                        self._trigger_status_effect(target, ability)
+                        self._trigger_status_effect(target, ability, event_time=timestamp)
                     
                     # Update Damage Meter stats if combat is active
                     if self.app_start_time:
@@ -2609,22 +2636,19 @@ class CombatLogApp:
                     else:
                         p["dm_taken"] = 0
                     
-                    # Check if "You" were knocked down/intimidated/etc based on message/ability
-                    # The message might contain "You have been knocked down"
+                    # Resolve cooldown/status target from message directionality to avoid
+                    # mislabeling self-cast intimidate lines on "You".
+                    from utils import resolve_cooldown_target
                     msg = event.get("message", "")
                     if msg:
-                        self._trigger_status_effect("You", msg)
+                        resolved_msg_target = resolve_cooldown_target(target, source, msg, self.char_name.get())
+                        if resolved_msg_target and resolved_msg_target != "Unknown":
+                            self._trigger_status_effect(resolved_msg_target, msg, event_time=timestamp)
                     if ability:
-                        self._trigger_status_effect("You", ability)
+                        resolved_ability_target = resolve_cooldown_target(target, source, ability, self.char_name.get())
+                        if resolved_ability_target and resolved_ability_target != "Unknown":
+                            self._trigger_status_effect(resolved_ability_target, ability, event_time=timestamp)
                     
-                    # Also check for other players being affected in "taken" events
-                    # if target is not You, and it's a taken event with a status message
-                    if target != "You" and target != "Unknown":
-                         if msg:
-                             self._trigger_status_effect(target, msg)
-                         if ability:
-                             self._trigger_status_effect(target, ability)
-
                     # Increment counters for evasion/miss stats
                     if damage > 0:
                         p["dm_taken_hits"] = p.get("dm_taken_hits", 0) + 1

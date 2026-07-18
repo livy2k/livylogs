@@ -94,25 +94,30 @@ class CombatLogApp:
         # Load Lilita One font if available
         self.lilita_font_path = get_resource_path("LilitaOne.ttf")
         self.lilita_family = "Lilita One"
-        if not os.path.exists(self.lilita_font_path):
-             # Fallback to absolute dev path
-             self.lilita_font_path = r"C:\Users\LivyC\Documents\UImaker\assets\fonts\LilitaOne\LilitaOne.ttf"
+        # We try to find the font in multiple places
+        potential_font_paths = [
+            self.lilita_font_path,
+            r"C:\Users\LivyC\Documents\UImaker\assets\fonts\LilitaOne\LilitaOne.ttf",
+            os.path.join(os.getcwd(), "LilitaOne.ttf"),
+            os.path.join(os.path.dirname(__file__), "LilitaOne.ttf")
+        ]
         
-        if os.path.exists(self.lilita_font_path):
-            try:
-                import ctypes
-                # Attempt to load font on Windows using ctypes
-                # gdi32.AddFontResourceExW
-                FR_PRIVATE = 0x10
-                res = ctypes.windll.gdi32.AddFontResourceExW(self.lilita_font_path, FR_PRIVATE, 0)
-                if res > 0:
-                     print(f"[DEBUG] Loaded custom font: {self.lilita_family} from {self.lilita_font_path}")
-                     # Refresh font list
-                     # ctypes.windll.user32.SendMessageW(0xFFFF, 0x001D, 0, 0)
-                else:
-                     print(f"[DEBUG] Failed to load font resource: {self.lilita_font_path}")
-            except Exception as e:
-                print(f"[DEBUG] Error loading font: {e}")
+        loaded_font = False
+        for fpath in potential_font_paths:
+            if os.path.exists(fpath):
+                try:
+                    import ctypes
+                    FR_PRIVATE = 0x10
+                    res = ctypes.windll.gdi32.AddFontResourceExW(fpath, FR_PRIVATE, 0)
+                    if res > 0:
+                         print(f"[DEBUG] Loaded custom font: {self.lilita_family} from {fpath}")
+                         loaded_font = True
+                         break
+                except Exception as e:
+                    print(f"[DEBUG] Failed to load font {fpath}: {e}")
+        
+        if not loaded_font:
+             print(f"[DEBUG] Failed to load custom font from any potential path.")
         
         self.config = ConfigParser()
         self.config.read("settings.ini")
@@ -229,8 +234,11 @@ class CombatLogApp:
             self.save_config()
         
         # Backward compatibility: Migrating from old bot token to relay
+        # We keep the Discord section for relay_enabled, but ensure DiscordRelay is used for newer stuff
         if self.config.has_section("Discord"):
-            self.config.remove_section("Discord")
+            # If they had the old bot setup, we can keep the section but it's mostly unused now
+            # except for relay_enabled which we migrated to the Discord section for persistence
+            pass
             
         # Initialize App State
         self.calc_win = None
@@ -3569,6 +3577,13 @@ class CombatLogApp:
             "relay_enabled": str(self.discord_relay_enabled.get())
         })
         
+        # Ensure DiscordRelay section is explicitly preserved in config object
+        if "DiscordRelay" not in self.config: self.config["DiscordRelay"] = {}
+        # relay_url is already handled by OptionsWindow or manual sets, but let's be safe
+        self.config["DiscordRelay"]["relay_url"] = self.discord_relay_url.get()
+        # is_verified and relay_token are set by DiscordViewerWindow.perform_verification
+        # and they stay in the config object.
+        
         # Save popout positions/sizes via WindowManager
         if self.window_manager:
             self.window_manager.save_all_configs()
@@ -4531,29 +4546,63 @@ class CombatLogApp:
         
         def _bg_gen():
             try:
+                import requests
+                
                 if is_test:
                     import generate_example_report
                     tracker = generate_example_report.MockTracker()
                     report_path = tracker.generate_html_report()
                 else:
-                    # For real reports, we'd need a real tracker or data export
-                    # If generate_report.py only does PDF, we might need to adapt it.
-                    # Given generate_example_report.py has generate_html_report, 
-                    # let's assume there's a way to get real data into it or use a similar logic.
-                    # For now, we'll use generate_example_report as a placeholder or template.
                     import generate_example_report
                     tracker = generate_example_report.MockTracker()
-                    # Override mock data with real data if possible
-                    # tracker.player_data = self.player_data ...
+                    # TODO: Fill with real data from self.player_data and self.all_events
                     report_path = tracker.generate_html_report()
                 
+                if not os.path.exists(report_path):
+                    raise FileNotFoundError(f"Report file not created: {report_path}")
+
+                with open(report_path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+
                 if self.discord_viewer_win:
-                    self.discord_viewer_win._append_log("System", f"Report generated: {report_path}")
+                    self.discord_viewer_win._append_log("System", f"Report generated. Uploading to Discord...")
                 
-                # Automatically open it
+                # Upload to relay bot
+                is_verified = self.config.getboolean("DiscordRelay", "is_verified", fallback=False)
+                if is_verified:
+                    url = self.discord_relay_url.get()
+                    if not url.endswith("/"): url += "/"
+                    report_endpoint = f"{url}report"
+                    
+                    payload = {
+                        "app_id": self.config.get("Discord", "app_id", fallback=str(uuid.uuid4())),
+                        "relay_token": self.config.get("DiscordRelay", "relay_token", fallback=""),
+                        "content": html_content,
+                        "filename": os.path.basename(report_path),
+                        "author_name": self.char_name.get() or "Unknown Pilot"
+                    }
+                    
+                    resp = requests.post(report_endpoint, json=payload, timeout=30)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        web_url = data.get("url")
+                        msg = "Report shared to Discord!"
+                        if web_url: msg += f" View at: {web_url}"
+                        if self.discord_viewer_win:
+                            self.discord_viewer_win._append_log("System", msg)
+                    else:
+                        if self.discord_viewer_win:
+                            self.discord_viewer_win._append_log("System", f"Upload Failed ({resp.status_code}): {resp.text}")
+                else:
+                    if self.discord_viewer_win:
+                        self.discord_viewer_win._append_log("System", "Not linked to Discord. Report saved locally.")
+
+                # Always show locally too
                 if os.path.exists(report_path):
                     os.startfile(report_path)
+                    
             except Exception as e:
+                print(f"Report Generation Error: {e}")
                 if self.discord_viewer_win:
                     self.discord_viewer_win._append_log("System", f"Report Error: {e}")
 

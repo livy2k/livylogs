@@ -2,13 +2,21 @@ import discord
 from discord import app_commands
 import asyncio
 import os
-import json
-import uuid
+import sys
+import threading
+import queue
+import re
 import time
+import io
+import datetime
+import json
+import random
+import string
+import base64
 import hashlib
+import aiohttp
 import secrets
 from aiohttp import web
-import psycopg2
 
 # Configuration
 TOKEN = os.environ.get('DISCORD_BOT_TOKEN', '')
@@ -29,16 +37,18 @@ class CentralRelayBot(discord.Client):
         self.verifications = {} # {code: {"user_id": int, "guild_id": int, "channel_id": int, "expires": float}}
         self.verified_links = {} # {app_id: {"user_id": int, "channel_id": int}}
         self.load_links()
+        self.tracker = CombatTracker()
 
     async def setup_hook(self):
         # Sync slash commands
         await self.tree.sync()
         # Start web server for app-to-bot communication
-        app = web.Application()
+        app = web.Application(client_max_size=1024**2 * 10) # 10MB limit
         app.add_routes([
             web.get('/', self.handle_root),
             web.post('/verify', self.handle_app_verify),
             web.post('/relay', self.handle_app_relay),
+            web.post('/report', self.handle_app_report),
             web.get('/messages', self.handle_app_messages)
         ])
         runner = web.AppRunner(app)
@@ -102,6 +112,7 @@ class CentralRelayBot(discord.Client):
             message = data.get("message")
             image_data = data.get("image_data")
             relay_token = data.get("relay_token")
+            author_name = data.get("author_name", "LivyLogs User")
             
             if app_id in self.verified_links:
                 link = self.verified_links[app_id]
@@ -117,19 +128,103 @@ class CentralRelayBot(discord.Client):
                         channel = None
                 
                 if channel:
+                    # Pass pulse to tracker
+                    if message and "[LIVYLOGS RELAY]" in message:
+                        if self.tracker:
+                            await self.tracker.add_pulse_from_msg(message, channel)
+
+                    # Try to use Webhook for better attribution
+                    webhook = None
+                    try:
+                        webhooks = await channel.webhooks()
+                        webhook = discord.utils.get(webhooks, name="LivyLogs Relay")
+                        if not webhook:
+                            webhook = await channel.create_webhook(name="LivyLogs Relay")
+                    except Exception:
+                        webhook = None
+
                     if image_data:
-                        import io, base64
-                        from discord import File
                         image_bytes = base64.b64decode(image_data)
-                        file = File(io.BytesIO(image_bytes), filename="upload.png")
-                        await channel.send(content=message, file=file)
+                        file = discord.File(io.BytesIO(image_bytes), filename="upload.png")
+                        
+                        if webhook:
+                            await webhook.send(content=message or "", username=author_name, file=file)
+                        else:
+                            display_msg = f"**{author_name}**: {message}" if message else f"**{author_name}** shared an image:"
+                            await channel.send(content=display_msg, file=file)
                     else:
                         safe_message = (message or "")[:1900]
                         if safe_message:
-                            await channel.send(safe_message)
+                            if webhook:
+                                await webhook.send(content=safe_message, username=author_name)
+                            else:
+                                display_msg = f"**{author_name}**: {safe_message}"
+                                await channel.send(display_msg)
                     return web.json_response({"status": "success"})
                 return web.json_response({"status": "error", "message": "Channel not found"}, status=404)
             
+            return web.json_response({"status": "error", "message": "Not verified"}, status=403)
+        except Exception as e:
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+    async def handle_app_report(self, request):
+        try:
+            data = await request.json()
+            app_id = data.get("app_id")
+            relay_token = data.get("relay_token")
+            content = data.get("content") # HTML content
+            filename = data.get("filename", "combat_report.html")
+            author_name = data.get("author_name", "LivyLogs User")
+
+            if app_id in self.verified_links:
+                link = self.verified_links[app_id]
+                if relay_token != link.get("relay_token"):
+                    return web.json_response({"status": "error", "message": "Unauthorized"}, status=401)
+                
+                channel = self.get_channel(link["channel_id"])
+                if not channel:
+                    channel = await self.fetch_channel(link["channel_id"])
+                
+                if channel:
+                    # Upload to GitHub if configured
+                    report_url = None
+                    if self.tracker and self.tracker.publisher:
+                        # Create a unique path for the report
+                        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                        safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
+                        github_path = f"reports/{safe_name}_{ts}.html"
+                        
+                        await self.tracker.publisher._upload_to_github(
+                            github_path, 
+                            content, 
+                            f"Combat Report for {author_name}"
+                        )
+                        
+                        if self.tracker.publisher.domain:
+                            report_url = f"https://{self.tracker.publisher.domain}/{github_path}"
+                        elif self.tracker.publisher.repo:
+                            # Fallback to raw.githubusercontent or similar if domain not set
+                            user_repo = self.tracker.publisher.repo
+                            report_url = f"https://{user_repo.split('/')[0]}.github.io/{user_repo.split('/')[1]}/{github_path}"
+
+                    # Send to Discord
+                    embed = discord.Embed(
+                        title="📊 Combat Performance Report",
+                        description=f"New tactical breakdown generated for **{author_name}**.",
+                        color=discord.Color.blue(),
+                        timestamp=datetime.datetime.now()
+                    )
+                    
+                    if report_url:
+                        embed.add_field(name="🌐 Web View", value=f"[Click to View Interactive Report]({report_url})")
+                        await channel.send(embed=embed)
+                    else:
+                        # If no GitHub, send as file attachment
+                        file = discord.File(io.BytesIO(content.encode()), filename=filename)
+                        await channel.send(embed=embed, file=file)
+
+                    return web.json_response({"status": "success", "url": report_url})
+                return web.json_response({"status": "error", "message": "Channel not found"}, status=404)
             return web.json_response({"status": "error", "message": "Not verified"}, status=403)
         except Exception as e:
             return web.json_response({"status": "error", "message": str(e)}, status=500)
@@ -167,6 +262,50 @@ class CentralRelayBot(discord.Client):
             return web.json_response({"status": "error", "message": "Not verified"}, status=403)
         except Exception as e:
             return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+
+# --- GITHUB PAGES PUBLISHER ---
+class GitHubPublisher:
+    def __init__(self):
+        self.token = os.getenv("GITHUB_TOKEN")
+        self.repo = os.getenv("GITHUB_REPO")
+        self.domain = os.getenv("GITHUB_DOMAIN")
+        self.branch = "gh-pages"
+
+    async def _upload_to_github(self, path, content, message):
+        if not self.token or not self.repo: return
+        url = f"https://api.github.com/repos/{self.repo}/contents/{path}"
+        headers = {"Authorization": f"token {self.token}", "Accept": "application/vnd.github.v3+json"}
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as resp:
+                sha = (await resp.json()).get("sha") if resp.status_code == 200 else None
+            payload = {"message": message, "content": base64.b64encode(content.encode() if isinstance(content, str) else content).decode(), "branch": self.branch}
+            if sha: payload["sha"] = sha
+            await session.put(url, headers=headers, json=payload)
+
+# --- COMBAT TRACKER ---
+class CombatTracker:
+    def __init__(self):
+        self.history = {}
+        self.start_time = 0
+        self.last_pulse_time = 0
+        self.is_active = False
+        self.lock = asyncio.Lock()
+        self.publisher = GitHubPublisher()
+        self.pulse_pattern = re.compile(r"\[LIVYLOGS RELAY\] (.+?) \| DMG: (\d+) \| HEAL: (\d+) \| INC: (\d+) \| KD: (\d+) \| TGT: (.+?)(?: \| EVTS: (.+))?$")
+
+    async def add_pulse_from_msg(self, content, channel=None):
+        match = self.pulse_pattern.match(content)
+        if not match: return
+        name, dmg, heal = match.group(1).strip(), int(match.group(2)), int(match.group(3))
+        async with self.lock:
+            now = time.time()
+            if not self.is_active:
+                self.is_active, self.start_time, self.history = True, now, {}
+                if channel: await channel.send("⚔️ **PvP Combat has begun!**")
+            if name not in self.history: self.history[name] = {"totals": [], "events": []}
+            self.history[name]["totals"].append((now - self.start_time, dmg, heal))
+            self.last_pulse_time = now
 
 bot = CentralRelayBot()
 

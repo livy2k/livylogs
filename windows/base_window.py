@@ -52,11 +52,24 @@ class BasePopoutWindow:
         if not hasattr(self.app, '_taskbar_dummy'):
             self.app._taskbar_dummy = tk.Toplevel(self.app.root)
             self.app._taskbar_dummy.withdraw()
+            # On Windows, we need the parent to have some properties to properly host a child with focus
+            # But overrideredirect(True) on parent is fine.
             self.app._taskbar_dummy.overrideredirect(True)
 
         self.window = tk.Toplevel(self.app._taskbar_dummy)
         self.window.title(self.title)
         
+        # Windows-specific fix for focus in borderless windows
+        try:
+            hwnd = self.window.winfo_id()
+            if hwnd:
+                import ctypes
+                # WS_CAPTION | WS_THICKFRAME to make it "standard" for Windows focus manager,
+                # then we hide the title bar via overrideredirect(True) or other means.
+                # Actually, simply setting the owner can help.
+                pass
+        except: pass
+
         w = self.app.config.getint(self.config_key, "width", fallback=self.default_w)
         h = self.app.config.getint(self.config_key, "height", fallback=self.default_h)
 
@@ -96,14 +109,28 @@ class BasePopoutWindow:
         if self.app.always_on_top:
             self.window.attributes("-topmost", True)
         
+        # Bring to front and ensure it can receive keyboard events
         self.window.lift()
-        self.window.focus_force()
+        
+        # Standard Tkinter focus_force can be unreliable with overrideredirect
+        def force_focus():
+            if self.window and self.window.winfo_exists():
+                self.window.lift()
+                self.window.focus_force()
+                # If there's a specific entry, we should focus it in the subclass, 
+                # but we ensure the window itself has focus here.
+                if hasattr(self, '_force_focus'):
+                    self._force_focus()
+        
+        self.window.after(100, force_focus)
+        self.window.after(500, force_focus) # Double tap for Windows
         
         if not self.fixed_size:
             self.window.bind("<Configure>", self.on_configure)
         
         # Enable basic copy/select all globally for the window
         self.window.bind("<Control-c>", self._on_global_copy)
+        self.window.bind("<Control-v>", self._on_global_paste)
         self.window.bind("<Control-a>", self._on_global_select_all)
         
         border = tk.Frame(self.window, bg=BORDER_COLOR, padx=0, pady=0)
@@ -179,7 +206,8 @@ class BasePopoutWindow:
         self._is_resizing = True
         self.app.do_resize_popout(e, self.window, self.default_w, self.default_h)
         # Update textures or layout if needed immediately
-        self.refresh(force=True)
+        # We call refresh but subclasses should handle it gracefully during resizing
+        self.refresh(force=False)
 
     def on_resize_end(self, e):
         self.app.is_interacting = False
@@ -206,6 +234,7 @@ class BasePopoutWindow:
     def click_window(self, event):
         self.window.lift()
         self.window.focus_force()
+        self._is_dragging = True
         if hasattr(self.app, 'is_interacting'):
             self.app.is_interacting = True
         if hasattr(self.app, 'last_interaction_time'):
@@ -224,6 +253,7 @@ class BasePopoutWindow:
 
     def release_window(self, event=None):
         self.app.is_interacting = False
+        self._is_dragging = False
         try:
             self.app.save_config()
         except: pass
@@ -254,6 +284,23 @@ class BasePopoutWindow:
         
         # If nothing specific is focused/selected, call window-specific copy
         self.copy_to_clipboard()
+        return "break"
+
+    def _on_global_paste(self, event=None):
+        focused = self.window.focus_get()
+        if isinstance(focused, (tk.Text, tk.Entry)):
+            try:
+                content = self.window.clipboard_get()
+                if content:
+                    if isinstance(focused, tk.Text):
+                        focused.insert(tk.INSERT, content)
+                    elif isinstance(focused, tk.Entry):
+                        # Handle selection replacement if present
+                        if focused.selection_present():
+                            focused.delete(tk.SEL_FIRST, tk.SEL_LAST)
+                        focused.insert(tk.INSERT, content)
+                return "break"
+            except: pass
         return "break"
 
     def _on_global_select_all(self, event=None):

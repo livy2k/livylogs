@@ -8,7 +8,7 @@ from constants import WINDOW_BG, PANEL_DARK, ACCENT_BLUE, ACCENT_RED, CENTRAL_BO
 
 class DiscordViewerWindow(BasePopoutWindow):
     def __init__(self, app):
-        super().__init__(app, "Discord Relay", "DiscordViewerWindow", 400, 300, centered=True)
+        super().__init__(app, "Discord Relay", "DiscordViewerWindow", 500, 400, centered=True)
         self.is_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
         self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
         self.verification_code = tk.StringVar()
@@ -27,63 +27,43 @@ class DiscordViewerWindow(BasePopoutWindow):
 
         if not self.content_container.winfo_children():
             self._build_ui()
+        
+        # Ensure chat entry is focused when window is shown
+        if self.window and self.window.winfo_exists():
+            self.window.after(200, self._force_focus)
 
     def _build_ui(self):
+        # Save old log content if it exists
+        old_content = None
+        if hasattr(self, 'log_text') and self.log_text.winfo_exists():
+            old_content = self.log_text.get("1.0", tk.END).strip()
+
+        # Force refresh verification status from config
+        self.is_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
+        self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
         self._last_built_verified = self.is_verified
+
         for widget in self.content_container.winfo_children():
             widget.destroy()
 
         main_frame = tk.Frame(self.content_container, bg=WINDOW_BG)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Force refresh verification status from config just in case it changed elsewhere
-        self.is_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
-        self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
-
         if not self.is_verified:
-            # Verification UI
-            tk.Label(main_frame, text="LINK DISCORD RELAY", bg=WINDOW_BG, fg=ACCENT_RED, font=("Lilita One", 14)).pack(pady=(0, 10))
+            # Simple prompt when not linked
+            tk.Label(main_frame, text="DISCORD NOT LINKED", bg=WINDOW_BG, fg=ACCENT_RED, font=("Lilita One", 14)).pack(pady=(0, 10))
             
-            instructions = (
-                "1. Invite our Bot to your Discord server.\n"
-                "2. Go to your target channel.\n"
-                "3. Type `/verify` in that channel.\n"
-                "4. Enter the 6-digit code below:"
-            )
-            tk.Label(main_frame, text=instructions, bg=WINDOW_BG, fg="white", font=("Segoe UI", 9), justify=tk.LEFT).pack(pady=10)
+            msg = "Go to the Options window to link your Discord account."
+            tk.Label(main_frame, text=msg, bg=WINDOW_BG, fg="white", font=("Segoe UI", 10)).pack(pady=20)
 
-            # Container for entry and status to keep them together during updates
-            self.input_container = tk.Frame(main_frame, bg=WINDOW_BG)
-            self.input_container.pack(pady=10)
-
-            self.code_entry = tk.Entry(self.input_container, textvariable=self.verification_code, bg="#1a1a1a", fg=ACCENT_BLUE, 
-                                     font=("Consolas", 18, "bold"), justify="center", insertbackground="white", width=10)
-            self.code_entry.pack()
-            
-            # Clear any previous value to ensure fresh entry
-            self.verification_code.set("")
-            self.code_entry.focus_set()
-            
-            self.code_entry.bind("<Return>", lambda e: self.perform_verification())
-            
-            # Add copy-paste support
-            self._setup_entry_bindings(self.code_entry)
-
-            self.verify_btn = tk.Button(main_frame, text="VERIFY & LINK", command=self.perform_verification, 
-                                      bg=ACCENT_RED, fg="white", font=("Lilita One", 10), padx=20, pady=5)
-            self.verify_btn.pack(pady=10)
-
-            self.status_label = tk.Label(main_frame, text="", bg=WINDOW_BG, fg="white", font=("Segoe UI", 8))
-            self.status_label.pack()
+            tk.Button(main_frame, text="OPEN OPTIONS", command=self.app.open_options, 
+                      bg=ACCENT_RED, fg="white", font=("Lilita One", 10), padx=20, pady=5).pack()
         else:
             # Linked UI
             header_frame = tk.Frame(main_frame, bg=WINDOW_BG)
             header_frame.pack(fill=tk.X)
             
             tk.Label(header_frame, text="RELAY ACTIVE", bg=WINDOW_BG, fg="#43B581", font=("Lilita One", 14)).pack(side=tk.LEFT)
-            
-            tk.Button(header_frame, text="UNLINK", command=self.unlink_account, 
-                      bg="#444", fg="white", font=("Segoe UI", 8), padx=10).pack(side=tk.RIGHT)
 
             # Chat / Pulse Log View
             log_frame = tk.Frame(main_frame, bg=PANEL_DARK, highlightbackground="#333", highlightthickness=1)
@@ -102,8 +82,14 @@ class DiscordViewerWindow(BasePopoutWindow):
             self.log_text.tag_configure("system", foreground=ACCENT_BLUE)
             self.log_text.tag_configure("pulse", foreground="#ffffff")
 
-            self._append_log("System", "Discord Relay connection active.")
-            self._append_log("System", "Pulses will appear here as they are sent.")
+            if old_content:
+                self.log_text.config(state=tk.NORMAL)
+                self.log_text.insert(tk.END, old_content + "\n")
+                self.log_text.see(tk.END)
+                self.log_text.config(state=tk.DISABLED)
+            else:
+                self._append_log("System", "Discord Relay connection active.")
+                self._append_log("System", "Pulses will appear here as they are sent.")
 
             # Chat Input Area
             input_frame = tk.Frame(main_frame, bg=WINDOW_BG)
@@ -114,6 +100,20 @@ class DiscordViewerWindow(BasePopoutWindow):
             self.chat_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5), ipady=3)
             self.chat_entry.bind("<Return>", lambda e: self.send_chat_message())
             self.chat_entry.bind("<Control-v>", lambda e: self._handle_paste())
+            
+            # Ensure it can get focus even in overrideredirect window
+            self.chat_entry.bind("<Button-1>", self._force_focus)
+            self.log_text.bind("<Button-1>", self._force_focus)
+            main_frame.bind("<Button-1>", self._force_focus)
+            self.content_container.bind("<Button-1>", self._force_focus)
+
+            # Image attachment button
+            self.img_btn = tk.Button(input_frame, text="📎", command=self._handle_paste,
+                                   bg="#333", fg="white", font=("Segoe UI", 10), borderwidth=0, padx=5)
+            self.img_btn.pack(side=tk.RIGHT, padx=(0, 5))
+            
+            # Add tooltip or help text if possible, but keep it simple
+            # self.img_btn.bind("<Enter>", lambda e: ...) 
 
             send_btn = tk.Button(input_frame, text="SEND", command=self.send_chat_message,
                                 bg=ACCENT_BLUE, fg="white", font=("Lilita One", 8), padx=10)
@@ -121,6 +121,20 @@ class DiscordViewerWindow(BasePopoutWindow):
 
             # Start message polling
             self._start_polling()
+
+    def _force_focus(self, event=None):
+        """Force focus to the window and chat entry."""
+        if self.window and self.window.winfo_exists():
+            self.window.lift()
+            self.window.focus_force()
+            # On Windows, overrideredirect windows can be tricky with focus.
+            # We use after to ensure it happens after the click event processes.
+            def _set_entry_focus():
+                if self.is_verified and hasattr(self, 'chat_entry'):
+                    self.chat_entry.focus_set()
+                elif not self.is_verified and hasattr(self, 'code_entry'):
+                    self.code_entry.focus_set()
+            self.window.after(10, _set_entry_focus)
 
     def _start_polling(self):
         if not self.is_verified or getattr(self, '_polling_started', False):
@@ -137,12 +151,9 @@ class DiscordViewerWindow(BasePopoutWindow):
 
         threading.Thread(target=_poll_loop, daemon=True).start()
 
-    def _handle_paste(self):
+    def _handle_paste(self, event=None):
         """Handle clipboard paste, checking for images."""
-        from PIL import ImageGrab, Image, ImageTk
-        import io
-        import base64
-
+        from PIL import ImageGrab, Image
         try:
             img = ImageGrab.grabclipboard()
             if isinstance(img, Image.Image):
@@ -152,7 +163,25 @@ class DiscordViewerWindow(BasePopoutWindow):
         except Exception as e:
             print(f"Paste error: {e}")
         
-        return None # Continue with default paste
+        # Fallback to global text paste
+        return self._on_global_paste(event)
+
+    def _select_and_send_image(self):
+        """Open file dialog to select and send an image."""
+        from tkinter import filedialog
+        from PIL import Image
+        
+        file_path = filedialog.askopenfilename(
+            title="Select Image",
+            filetypes=[("Image files", "*.png *.jpg *.jpeg *.gif *.bmp")]
+        )
+        
+        if file_path:
+            try:
+                img = Image.open(file_path)
+                self._send_image(img)
+            except Exception as e:
+                self._append_log("System", f"Error opening image: {e}")
 
     def _send_image(self, img):
         """Resize, display and send image to relay."""
@@ -184,11 +213,15 @@ class DiscordViewerWindow(BasePopoutWindow):
                 if base_url: base_url = base_url.get().rstrip('/')
                 else: base_url = CENTRAL_BOT_API_URL.rstrip('/')
                 
+                # Attribution
+                author_name = self.app.char_name.get() or "Unknown"
+
                 url = f"{base_url}/relay"
                 requests.post(url, json={
                     "app_id": self.app_id, 
                     "image_data": img_str, 
-                    "relay_token": self.relay_token
+                    "relay_token": self.relay_token,
+                    "author_name": author_name
                 }, timeout=10)
             except Exception as e:
                 self.window.after(0, lambda: self._append_log("System", f"Image send error: {e}"))
@@ -204,29 +237,44 @@ class DiscordViewerWindow(BasePopoutWindow):
         
         url = f"{base_url}/messages"
         params = {"app_id": self.app_id, "relay_token": self.relay_token}
-        resp = requests.get(url, params=params, timeout=5)
-        
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get("status") == "success":
-                messages = data.get("messages", [])
-                for msg in messages:
-                    ts = msg.get("timestamp", 0)
-                    if ts > self._last_msg_ts:
-                        author = msg.get("author")
-                        content = msg.get("content")
-                        attachments = msg.get("attachments", [])
-                        
-                        if attachments:
-                            for att in attachments:
-                                self.window.after(0, lambda a=author, u=att: self._fetch_and_display_image(a, u))
-                        
-                        if content:
-                            self.window.after(0, lambda a=author, c=content: self._append_log(a, c))
-                        
-                        self._last_msg_ts = ts
+        try:
+            resp = requests.get(url, params=params, timeout=5)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("status") == "success":
+                    messages = data.get("messages", [])
+                    for msg in messages:
+                        ts = msg.get("timestamp", 0)
+                        if ts > self._last_msg_ts:
+                            author = msg.get("author")
+                            content = msg.get("content")
+                            attachments = msg.get("attachments", [])
+                            
+                            # Log the receipt of attachments for debugging
+                            if attachments:
+                                print(f"[DiscordViewer] Found {len(attachments)} attachments in message from {author}")
 
-    def _fetch_and_display_image(self, author, url):
+                            if attachments:
+                                for att in attachments:
+                                    self.window.after(0, lambda a=author, u=att, t=ts: self._fetch_and_display_image(a, u, t))
+                            
+                            if content:
+                                self.window.after(0, lambda a=author, c=content, t=ts: self._append_log(a, c, timestamp=t))
+                            
+                            self._last_msg_ts = ts
+            elif resp.status_code == 403:
+                if not getattr(self, '_auth_error_shown', False):
+                    self.window.after(0, lambda: self._append_log("System", "Error 403: Discord link is invalid or expired. Please relink in Options."))
+                    self._auth_error_shown = True
+                print(f"[DiscordViewer] Message fetch failed: 403 (Forbidden)")
+            else:
+                if resp.status_code != 404: # Ignore not found errors if no messages yet
+                    print(f"[DiscordViewer] Message fetch failed: {resp.status_code}")
+        except Exception as e:
+            print(f"[DiscordViewer] Error fetching messages: {e}")
+
+    def _fetch_and_display_image(self, author, url, timestamp=None):
         """Fetch image from URL and display in log."""
         from PIL import Image, ImageTk
         import io
@@ -234,9 +282,12 @@ class DiscordViewerWindow(BasePopoutWindow):
 
         def _bg_fetch():
             try:
-                resp = requests.get(url, timeout=10)
+                # Add headers to mimic a browser, some CDNs block simple requests
+                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+                resp = requests.get(url, headers=headers, timeout=15)
                 if resp.status_code == 200:
-                    img = Image.open(io.BytesIO(resp.content))
+                    img_data = io.BytesIO(resp.content)
+                    img = Image.open(img_data)
                     
                     # Resize for display
                     max_size = (300, 300)
@@ -245,8 +296,12 @@ class DiscordViewerWindow(BasePopoutWindow):
                     photo = ImageTk.PhotoImage(img)
                     self._image_cache.append(photo)
                     
-                    self.window.after(0, lambda: self._append_log(author, "[Image]", image=photo))
-            except: pass
+                    if self.window and self.window.winfo_exists():
+                        self.window.after(0, lambda: self._append_log(author, "[Image]", image=photo, timestamp=timestamp))
+                else:
+                    print(f"[DiscordViewer] Failed to fetch image: {resp.status_code} for {url}")
+            except Exception as e:
+                print(f"[DiscordViewer] Error fetching image: {e}")
 
         threading.Thread(target=_bg_fetch, daemon=True).start()
 
@@ -263,6 +318,7 @@ class DiscordViewerWindow(BasePopoutWindow):
 
     def _send_to_relay(self, msg):
         relay_app_id = getattr(self.app, 'app_id', self.app_id)
+        author_name = self.app.char_name.get() or "Unknown"
         def _bg_send():
             try:
                 base_url = getattr(self.app, 'discord_relay_url', None)
@@ -270,17 +326,32 @@ class DiscordViewerWindow(BasePopoutWindow):
                 else: base_url = CENTRAL_BOT_API_URL.rstrip('/')
                 
                 url = f"{base_url}/relay"
-                requests.post(url, json={"app_id": relay_app_id, "message": msg, "relay_token": self.relay_token}, timeout=5)
+                requests.post(url, json={
+                    "app_id": relay_app_id, 
+                    "message": msg, 
+                    "relay_token": self.relay_token,
+                    "author_name": author_name
+                }, timeout=10)
             except: pass
         threading.Thread(target=_bg_send, daemon=True).start()
 
-    def _append_log(self, sender, message, image=None):
+    def _append_log(self, sender, message, image=None, timestamp=None):
         if not hasattr(self, 'log_text') or not self.log_text.winfo_exists():
             return
             
         self.log_text.config(state=tk.NORMAL)
-        ts = time.strftime("[%H:%M:%S] ")
-        self.log_text.insert(tk.END, ts, "timestamp")
+        
+        # Determine timestamp string
+        if timestamp:
+            # If it's a float/int (from Discord), format it. If it's already a string, use it.
+            if isinstance(timestamp, (int, float)):
+                ts_str = time.strftime("[%m/%d %H:%M:%S] ", time.localtime(timestamp))
+            else:
+                ts_str = f"{timestamp} "
+        else:
+            ts_str = time.strftime("[%H:%M:%S] ")
+            
+        self.log_text.insert(tk.END, ts_str, "timestamp")
         
         if sender == "System":
             self.log_text.insert(tk.END, f"{message}\n", "system")
@@ -324,94 +395,6 @@ class DiscordViewerWindow(BasePopoutWindow):
         entry.bind("<Control-c>", lambda e: entry.event_generate("<<Copy>>"))
         entry.bind("<Control-a>", lambda e: [entry.selection_range(0, tk.END), "break"])
 
-    def perform_verification(self):
-        # Prevent multiple simultaneous verification attempts
-        if getattr(self, '_verifying', False):
-            return
-            
-        # Refresh app_id if it was missing during init
-        if not getattr(self.app, 'app_id', None):
-            self.app_id = getattr(self.app, 'app_id', self.app_id)
-        else:
-            self.app_id = self.app.app_id
-
-        code = self.verification_code.get().strip().upper()
-        if len(code) != 6:
-            self.status_label.config(text="Code must be 6 characters.", fg="red")
-            return
-
-        self._verifying = True
-        self.verify_btn.config(state=tk.DISABLED)
-        self.status_label.config(text="Verifying...", fg="white")
-        
-        def _bg_verify():
-            try:
-                # Use configured relay URL
-                base_url = getattr(self.app, 'discord_relay_url', None)
-                if base_url:
-                    base_url = base_url.get().rstrip('/')
-                else:
-                    base_url = CENTRAL_BOT_API_URL.rstrip('/')
-                
-                url = f"{base_url}/verify"
-                resp = requests.post(url, json={"code": code, "app_id": self.app_id}, timeout=10)
-                
-                def _finalize_ui():
-                    self._verifying = False
-                    if self.window and self.window.winfo_exists():
-                        self.verify_btn.config(state=tk.NORMAL)
-
-                if resp.status_code == 200:
-                    payload = resp.json()
-                    self.relay_token = payload.get("relay_token", "")
-                    self.is_verified = True
-                    self.app.config.set("DiscordRelay", "is_verified", "True")
-                    self.app.config.set("DiscordRelay", "relay_token", self.relay_token)
-                    
-                    # Also enable the relay automatically upon verification
-                    if hasattr(self.app, 'discord_relay_enabled'):
-                        self.app.discord_relay_enabled.set(True)
-                        self.app.config.set("Discord", "relay_enabled", "True")
-                        # Explicitly set last_discord_pulse_time to 0 to trigger a pulse soon
-                        self.app.last_discord_pulse_time = 0
-                        
-                    self.app.save_config()
-                    # Rebuild to show the Linked UI
-                    self.window.after(0, lambda: [
-                        self._finalize_ui_state(), 
-                        self.refresh(force=True),
-                        self.chat_entry.focus_set() if hasattr(self, 'chat_entry') else None
-                    ])
-                else:
-                    try:
-                        msg = resp.json().get("message", "Invalid code.")
-                    except:
-                        msg = f"Error: {resp.status_code}"
-                    self.window.after(0, lambda m=msg: [self._finalize_ui_state(), self.status_label.config(text=m, fg="red")])
-            except Exception as e:
-                # Improve error message for connection issues
-                err_msg = str(e)
-                if "ConnectionRefusedError" in err_msg or "Failed to establish a new connection" in err_msg:
-                    err_msg = "Relay Server offline or URL incorrect. Check Options."
-                self.window.after(0, lambda err=err_msg: [self._finalize_ui_state(), self.status_label.config(text=f"Connection Error: {err}", fg="red")])
-
-        threading.Thread(target=_bg_verify, daemon=True).start()
-
-    def _finalize_ui_state(self):
-        self._verifying = False
-        if self.window and self.window.winfo_exists():
-            try:
-                self.verify_btn.config(state=tk.NORMAL)
-            except: pass
-
-    def unlink_account(self):
-        self.is_verified = False
-        self.relay_token = ""
-        self.app.config.set("DiscordRelay", "is_verified", "False")
-        self.app.config.set("DiscordRelay", "relay_token", "")
-        self.app.save_config()
-        self._build_ui()
-
     def send_pulse(self, msg):
         """Send a summarized combat pulse to the central relay bot."""
         if not self.is_verified:
@@ -422,6 +405,7 @@ class DiscordViewerWindow(BasePopoutWindow):
             
         # Ensure app_id is current
         relay_app_id = getattr(self.app, 'app_id', self.app_id)
+        author_name = self.app.char_name.get() or "Unknown"
 
         def _bg_send():
             try:
@@ -435,7 +419,12 @@ class DiscordViewerWindow(BasePopoutWindow):
                 url = f"{base_url}/relay"
                 requests.post(
                     url,
-                    json={"app_id": relay_app_id, "message": msg, "relay_token": self.relay_token},
+                    json={
+                        "app_id": relay_app_id, 
+                        "message": msg, 
+                        "relay_token": self.relay_token,
+                        "author_name": author_name
+                    },
                     timeout=5
                 )
             except:
@@ -445,11 +434,25 @@ class DiscordViewerWindow(BasePopoutWindow):
 
     def refresh(self, force=True):
         if self.window and self.window.winfo_exists():
+            # If we are currently resizing or dragging, don't rebuild the whole UI as it's destructive
+            if getattr(self, "_is_resizing", False) or getattr(self, "_is_dragging", False):
+                return
+
             # Check if verified status changed since last build
             current_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
-            if force or getattr(self, '_last_built_verified', None) != current_verified or not self.content_container.winfo_children():
+            
+            # Smart Refresh: Only rebuild if verified status changed OR UI is empty
+            # If force is True but verified status is the same, we DON'T rebuild the whole UI to avoid data loss
+            # Subclasses of widgets will handle their own internal updates
+            needs_rebuild = (getattr(self, '_last_built_verified', None) != current_verified) or not self.content_container.winfo_children()
+            
+            if needs_rebuild:
                 self.is_verified = current_verified
                 self._build_ui()
+            elif force:
+                # If forced but no rebuild needed, just ensure focus or other minor updates
+                if self.is_verified:
+                    self._force_focus()
 
     def save_config(self):
         super().save_config()

@@ -336,6 +336,29 @@ void p_l(HANDLE h, char* l) {
         return;
     }
 
+    // New trigger for "looks very intimidated by you"
+    if (strstr(lower, "looks very intimidated by you")) {
+        char target[128] = "Unknown";
+        char* p_int = strstr(lower, "looks very intimidated by you");
+        if (p_int) {
+            int t_len = p_int - lower;
+            if (t_len > 127) t_len = 127;
+            if (t_len > 0) {
+                strncpy(target, clean, t_len); target[t_len] = '\0';
+                while(strlen(target) > 0 && isspace(target[strlen(target)-1])) target[strlen(target)-1] = '\0';
+                if (strlen(target) > 0 && target[strlen(target)-1] == '.') target[strlen(target)-1] = '\0';
+                
+                // Ensure target is not a fragment
+                if (strlen(target) > 0 && strcmp(target, "Unknown") != 0) {
+                    char e_buf[512];
+                    sprintf(e_buf, "{\"type\": \"cooldown\", \"target\": \"%s\", \"source\": \"You\", \"status\": \"intimidate\", \"message\": \"%s\"}\n", target, clean);
+                    send_raw_event(h, e_buf);
+                }
+            }
+        }
+        return;
+    }
+
     if (strstr(lower, s_kn) || strstr(lower, s_kn_d) || strstr(lower, s_knl) || strstr(lower, s_knlg) || strstr(lower, s_prn) || strstr(lower, s_intm)) {
         char target[128] = "Unknown";
         char source[128] = "Unknown";

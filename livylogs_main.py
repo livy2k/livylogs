@@ -1831,6 +1831,10 @@ class CombatLogApp:
                          if p.lower() in fragment_words:
                              continue
                          
+                         # Additional fragment check: if normalize_name returns "Unknown" for the original name, skip
+                         if normalize_name(p) == "Unknown":
+                             continue
+                         
                          # UNIFY: Map character name or "yourself" to "You"
                          if p.lower() == self.char_name.get().lower() or p.lower() == "yourself":
                              p = "You"

@@ -10,6 +10,7 @@ class DiscordViewerWindow(BasePopoutWindow):
     def __init__(self, app):
         super().__init__(app, "Discord Relay", "DiscordViewerWindow", 400, 300, centered=True)
         self.is_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
+        self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
         self.verification_code = tk.StringVar()
         self.app_id = getattr(self.app, 'app_id', None)
         if not self.app_id:
@@ -83,8 +84,11 @@ class DiscordViewerWindow(BasePopoutWindow):
                 url = f"{CENTRAL_BOT_API_URL}/verify"
                 resp = requests.post(url, json={"code": code, "app_id": self.app_id}, timeout=10)
                 if resp.status_code == 200:
+                    payload = resp.json()
+                    self.relay_token = payload.get("relay_token", "")
                     self.is_verified = True
                     self.app.config.set("DiscordRelay", "is_verified", "True")
+                    self.app.config.set("DiscordRelay", "relay_token", self.relay_token)
                     self.app.save_config()
                     self.window.after(0, self._build_ui)
                 else:
@@ -97,7 +101,9 @@ class DiscordViewerWindow(BasePopoutWindow):
 
     def unlink_account(self):
         self.is_verified = False
+        self.relay_token = ""
         self.app.config.set("DiscordRelay", "is_verified", "False")
+        self.app.config.set("DiscordRelay", "relay_token", "")
         self.app.save_config()
         self._build_ui()
 
@@ -112,7 +118,11 @@ class DiscordViewerWindow(BasePopoutWindow):
         def _bg_send():
             try:
                 url = f"{CENTRAL_BOT_API_URL}/relay"
-                requests.post(url, json={"app_id": relay_app_id, "message": msg}, timeout=5)
+                requests.post(
+                    url,
+                    json={"app_id": relay_app_id, "message": msg, "relay_token": self.relay_token},
+                    timeout=5
+                )
             except:
                 pass
 

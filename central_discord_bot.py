@@ -6,6 +6,7 @@ import json
 import uuid
 import time
 import hashlib
+import secrets
 from aiohttp import web
 
 # Configuration
@@ -44,6 +45,10 @@ class CentralRelayBot(discord.Client):
         with open("verified_links.json", "w") as f:
             json.dump(self.verified_links, f)
 
+    @staticmethod
+    def _new_relay_token():
+        return secrets.token_urlsafe(24)
+
     def load_links(self):
         if os.path.exists("verified_links.json"):
             try:
@@ -61,14 +66,21 @@ class CentralRelayBot(discord.Client):
             if code in self.verifications:
                 v = self.verifications[code]
                 if time.time() < v["expires"]:
+                    relay_token = self._new_relay_token()
                     self.verified_links[app_id] = {
                         "user_id": v["user_id"],
                         "channel_id": v["channel_id"],
-                        "guild_id": v["guild_id"]
+                        "guild_id": v["guild_id"],
+                        "relay_token": relay_token,
+                        "linked_at": int(time.time())
                     }
                     self.save_links()
                     del self.verifications[code]
-                    return web.json_response({"status": "success", "message": "Verified!"})
+                    return web.json_response({
+                        "status": "success",
+                        "message": "Verified!",
+                        "relay_token": relay_token
+                    })
             
             return web.json_response({"status": "error", "message": "Invalid or expired code"}, status=400)
         except Exception as e:
@@ -79,12 +91,23 @@ class CentralRelayBot(discord.Client):
             data = await request.json()
             app_id = data.get("app_id")
             message = data.get("message")
+            relay_token = data.get("relay_token")
             
             if app_id in self.verified_links:
                 link = self.verified_links[app_id]
+                expected_token = link.get("relay_token")
+                if expected_token and relay_token != expected_token:
+                    return web.json_response({"status": "error", "message": "Unauthorized relay token"}, status=401)
+
                 channel = self.get_channel(link["channel_id"])
+                if channel is None:
+                    try:
+                        channel = await self.fetch_channel(link["channel_id"])
+                    except Exception:
+                        channel = None
                 if channel:
-                    await channel.send(message)
+                    safe_message = (message or "")[:1900]
+                    await channel.send(safe_message)
                     return web.json_response({"status": "success"})
                 return web.json_response({"status": "error", "message": "Channel not found"}, status=404)
             
@@ -107,7 +130,39 @@ async def verify(interaction: discord.Interaction):
     await interaction.response.send_message(
         f"🛡️ **LivyLogs Verification Code**: `{code}`\n"
         f"Enter this code in your LivyLogs app to link this channel.\n"
-        f"Expires in 10 minutes.", ephemeral=True
+        f"Expires in 10 minutes.\n"
+        f"Use `/unlink` in this channel any time to stop broadcasts.", ephemeral=True
+    )
+
+@bot.tree.command(name="unlink", description="Stop LivyLogs broadcasts to this channel")
+async def unlink(interaction: discord.Interaction):
+    guild_id = interaction.guild_id
+    channel_id = interaction.channel_id
+    user_id = interaction.user.id
+
+    matching_app_ids = [
+        app_id
+        for app_id, link in bot.verified_links.items()
+        if link.get("guild_id") == guild_id
+        and link.get("channel_id") == channel_id
+        and link.get("user_id") == user_id
+    ]
+
+    if not matching_app_ids:
+        await interaction.response.send_message(
+            "No active LivyLogs link from your account was found for this channel.",
+            ephemeral=True
+        )
+        return
+
+    for app_id in matching_app_ids:
+        bot.verified_links.pop(app_id, None)
+
+    bot.save_links()
+    await interaction.response.send_message(
+        f"✅ Unlinked `{len(matching_app_ids)}` LivyLogs app link(s) for this channel."
+        " Broadcasts to this channel are now stopped for those links.",
+        ephemeral=True
     )
 
 @bot.event

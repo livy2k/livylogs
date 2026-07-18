@@ -1,84 +1,217 @@
 import json
 import datetime
 import os
+import sys
 from fpdf import FPDF
 
 def create_bot_instructions_pdf(output_path):
     pdf = FPDF()
     pdf.add_page()
-    
-    # --- TITLE ---
-    pdf.set_font("Arial", 'B', 20)
-    pdf.set_text_color(211, 26, 23) # Red #d31a17
-    pdf.cell(0, 20, "LIVIUS ADVANCED BOT: TACTICAL GUIDE", ln=True, align='C')
-    pdf.ln(5)
-    
-    # --- INTRODUCTION ---
-    pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 10, "Overview", ln=True)
-    pdf.set_font("Arial", size=11)
-    pdf.multi_cell(0, 6, "The Advanced Bot is a high-performance Discord automation tool designed to link your game client with the Livius Tactical Overlay. It provides real-time combat tracking, database queries via Uncle ReCoN, and automatic report publishing to GitHub Pages.")
-    pdf.ln(10)
-    
-    # --- SETUP SECTION ---
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "1. One-Code Setup (/123)", ln=True)
-    pdf.set_font("Arial", size=11)
-    pdf.multi_cell(0, 6, "Linking your desktop application to the Discord Bot is now automated:")
-    pdf.ln(2)
-    pdf.set_font("Arial", 'I', 11)
-    pdf.multi_cell(0, 6, "1. In your Discord server, type '/123' in the channel where you want reports posted.\n2. The bot will DM you a 6-digit secure code.\n3. Open the LivyLogs app -> Options -> Advanced Bot Setup.\n4. Enter the code and click 'LINK BOT'.\n5. The app will automatically configure your Token and Channel ID using encrypted transport.")
-    pdf.ln(8)
-    
-    # --- COMMANDS SECTION ---
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "2. Tactical Commands", ln=True)
-    pdf.set_font("Arial", size=11)
-    
-    commands = [
-        ["/rico <query>", "Search Uncle ReCoN archives for Mobs, Items, or Stats."],
-        ["/curate", "List pending combat reports waiting for approval."],
-        ["/curate approve <ID>", "Validate a report and move it to official archives."],
-        ["/123", "Generate a setup code for the desktop application."]
-    ]
-    
-    for cmd, desc in commands:
-        pdf.set_font("Arial", 'B', 11)
-        pdf.cell(50, 8, cmd, border=0)
+
+    def title(text):
+        pdf.set_font("Arial", "B", 14)
+        pdf.set_text_color(0, 0, 0)
+        pdf.multi_cell(0, 8, text)
+        pdf.ln(1)
+
+    def body(text):
         pdf.set_font("Arial", size=11)
-        pdf.cell(0, 8, desc, ln=True)
-    
-    pdf.ln(10)
-    
-    # --- WEB INTERFACE SECTION ---
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "3. Tactical Overlay & Web Reports", ln=True)
-    pdf.set_font("Arial", size=11)
-    pdf.multi_cell(0, 6, "The bot automatically generates interactive HTML reports after combat encounters. These reports feature:\n- Dynamic DPS/HPS Charts (Tailwind & DaisyUI)\n- Loot Acquisition Tracking\n- MVP Performance Metrics\n- Uncle ReCoN Stat Injections")
-    pdf.ln(10)
-    
-    # --- TECHNICAL SPECS ---
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "4. Technical Specifications", ln=True)
-    pdf.set_font("Arial", size=10)
-    specs = (
-        "- Runtime: Python 3.12+ / Discord.py\n"
-        "- Database: Uncle ReCoN v12 (RAM-cached SQLite)\n"
-        "- Encryption: Fernet (AES-128) for token transport\n"
-        "- Web API: Port 8081 (Local Verification Relay)\n"
-        "- Integration: GitHub API v3 for Web Hosting"
+        pdf.set_text_color(0, 0, 0)
+        pdf.multi_cell(0, 6, text)
+        pdf.ln(1)
+
+    # --- TITLE ---
+    pdf.set_font("Arial", 'B', 18)
+    pdf.set_text_color(211, 26, 23)
+    pdf.cell(0, 14, "LivyLogs Full Setup Guide (Current Flow)", ln=True, align='C')
+    pdf.set_font("Arial", 'I', 11)
+    pdf.set_text_color(60, 60, 60)
+    pdf.cell(0, 8, "Very simple steps: do this, then this.", ln=True, align='C')
+    pdf.ln(4)
+
+    title("Read this first: real app entrypoint")
+    body(
+        "Start LivyLogs with python livylogs.py.\n"
+        "Parser/engine pieces still exist, but this guide uses the current top-level app startup flow."
     )
-    pdf.multi_cell(0, 5, specs)
-    
+
+    title("Part 1: Start LivyLogs app")
+    body(
+        "In PowerShell, run:\n"
+        "cd C:\\Users\\LivyC\\PycharmProjects\\livylogs\n"
+        "python --version\n"
+        "python .\\livylogs.py\n"
+        "\n"
+        "Success looks like: the LivyLogs UI opens."
+    )
+
+    title("Part 2: First-run app checklist")
+    body(
+        "1) Open Options window.\n"
+        "2) Select your SWG log file.\n"
+        "3) Confirm combat events begin updating.\n"
+        "4) Adjust overlay/opacity if wanted.\n"
+        "\n"
+        "Success looks like: damage/healing/session values move live."
+    )
+
+    title("Part 3: App window map (what each one does)")
+    body(
+        "- skimmers: quick high-level skim view\n"
+        "- damage_meter: live damage totals/rate\n"
+        "- leaderboard: ranking view\n"
+        "- details: deep per-player/event breakdown\n"
+        "- options: settings\n"
+        "- alexa: helper/AI window\n"
+        "- equalizer: audio/effect controls\n"
+        "- livius: tactical roster view\n"
+        "- gharv: utility analysis panel\n"
+        "- fax: utility/status panel\n"
+        "- discord_viewer: Discord link + relay state"
+    )
+
+    title("Part 4: Uncle ReCoN (simple explanation)")
+    body(
+        "Uncle ReCoN is loaded automatically during app startup.\n"
+        "You normally do not start it manually.\n"
+        "It supports intel/report-related workflows in the app ecosystem."
+    )
+
+    title("Part 5: Make Discord bot in Discord (one time)")
+    body(
+        "1) Go to Discord Developer Portal and create a New Application.\n"
+        "2) Open the Bot tab and click Add Bot.\n"
+        "3) Turn ON Message Content Intent.\n"
+        "4) Copy the Bot Token (keep it secret).\n"
+        "5) In OAuth2 -> URL Generator: check 'bot' and 'applications.commands'.\n"
+        "6) Give it Send Messages + View Channel (+ Attach Files + Embed Links for advanced mode).\n"
+        "7) Open the invite URL and add the bot to your server."
+    )
+
+    title("Part 6: Run relay bot (basic Discord posting)")
+    body(
+        "In PowerShell, run:\n"
+        "\n"
+        "pip install discord.py aiohttp\n"
+        "$env:DISCORD_BOT_TOKEN=\"PASTE_YOUR_TOKEN_HERE\"\n"
+        "$env:RELAY_PORT=\"8080\"   (optional)\n"
+        "python .\\central_discord_bot.py\n"
+        "\n"
+        "Success looks like: 'Relay API started on port 8080' and 'Logged in as ...'."
+    )
+
+    title("Part 6B: Public standalone bot (host once for everyone)")
+    body(
+        "Like-I-am-5 version:\n"
+        "- You (bot owner) keep one bot running all the time on one host.\n"
+        "- Other people only invite your bot and link with one code.\n"
+        "- They do NOT run bot code on their own PC.\n"
+        "\n"
+        "Owner setup:\n"
+        "1) Keep central_discord_bot.py online 24/7.\n"
+        "2) Put HTTPS in front (example: https://relay.yourdomain.com).\n"
+        "3) Tell users to set in PowerShell:\n"
+        "$env:CENTRAL_BOT_API_URL=\"https://relay.yourdomain.com\"\n"
+        "\n"
+        "Success looks like: users only do /verify + VERIFY & LINK."
+    )
+
+    title("Part 7: Link LivyLogs with one code")
+    body(
+        "1) In Discord, open the exact channel where you want messages.\n"
+        "2) Run /verify.\n"
+        "3) Discord shows a 6-character code (expires in 10 minutes).\n"
+        "4) In LivyLogs: open Discord Relay window.\n"
+        "5) Paste the code and click VERIFY & LINK.\n"
+        "6) You should see RELAY ACTIVE."
+    )
+
+    title("Part 8: Specific channel ID (optional but recommended)")
+    body(
+        "If you want one exact channel:\n"
+        "1) Turn on Discord Developer Mode.\n"
+        "2) Right-click channel -> Copy Channel ID.\n"
+        "3) Run /verify in that exact channel.\n"
+        "\n"
+        "Important: /verify binds to that exact guild_id + channel_id."
+    )
+
+    title("Part 9: Test relay mode")
+    body(
+        "Do a short combat test in-game.\n"
+        "Success looks like: combat relay messages appear in the linked Discord channel."
+    )
+
+    title("Part 10: Advanced report + website mode (optional)")
+    body(
+        "Create .env from .env.example, then fill:\n"
+        "- DISCORD_BOT_TOKEN\n"
+        "- DISCORD_CHANNEL_ID\n"
+        "- GITHUB_TOKEN\n"
+        "- GITHUB_REPO\n"
+        "- GITHUB_DOMAIN (optional)\n"
+        "\n"
+        "Run:\n"
+        "\n"
+        "pip install discord.py aiohttp python-dotenv cryptography pillow\n"
+        "python .\\admin_tools\\discord_bot_advanced.py\n"
+        "\n"
+        "Success looks like: advanced bot logs in, tracks encounters, and can publish reports when GitHub values are valid."
+    )
+
+    title("Part 11: GitHub Pages setup (super simple)")
+    body(
+        "Goal: put your HTML reports on a website with almost no stress.\n"
+        "\n"
+        "1) Make a GitHub repo for reports.\n"
+        "2) In GitHub repo Settings -> Pages, turn on GitHub Pages.\n"
+        "3) In .env, fill:\n"
+        "   - GITHUB_TOKEN (can write to repo)\n"
+        "   - GITHUB_REPO (example: yourname/your-gh-pages-repo)\n"
+        "   - GITHUB_DOMAIN (only if using custom domain)\n"
+        "4) Run advanced bot again:\n"
+        "python .\\admin_tools\\discord_bot_advanced.py\n"
+        "\n"
+        "Success looks like:\n"
+        "- Discord gets tactical report messages.\n"
+        "- GitHub gh-pages content updates.\n"
+        "- Website report URL opens."
+    )
+
+    title("Common oops fixes")
+    body(
+        "- 'DISCORD_BOT_TOKEN not set': set the env var, then rerun the bot.\n"
+        "- 'DISCORD_CHANNEL_ID environment variable not set': add it to .env for advanced mode.\n"
+        "- 'Invalid or expired code': run /verify again and use the new code fast.\n"
+        "- 'Connection Error' in app: make sure central_discord_bot.py is running and reachable.\n"
+        "- No messages in channel: check bot permissions (Send Messages / View Channel).\n"
+        "- GitHub upload skipped: check GITHUB_TOKEN and GITHUB_REPO in .env."
+    )
+
+    title("Ready status checklist")
+    body(
+        "[ ] LivyLogs opens with python .\\livylogs.py\n"
+        "[ ] Options window set to your real SWG log file\n"
+        "[ ] Bot invited to server\n"
+        "[ ] central_discord_bot.py running\n"
+        "[ ] (Public bot) Hosted URL is set with CENTRAL_BOT_API_URL\n"
+        "[ ] /verify gives a code\n"
+        "[ ] LivyLogs shows RELAY ACTIVE\n"
+        "[ ] Combat pulse appears in Discord\n"
+        "[ ] (Optional) HTML report published to GitHub Pages website"
+    )
+
     # --- FOOTER ---
     pdf.ln(20)
     pdf.set_font("Arial", 'I', 8)
     pdf.set_text_color(128, 128, 128)
-    pdf.cell(0, 10, f"Generated on {datetime.datetime.now().strftime('%Y-%m-%d')} | Livius Tactical Systems v4.0", align='C')
-    
+    pdf.cell(0, 10, f"Generated on {datetime.datetime.now().strftime('%Y-%m-%d')} | LivyLogs Discord Relay Guide", align='C')
+
     pdf.output(output_path)
     print(f"PDF Instructions created at: {output_path}")
 
 if __name__ == "__main__":
-    create_bot_instructions_pdf("advanced_bot_instructions.pdf")
+    output_name = "advanced_bot_instructions.pdf"
+    if len(sys.argv) > 1 and sys.argv[1].strip():
+        output_name = sys.argv[1].strip()
+    create_bot_instructions_pdf(output_name)

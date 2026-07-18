@@ -6,6 +6,7 @@ Licensed under the GNU General Public License v3.0.
 
 import ctypes
 from ctypes import wintypes
+import os
 
 # Version Info
 VERSION = "1.0"
@@ -48,7 +49,7 @@ ENTRY_BG = "#090a0c"
 COLOR_DEFAULT_CLASS = "#00a2ff" # Default blue for unidentified classes
 
 # Bot / Relay API
-CENTRAL_BOT_API_URL = "http://localhost:8080" # Change this to your hosted bot URL
+CENTRAL_BOT_API_URL = os.environ.get("CENTRAL_BOT_API_URL", "http://localhost:8080")
 
 # AI Agent Configuration (Uncle Recon)
 # Now using ZERO-COST Cloud Intelligence (Google Gemini)

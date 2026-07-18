@@ -1,63 +1,93 @@
 import datetime
+import html as html_utils
+import json
 import random
 import os
 
 class MockTracker:
     def __init__(self):
-        # Sample data to make the report look realistic
-        self.history = {
-            "YOU": {
-                "pulses": [
-                    (4, 50, 0, "Stormtrooper"),
-                    (5, 100, 0, "Stormtrooper"),
-                    (6, 20, 0, "Stormtrooper"),
-                    (11, 200, 0, "Stormtrooper"),
-                    (12, 500, 0, "Stormtrooper"),
-                    (24, 0, 0, "YOU"),
-                    (25, 0, 0, "YOU"),
-                    (45, 0, 0, "Stormtrooper"),
-                    (54, 300, 0, "Bounty Hunter"),
-                    (55, 600, 0, "Bounty Hunter"),
-                ],
-                "totals": [(5, 150, 0), (12, 850, 0), (55, 1750, 0)],
-                "events": [
-                    (5, "PD", "YOU", "Stormtrooper", "Point Blank Shot"),
-                    (12, "KD", "YOU", "Stormtrooper", "Killing Blow"),
-                    (25, "INC", "Bounty Hunter", "YOU", "Tracking Shot"),
-                    (45, "LOOT", "YOU", "Stormtrooper", "Credits, Blaster Carbine"),
-                    (55, "KILL", "YOU", "Bounty Hunter", "Final Strike"),
-                ]
-            },
-            "Vader": {
-                "pulses": [
-                    (9, 100, 0, "Rebel Scum"),
-                    (10, 200, 0, "Rebel Scum"),
-                    (29, 300, 0, "Luke"),
-                    (30, 400, 0, "Luke"),
-                    (59, 1000, 0, "Luke"),
-                    (60, 0, 0, "Luke"),
-                ],
-                "totals": [(10, 300, 0), (30, 700, 0), (60, 1700, 0)],
-                "events": [
-                    (10, "INT", "Vader", "Rebel Scum", "Force Choke"),
-                    (30, "PD", "Vader", "Luke", "Lightsaber Strike"),
-                    (60, "DEATH", "Luke", "Vader", "Defeated"),
-                ]
-            },
-            "Boba Fett": {
-                "pulses": [
-                    (14, 50, 0, "Han Solo"),
-                    (15, 80, 0, "Han Solo"),
-                    (39, 0, 0, "Boba Fett"),
-                    (40, 0, 0, "Boba Fett"),
-                ],
-                "totals": [(15, 130, 0), (40, 130, 0)],
-                "events": [
-                    (15, "PD", "Boba Fett", "Han Solo", "E-3 Carbine Fire"),
-                    (40, "INC", "Han Solo", "Boba Fett", "Lucky Shot"),
-                ]
-            }
+        random.seed(42)
+
+        friendly_names = [
+            "Medico", "Vex", "Ryn", "Daro", "Kira", "Nox", "Tallis", "Brigg", "Echo", "Aeris"
+        ]
+        enemy_names = [
+            "IiIiIiIi", "Stormtrooper", "Bounty Hunter", "Rancor", "Nightblade", "Skorn", "Rivet", "Krell", "Mako", "Zyra"
+        ]
+
+        self.history = {}
+        self.player_alignment = {}
+
+        for name in friendly_names:
+            self.player_alignment[name] = "friendly"
+        for name in enemy_names:
+            self.player_alignment[name] = "enemy"
+
+        all_names = friendly_names + enemy_names
+        ability_map = {
+            "KD": ["Killing Blow", "Heavy Slam", "Smash"],
+            "PD": ["Point Blank Shot", "Quick Burst", "Impact Round"],
+            "INT": ["Intimidate", "Disrupt", "Pressure"],
+            "INC": ["Incapacitate", "Crippling Hit", "Shock Down"],
+            "LOOT": ["Credits", "Composite Segment", "Weapon Parts"],
+            "KILL": ["Final Strike", "Execution", "Finisher"],
+            "DEATH": ["Defeated", "Collapsed", "Eliminated"],
         }
+
+        encounter_time = 165
+        event_types = ["KD", "PD", "INT", "INC", "LOOT", "KILL", "DEATH"]
+
+        for idx, name in enumerate(all_names):
+            pulses = []
+            events = []
+            cumulative_damage = 0
+            cumulative_heal = 0
+
+            lane_targets = enemy_names if self.player_alignment[name] == "friendly" else friendly_names
+
+            for _ in range(18):
+                t = random.randint(4, encounter_time)
+                target = random.choice(lane_targets)
+
+                if self.player_alignment[name] == "friendly":
+                    dmg = random.randint(900, 6800)
+                    heal = random.randint(0, 2600) if idx % 3 == 0 else random.randint(0, 600)
+                else:
+                    dmg = random.randint(700, 5400)
+                    heal = random.randint(0, 1000) if idx % 4 == 0 else random.randint(0, 300)
+
+                pulses.append((t, dmg, heal, target))
+                cumulative_damage += dmg
+                cumulative_heal += heal
+
+            pulses.sort(key=lambda x: x[0])
+
+            totals = []
+            if pulses:
+                step = max(1, len(pulses) // 3)
+                running_dmg = 0
+                running_heal = 0
+                for j, (t, dmg, heal, _) in enumerate(pulses):
+                    running_dmg += dmg
+                    running_heal += heal
+                    if (j + 1) % step == 0 or j == len(pulses) - 1:
+                        totals.append((t, running_dmg, running_heal))
+
+            for _ in range(6):
+                t = random.randint(6, encounter_time)
+                etype = random.choice(event_types)
+                target = random.choice(lane_targets)
+                label = random.choice(ability_map[etype])
+                src = name
+                tgt = target
+
+                if etype == "DEATH":
+                    src, tgt = target, name
+
+                events.append((t, etype, src, tgt, label))
+
+            events.sort(key=lambda x: x[0])
+            self.history[name] = {"pulses": pulses, "totals": totals, "events": events}
 
     def generate_html_report(self):
         # Generate an interactive HTML report using Tailwind CSS and DaisyUI
@@ -102,9 +132,9 @@ class MockTracker:
                 }}
                 body {{ font-family: 'JetBrains Mono', monospace; background-color: #05070a; background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #05070a 100%); }}
                 h1, .font-orbitron {{ font-family: 'Orbitron', sans-serif; }}
-                .swimlane-container {{ position: relative; min-width: 1200px; padding-top: 60px; }}
-                .event-marker {{ position: absolute; transform: translateX(-50%); transition: all 0.2s; z-index: 30; }}
-                .event-marker:hover {{ transform: translateX(-50%) scale(1.2); z-index: 100; }}
+                .swimlane-container {{ position: relative; min-width: 2100px; padding-top: 80px; }}
+                .event-marker {{ position: absolute; transform: translateX(-50%); transition: all 0.2s; z-index: 90; }}
+                .event-marker:hover {{ transform: translateX(-50%) scale(1.2); z-index: 150; }}
                 .time-line {{ position: absolute; top: 0; bottom: 0; border-left: 1px solid rgba(0, 236, 255, 0.1); pointer-events: none; }}
                 .mini-log {{ max-height: 160px; overflow-y: auto; scrollbar-width: thin; }}
                 .mini-log::-webkit-scrollbar {{ width: 4px; }}
@@ -114,13 +144,20 @@ class MockTracker:
                 @keyframes scan {{ from {{ top: -100px; }} to {{ top: 100%; }} }}
                 .glow-text-blue {{ text-shadow: 0 0 10px rgba(0, 236, 255, 0.5); }}
                 .glow-text-red {{ text-shadow: 0 0 10px rgba(255, 0, 60, 0.5); }}
-                .player-row {{ transition: background 0.3s; }}
-                .player-row:hover {{ background: rgba(0, 236, 255, 0.05); }}
-                .sparkline {{ pointer-events: none; position: absolute; inset: 0; z-index: 10; opacity: 0.6; }}
+                .player-row {{ transition: background 0.3s; z-index: 10; }}
+                .player-row:hover {{ background: rgba(0, 236, 255, 0.05); z-index: 120; }}
+                .sparkline {{ pointer-events: none; width: 100%; height: 100%; display: block; z-index: 10; opacity: 0.6; }}
+                .graph-hover-layer {{ position: absolute; inset: 0; z-index: 40; cursor: default; }}
+                .graph-crosshair {{ position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, 0.35); pointer-events: none; }}
+                .graph-tooltip {{ position: absolute; top: calc(100% + 8px); transform: translateX(-50%); pointer-events: none; z-index: 500; }}
+                .event-detail-overlay {{ position: fixed; inset: 0; background: rgba(1, 6, 12, 0.52); z-index: 900; display: none; }}
+                .event-detail-overlay.open {{ display: block; }}
+                .event-detail-panel {{ position: fixed; left: 20px; top: 20px; width: min(460px, calc(100vw - 40px)); max-height: min(76vh, 700px); overflow: auto; z-index: 901; display: none; }}
+                .event-detail-panel.open {{ display: block; }}
             </style>
         </head>
         <body class="min-h-screen p-4 md:p-8 text-slate-300">
-            <div class="max-w-[1800px] mx-auto relative">
+            <div class="max-w-[2350px] mx-auto relative">
                 <!-- Header -->
                 <div class="flex flex-col md:flex-row justify-between items-stretch mb-8 hud-border bg-black/60 backdrop-blur-md p-6 rounded-lg border-l-4 border-l-primary gap-6 relative overflow-hidden">
                     <div class="scanline"></div>
@@ -145,8 +182,8 @@ class MockTracker:
                 </div>
 
                 <!-- Main Analysis Area -->
-                <div class="hud-border bg-black/40 rounded-lg p-1 overflow-x-auto relative">
-                    <div class="swimlane-container" style="height: {len(players) * 140 + 100}px;">
+                <div class="hud-border bg-black/40 rounded-lg p-2 overflow-x-auto overflow-y-visible relative">
+                    <div class="swimlane-container" style="height: {len(players) * 180 + 140}px;">
                         <div class="scanline"></div>
                         <!-- Time Markers -->
         """
@@ -163,9 +200,16 @@ class MockTracker:
 
         # Draw Player Lanes
         for i, name in enumerate(players):
-            top = 80 + (i * 140)
-            is_you = name.upper() == "YOU"
-            row_bg = "bg-primary/5 border-primary/30" if is_you else "bg-white/[0.02] border-white/5"
+            top = 90 + (i * 180)
+            alignment = self.player_alignment.get(name, "friendly")
+            if alignment == "friendly":
+                row_bg = "bg-emerald-500/10 border-emerald-300/30"
+                lane_label_class = "badge-success"
+                lane_label = "FRIENDLY"
+            else:
+                row_bg = "bg-red-500/10 border-red-300/30"
+                lane_label_class = "badge-error"
+                lane_label = "ENEMY"
             
             # Generate Sparkline Data
             pulses = self.history[name].get("pulses", [])
@@ -178,9 +222,30 @@ class MockTracker:
             # Construct SVG paths for DMG and HEAL
             dmg_path = ""
             heal_path = ""
+            hover_points = ""
             if pulses:
-                # Add padding points at start/end
                 sorted_pulses = sorted(pulses, key=lambda x: x[0])
+                hover_rows = {}
+                for pt, pd, ph, ptgt in sorted_pulses:
+                    row = hover_rows.setdefault(pt, {"t": pt, "d": 0, "h": 0, "d_sources": {}, "h_sources": {}})
+                    row["d"] += pd
+                    row["h"] += ph
+                    if pd > 0:
+                        row["d_sources"][ptgt] = row["d_sources"].get(ptgt, 0) + pd
+                    if ph > 0:
+                        row["h_sources"][ptgt] = row["h_sources"].get(ptgt, 0) + ph
+
+                hover_payload = []
+                for pt in sorted(hover_rows.keys()):
+                    row = hover_rows[pt]
+                    hover_payload.append({
+                        "t": row["t"],
+                        "d": row["d"],
+                        "h": row["h"],
+                        "d_sources": sorted(row["d_sources"].items(), key=lambda x: x[1], reverse=True),
+                        "h_sources": sorted(row["h_sources"].items(), key=lambda x: x[1], reverse=True),
+                    })
+                hover_points = html_utils.escape(json.dumps(hover_payload, separators=(",", ":")), quote=True)
                 
                 def get_svg_points(data_type_idx):
                     pts = []
@@ -196,14 +261,16 @@ class MockTracker:
 
                 dmg_path = get_svg_points(1)
                 heal_path = get_svg_points(2)
-
             html += f"""
-                        <div class="absolute left-0 right-0 h-28 rounded border {row_bg} flex items-center px-6 backdrop-blur-sm player-row" style="top: {top}px;">
-                            <div class="w-48 flex-shrink-0 border-r border-white/10 mr-8 py-2 relative z-20">
+                        <div class="absolute left-0 right-0 h-40 rounded border {row_bg} flex items-center px-6 backdrop-blur-sm player-row" style="top: {top}px;">
+                            <div class="w-60 flex-shrink-0 border-r border-white/10 mr-8 py-2 relative z-20">
                                 <span class="text-[8px] font-black opacity-30 uppercase tracking-[0.3em] mb-1 block">Entity Signature</span>
-                                <span class="text-lg font-orbitron font-black {'text-primary glow-text-blue' if is_you else 'text-slate-200'} truncate block tracking-widest">
+                                <span class="text-lg font-orbitron font-black text-slate-200 truncate block tracking-widest">
                                     {name.upper()}
                                 </span>
+                                <div class="mt-2">
+                                    <span class="badge {lane_label_class} badge-xs font-black tracking-widest">{lane_label}</span>
+                                </div>
                                 <div class="flex gap-2 mt-2">
                                     <div class="h-1 w-12 bg-white/5 rounded-full overflow-hidden">
                                         <div class="h-full bg-error" style="width: {min(100, sum(p[1] for p in pulses)/1000)}%"></div>
@@ -214,12 +281,19 @@ class MockTracker:
                                 </div>
                             </div>
                             
-                            <div class="relative flex-grow h-full overflow-hidden">
-                                <!-- Continuous Data Sparklines -->
-                                <svg class="sparkline" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                    <polyline fill="rgba(255, 0, 60, 0.05)" stroke="rgba(255, 0, 60, 0.3)" stroke-width="0.5" points="{dmg_path}" />
-                                    <polyline fill="rgba(0, 255, 150, 0.05)" stroke="rgba(0, 255, 150, 0.3)" stroke-width="0.5" points="{heal_path}" />
-                                </svg>
+                            <div class="relative flex-grow h-full overflow-visible pr-4">
+                                <div class="h-full relative rounded border border-white/10 bg-black/20 overflow-visible">
+                                    <div class="absolute left-2 top-1 text-[8px] font-black tracking-widest text-error/70">DMG</div>
+                                    <div class="absolute left-12 top-1 text-[8px] font-black tracking-widest text-success/70">HEAL</div>
+                                    <svg class="sparkline" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                        <polyline fill="rgba(255, 0, 60, 0.10)" stroke="rgba(255, 0, 60, 0.55)" stroke-width="1.1" points="{dmg_path}" />
+                                        <polyline fill="none" stroke="rgba(0, 255, 150, 0.80)" stroke-width="1.1" points="{heal_path}" />
+                                    </svg>
+                                    <div class="graph-hover-layer" data-player="{name}" data-max-time="{max_time}" data-points="{hover_points}">
+                                        <div class="graph-crosshair hidden"></div>
+                                        <div class="graph-tooltip hidden bg-[#0a0f14] border border-primary/40 px-3 py-2 rounded text-[9px] font-mono shadow-[0_0_30px_rgba(0,236,255,0.2)] min-w-[280px]"></div>
+                                    </div>
+                                </div>
             """
             
             events = self.history[name].get("events", [])
@@ -256,49 +330,21 @@ class MockTracker:
                             <span class="text-right tabular-nums">{log_line}</span>
                         </div>
                         """
+
+                event_payload = html_utils.escape(json.dumps({
+                    "type": etype,
+                    "time": round(float(t), 1),
+                    "source": src,
+                    "target": tgt,
+                    "label": label,
+                    "mini_log_html": mini_log_html,
+                    "player": name,
+                }, separators=(",", ":")), quote=True)
                 
                 html += f"""
-                                <div class="event-marker group" style="left: {left}%; top: 50%; margin-top: -14px;">
+                                <div class="event-marker event-clickable" data-event="{event_payload}" style="left: {left}%; top: 50%; margin-top: -14px;" role="button" tabindex="0" aria-label="Open event details">
                                     <div class="badge {badge_class} badge-sm font-black shadow-[0_0_10px_rgba(0,0,0,0.5)] border-white/20 cursor-pointer hover:scale-110 transition-transform font-orbitron">
                                         {etype}
-                                    </div>
-                                    <!-- Tactical Tooltip -->
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 hidden group-hover:block z-[100] animate-in fade-in zoom-in duration-200">
-                                        <div class="bg-[#0a0f14] border border-primary/40 p-4 rounded-lg shadow-[0_0_40px_rgba(0,236,255,0.2)] w-80 text-xs hud-border">
-                                            <div class="flex justify-between items-center mb-4 border-b border-primary/20 pb-2">
-                                                <span class="font-orbitron font-black text-primary text-[10px] tracking-widest uppercase">{etype} @ T+{t:.1f}S</span>
-                                                <div class="flex gap-1">
-                                                    <div class="w-1.5 h-1.5 bg-primary animate-pulse"></div>
-                                                    <div class="w-1.5 h-1.5 bg-primary/20"></div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                                <div class="bg-black/40 p-2 border border-white/5 rounded">
-                                                    <div class="text-[7px] font-black opacity-30 uppercase tracking-widest mb-1">Source</div>
-                                                    <div class="font-bold truncate text-primary uppercase">{src}</div>
-                                                </div>
-                                                <div class="bg-black/40 p-2 border border-white/5 rounded">
-                                                    <div class="text-[7px] font-black opacity-30 uppercase tracking-widest mb-1">Target</div>
-                                                    <div class="font-bold truncate text-secondary uppercase">{tgt}</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="bg-primary/5 p-3 rounded mb-4 text-[9px] font-bold border-l-2 border-primary/40 tracking-tight italic opacity-80">
-                                                {label}
-                                            </div>
-
-                                            <div>
-                                                <div class="flex justify-between items-center mb-2 px-1">
-                                                    <span class="text-[8px] font-black text-primary/60 uppercase tracking-[0.2em]">High-Res Telemetry</span>
-                                                    <span class="text-[8px] opacity-30">-2.0s / +1.0s</span>
-                                                </div>
-                                                <div class="mini-log bg-black/60 rounded p-2 border border-white/5">
-                                                    {mini_log_html}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="w-3 h-3 bg-[#0a0f14] border-r border-b border-primary/40 absolute left-1/2 -translate-x-1/2 -bottom-1.5 rotate-45"></div>
                                     </div>
                                 </div>
                 """
@@ -352,6 +398,193 @@ class MockTracker:
                     <div class="text-[8px] font-mono font-bold tracking-widest uppercase opacity-20">Cycle Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
                 </div>
             </div>
+            <div class="event-detail-overlay" id="eventDetailOverlay"></div>
+            <div class="event-detail-panel hud-border bg-[#0a0f14] rounded-lg p-4 shadow-[0_0_45px_rgba(0,236,255,0.22)]" id="eventDetailPanel">
+                <div class="flex justify-between items-center mb-3 border-b border-primary/20 pb-2">
+                    <div>
+                        <div class="text-[9px] font-black text-primary tracking-[0.22em] uppercase" id="eventDetailType">Event</div>
+                        <div class="text-[8px] opacity-60" id="eventDetailMeta">Tactical Breakdown</div>
+                    </div>
+                    <button class="btn btn-xs btn-ghost" id="eventDetailClose" type="button">Close</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-3 text-[10px]">
+                    <div class="bg-black/40 p-2 rounded border border-white/5">
+                        <div class="text-[8px] opacity-35 uppercase tracking-widest mb-1">Source</div>
+                        <div class="font-bold text-primary break-all" id="eventDetailSource">-</div>
+                    </div>
+                    <div class="bg-black/40 p-2 rounded border border-white/5">
+                        <div class="text-[8px] opacity-35 uppercase tracking-widest mb-1">Target</div>
+                        <div class="font-bold text-secondary break-all" id="eventDetailTarget">-</div>
+                    </div>
+                </div>
+                <div class="bg-primary/5 p-3 rounded mb-3 text-[10px] border-l-2 border-primary/40 tracking-tight italic opacity-85" id="eventDetailLabel">-</div>
+                <div>
+                    <div class="flex justify-between items-center mb-2 px-1">
+                        <span class="text-[8px] font-black text-primary/60 uppercase tracking-[0.2em]">High-Res Telemetry</span>
+                        <span class="text-[8px] opacity-35">-2.0s / +1.0s</span>
+                    </div>
+                    <div class="mini-log bg-black/60 rounded p-2 border border-white/5" id="eventDetailLog"></div>
+                </div>
+            </div>
+            <script>
+                (() => {{
+                    const layers = document.querySelectorAll('.graph-hover-layer');
+                    const eventMarkers = document.querySelectorAll('.event-clickable');
+                    const eventDetailOverlay = document.getElementById('eventDetailOverlay');
+                    const eventDetailPanel = document.getElementById('eventDetailPanel');
+                    const eventDetailType = document.getElementById('eventDetailType');
+                    const eventDetailMeta = document.getElementById('eventDetailMeta');
+                    const eventDetailSource = document.getElementById('eventDetailSource');
+                    const eventDetailTarget = document.getElementById('eventDetailTarget');
+                    const eventDetailLabel = document.getElementById('eventDetailLabel');
+                    const eventDetailLog = document.getElementById('eventDetailLog');
+                    const eventDetailClose = document.getElementById('eventDetailClose');
+
+                    const parsePoints = (raw) => {{
+                        if (!raw) return [];
+                        try {{
+                            const parsed = JSON.parse(raw);
+                            return Array.isArray(parsed)
+                                ? parsed.filter((p) => Number.isFinite(p.t)).sort((a, b) => a.t - b.t)
+                                : [];
+                        }} catch (_) {{
+                            return [];
+                        }}
+                    }};
+
+                    layers.forEach((layer) => {{
+                        const points = parsePoints(layer.dataset.points || '');
+                        const maxTime = Number(layer.dataset.maxTime || '1');
+                        const crosshair = layer.querySelector('.graph-crosshair');
+                        const tooltip = layer.querySelector('.graph-tooltip');
+                        const player = layer.dataset.player || 'Unknown';
+
+                        const findNearest = (timeAtCursor) => {{
+                            if (!points.length) return {{ t: timeAtCursor, d: 0, h: 0, d_sources: [], h_sources: [] }};
+                            let nearest = points[0];
+                            let bestDelta = Math.abs(points[0].t - timeAtCursor);
+                            for (let i = 1; i < points.length; i += 1) {{
+                                const delta = Math.abs(points[i].t - timeAtCursor);
+                                if (delta < bestDelta) {{
+                                    bestDelta = delta;
+                                    nearest = points[i];
+                                }}
+                            }}
+                            return nearest;
+                        }};
+
+                        const renderSources = (sources, cssClass, label) => {{
+                            if (!Array.isArray(sources) || !sources.length) {{
+                                return `<div class="${{cssClass}}/80">${{label}} Sources: none</div>`;
+                            }}
+                            const top = sources.slice(0, 3)
+                                .map(([who, amount]) => `<span class="font-bold">${{who}}</span> ${{Number(amount || 0).toLocaleString()}}`)
+                                .join(' • ');
+                            return `<div class="${{cssClass}}">${{label}} Sources: ${{top}}</div>`;
+                        }};
+
+                        layer.addEventListener('mousemove', (event) => {{
+                            const rect = layer.getBoundingClientRect();
+                            const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+                            const ratio = rect.width > 0 ? x / rect.width : 0;
+                            const timeAtCursor = ratio * maxTime;
+                            const sample = findNearest(timeAtCursor);
+
+                            crosshair.classList.remove('hidden');
+                            tooltip.classList.remove('hidden');
+                            crosshair.style.left = `${{x}}px`;
+
+                            tooltip.style.left = `${{x}}px`;
+                            const boxWidth = tooltip.offsetWidth || 220;
+                            if (x < 100) {{
+                                tooltip.style.transform = 'translateX(0)';
+                            }} else if (x > rect.width - 100) {{
+                                tooltip.style.transform = `translateX(-${{boxWidth}}px)`;
+                            }} else {{
+                                tooltip.style.transform = 'translateX(-50%)';
+                            }}
+
+                            const dmgSources = renderSources(sample.d_sources, 'text-error', 'DMG');
+                            const healSources = renderSources(sample.h_sources, 'text-success', 'HEAL');
+                            tooltip.innerHTML =
+                                `<div class="text-primary font-bold mb-1">${{player}} @ T+${{timeAtCursor.toFixed(1)}}s</div>` +
+                                `<div class="mb-1"><span class="text-error">DMG: ${{Number(sample.d || 0).toLocaleString()}}</span> • <span class="text-success">HEAL: ${{Number(sample.h || 0).toLocaleString()}}</span></div>` +
+                                `<div class="text-[8px] space-y-0.5">${{dmgSources}}${{healSources}}</div>`;
+                        }});
+
+                        layer.addEventListener('mouseleave', () => {{
+                            crosshair.classList.add('hidden');
+                            tooltip.classList.add('hidden');
+                        }});
+                    }});
+
+                    const closeEventDetail = () => {{
+                        eventDetailOverlay?.classList.remove('open');
+                        eventDetailPanel?.classList.remove('open');
+                    }};
+
+                    const placeEventPanelNearCursor = (x, y) => {{
+                        if (!eventDetailPanel) return;
+                        const offsetX = 10;
+                        const safePadding = 12;
+                        const panelRect = eventDetailPanel.getBoundingClientRect();
+                        const maxLeft = Math.max(safePadding, window.innerWidth - panelRect.width - safePadding);
+                        const maxTop = Math.max(safePadding, window.innerHeight - panelRect.height - safePadding);
+                        const nextLeft = Math.min(Math.max(safePadding, x + offsetX), maxLeft);
+                        const nextTop = Math.min(Math.max(safePadding, y), maxTop);
+                        eventDetailPanel.style.left = `${{nextLeft}}px`;
+                        eventDetailPanel.style.top = `${{nextTop}}px`;
+                        eventDetailPanel.style.right = 'auto';
+                        eventDetailPanel.style.bottom = 'auto';
+                    }};
+
+                    const openEventDetail = (payload, clickX, clickY) => {{
+                        if (!payload || !eventDetailPanel || !eventDetailOverlay) return;
+                        eventDetailType.textContent = `${{payload.type || 'EVENT'}} @ T+${{Number(payload.time || 0).toFixed(1)}}S`;
+                        eventDetailMeta.textContent = `Lane: ${{(payload.player || 'Unknown').toUpperCase()}}`;
+                        eventDetailSource.textContent = payload.source || 'Unknown';
+                        eventDetailTarget.textContent = payload.target || 'Unknown';
+                        eventDetailLabel.textContent = payload.label || 'No summary available';
+                        eventDetailLog.innerHTML = payload.mini_log_html || "<div class='text-[8px] opacity-20 italic text-center py-4 tracking-widest'>NO TELEMETRY IN WINDOW</div>";
+                        eventDetailOverlay.classList.add('open');
+                        eventDetailPanel.classList.add('open');
+                        const fallbackX = window.innerWidth * 0.5;
+                        const fallbackY = window.innerHeight * 0.5;
+                        placeEventPanelNearCursor(
+                            Number.isFinite(clickX) ? clickX : fallbackX,
+                            Number.isFinite(clickY) ? clickY : fallbackY,
+                        );
+                    }};
+
+                    eventMarkers.forEach((marker) => {{
+                        const openFromElement = (event) => {{
+                            const raw = marker.dataset.event || '';
+                            if (!raw) return;
+                            try {{
+                                const rect = marker.getBoundingClientRect();
+                                const clickX = event?.clientX ?? (rect.left + (rect.width / 2));
+                                const clickY = event?.clientY ?? (rect.top + (rect.height / 2));
+                                openEventDetail(JSON.parse(raw), clickX, clickY);
+                            }} catch (_) {{
+                                // Ignore bad payloads in sample data
+                            }}
+                        }};
+                        marker.addEventListener('click', openFromElement);
+                        marker.addEventListener('keydown', (event) => {{
+                            if (event.key === 'Enter' || event.key === ' ') {{
+                                event.preventDefault();
+                                openFromElement();
+                            }}
+                        }});
+                    }});
+
+                    eventDetailOverlay?.addEventListener('click', closeEventDetail);
+                    eventDetailClose?.addEventListener('click', closeEventDetail);
+                    document.addEventListener('keydown', (event) => {{
+                        if (event.key === 'Escape') closeEventDetail();
+                    }});
+                }})();
+            </script>
         </body>
         </html>
         """

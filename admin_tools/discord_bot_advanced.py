@@ -1034,6 +1034,8 @@ class CombatTracker:
             print(f"[Tracker] Combat inactivity reached. Generating reports...")
             img = self.generate_chart()
             html = self.generate_html_report()
+            report_bytes = html.encode('utf-8')
+            report_sha256 = hashlib.sha256(report_bytes).hexdigest()
             
             # Determine MVP for summary
             leaderboard = load_json("livius_leaderboard.json")
@@ -1101,6 +1103,7 @@ class CombatTracker:
             )
             if github_url:
                 embed.add_field(name="🌐 VIEW TEMP HUD", value=f"[**ACCESS ARCHIVE**]({github_url})", inline=False)
+            embed.add_field(name="📎 DISCORD REPORT MIRROR", value=f"Attached `{report_name}` is the same HTML report uploaded to the website.\n`sha256: {report_sha256[:16]}...`", inline=False)
             
             embed.add_field(name="🏆 MVP", value=f"`{mvp}`", inline=True)
             embed.add_field(name="✨ EST. LARP", value=f"`+{summary_data['potential_larp']}`", inline=True)
@@ -1127,7 +1130,7 @@ class CombatTracker:
                 embed.set_image(url="attachment://pvp_timeline.png")
             
             if html:
-                html_binary = io.BytesIO(html.encode('utf-8'))
+                html_binary = io.BytesIO(report_bytes)
                 files.append(discord.File(fp=html_binary, filename=report_name))
 
             await channel.send(embed=embed, files=files)

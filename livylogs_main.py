@@ -338,10 +338,6 @@ class CombatLogApp:
             self.player_arrival_order.append("You")
         self.friendly_players.add("You")
         
-        # Prompt for character name if not set
-        if not self.char_name.get():
-            self.root.after(500, self._prompt_for_character_name)
-        
         self.load_bosses()
         self.load_filters()
         self.load_class_configs()
@@ -3868,6 +3864,14 @@ class CombatLogApp:
                     # Sync "You" player data with character name
                     if "You" in self.player_data and new_name != "You":
                         self.player_data[new_name] = self.player_data.pop("You")
+                    if "You" in self.status_cooldowns and new_name != "You":
+                        self.status_cooldowns[new_name] = self.status_cooldowns.pop("You")
+                    if "You" in self.friendly_players:
+                        self.friendly_players.remove("You")
+                        self.friendly_players.add(new_name)
+                    if "You" in self.player_arrival_order:
+                        self.player_arrival_order.remove("You")
+                        self.player_arrival_order.append(new_name)
                 elif not self.char_name.get():
                     self.char_name.set(detected_name)
                 
@@ -3884,7 +3888,8 @@ class CombatLogApp:
         
                 self.refresh_ui_only(force=True)
 
-            if skip_prompt or (not self.char_name.get() and self.disable_warnings.get()):
+            # Always prompt for character name when selecting a log (unless skip_prompt is True)
+            if skip_prompt:
                 apply_settings(None)
             else:
                 self.is_dialog_open = True

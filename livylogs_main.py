@@ -57,6 +57,9 @@ from window_manager import WindowManager
 class CombatLogApp:
     def __init__(self, root):
         self.root = root
+        # Ensure attributes that subwindows may access exist from the start.
+        self.radio_mgr = None
+        self.window_manager = None
         
         # --- CRITICAL TIMING INITIALIZATION ---
         self.last_top_stats_check = time.time()
@@ -243,6 +246,7 @@ class CombatLogApp:
         self.last_interaction_time = 0
         self.actual_app_start_time = datetime.now()
         self.last_reset_time = self.actual_app_start_time
+        self.last_combat_time = 0
         self.running = True
         self.target_game_hwnd = None
         
@@ -273,6 +277,7 @@ class CombatLogApp:
         self.current_top_healing = {'friendly': None, 'enemy': None}
         self.current_focus_target = {'friendly': None, 'enemy': None}
         self.is_pvp_active = False
+        self.d911_active = False
         self.last_discord_pulse_time = 0
         # self.last_top_stats_check = time.time() # MOVED TO START OF INIT
         # self._last_ui_tick = time.time() # MOVED TO START OF INIT
@@ -2215,6 +2220,15 @@ class CombatLogApp:
                             self.player_data[source]["last_911_time"] = global_time.time()
                             if hasattr(self, 'livius_win') and self.livius_win:
                                 self.livius_win.refresh(force=True)
+                    if msg_clean == "d911":
+                        self.d911_active = not self.d911_active
+                        if self.discord_viewer_win:
+                            status = "ENABLED" if self.d911_active else "DISABLED"
+                            self.discord_viewer_win._append_log("System", f"Discord PvP Pulse {status} via combatlog.")
+                    if msg_clean == "d999":
+                        self.generate_report_from_combatlog(is_test=False)
+                    if msg_clean == "dg001":
+                        self.generate_report_from_combatlog(is_test=True)
                 return
 
             elif event_type == "status":
@@ -2922,11 +2936,13 @@ class CombatLogApp:
         # --- DISCORD PULSE RELAY (10s) ---
         import time as global_time
         now = global_time.time()
-        if self.discord_relay_enabled.get() and self.is_pvp_active:
-            if now - self.last_combat_time < 15:
-                if now - self.last_discord_pulse_time >= 10:
-                    self.send_discord_relay_pulse()
-                    self.last_discord_pulse_time = now
+        # Discord pulses are only sent if d911_active is True and we've had recent combat
+        if self.discord_relay_enabled.get() and self.d911_active:
+            if self.is_pvp_active or self.test_mode.get():
+                if now - self.last_combat_time < 30: # Relaxed from 15s
+                    if now - self.last_discord_pulse_time >= 10:
+                        self.send_discord_relay_pulse()
+                        self.last_discord_pulse_time = now
 
         if force:
             # Instead of full build_layout which causes flashing,
@@ -3554,7 +3570,8 @@ class CombatLogApp:
         })
         
         # Save popout positions/sizes via WindowManager
-        self.window_manager.save_all_configs()
+        if self.window_manager:
+            self.window_manager.save_all_configs()
 
         self.config.set("General", "character_name", self.char_name.get())
         self.config.set("General", "api_url", self.api_url.get())
@@ -4506,6 +4523,41 @@ class CombatLogApp:
     def toggle_skimmer_search(self):
         self.skimmer_search_mode = not self.skimmer_search_mode
         self.skimmers_win.show(force_open=True)
+
+    def generate_report_from_combatlog(self, is_test=False):
+        """Triggered by d999 or dg001 in combat log."""
+        if self.discord_viewer_win:
+            self.discord_viewer_win._append_log("System", f"Generating {'TEST ' if is_test else ''}HTML Report...")
+        
+        def _bg_gen():
+            try:
+                if is_test:
+                    import generate_example_report
+                    tracker = generate_example_report.MockTracker()
+                    report_path = tracker.generate_html_report()
+                else:
+                    # For real reports, we'd need a real tracker or data export
+                    # If generate_report.py only does PDF, we might need to adapt it.
+                    # Given generate_example_report.py has generate_html_report, 
+                    # let's assume there's a way to get real data into it or use a similar logic.
+                    # For now, we'll use generate_example_report as a placeholder or template.
+                    import generate_example_report
+                    tracker = generate_example_report.MockTracker()
+                    # Override mock data with real data if possible
+                    # tracker.player_data = self.player_data ...
+                    report_path = tracker.generate_html_report()
+                
+                if self.discord_viewer_win:
+                    self.discord_viewer_win._append_log("System", f"Report generated: {report_path}")
+                
+                # Automatically open it
+                if os.path.exists(report_path):
+                    os.startfile(report_path)
+            except Exception as e:
+                if self.discord_viewer_win:
+                    self.discord_viewer_win._append_log("System", f"Report Error: {e}")
+
+        threading.Thread(target=_bg_gen, daemon=True).start()
 
     # Required for popout window resizing
     def init_resize_popout(self, e, w, dw, dh): 

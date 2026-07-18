@@ -12,6 +12,9 @@ class DiscordViewerWindow(BasePopoutWindow):
         self.is_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
         self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
         self.verification_code = tk.StringVar()
+        self.chat_message = tk.StringVar()
+        self._last_msg_ts = 0
+        self._image_cache = [] # Keep references to PhotoImage objects
         self.app_id = getattr(self.app, 'app_id', None)
         if not self.app_id:
             import uuid
@@ -70,13 +73,232 @@ class DiscordViewerWindow(BasePopoutWindow):
             self.status_label.pack()
         else:
             # Linked UI
-            tk.Label(main_frame, text="RELAY ACTIVE", bg=WINDOW_BG, fg="#43B581", font=("Lilita One", 14)).pack(pady=(0, 10))
+            header_frame = tk.Frame(main_frame, bg=WINDOW_BG)
+            header_frame.pack(fill=tk.X)
             
-            tk.Label(main_frame, text="Your app is successfully linked to Discord.\nCombat pulses are being sent to your channel.", 
-                     bg=WINDOW_BG, fg="white", font=("Segoe UI", 9), justify=tk.CENTER).pack(pady=20)
+            tk.Label(header_frame, text="RELAY ACTIVE", bg=WINDOW_BG, fg="#43B581", font=("Lilita One", 14)).pack(side=tk.LEFT)
+            
+            tk.Button(header_frame, text="UNLINK", command=self.unlink_account, 
+                      bg="#444", fg="white", font=("Segoe UI", 8), padx=10).pack(side=tk.RIGHT)
 
-            tk.Button(main_frame, text="UNLINK ACCOUNT", command=self.unlink_account, 
-                      bg="#444", fg="white", font=("Segoe UI", 8)).pack(side=tk.BOTTOM, pady=10)
+            # Chat / Pulse Log View
+            log_frame = tk.Frame(main_frame, bg=PANEL_DARK, highlightbackground="#333", highlightthickness=1)
+            log_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+
+            self.log_text = tk.Text(log_frame, bg="#121212", fg="#dcddde", font=("Consolas", 9), 
+                                  padx=10, pady=10, borderwidth=0, highlightthickness=0, state=tk.DISABLED)
+            self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            scrollbar = tk.Scrollbar(log_frame, command=self.log_text.yview, bg=PANEL_DARK)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.log_text.config(yscrollcommand=scrollbar.set)
+            
+            # Add tags for coloring
+            self.log_text.tag_configure("timestamp", foreground="#72767d")
+            self.log_text.tag_configure("system", foreground=ACCENT_BLUE)
+            self.log_text.tag_configure("pulse", foreground="#ffffff")
+
+            self._append_log("System", "Discord Relay connection active.")
+            self._append_log("System", "Pulses will appear here as they are sent.")
+
+            # Chat Input Area
+            input_frame = tk.Frame(main_frame, bg=WINDOW_BG)
+            input_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(5, 0))
+
+            self.chat_entry = tk.Entry(input_frame, textvariable=self.chat_message, bg="#1a1a1a", fg="white",
+                                      insertbackground="white", font=("Segoe UI", 9), borderwidth=1, relief=tk.FLAT)
+            self.chat_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5), ipady=3)
+            self.chat_entry.bind("<Return>", lambda e: self.send_chat_message())
+            self.chat_entry.bind("<Control-v>", lambda e: self._handle_paste())
+
+            send_btn = tk.Button(input_frame, text="SEND", command=self.send_chat_message,
+                                bg=ACCENT_BLUE, fg="white", font=("Lilita One", 8), padx=10)
+            send_btn.pack(side=tk.RIGHT)
+
+            # Start message polling
+            self._start_polling()
+
+    def _start_polling(self):
+        if not self.is_verified:
+            return
+            
+        def _poll_loop():
+            while self.window and self.window.winfo_exists() and self.is_verified:
+                try:
+                    self._fetch_messages()
+                except: pass
+                time.sleep(5) # Poll every 5 seconds
+
+        threading.Thread(target=_poll_loop, daemon=True).start()
+
+    def _handle_paste(self):
+        """Handle clipboard paste, checking for images."""
+        from PIL import ImageGrab, Image, ImageTk
+        import io
+        import base64
+
+        try:
+            img = ImageGrab.grabclipboard()
+            if isinstance(img, Image.Image):
+                # It's an image!
+                self._send_image(img)
+                return "break" # Prevent default paste
+        except Exception as e:
+            print(f"Paste error: {e}")
+        
+        return None # Continue with default paste
+
+    def _send_image(self, img):
+        """Resize, display and send image to relay."""
+        from PIL import Image, ImageTk
+        import io
+        import base64
+        import threading
+
+        # Resize for display
+        display_img = img.copy()
+        max_size = (300, 300)
+        display_img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        
+        photo = ImageTk.PhotoImage(display_img)
+        self._image_cache.append(photo) # Prevent GC
+        
+        # Display in log
+        self._append_log("You", "[Image]", image=photo)
+        
+        # Prepare for sending
+        def _bg_send():
+            try:
+                # Convert to base64
+                buffer = io.BytesIO()
+                img.save(buffer, format="PNG")
+                img_str = base64.b64encode(buffer.getvalue()).decode()
+                
+                base_url = getattr(self.app, 'discord_relay_url', None)
+                if base_url: base_url = base_url.get().rstrip('/')
+                else: base_url = CENTRAL_BOT_API_URL.rstrip('/')
+                
+                url = f"{base_url}/relay"
+                requests.post(url, json={
+                    "app_id": self.app_id, 
+                    "image_data": img_str, 
+                    "relay_token": self.relay_token
+                }, timeout=10)
+            except Exception as e:
+                self.window.after(0, lambda: self._append_log("System", f"Image send error: {e}"))
+
+        threading.Thread(target=_bg_send, daemon=True).start()
+
+    def _fetch_messages(self):
+        if not self.is_verified: return
+        
+        base_url = getattr(self.app, 'discord_relay_url', None)
+        if base_url: base_url = base_url.get().rstrip('/')
+        else: base_url = CENTRAL_BOT_API_URL.rstrip('/')
+        
+        url = f"{base_url}/messages"
+        params = {"app_id": self.app_id, "relay_token": self.relay_token}
+        resp = requests.get(url, params=params, timeout=5)
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("status") == "success":
+                messages = data.get("messages", [])
+                for msg in messages:
+                    ts = msg.get("timestamp", 0)
+                    if ts > self._last_msg_ts:
+                        author = msg.get("author")
+                        content = msg.get("content")
+                        attachments = msg.get("attachments", [])
+                        
+                        if attachments:
+                            for att in attachments:
+                                self.window.after(0, lambda a=author, u=att: self._fetch_and_display_image(a, u))
+                        
+                        if content:
+                            self.window.after(0, lambda a=author, c=content: self._append_log(a, c))
+                        
+                        self._last_msg_ts = ts
+
+    def _fetch_and_display_image(self, author, url):
+        """Fetch image from URL and display in log."""
+        from PIL import Image, ImageTk
+        import io
+        import requests
+
+        def _bg_fetch():
+            try:
+                resp = requests.get(url, timeout=10)
+                if resp.status_code == 200:
+                    img = Image.open(io.BytesIO(resp.content))
+                    
+                    # Resize for display
+                    max_size = (300, 300)
+                    img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                    
+                    photo = ImageTk.PhotoImage(img)
+                    self._image_cache.append(photo)
+                    
+                    self.window.after(0, lambda: self._append_log(author, "[Image]", image=photo))
+            except: pass
+
+        threading.Thread(target=_bg_fetch, daemon=True).start()
+
+    def send_chat_message(self):
+        msg = self.chat_message.get().strip()
+        if not msg: return
+        
+        self.chat_message.set("")
+        # Add to local log immediately
+        self._append_log("You", msg)
+        
+        # Send to relay (reusing send_pulse logic but without the PULSE prefix)
+        self._send_to_relay(msg)
+
+    def _send_to_relay(self, msg):
+        relay_app_id = getattr(self.app, 'app_id', self.app_id)
+        def _bg_send():
+            try:
+                base_url = getattr(self.app, 'discord_relay_url', None)
+                if base_url: base_url = base_url.get().rstrip('/')
+                else: base_url = CENTRAL_BOT_API_URL.rstrip('/')
+                
+                url = f"{base_url}/relay"
+                requests.post(url, json={"app_id": relay_app_id, "message": msg, "relay_token": self.relay_token}, timeout=5)
+            except: pass
+        threading.Thread(target=_bg_send, daemon=True).start()
+
+    def _append_log(self, sender, message, image=None):
+        if not hasattr(self, 'log_text') or not self.log_text.winfo_exists():
+            return
+            
+        self.log_text.config(state=tk.NORMAL)
+        ts = time.strftime("[%H:%M:%S] ")
+        self.log_text.insert(tk.END, ts, "timestamp")
+        
+        if sender == "System":
+            self.log_text.insert(tk.END, f"{message}\n", "system")
+        elif sender == "App" or sender == "You":
+            self.log_text.insert(tk.END, f"{sender}: ", "pulse")
+            if image:
+                self.log_text.image_create(tk.END, image=image)
+                self.log_text.insert(tk.END, "\n")
+            else:
+                self.log_text.insert(tk.END, f"{message}\n", "pulse")
+        else:
+            # Discord message
+            self.log_text.insert(tk.END, f"{sender}: ", "system")
+            if image:
+                self.log_text.image_create(tk.END, image=image)
+                self.log_text.insert(tk.END, "\n")
+            elif message == "[Image]":
+                 # Fallback if text message is just "[Image]" and we have no image object
+                 self.log_text.insert(tk.END, "[Image loading...]\n", "pulse")
+            else:
+                self.log_text.insert(tk.END, f"{message}\n", "pulse")
+            
+        self.log_text.see(tk.END)
+        self.log_text.config(state=tk.DISABLED)
 
     def _setup_entry_bindings(self, entry):
         def show_menu(event):
@@ -140,6 +362,8 @@ class DiscordViewerWindow(BasePopoutWindow):
                     if hasattr(self.app, 'discord_relay_enabled'):
                         self.app.discord_relay_enabled.set(True)
                         self.app.config.set("Discord", "relay_enabled", "True")
+                        # Explicitly set last_discord_pulse_time to 0 to trigger a pulse soon
+                        self.app.last_discord_pulse_time = 0
                         
                     self.app.save_config()
                     # Rebuild to show the Linked UI
@@ -178,6 +402,9 @@ class DiscordViewerWindow(BasePopoutWindow):
         """Send a summarized combat pulse to the central relay bot."""
         if not self.is_verified:
             return
+            
+        # UI Feedback
+        self._append_log("App", msg)
             
         # Ensure app_id is current
         relay_app_id = getattr(self.app, 'app_id', self.app_id)

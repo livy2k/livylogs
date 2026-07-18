@@ -8,13 +8,17 @@ import time
 import hashlib
 import secrets
 from aiohttp import web
+import psycopg2
 
 # Configuration
 TOKEN = os.environ.get('DISCORD_BOT_TOKEN', '')
 PORT = int(os.environ.get('RELAY_PORT', 8080))
+DATABASE_URL = os.environ.get('DATABASE_URL', '') 
 
 if not TOKEN:
     print("ERROR: DISCORD_BOT_TOKEN not set.")
+if not DATABASE_URL:
+    print("ERROR: DATABASE_URL not set. Memory will not work!")    
 
 class CentralRelayBot(discord.Client):
     def __init__(self):
@@ -34,7 +38,8 @@ class CentralRelayBot(discord.Client):
         app.add_routes([
             web.get('/', self.handle_root),
             web.post('/verify', self.handle_app_verify),
-            web.post('/relay', self.handle_app_relay)
+            web.post('/relay', self.handle_app_relay),
+            web.get('/messages', self.handle_app_messages)
         ])
         runner = web.AppRunner(app)
         await runner.setup()
@@ -95,6 +100,7 @@ class CentralRelayBot(discord.Client):
             data = await request.json()
             app_id = data.get("app_id")
             message = data.get("message")
+            image_data = data.get("image_data")
             relay_token = data.get("relay_token")
             
             if app_id in self.verified_links:
@@ -102,18 +108,61 @@ class CentralRelayBot(discord.Client):
                 expected_token = link.get("relay_token")
                 if expected_token and relay_token != expected_token:
                     return web.json_response({"status": "error", "message": "Unauthorized relay token"}, status=401)
-
+                
                 channel = self.get_channel(link["channel_id"])
                 if channel is None:
                     try:
                         channel = await self.fetch_channel(link["channel_id"])
                     except Exception:
                         channel = None
+                
                 if channel:
-                    safe_message = (message or "")[:1900]
-                    await channel.send(safe_message)
+                    if image_data:
+                        import io, base64
+                        from discord import File
+                        image_bytes = base64.b64decode(image_data)
+                        file = File(io.BytesIO(image_bytes), filename="upload.png")
+                        await channel.send(content=message, file=file)
+                    else:
+                        safe_message = (message or "")[:1900]
+                        if safe_message:
+                            await channel.send(safe_message)
                     return web.json_response({"status": "success"})
                 return web.json_response({"status": "error", "message": "Channel not found"}, status=404)
+            
+            return web.json_response({"status": "error", "message": "Not verified"}, status=403)
+        except Exception as e:
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+    async def handle_app_messages(self, request):
+        try:
+            app_id = request.query.get("app_id")
+            relay_token = request.query.get("relay_token")
+            
+            if app_id in self.verified_links:
+                link = self.verified_links[app_id]
+                if relay_token != link.get("relay_token"):
+                    return web.json_response({"status": "error", "message": "Unauthorized"}, status=401)
+
+                channel = self.get_channel(link["channel_id"])
+                if not channel:
+                    channel = await self.fetch_channel(link["channel_id"])
+                
+                messages = []
+                async for msg in channel.history(limit=20):
+                    # Skip messages from the bot itself if they are pulses
+                    if msg.author == self.user and "[LIVYLOGS RELAY]" in msg.content:
+                        continue
+                    messages.append({
+                        "author": str(msg.author.display_name),
+                        "content": msg.content,
+                        "timestamp": msg.created_at.timestamp(),
+                        "is_bot": msg.author.bot,
+                        "attachments": [att.url for att in msg.attachments if att.content_type and att.content_type.startswith("image")]
+                    })
+                
+                # Return in chronological order
+                return web.json_response({"status": "success", "messages": messages[::-1]})
             
             return web.json_response({"status": "error", "message": "Not verified"}, status=403)
         except Exception as e:

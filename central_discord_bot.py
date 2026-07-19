@@ -408,6 +408,53 @@ class GitHubPublisher:
         self.branch = os.getenv("GITHUB_BRANCH", "gh-pages")
         self._repo_exists = None  # Cache for repository existence check
 
+    async def _ensure_website_files(self):
+        """Upload the liviusweb website files if they don't exist."""
+        if not self.token or not self.repo:
+            return
+        
+        files = {
+            "liviusweb/index.html": open("liviusweb/index.html", "rb").read().decode() if os.path.exists("liviusweb/index.html") else None,
+            "liviusweb/report.html": open("liviusweb/report.html", "rb").read().decode() if os.path.exists("liviusweb/report.html") else None,
+            "liviusweb/style.css": open("liviusweb/style.css", "rb").read().decode() if os.path.exists("liviusweb/style.css") else None,
+            "liviusweb/script.js": open("liviusweb/script.js", "rb").read().decode() if os.path.exists("liviusweb/script.js") else None,
+            "liviusweb/reports.json": "[]"
+        }
+        
+        for path, content in files.items():
+            if content is None:
+                continue
+            
+            url = f"https://api.github.com/repos/{self.repo}/contents/{path}"
+            headers = {
+                "Authorization": f"token {self.token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            
+            try:
+                async with aiohttp.ClientSession() as session:
+                    # Check if file exists
+                    sha = None
+                    async with session.get(url, headers=headers) as resp:
+                        if resp.status == 200:
+                            data = await resp.json()
+                            sha = data["sha"]
+                            continue  # File already exists, skip
+                    
+                    # Upload file
+                    payload = {
+                        "message": f"Add {path}",
+                        "content": base64.b64encode(content.encode()).decode(),
+                        "branch": self.branch
+                    }
+                    async with session.put(url, headers=headers, json=payload) as resp:
+                        if resp.status in (200, 201):
+                            print(f"[GitHub] Uploaded {path}")
+                        else:
+                            print(f"[GitHub] Error uploading {path}: {await resp.text()[:200]}")
+            except Exception as e:
+                print(f"[GitHub] Error ensuring {path}: {e}")
+
     async def _check_repo_exists(self):
         """Check if the configured repository exists on GitHub."""
         if self._repo_exists is not None:
@@ -437,6 +484,8 @@ class GitHubPublisher:
                     if resp.status == 200:
                         print(f"[GitHub] Repository {self.repo} exists and is accessible.")
                         self._repo_exists = True
+                        # Ensure website files exist
+                        await self._ensure_website_files()
                         return True
                     elif resp.status == 404:
                         print(f"[GitHub] Repository {self.repo} does not exist. Attempting to create it...")
@@ -517,6 +566,8 @@ class GitHubPublisher:
                         print(f"[GitHub] Repository {self.repo} created successfully.")
                         # Also create gh-pages branch
                         await self._create_gh_pages_branch()
+                        # Upload website files
+                        await self._ensure_website_files()
                         return True
                     elif resp.status == 401:
                         print(f"[GitHub] ERROR: Unauthorized. Check your GITHUB_TOKEN.")
@@ -610,6 +661,58 @@ class GitHubPublisher:
                                 print(f"[GitHub] Neither main nor master branch found. Repository may not have been initialized.")
         except Exception as e:
             print(f"[GitHub] Exception creating gh-pages branch: {e}")
+            traceback.print_exc()
+
+    async def _update_reports_index(self, report_data):
+        """Update the reports.json index file with new report metadata."""
+        if not self.token or not self.repo:
+            print("[GitHub] Cannot update reports index: missing credentials")
+            return
+        
+        url = f"https://api.github.com/repos/{self.repo}/contents/liviusweb/reports.json"
+        headers = {
+            "Authorization": f"token {self.token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                # Get current reports list
+                sha = None
+                reports = []
+                async with session.get(url, headers=headers) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        sha = data["sha"]
+                        content = base64.b64decode(data["content"]).decode()
+                        reports = json.loads(content)
+                    elif resp.status == 404:
+                        print("[GitHub] reports.json does not exist yet. Creating new one.")
+                    else:
+                        print(f"[GitHub] Error fetching reports.json: {resp.status}")
+                
+                # Add new report to the beginning
+                reports.insert(0, report_data)
+                # Keep only last 100 reports
+                reports = reports[:100]
+                
+                # Upload updated index
+                payload = {
+                    "message": f"Add report: {report_data.get('filename', 'unknown')}",
+                    "content": base64.b64encode(json.dumps(reports, indent=2).encode()).decode(),
+                    "branch": self.branch
+                }
+                if sha:
+                    payload["sha"] = sha
+                
+                async with session.put(url, headers=headers, json=payload) as resp:
+                    if resp.status in (200, 201):
+                        print(f"[GitHub] Successfully updated reports.json")
+                    else:
+                        error_text = await resp.text()
+                        print(f"[GitHub] Error updating reports.json ({resp.status}): {error_text[:300]}")
+        except Exception as e:
+            print(f"[GitHub] Exception updating reports index: {e}")
             traceback.print_exc()
 
     async def _upload_to_github(self, path, content, message):
@@ -851,6 +954,19 @@ class CombatTracker:
                     report_url = report_url.replace(" ", "%20")
                     if not report_url.startswith("http"): report_url = f"https://{report_url}"
                     print(f"[Report] Final URL: {report_url}")
+                    
+                    # Update reports index
+                    report_data = {
+                        "filename": filename,
+                        "title": f"{'Test ' if is_test else ''}Combat Report: {author_name}",
+                        "author": author_name,
+                        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "total_dmg": total_dmg,
+                        "total_heal": total_heal,
+                        "total_kd": total_kd,
+                        "url": report_url
+                    }
+                    await self.publisher._update_reports_index(report_data)
             except asyncio.TimeoutError:
                 print("[Report] GitHub upload timed out. Trying temp host...")
                 report_url = await self._upload_to_temp_host(html_content, filename)

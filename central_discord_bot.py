@@ -406,6 +406,45 @@ class GitHubPublisher:
         self.repo = os.getenv("GITHUB_REPO")
         self.domain = os.getenv("GITHUB_DOMAIN")
         self.branch = os.getenv("GITHUB_BRANCH", "master")
+        self._repo_exists = None  # Cache for repository existence check
+
+    async def _check_repo_exists(self):
+        """Check if the configured repository exists on GitHub."""
+        if self._repo_exists is not None:
+            return self._repo_exists
+        
+        if not self.token or not self.repo:
+            print("[GitHub] Cannot check repository: missing token or repo")
+            self._repo_exists = False
+            return False
+        
+        url = f"https://api.github.com/repos/{self.repo}"
+        headers = {
+            "Authorization": f"token {self.token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as resp:
+                    if resp.status == 200:
+                        print(f"[GitHub] Repository {self.repo} exists and is accessible.")
+                        self._repo_exists = True
+                        return True
+                    elif resp.status == 404:
+                        print(f"[GitHub] ERROR: Repository {self.repo} does not exist or is not accessible.")
+                        print(f"[GitHub] Please create the repository at https://github.com/{self.repo}")
+                        self._repo_exists = False
+                        return False
+                    else:
+                        error_text = await resp.text()
+                        print(f"[GitHub] Error checking repository ({resp.status}): {error_text}")
+                        self._repo_exists = False
+                        return False
+        except Exception as e:
+            print(f"[GitHub] Exception checking repository: {e}")
+            self._repo_exists = False
+            return False
 
     async def _upload_to_github(self, path, content, message):
         print(f"[GitHub] Starting upload attempt for {path}...")
@@ -414,6 +453,12 @@ class GitHubPublisher:
             return
         if not self.repo:
             print("[GitHub] ERROR: GITHUB_REPO is not set.")
+            return
+        
+        # Check if repository exists before attempting upload
+        repo_ok = await self._check_repo_exists()
+        if not repo_ok:
+            print("[GitHub] Skipping upload because repository does not exist or is not accessible.")
             return
         
         url = f"https://api.github.com/repos/{self.repo}/contents/{path}"
@@ -623,15 +668,29 @@ class CombatTracker:
                     else:
                         await channel.send(embed=embed)
                 else:
-                    file = discord.File(io.BytesIO(html_content.encode()), filename=f"report_{ts}.html")
-                    embed.add_field(name="📎 Attached Report", value="Interactive report is attached (upload skipped/failed).", inline=False)
-                    if interaction:
-                        try:
-                            await interaction.followup.send(embed=embed, file=file)
-                        except discord.NotFound:
-                            await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, file=file)
+                    # Check file size before sending as attachment (Discord limit is 25MB)
+                    html_bytes = html_content.encode()
+                    file_size_mb = len(html_bytes) / (1024 * 1024)
+                    if file_size_mb > 24:  # Leave some margin
+                        print(f"[Report] HTML file too large ({file_size_mb:.1f}MB). Sending as text message instead.")
+                        embed.add_field(name="📎 Report Too Large", value=f"The report is {file_size_mb:.1f}MB which exceeds Discord's attachment limit. Please check the console logs for the report content.", inline=False)
+                        if interaction:
+                            try:
+                                await interaction.followup.send(embed=embed)
+                            except discord.NotFound:
+                                await channel.send(embed=embed)
+                        else:
+                            await channel.send(embed=embed)
                     else:
-                        await channel.send(embed=embed, file=file)
+                        file = discord.File(io.BytesIO(html_bytes), filename=f"report_{ts}.html")
+                        embed.add_field(name="📎 Attached Report", value="Interactive report is attached (upload skipped/failed).", inline=False)
+                        if interaction:
+                            try:
+                                await interaction.followup.send(embed=embed, file=file)
+                            except discord.NotFound:
+                                await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, file=file)
+                        else:
+                            await channel.send(embed=embed, file=file)
                 print("[Report] Delivery complete.")
             except Exception as send_e:
                 print(f"[Report] Final delivery failed: {send_e}")

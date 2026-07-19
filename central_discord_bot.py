@@ -857,10 +857,9 @@ class CombatTracker:
 
     async def _upload_to_temp_host(self, html_content, filename):
         """Upload HTML to a temporary file hosting service and return the URL."""
+        # Try file.io first (free, no auth required)
         try:
-            # Try file.io first (free, no auth required)
             async with aiohttp.ClientSession() as session:
-                # file.io accepts multipart form data
                 data = aiohttp.FormData()
                 data.add_field('file', html_content.encode(), filename=filename, content_type='text/html')
                 
@@ -901,7 +900,6 @@ class CombatTracker:
         try:
             # 1. Start-up checks
             try:
-                # Use wait_for instead of asyncio.timeout for Python < 3.11 compatibility
                 result = await asyncio.wait_for(
                     self._acquire_lock_and_process(channel, author_name_override, is_test, interaction),
                     timeout=5.0
@@ -923,57 +921,27 @@ class CombatTracker:
                     await interaction.followup.send(f"❌ Error acquiring combat data: {e}", ephemeral=True)
                 return f"Lock error: {e}"
 
-            # 3. Try to upload to a hosting service (GitHub first, then temp host)
+            # 3. Upload to temporary hosting
             report_url = None
             ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
             filename = f"{'test_' if is_test else ''}{safe_name}_{ts}.html"
-            github_path = f"reports/{filename}"
             
-            print(f"[Report] Uploading to GitHub: {github_path}")
+            print("[Report] Uploading to temporary hosting...")
             try:
-                await asyncio.wait_for(
-                    self.publisher._upload_to_github(
-                        github_path, 
-                        html_content, 
-                        f"{'Test ' if is_test else ''}Combat Report for {author_name}"
-                    ),
-                    timeout=10.0
+                report_url = await asyncio.wait_for(
+                    self._upload_to_temp_host(html_content, filename),
+                    timeout=15.0
                 )
-                
-                # Form URL
-                if self.publisher.domain:
-                    clean_domain = self.publisher.domain.replace("https://", "").replace("http://", "").strip().strip("/")
-                    report_url = f"https://{clean_domain}/{github_path}"
-                elif self.publisher.repo and "/" in self.publisher.repo:
-                    parts = self.publisher.repo.strip().strip("/").split('/')
-                    if len(parts) >= 2:
-                        report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
-                
                 if report_url:
-                    report_url = report_url.replace(" ", "%20")
-                    if not report_url.startswith("http"): report_url = f"https://{report_url}"
-                    print(f"[Report] Final URL: {report_url}")
-                    
-                    # Update reports index
-                    report_data = {
-                        "filename": filename,
-                        "title": f"{'Test ' if is_test else ''}Combat Report: {author_name}",
-                        "author": author_name,
-                        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "total_dmg": total_dmg,
-                        "total_heal": total_heal,
-                        "total_kd": total_kd,
-                        "url": report_url
-                    }
-                    await self.publisher._update_reports_index(report_data)
+                    print(f"[Report] Uploaded successfully: {report_url}")
+                else:
+                    print("[Report] All hosting services failed.")
             except asyncio.TimeoutError:
-                print("[Report] GitHub upload timed out. Trying temp host...")
-                report_url = await self._upload_to_temp_host(html_content, filename)
+                print("[Report] Temp host upload timed out.")
             except Exception as e:
-                print(f"[Report] GitHub upload error: {e}. Trying temp host...")
+                print(f"[Report] Temp host upload error: {e}")
                 traceback.print_exc()
-                report_url = await self._upload_to_temp_host(html_content, filename)
 
             # 4. Final Delivery
             print("[Report] Delivering to Discord...")
@@ -992,9 +960,7 @@ class CombatTracker:
                 is_valid_url = False
                 if report_url and isinstance(report_url, str):
                     report_url = report_url.strip()
-                    # Must start with http:// or https://, contain a dot, and be longer than 12 chars
                     if report_url.startswith(("http://", "https://")) and "." in report_url and len(report_url) > 12:
-                        # Further validation: check domain part has a dot and is not empty
                         domain_part = report_url.split("//")[-1].split("/")[0]
                         if "." in domain_part and len(domain_part) > 3:
                             is_valid_url = True
@@ -1013,9 +979,9 @@ class CombatTracker:
                     # Check file size before sending as attachment (Discord limit is 25MB)
                     html_bytes = html_content.encode()
                     file_size_mb = len(html_bytes) / (1024 * 1024)
-                    if file_size_mb > 24:  # Leave some margin
+                    if file_size_mb > 24:
                         print(f"[Report] HTML file too large ({file_size_mb:.1f}MB). Sending as text message instead.")
-                        embed.add_field(name="📎 Report Too Large", value=f"The report is {file_size_mb:.1f}MB which exceeds Discord's attachment limit. Please check the console logs for the report content.", inline=False)
+                        embed.add_field(name="📎 Report Too Large", value=f"The report is {file_size_mb:.1f}MB which exceeds Discord's attachment limit.", inline=False)
                         if interaction:
                             try:
                                 await interaction.followup.send(embed=embed)

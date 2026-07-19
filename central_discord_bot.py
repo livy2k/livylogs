@@ -485,6 +485,11 @@ class GitHubPublisher:
                     print(f"[GitHub] Repository check response status: {resp.status}")
                     if resp.status == 200:
                         print(f"[GitHub] Repository {self.repo} exists and is accessible.")
+                        # Check if repository is private (GitHub Pages requires public)
+                        data = await resp.json()
+                        if data.get("private", True):
+                            print(f"[GitHub] WARNING: Repository {self.repo} is PRIVATE. GitHub Pages requires a public repository.")
+                            print(f"[GitHub] Please make the repository public at https://github.com/{self.repo}/settings")
                         self._repo_exists = True
                         # Ensure website files exist
                         await self._ensure_website_files()

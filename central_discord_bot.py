@@ -407,7 +407,7 @@ class GitHubPublisher:
         self.token = os.getenv("GITHUB_TOKEN")
         self.repo = os.getenv("GITHUB_REPO")
         self.domain = os.getenv("GITHUB_DOMAIN")
-        self.branch = os.getenv("GITHUB_BRANCH", "gh-pages")
+        self.branch = os.getenv("GITHUB_BRANCH", "main")
         self._repo_exists = None  # Cache for repository existence check
 
     async def _ensure_website_files(self):
@@ -597,78 +597,8 @@ class GitHubPublisher:
             return False
 
     async def _create_gh_pages_branch(self):
-        """Create the gh-pages branch for GitHub Pages."""
-        if not self.token:
-            print("[GitHub] Cannot create gh-pages branch: GITHUB_TOKEN is not set.")
-            return
-        if not self.repo:
-            print("[GitHub] Cannot create gh-pages branch: GITHUB_REPO is not set.")
-            return
-        
-        print(f"[GitHub] Creating gh-pages branch for {self.repo}...")
-        
-        # Get the default branch SHA
-        url = f"https://api.github.com/repos/{self.repo}/git/refs/heads/main"
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                print(f"[GitHub] Checking for main branch at {url}...")
-                async with session.get(url, headers=headers) as resp:
-                    response_text = await resp.text()
-                    print(f"[GitHub] Main branch check status: {resp.status}")
-                    if resp.status == 200:
-                        data = await resp.json()
-                        sha = data["object"]["sha"]
-                        print(f"[GitHub] Main branch SHA: {sha}")
-                        
-                        # Create gh-pages branch from main
-                        create_url = f"https://api.github.com/repos/{self.repo}/git/refs"
-                        payload = {
-                            "ref": "refs/heads/gh-pages",
-                            "sha": sha
-                        }
-                        print(f"[GitHub] Creating gh-pages branch...")
-                        async with session.post(create_url, headers=headers, json=payload) as create_resp:
-                            create_response_text = await create_resp.text()
-                            print(f"[GitHub] Create gh-pages response status: {create_resp.status}")
-                            if create_resp.status in (200, 201):
-                                print("[GitHub] gh-pages branch created successfully.")
-                            else:
-                                print(f"[GitHub] Failed to create gh-pages branch: {create_response_text[:300]}")
-                    else:
-                        print(f"[GitHub] Main branch not found (status {resp.status}). Trying master branch...")
-                        # Try master branch
-                        url_master = f"https://api.github.com/repos/{self.repo}/git/refs/heads/master"
-                        async with session.get(url_master, headers=headers) as resp_m:
-                            response_text_m = await resp_m.text()
-                            print(f"[GitHub] Master branch check status: {resp_m.status}")
-                            if resp_m.status == 200:
-                                data = await resp_m.json()
-                                sha = data["object"]["sha"]
-                                print(f"[GitHub] Master branch SHA: {sha}")
-                                
-                                create_url = f"https://api.github.com/repos/{self.repo}/git/refs"
-                                payload = {
-                                    "ref": "refs/heads/gh-pages",
-                                    "sha": sha
-                                }
-                                print(f"[GitHub] Creating gh-pages branch from master...")
-                                async with session.post(create_url, headers=headers, json=payload) as create_resp:
-                                    create_response_text = await create_resp.text()
-                                    print(f"[GitHub] Create gh-pages response status: {create_resp.status}")
-                                    if create_resp.status in (200, 201):
-                                        print("[GitHub] gh-pages branch created from master.")
-                                    else:
-                                        print(f"[GitHub] Failed to create gh-pages branch: {create_response_text[:300]}")
-                            else:
-                                print(f"[GitHub] Neither main nor master branch found. Repository may not have been initialized.")
-        except Exception as e:
-            print(f"[GitHub] Exception creating gh-pages branch: {e}")
-            traceback.print_exc()
+        """No need to create gh-pages branch when using main branch directly."""
+        print("[GitHub] Using main branch for GitHub Pages. No separate gh-pages branch needed.")
 
     async def _update_reports_index(self, report_data):
         """Update the reports.json index file with new report metadata."""

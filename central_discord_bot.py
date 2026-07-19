@@ -52,6 +52,15 @@ class CentralRelayBot(discord.Client):
             print(f"[Bot] Failed to sync commands: {e}")
             traceback.print_exc()
         
+        # Upload website files to GitHub on startup
+        print("[Bot] Uploading website files to GitHub...")
+        try:
+            await self.tracker.publisher._ensure_website_files()
+            print("[Bot] Website files uploaded successfully.")
+        except Exception as e:
+            print(f"[Bot] Failed to upload website files: {e}")
+            traceback.print_exc()
+        
         # Start web server for app-to-bot communication
         app = web.Application(client_max_size=1024**2 * 10) # 10MB limit
         app.add_routes([
@@ -411,8 +420,9 @@ class GitHubPublisher:
         self._repo_exists = None  # Cache for repository existence check
 
     async def _ensure_website_files(self):
-        """Upload the liviusweb website files if they don't exist."""
+        """Upload the liviusweb website files to GitHub (overwrite if exists)."""
         if not self.token or not self.repo:
+            print("[GitHub] Cannot upload website files: missing credentials")
             return
         
         files = {
@@ -425,6 +435,7 @@ class GitHubPublisher:
         
         for path, content in files.items():
             if content is None:
+                print(f"[GitHub] Skipping {path}: file not found locally")
                 continue
             
             url = f"https://api.github.com/repos/{self.repo}/contents/{path}"
@@ -435,27 +446,36 @@ class GitHubPublisher:
             
             try:
                 async with aiohttp.ClientSession() as session:
-                    # Check if file exists
+                    # Get current SHA if file exists (for overwrite)
                     sha = None
                     async with session.get(url, headers=headers) as resp:
                         if resp.status == 200:
                             data = await resp.json()
                             sha = data["sha"]
-                            continue  # File already exists, skip
+                            print(f"[GitHub] File {path} exists. Will overwrite.")
+                        elif resp.status == 404:
+                            print(f"[GitHub] File {path} does not exist. Creating new.")
+                        else:
+                            print(f"[GitHub] Error checking {path}: {resp.status}")
                     
-                    # Upload file
+                    # Upload file (overwrite if sha exists)
                     payload = {
-                        "message": f"Add {path}",
+                        "message": f"Update {path}",
                         "content": base64.b64encode(content.encode()).decode(),
                         "branch": self.branch
                     }
+                    if sha:
+                        payload["sha"] = sha
+                    
                     async with session.put(url, headers=headers, json=payload) as resp:
+                        response_text = await resp.text()
                         if resp.status in (200, 201):
-                            print(f"[GitHub] Uploaded {path}")
+                            print(f"[GitHub] Successfully uploaded {path}")
                         else:
-                            print(f"[GitHub] Error uploading {path}: {await resp.text()[:200]}")
+                            print(f"[GitHub] Error uploading {path} ({resp.status}): {response_text[:200]}")
             except Exception as e:
                 print(f"[GitHub] Error ensuring {path}: {e}")
+                traceback.print_exc()
 
     async def _check_repo_exists(self):
         """Check if the configured repository exists on GitHub."""

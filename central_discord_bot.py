@@ -405,7 +405,7 @@ class GitHubPublisher:
         self.token = os.getenv("GITHUB_TOKEN")
         self.repo = os.getenv("GITHUB_REPO")
         self.domain = os.getenv("GITHUB_DOMAIN")
-        self.branch = os.getenv("GITHUB_BRANCH", "master")
+        self.branch = os.getenv("GITHUB_BRANCH", "gh-pages")
         self._repo_exists = None  # Cache for repository existence check
 
     async def _check_repo_exists(self):
@@ -439,11 +439,16 @@ class GitHubPublisher:
                         self._repo_exists = True
                         return True
                     elif resp.status == 404:
-                        print(f"[GitHub] ERROR: Repository {self.repo} does not exist or is not accessible.")
-                        print(f"[GitHub] Please create the repository at https://github.com/{self.repo}")
-                        print(f"[GitHub] Response: {response_text[:200]}")
-                        self._repo_exists = False
-                        return False
+                        print(f"[GitHub] Repository {self.repo} does not exist. Attempting to create it...")
+                        created = await self._create_repo()
+                        if created:
+                            print(f"[GitHub] Repository {self.repo} created successfully.")
+                            self._repo_exists = True
+                            return True
+                        else:
+                            print(f"[GitHub] Failed to create repository {self.repo}.")
+                            self._repo_exists = False
+                            return False
                     elif resp.status == 401:
                         print(f"[GitHub] ERROR: Unauthorized. Check your GITHUB_TOKEN.")
                         print(f"[GitHub] Response: {response_text[:200]}")
@@ -463,6 +468,104 @@ class GitHubPublisher:
             traceback.print_exc()
             self._repo_exists = False
             return False
+
+    async def _create_repo(self):
+        """Create the repository on GitHub if it doesn't exist."""
+        if not self.token or not self.repo:
+            return False
+        
+        # Parse username/repo from self.repo
+        parts = self.repo.strip().strip("/").split("/")
+        if len(parts) < 2:
+            print(f"[GitHub] Invalid repo format: {self.repo}. Expected username/repo")
+            return False
+        
+        username = parts[0]
+        repo_name = parts[1]
+        
+        url = "https://api.github.com/user/repos"
+        headers = {
+            "Authorization": f"token {self.token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        payload = {
+            "name": repo_name,
+            "description": "LivyLogs Combat Reports",
+            "private": False,
+            "auto_init": True,
+            "gitignore_template": "Python"
+        }
+        
+        print(f"[GitHub] Creating repository {self.repo}...")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, json=payload) as resp:
+                    response_text = await resp.text()
+                    print(f"[GitHub] Create repo response status: {resp.status}")
+                    if resp.status in (200, 201):
+                        print(f"[GitHub] Repository {self.repo} created successfully.")
+                        # Also create gh-pages branch
+                        await self._create_gh_pages_branch()
+                        return True
+                    else:
+                        print(f"[GitHub] Failed to create repository: {response_text[:500]}")
+                        return False
+        except Exception as e:
+            print(f"[GitHub] Exception creating repository: {e}")
+            traceback.print_exc()
+            return False
+
+    async def _create_gh_pages_branch(self):
+        """Create the gh-pages branch for GitHub Pages."""
+        if not self.token or not self.repo:
+            return
+        
+        # Get the default branch SHA
+        url = f"https://api.github.com/repos/{self.repo}/git/refs/heads/main"
+        headers = {
+            "Authorization": f"token {self.token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        sha = data["object"]["sha"]
+                        
+                        # Create gh-pages branch from main
+                        create_url = f"https://api.github.com/repos/{self.repo}/git/refs"
+                        payload = {
+                            "ref": "refs/heads/gh-pages",
+                            "sha": sha
+                        }
+                        async with session.post(create_url, headers=headers, json=payload) as create_resp:
+                            if create_resp.status in (200, 201):
+                                print("[GitHub] gh-pages branch created.")
+                            else:
+                                print(f"[GitHub] Failed to create gh-pages branch: {await create_resp.text()[:200]}")
+                    else:
+                        # Try master branch
+                        url_master = f"https://api.github.com/repos/{self.repo}/git/refs/heads/master"
+                        async with session.get(url_master, headers=headers) as resp_m:
+                            if resp_m.status == 200:
+                                data = await resp_m.json()
+                                sha = data["object"]["sha"]
+                                
+                                create_url = f"https://api.github.com/repos/{self.repo}/git/refs"
+                                payload = {
+                                    "ref": "refs/heads/gh-pages",
+                                    "sha": sha
+                                }
+                                async with session.post(create_url, headers=headers, json=payload) as create_resp:
+                                    if create_resp.status in (200, 201):
+                                        print("[GitHub] gh-pages branch created from master.")
+                                    else:
+                                        print(f"[GitHub] Failed to create gh-pages branch: {await create_resp.text()[:200]}")
+        except Exception as e:
+            print(f"[GitHub] Exception creating gh-pages branch: {e}")
 
     async def _upload_to_github(self, path, content, message):
         print(f"[GitHub] Starting upload attempt for {path}...")

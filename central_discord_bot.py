@@ -568,7 +568,17 @@ class CombatTracker:
                         total_kd += len([e for e in data["events"] if e[1] == "KD"])
 
                     print("[Report] Building HTML...")
-                    html_content = await asyncio.to_thread(self.generate_html_report, session)
+                    try:
+                        html_content = await asyncio.wait_for(
+                            asyncio.to_thread(self.generate_html_report, session),
+                            timeout=30.0
+                        )
+                    except asyncio.TimeoutError:
+                        print("[Report] HTML generation timed out")
+                        html_content = "<html><body><h1>Report generation timed out</h1></body></html>"
+                    except Exception as e:
+                        print(f"[Report] HTML generation error: {e}")
+                        html_content = "<html><body><h1>Error generating report</h1></body></html>"
                     
                     if not is_test:
                         session["is_active"] = False
@@ -980,7 +990,17 @@ async def sync_cmds(interaction: discord.Interaction):
 @bot.tree.command(name="testreport", description="Generate a test combat report")
 async def test_report_new(interaction: discord.Interaction):
     print(f"[Command] /testreport used by {interaction.user}")
-    await interaction.response.send_message("🧪 **Check your LivyLogs App!** Type `dg001` in your game chat to generate a test report.", ephemeral=True)
+    await interaction.response.defer(ephemeral=True)
+    try:
+        await bot.tracker.finalize_combat(
+            channel=interaction.channel,
+            author_name_override="Test_Pilot",
+            is_test=True,
+            interaction=interaction
+        )
+    except Exception as e:
+        print(f"[Command] /testreport error: {e}")
+        await interaction.followup.send(f"❌ Error generating test report: {e}", ephemeral=True)
 
 @bot.tree.command(name="combatreport", description="Generate a manual combat report")
 async def manual_report_new(interaction: discord.Interaction):
@@ -994,8 +1014,18 @@ async def manual_report(interaction: discord.Interaction):
 
 @bot.tree.command(name="gd001", description="Generate a test combat report with randomized data")
 async def test_report(interaction: discord.Interaction):
-    # Keep old command but point it to new logic
-    await test_report_new(interaction)
+    print(f"[Command] /gd001 used by {interaction.user}")
+    await interaction.response.defer(ephemeral=True)
+    try:
+        await bot.tracker.finalize_combat(
+            channel=interaction.channel,
+            author_name_override="Test_Pilot",
+            is_test=True,
+            interaction=interaction
+        )
+    except Exception as e:
+        print(f"[Command] /gd001 error: {e}")
+        await interaction.followup.send(f"❌ Error generating test report: {e}", ephemeral=True)
 
 @bot.tree.command(name="reset", description="Clear combat data for this channel")
 async def reset_combat(interaction: discord.Interaction):

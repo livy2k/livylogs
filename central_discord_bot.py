@@ -1023,15 +1023,15 @@ class CombatTracker:
                     pass
         
         return True
-    except Exception as e:
-        print(f"[Report] CRITICAL ERROR in finalize_combat: {e}")
-        traceback.print_exc()
-        if interaction:
-            try:
-                await interaction.followup.send(f"❌ Critical error generating report: {e}", ephemeral=True)
-            except:
-                pass
-        return f"Critical error: {e}"
+        except Exception as e:
+            print(f"[Report] CRITICAL ERROR in finalize_combat: {e}")
+            traceback.print_exc()
+            if interaction:
+                try:
+                    await interaction.followup.send(f"❌ Critical error generating report: {e}", ephemeral=True)
+                except:
+                    pass
+            return f"Critical error: {e}"
 
     async def _acquire_lock_and_process(self, channel, author_name_override, is_test, interaction):
         """Helper method to acquire lock and process combat data.

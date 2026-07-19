@@ -61,6 +61,29 @@ class CentralRelayBot(discord.Client):
             print(f"[Bot] Failed to upload website files: {e}")
             traceback.print_exc()
         
+        # Generate a test report on startup to verify GitHub upload works
+        print("[Bot] Generating test report for verification...")
+        try:
+            # Create a mock channel for the test report
+            # We'll use the first available channel from any guild
+            for guild in self.guilds:
+                for channel in guild.text_channels:
+                    if channel.permissions_for(guild.me).send_messages:
+                        await self.tracker.finalize_combat(
+                            channel=channel,
+                            author_name_override="Startup_Test",
+                            is_test=True,
+                            interaction=None
+                        )
+                        print(f"[Bot] Test report generated in channel {channel.name}")
+                        break
+                else:
+                    continue
+                break
+        except Exception as e:
+            print(f"[Bot] Failed to generate test report: {e}")
+            traceback.print_exc()
+        
         # Start web server for app-to-bot communication
         app = web.Application(client_max_size=1024**2 * 10) # 10MB limit
         app.add_routes([

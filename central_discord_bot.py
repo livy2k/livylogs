@@ -880,29 +880,7 @@ class CombatTracker:
                 print(f"[Report] Temp host upload error: {e}")
                 traceback.print_exc()
 
-            # 4. Try to upload to temporary hosting for interactive link
-            report_url = None
-            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
-            filename = f"{'test_' if is_test else ''}{safe_name}_{ts}.html"
-            
-            print("[Report] Uploading to temporary hosting...")
-            try:
-                report_url = await asyncio.wait_for(
-                    self._upload_to_temp_host(html_content, filename),
-                    timeout=15.0
-                )
-                if report_url:
-                    print(f"[Report] Uploaded successfully: {report_url}")
-                else:
-                    print("[Report] All hosting services failed.")
-            except asyncio.TimeoutError:
-                print("[Report] Temp host upload timed out.")
-            except Exception as e:
-                print(f"[Report] Temp host upload error: {e}")
-                traceback.print_exc()
-
-            # 5. Final Delivery
+            # 4. Final Delivery
             print("[Report] Delivering to Discord...")
             embed = discord.Embed(
                 title=f"{'🧪 Test' if is_test else '🏆'} Combat Report: {author_name}",

@@ -541,49 +541,11 @@ class CombatTracker:
         
         # 1. Start-up checks
         try:
-            async with asyncio.timeout(5.0): # Wait max 5s for the lock
-                async with self.lock:
-                    session = self._get_session(channel.id)
-                    if not session["is_active"] and not is_test: 
-                        msg = "No active combat data in this channel. Try `/gd001` for a test report."
-                        if interaction: await interaction.followup.send(msg, ephemeral=True)
-                        return msg
-
-                    if is_test:
-                        session["history"] = self._generate_test_history()
-                        session["start_time"] = time.time()
-                        session["is_active"] = True
-                    
-                    history = session["history"]
-                    author_name = author_name_override or (list(history.keys())[0] if history else "Unknown Pilot")
-                    
-                    # Calculate stats
-                    total_dmg = 0
-                    total_heal = 0
-                    total_kd = 0
-                    for name, data in history.items():
-                        if data["pulses"]:
-                            total_dmg += sum(p[1] for p in data["pulses"])
-                            total_heal += sum(p[2] for p in data["pulses"])
-                        total_kd += len([e for e in data["events"] if e[1] == "KD"])
-
-                    print("[Report] Building HTML...")
-                    try:
-                        html_content = await asyncio.wait_for(
-                            asyncio.to_thread(self.generate_html_report, session),
-                            timeout=30.0
-                        )
-                    except asyncio.TimeoutError:
-                        print("[Report] HTML generation timed out")
-                        html_content = "<html><body><h1>Report generation timed out</h1></body></html>"
-                    except Exception as e:
-                        print(f"[Report] HTML generation error: {e}")
-                        html_content = "<html><body><h1>Error generating report</h1></body></html>"
-                    
-                    if not is_test:
-                        session["is_active"] = False
-                        session["history"] = {}
-                    print("[Report] Data ready.")
+            # Use wait_for instead of asyncio.timeout for Python < 3.11 compatibility
+            await asyncio.wait_for(
+                self._acquire_lock_and_process(channel, author_name_override, is_test, interaction),
+                timeout=5.0
+            )
         except asyncio.TimeoutError:
             print("[Report] ERROR: Could not acquire lock.")
             if interaction:
@@ -598,12 +560,14 @@ class CombatTracker:
         
         print(f"[Report] Uploading to GitHub: {github_path}")
         try:
-            async with asyncio.timeout(10.0):
-                await self.publisher._upload_to_github(
+            await asyncio.wait_for(
+                self.publisher._upload_to_github(
                     github_path, 
                     html_content, 
                     f"{'Test ' if is_test else ''}Combat Report for {author_name}"
-                )
+                ),
+                timeout=10.0
+            )
             
             # Form URL
             if self.publisher.domain:
@@ -666,6 +630,51 @@ class CombatTracker:
                     pass
         
         return True
+
+    async def _acquire_lock_and_process(self, channel, author_name_override, is_test, interaction):
+        """Helper method to acquire lock and process combat data."""
+        async with self.lock:
+            session = self._get_session(channel.id)
+            if not session["is_active"] and not is_test: 
+                msg = "No active combat data in this channel. Try `/gd001` for a test report."
+                if interaction: await interaction.followup.send(msg, ephemeral=True)
+                return msg
+
+            if is_test:
+                session["history"] = self._generate_test_history()
+                session["start_time"] = time.time()
+                session["is_active"] = True
+            
+            history = session["history"]
+            author_name = author_name_override or (list(history.keys())[0] if history else "Unknown Pilot")
+            
+            # Calculate stats
+            total_dmg = 0
+            total_heal = 0
+            total_kd = 0
+            for name, data in history.items():
+                if data["pulses"]:
+                    total_dmg += sum(p[1] for p in data["pulses"])
+                    total_heal += sum(p[2] for p in data["pulses"])
+                total_kd += len([e for e in data["events"] if e[1] == "KD"])
+
+            print("[Report] Building HTML...")
+            try:
+                html_content = await asyncio.wait_for(
+                    asyncio.to_thread(self.generate_html_report, session),
+                    timeout=30.0
+                )
+            except asyncio.TimeoutError:
+                print("[Report] HTML generation timed out")
+                html_content = "<html><body><h1>Report generation timed out</h1></body></html>"
+            except Exception as e:
+                print(f"[Report] HTML generation error: {e}")
+                html_content = "<html><body><h1>Error generating report</h1></body></html>"
+            
+            if not is_test:
+                session["is_active"] = False
+                session["history"] = {}
+            print("[Report] Data ready.")
 
     def _generate_test_history(self):
         """Generate randomized combat data for /gd001."""

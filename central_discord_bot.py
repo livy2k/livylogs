@@ -752,6 +752,45 @@ class CombatTracker:
             
             session["last_pulse_time"] = now
 
+    async def _upload_to_temp_host(self, html_content, filename):
+        """Upload HTML to a temporary file hosting service and return the URL."""
+        try:
+            # Try file.io first (free, no auth required)
+            async with aiohttp.ClientSession() as session:
+                # file.io accepts multipart form data
+                data = aiohttp.FormData()
+                data.add_field('file', html_content.encode(), filename=filename, content_type='text/html')
+                
+                async with session.post('https://file.io', data=data) as resp:
+                    if resp.status == 200:
+                        result = await resp.json()
+                        if result.get('success') and result.get('link'):
+                            print(f"[Report] Uploaded to file.io: {result['link']}")
+                            return result['link']
+                    else:
+                        print(f"[Report] file.io upload failed with status {resp.status}")
+        except Exception as e:
+            print(f"[Report] file.io upload error: {e}")
+        
+        # Fallback to 0x0.st (another free file hosting)
+        try:
+            async with aiohttp.ClientSession() as session:
+                data = aiohttp.FormData()
+                data.add_field('file', html_content.encode(), filename=filename, content_type='text/html')
+                
+                async with session.post('https://0x0.st', data=data) as resp:
+                    if resp.status == 200:
+                        url = (await resp.text()).strip()
+                        if url:
+                            print(f"[Report] Uploaded to 0x0.st: {url}")
+                            return url
+                    else:
+                        print(f"[Report] 0x0.st upload failed with status {resp.status}")
+        except Exception as e:
+            print(f"[Report] 0x0.st upload error: {e}")
+        
+        return None
+
     async def finalize_combat(self, channel, author_name_override=None, is_test=False, interaction=None):
         """Generate, upload, and share the combat report."""
         print(f"[Report] finalize_combat called (test={is_test})")
@@ -781,11 +820,12 @@ class CombatTracker:
                     await interaction.followup.send(f"❌ Error acquiring combat data: {e}", ephemeral=True)
                 return f"Lock error: {e}"
 
-            # 3. GitHub Upload with timeout
+            # 3. Try to upload to a hosting service (GitHub first, then temp host)
             report_url = None
             ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
-            github_path = f"reports/{'test_' if is_test else ''}{safe_name}_{ts}.html"
+            filename = f"{'test_' if is_test else ''}{safe_name}_{ts}.html"
+            github_path = f"reports/{filename}"
             
             print(f"[Report] Uploading to GitHub: {github_path}")
             try:
@@ -812,10 +852,12 @@ class CombatTracker:
                     if not report_url.startswith("http"): report_url = f"https://{report_url}"
                     print(f"[Report] Final URL: {report_url}")
             except asyncio.TimeoutError:
-                print("[Report] GitHub upload timed out. Proceeding with attachment.")
+                print("[Report] GitHub upload timed out. Trying temp host...")
+                report_url = await self._upload_to_temp_host(html_content, filename)
             except Exception as e:
-                print(f"[Report] GitHub upload error: {e}")
+                print(f"[Report] GitHub upload error: {e}. Trying temp host...")
                 traceback.print_exc()
+                report_url = await self._upload_to_temp_host(html_content, filename)
 
             # 4. Final Delivery
             print("[Report] Delivering to Discord...")

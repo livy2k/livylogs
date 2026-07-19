@@ -18,6 +18,8 @@ import aiohttp
 import secrets
 import traceback
 from aiohttp import web
+from PIL import Image
+from PIL import Image
 
 # Configuration
 TOKEN = os.environ.get('DISCORD_BOT_TOKEN', '')
@@ -943,7 +945,19 @@ class CombatTracker:
                 print(f"[Report] Temp host upload error: {e}")
                 traceback.print_exc()
 
-            # 4. Final Delivery
+            # 4. Generate chart image for preview
+            print("[Report] Generating chart image...")
+            chart_img = None
+            try:
+                chart_img = await asyncio.wait_for(
+                    asyncio.to_thread(self.generate_chart),
+                    timeout=10.0
+                )
+            except Exception as e:
+                print(f"[Report] Chart generation error: {e}")
+                chart_img = None
+
+            # 5. Final Delivery
             print("[Report] Delivering to Discord...")
             embed = discord.Embed(
                 title=f"{'🧪 Test' if is_test else '🏆'} Combat Report: {author_name}",
@@ -955,50 +969,37 @@ class CombatTracker:
             embed.add_field(name="💉 Healing", value=f"{total_heal:,}", inline=True)
             embed.add_field(name="💀 KDs", value=str(total_kd), inline=True)
 
+            files = []
+            
+            # Add chart image if available
+            if chart_img:
+                image_binary = io.BytesIO()
+                # Resize to fit Discord embed (max 400x300)
+                chart_img.thumbnail((400, 300), Image.Resampling.LANCZOS)
+                chart_img.save(image_binary, 'PNG')
+                image_binary.seek(0)
+                files.append(discord.File(fp=image_binary, filename='combat_chart.png'))
+                embed.set_image(url="attachment://combat_chart.png")
+
+            # Add HTML report as attachment
+            html_bytes = html_content.encode()
+            file_size_mb = len(html_bytes) / (1024 * 1024)
+            
+            if file_size_mb > 24:
+                print(f"[Report] HTML file too large ({file_size_mb:.1f}MB). Sending as text message instead.")
+                embed.add_field(name="📎 Report Too Large", value=f"The report is {file_size_mb:.1f}MB which exceeds Discord's attachment limit.", inline=False)
+            else:
+                files.append(discord.File(io.BytesIO(html_bytes), filename=f"report_{ts}.html"))
+                embed.add_field(name="📎 Interactive Report", value=f"Download `report_{ts}.html` and open in any browser for the full interactive experience.", inline=False)
+
             try:
-                # Validate URL before using it in embed
-                is_valid_url = False
-                if report_url and isinstance(report_url, str):
-                    report_url = report_url.strip()
-                    if report_url.startswith(("http://", "https://")) and "." in report_url and len(report_url) > 12:
-                        domain_part = report_url.split("//")[-1].split("/")[0]
-                        if "." in domain_part and len(domain_part) > 3:
-                            is_valid_url = True
-                
-                if is_valid_url:
-                    embed.url = report_url
-                    embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**", inline=False)
-                    if interaction:
-                        try:
-                            await interaction.followup.send(embed=embed)
-                        except discord.NotFound:
-                            await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed)
-                    else:
-                        await channel.send(embed=embed)
+                if interaction:
+                    try:
+                        await interaction.followup.send(embed=embed, files=files)
+                    except discord.NotFound:
+                        await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, files=files)
                 else:
-                    # Check file size before sending as attachment (Discord limit is 25MB)
-                    html_bytes = html_content.encode()
-                    file_size_mb = len(html_bytes) / (1024 * 1024)
-                    if file_size_mb > 24:
-                        print(f"[Report] HTML file too large ({file_size_mb:.1f}MB). Sending as text message instead.")
-                        embed.add_field(name="📎 Report Too Large", value=f"The report is {file_size_mb:.1f}MB which exceeds Discord's attachment limit.", inline=False)
-                        if interaction:
-                            try:
-                                await interaction.followup.send(embed=embed)
-                            except discord.NotFound:
-                                await channel.send(embed=embed)
-                        else:
-                            await channel.send(embed=embed)
-                    else:
-                        file = discord.File(io.BytesIO(html_bytes), filename=f"report_{ts}.html")
-                        embed.add_field(name="📎 Attached Report", value="Interactive report is attached (upload skipped/failed).", inline=False)
-                        if interaction:
-                            try:
-                                await interaction.followup.send(embed=embed, file=file)
-                            except discord.NotFound:
-                                await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, file=file)
-                        else:
-                            await channel.send(embed=embed, file=file)
+                    await channel.send(embed=embed, files=files)
                 print("[Report] Delivery complete.")
             except Exception as send_e:
                 print(f"[Report] Final delivery failed: {send_e}")

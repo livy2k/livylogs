@@ -542,10 +542,15 @@ class CombatTracker:
         # 1. Start-up checks
         try:
             # Use wait_for instead of asyncio.timeout for Python < 3.11 compatibility
-            await asyncio.wait_for(
+            result = await asyncio.wait_for(
                 self._acquire_lock_and_process(channel, author_name_override, is_test, interaction),
                 timeout=5.0
             )
+            author_name = result["author_name"]
+            total_dmg = result["total_dmg"]
+            total_heal = result["total_heal"]
+            total_kd = result["total_kd"]
+            html_content = result["html_content"]
         except asyncio.TimeoutError:
             print("[Report] ERROR: Could not acquire lock.")
             if interaction:
@@ -632,13 +637,15 @@ class CombatTracker:
         return True
 
     async def _acquire_lock_and_process(self, channel, author_name_override, is_test, interaction):
-        """Helper method to acquire lock and process combat data."""
+        """Helper method to acquire lock and process combat data.
+        Returns a dict with author_name, total_dmg, total_heal, total_kd, html_content.
+        """
         async with self.lock:
             session = self._get_session(channel.id)
             if not session["is_active"] and not is_test: 
                 msg = "No active combat data in this channel. Try `/gd001` for a test report."
                 if interaction: await interaction.followup.send(msg, ephemeral=True)
-                return msg
+                return {"author_name": None, "total_dmg": 0, "total_heal": 0, "total_kd": 0, "html_content": ""}
 
             if is_test:
                 session["history"] = self._generate_test_history()
@@ -675,6 +682,13 @@ class CombatTracker:
                 session["is_active"] = False
                 session["history"] = {}
             print("[Report] Data ready.")
+            return {
+                "author_name": author_name,
+                "total_dmg": total_dmg,
+                "total_heal": total_heal,
+                "total_kd": total_kd,
+                "html_content": html_content
+            }
 
     def _generate_test_history(self):
         """Generate randomized combat data for /gd001."""

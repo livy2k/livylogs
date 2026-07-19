@@ -186,11 +186,14 @@ class OptionsWindow(BasePopoutWindow):
         char_entry.bind("<Return>", on_name_change)
         
         # Also bind global paste to the entry specifically as a backup
-        char_entry.bind("<Control-v>", self._on_global_paste)
-        if hasattr(self, 'code_entry'):
-            self.code_entry.bind("<Control-v>", self._on_global_paste)
-        if hasattr(self, 'url_entry'):
-            self.url_entry.bind("<Control-v>", self._on_global_paste)
+        try:
+            char_entry.bind("<Control-v>", self._on_global_paste)
+            if hasattr(self, 'code_entry') and self.code_entry.winfo_exists():
+                self.code_entry.bind("<Control-v>", self._on_global_paste)
+            if hasattr(self, 'url_entry') and self.url_entry.winfo_exists():
+                self.url_entry.bind("<Control-v>", self._on_global_paste)
+        except tk.TclError:
+            pass # Widget might have been destroyed during a rapid refresh
 
         # Combat Log Path - simplified status
         tk.Label(self.content_container, text="LOG FILE STATUS", bg=WINDOW_BG, fg=TEXT_SECONDARY, font=("Lilita One", 8)).pack(anchor="w", pady=(10, 2))
@@ -323,7 +326,7 @@ class OptionsWindow(BasePopoutWindow):
             try:
                 # Use configured relay URL
                 base_url = self.app.discord_relay_url.get().rstrip('/')
-                app_id = getattr(self.app, 'app_id', str(uuid.uuid4()))
+                app_id = self.app.app_id
                 
                 import requests
                 url = f"{base_url}/verify"

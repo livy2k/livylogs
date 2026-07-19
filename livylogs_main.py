@@ -1825,8 +1825,17 @@ class CombatLogApp:
                 buff_source = source if source != "Unknown" else "You"
                 buff_target = target if target != "Unknown" else "Target"
                 
-                self.relay_events.append((now_ts, e_type_map.get(event_type, "EVT"), buff_source, buff_target, label))
+                e_type_rel = e_type_map.get(event_type, "EVT")
+                self.relay_events.append((now_ts, e_type_rel, buff_source, buff_target, label))
                 if len(self.relay_events) > 100: self.relay_events.pop(0)
+
+                # Record event for Hybrid Report Generation
+                if self.app_start_time:
+                    rel_t = round(now_ts - self.app_start_time.timestamp(), 1)
+                    if buff_source in self.player_data:
+                        self.player_data[buff_source]["history_events"].append((rel_t, e_type_rel, buff_source, buff_target, label))
+                        if len(self.player_data[buff_source]["history_events"]) > 100:
+                            self.player_data[buff_source]["history_events"].pop(0)
 
             # --- DUPLICATE EVENT GUARD (NON-METRIC ONLY) ---
             if event_type not in ["dealt", "taken", "healing", "stats"]:
@@ -2916,7 +2925,10 @@ class CombatLogApp:
                     # Set the effective timestamp if not present (usually added in process_external_event)
                     if "timestamp" not in evt:
                         evt["timestamp"] = datetime.now()
-                    self.process_external_event(evt, is_last=(i == len(events_to_process)-1))
+                    try:
+                        self.process_external_event(evt, is_last=(i == len(events_to_process)-1))
+                    except Exception as e:
+                        print(f"[DEBUG] Error processing buffered event: {e}")
 
             # Throttle UI refresh to save CPU
             # self._last_ui_tick is initialized in __init__
@@ -2942,8 +2954,7 @@ class CombatLogApp:
 
     def refresh_ui_only(self, force=False):
         # --- DISCORD PULSE RELAY (10s) ---
-        import time as global_time
-        now = global_time.time()
+        now = time.time()
         # Discord pulses are only sent if d911_active is True and we've had recent combat
         if self.discord_relay_enabled.get() and self.d911_active:
             if self.is_pvp_active or self.test_mode.get():
@@ -3017,7 +3028,10 @@ class CombatLogApp:
             self.main_canvas.coords(self.lbl_reset, rx, ry)
             self.main_canvas.itemconfig(self.lbl_reset, fill=rfg)
             # Re-apply font to ensure size 10 is maintained
-            self.main_canvas.itemconfig(self.lbl_reset, font=tkfont.Font(family="Lilita One", size=rsz))
+            try:
+                self.main_canvas.itemconfig(self.lbl_reset, font=tkfont.Font(family="Lilita One", size=rsz))
+            except Exception as e:
+                print(f"[DEBUG] Failed to update reset font: {e}")
         
         # Alexa etc
         if hasattr(self, 'lbl_alexa') and self.main_canvas.winfo_exists() and self.main_canvas.find_withtag(self.lbl_alexa):
@@ -3150,7 +3164,18 @@ class CombatLogApp:
                 # Dot matrix is 48 cols x 16 rows (High Res)
                 matrix = None
                 if not is_volume and not is_off:
-                    matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=10)
+                    # Cache the matrix to avoid re-rendering every tick
+                    if not hasattr(self, '_radio_matrix_cache'): self._radio_matrix_cache = {}
+                    cache_key = (text, color)
+                    if cache_key in self._radio_matrix_cache:
+                        matrix = self._radio_matrix_cache[cache_key]
+                    else:
+                        matrix = text_to_dot_matrix(text, self._dot_cols, self._dot_rows, font_family="Lilita One", font_size=10)
+                        self._radio_matrix_cache[cache_key] = matrix
+                        # Simple cache eviction if it grows too large
+                        if len(self._radio_matrix_cache) > 20:
+                            self._radio_matrix_cache.pop(next(iter(self._radio_matrix_cache)))
+                    
                     if not matrix: return
                 
                 # Render to PhotoImage buffer
@@ -3176,25 +3201,24 @@ class CombatLogApp:
                 max_col = int((vol_stage / 11.0) * self._dot_cols)
 
                 for r in range(self._dot_rows):
-                    for dot_row in range(2): 
-                        pixel_row = []
-                        for c in range(self._dot_cols):
-                            if is_volume:
-                                if c <= max_col and vol_stage > 0:
-                                    # Active bar dot
-                                    # Map column to gradient
-                                    color_idx = int((c / float(self._dot_cols)) * 10)
-                                    if color_idx >= len(vol_colors): color_idx = len(vol_colors) - 1
-                                    c_color = vol_colors[color_idx]
-                                else:
-                                    # Background/inactive dot
-                                    c_color = "#0A0500" 
+                    # Speed optimization: Calculate pixel_row more efficiently
+                    base_row = []
+                    for c in range(self._dot_cols):
+                        if is_volume:
+                            if c <= max_col and vol_stage > 0:
+                                color_idx = int((c / float(self._dot_cols)) * 10)
+                                if color_idx >= len(vol_colors): color_idx = len(vol_colors) - 1
+                                c_color = vol_colors[color_idx]
                             else:
-                                c_on = matrix[r][c] if matrix else False
-                                c_color = color if c_on else "#000000" 
-                            
-                            pixel_row.extend([c_color] * 5 + ["#000000"]) 
-                        data_rows.append("{" + " ".join(pixel_row) + "}")
+                                c_color = "#0A0500" 
+                        else:
+                            c_on = matrix[r][c] if matrix else False
+                            c_color = color if c_on else "#000000" 
+                        
+                        base_row.extend([c_color] * 5 + ["#000000"])
+                    
+                    pixel_row_str = "{" + " ".join(base_row) + "}"
+                    data_rows.extend([pixel_row_str, pixel_row_str])
                     data_rows.append("{" + " ".join(["#000000"] * (self._dot_cols * 6)) + "}")
                 
                 self.radio_image.put(" ".join(data_rows))
@@ -4066,7 +4090,8 @@ class CombatLogApp:
                 "xp_history": [], "looted_items": [], "total_credits": 0,
                 "poison_hits": 0, "incapacitated_count": 0, "kill_count": 0,
                 "knockdown_count": 0, "posture_count": 0, "intimidate_count": 0,
-                "status_effects": {}, "taken_damage_history": [], "last_911_time": 0
+                "status_effects": {}, "taken_damage_history": [], "last_911_time": 0,
+                "history_pulses": [], "history_events": [], "history_totals": []
             }
         else:
             # Ensure new tactical fields exist for existing players
@@ -4079,6 +4104,9 @@ class CombatLogApp:
             if "kill_count" not in p: p["kill_count"] = 0
             if "status_effects" not in p: p["status_effects"] = {}
             if "died" not in p: p["died"] = False
+            if "history_pulses" not in p: p["history_pulses"] = []
+            if "history_events" not in p: p["history_events"] = []
+            if "history_totals" not in p: p["history_totals"] = []
         return self.player_data[name]
 
     def reset_session_data(self):
@@ -4525,6 +4553,29 @@ class CombatLogApp:
             
         self.discord_viewer_win.send_pulse(pulse_msg)
 
+        # Record history for Hybrid Report Generation
+        if self.app_start_time:
+            now_rel = round(time.time() - self.app_start_time.timestamp(), 1)
+            for p_name, p_data in self.player_data.items():
+                if p_name == "Unknown": continue
+                # Pulse: (time, dmg, heal, target)
+                cur_dmg = int(p_data.get("dm_damage", 0))
+                cur_heal = int(p_data.get("dm_healing", 0))
+                
+                # Use current focus for "You", or last known target for others if possible
+                p_tgt = "None"
+                if p_name == "You":
+                    p_tgt = self.current_focus_target.get('enemy') or "None"
+                
+                if cur_dmg > 0 or cur_heal > 0:
+                    p_data["history_pulses"].append((now_rel, cur_dmg, cur_heal, p_tgt))
+                    p_data["history_totals"].append((now_rel, cur_dmg, cur_heal))
+                    
+                    # Limit history size (max 30 mins at 10s intervals = 180 points)
+                    if len(p_data["history_pulses"]) > 200:
+                        p_data["history_pulses"].pop(0)
+                        p_data["history_totals"].pop(0)
+
     def open_fax(self, event=None):
         """Open the FAX (Item Scanner & Link Creator) window."""
         if hasattr(self, 'fax_win') and self.fax_win:
@@ -4551,21 +4602,41 @@ class CombatLogApp:
                 if is_test:
                     import generate_example_report
                     tracker = generate_example_report.MockTracker()
-                    report_path = tracker.generate_html_report()
+                    report_path = tracker.generate_html_report_to_file()
                 else:
+                    # Collect real history from player_data
+                    history = {}
+                    for p_name, p_data in self.player_data.items():
+                        # Only include players with some history or relevant activity
+                        if p_data.get("history_pulses") or p_data.get("history_events"):
+                            history[p_name] = {
+                                "pulses": p_data.get("history_pulses", []),
+                                "events": p_data.get("history_events", []),
+                                "totals": p_data.get("history_totals", [])
+                            }
+                    
+                    if not history:
+                        # Fallback for empty history (maybe combat just started)
+                        print("[Report] History empty, generating mock for real player")
+                        history["You"] = {
+                            "pulses": [(0, 0, 0, "None")],
+                            "events": [],
+                            "totals": [(0, 0, 0)]
+                        }
+
                     import generate_example_report
-                    tracker = generate_example_report.MockTracker()
-                    # TODO: Fill with real data from self.player_data and self.all_events
-                    report_path = tracker.generate_html_report()
+                    tracker = generate_example_report.MockTracker(history=history)
+                    report_path = tracker.generate_html_report_to_file()
                 
                 if not os.path.exists(report_path):
                     raise FileNotFoundError(f"Report file not created: {report_path}")
 
+                print(f"[Report] Reading file: {report_path}")
                 with open(report_path, "r", encoding="utf-8") as f:
                     html_content = f.read()
 
                 if self.discord_viewer_win:
-                    self.discord_viewer_win._append_log("System", f"Report generated. Uploading to Discord...")
+                    self.discord_viewer_win._append_log("System", f"Report generated ({len(html_content)} bytes). Uploading to Discord...")
                 
                 # Upload to relay bot
                 is_verified = self.config.getboolean("DiscordRelay", "is_verified", fallback=False)
@@ -4574,34 +4645,99 @@ class CombatLogApp:
                     if not url.endswith("/"): url += "/"
                     report_endpoint = f"{url}report"
                     
+                    # Calculate key stats if possible
+                    total_dmg = 0
+                    total_heal = 0
+                    total_kd = 0
+                    
+                    if is_test:
+                        total_dmg = 125430
+                        total_heal = 45200
+                        total_kd = 12
+                    else:
+                        # Estimate from player_data
+                        for p_name, p_data in self.player_data.items():
+                            total_dmg += p_data.get("dm_damage", 0)
+                            total_heal += p_data.get("dm_healing", 0)
+                        # Count KDs from history_events
+                        for p_name, p_data in self.player_data.items():
+                            for evt in p_data.get("history_events", []):
+                                if evt[1] == "KD":
+                                    total_kd += 1
+                                
                     payload = {
-                        "app_id": self.config.get("Discord", "app_id", fallback=str(uuid.uuid4())),
+                        "app_id": self.app_id,
                         "relay_token": self.config.get("DiscordRelay", "relay_token", fallback=""),
                         "content": html_content,
                         "filename": os.path.basename(report_path),
-                        "author_name": self.char_name.get() or "Unknown Pilot"
+                        "author_name": self.char_name.get() or "Unknown Pilot",
+                        "total_dmg": total_dmg,
+                        "total_heal": total_heal,
+                        "total_kd": total_kd
                     }
                     
-                    resp = requests.post(report_endpoint, json=payload, timeout=30)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        web_url = data.get("url")
-                        msg = "Report shared to Discord!"
-                        if web_url: msg += f" View at: {web_url}"
-                        if self.discord_viewer_win:
-                            self.discord_viewer_win._append_log("System", msg)
-                    else:
-                        if self.discord_viewer_win:
-                            self.discord_viewer_win._append_log("System", f"Upload Failed ({resp.status_code}): {resp.text}")
+                    print(f"[Report] Uploading to {report_endpoint}")
+                    # Use a session with retries for better SSL reliability on Render
+                    from requests.adapters import HTTPAdapter
+                    from urllib3.util.retry import Retry
+                    
+                    session = requests.Session()
+                    retry_strategy = Retry(
+                        total=3,
+                        backoff_factor=1,
+                        status_forcelist=[429, 500, 502, 503, 504],
+                        allowed_methods=["POST"]
+                    )
+                    adapter = HTTPAdapter(max_retries=retry_strategy)
+                    session.mount("https://", adapter)
+                    
+                    try:
+                        resp = session.post(report_endpoint, json=payload, timeout=60)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            web_url = data.get("url")
+                            msg = "Report shared to Discord!"
+                            if web_url: msg += f" View at: {web_url}"
+                            if self.discord_viewer_win:
+                                self.discord_viewer_win._append_log("System", msg)
+                            print(f"[Report] Success: {web_url}")
+                        else:
+                            error_msg = f"Upload Failed ({resp.status_code}): {resp.text}"
+                            if self.discord_viewer_win:
+                                self.discord_viewer_win._append_log("System", error_msg)
+                            print(f"[Report] {error_msg}")
+                    except requests.exceptions.SSLError as se:
+                        print(f"[Report] SSL Error encountered, retrying without JSON (using multipart)...")
+                        # Fallback to multipart/form-data if JSON+SSL is being picky
+                        resp = session.post(report_endpoint, data={
+                            "app_id": payload["app_id"],
+                            "relay_token": payload["relay_token"],
+                            "filename": payload["filename"],
+                            "author_name": payload["author_name"],
+                            "total_dmg": str(payload["total_dmg"]),
+                            "total_heal": str(payload["total_heal"]),
+                            "total_kd": str(payload["total_kd"])
+                        }, files={"content": payload["content"]}, timeout=60)
+                        
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            web_url = data.get("url")
+                            if self.discord_viewer_win:
+                                self.discord_viewer_win._append_log("System", f"Report shared via fallback! View: {web_url}")
+                        else:
+                            raise se
                 else:
                     if self.discord_viewer_win:
                         self.discord_viewer_win._append_log("System", "Not linked to Discord. Report saved locally.")
+                    print("[Report] Not verified, skipping upload.")
 
                 # Always show locally too
-                if os.path.exists(report_path):
-                    os.startfile(report_path)
+                # if os.path.exists(report_path):
+                #     os.startfile(report_path)
                     
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 print(f"Report Generation Error: {e}")
                 if self.discord_viewer_win:
                     self.discord_viewer_win._append_log("System", f"Report Error: {e}")

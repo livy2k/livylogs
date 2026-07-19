@@ -5,7 +5,11 @@ import random
 import os
 
 class MockTracker:
-    def __init__(self):
+    def __init__(self, history=None):
+        if history:
+            self.history = history
+            return
+
         random.seed(42)
 
         friendly_names = [
@@ -590,9 +594,14 @@ class MockTracker:
         """
         return html
 
+    def generate_html_report_to_file(self):
+        html = self.generate_html_report()
+        path = os.path.join(os.getcwd(), "example_combat_report.html")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(html)
+        return path
+
 if __name__ == "__main__":
     tracker = MockTracker()
-    report_html = tracker.generate_html_report()
-    with open("example_combat_report.html", "w") as f:
-        f.write(report_html)
-    print("Example report generated: example_combat_report.html")
+    report_path = tracker.generate_html_report_to_file()
+    print(f"Example report generated: {report_path}")

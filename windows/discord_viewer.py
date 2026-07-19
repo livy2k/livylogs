@@ -59,6 +59,10 @@ class DiscordViewerWindow(BasePopoutWindow):
             tk.Button(main_frame, text="OPEN OPTIONS", command=self.app.open_options, 
                       bg=ACCENT_RED, fg="white", font=("Lilita One", 10), padx=20, pady=5).pack()
         else:
+            # Refresh session-based tokens
+            self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
+            self.app_id = self.app.app_id
+            
             # Linked UI
             header_frame = tk.Frame(main_frame, bg=WINDOW_BG)
             header_frame.pack(fill=tk.X)
@@ -87,9 +91,15 @@ class DiscordViewerWindow(BasePopoutWindow):
                 self.log_text.insert(tk.END, old_content + "\n")
                 self.log_text.see(tk.END)
                 self.log_text.config(state=tk.DISABLED)
+                
+                # Start polling immediately to catch up
+                # and clear old content first if we want a fresh view
+                self._last_msg_ts = 0 # Reset to fetch history
+                self._start_polling()
             else:
                 self._append_log("System", "Discord Relay connection active.")
                 self._append_log("System", "Pulses will appear here as they are sent.")
+                # Polling will start via _append_log logic
 
             # Chat Input Area
             input_frame = tk.Frame(main_frame, bg=WINDOW_BG)
@@ -244,6 +254,9 @@ class DiscordViewerWindow(BasePopoutWindow):
                 data = resp.json()
                 if data.get("status") == "success":
                     messages = data.get("messages", [])
+                    # Group messages by timestamp to keep chronological order
+                    # and process content/attachments together.
+                    grouped_messages = []
                     for msg in messages:
                         ts = msg.get("timestamp", 0)
                         if ts > self._last_msg_ts:
@@ -255,19 +268,36 @@ class DiscordViewerWindow(BasePopoutWindow):
                             if attachments:
                                 print(f"[DiscordViewer] Found {len(attachments)} attachments in message from {author}")
 
-                            if attachments:
-                                for att in attachments:
-                                    self.window.after(0, lambda a=author, u=att, t=ts: self._fetch_and_display_image(a, u, t))
+                            # Pack all components of a single message to ensure they stay together
+                            grouped_messages.append({
+                                "ts": ts,
+                                "author": author,
+                                "content": content,
+                                "attachments": attachments
+                            })
                             
-                            if content:
-                                self.window.after(0, lambda a=author, c=content, t=ts: self._append_log(a, c, timestamp=t))
-                            
-                            self._last_msg_ts = ts
+                    # Sort by timestamp (Discord API should return chronological, but safety first)
+                    grouped_messages.sort(key=lambda x: x["ts"])
+                    
+                    for m in grouped_messages:
+                        # Process attachments first, then content? 
+                        # Actually, Discord usually shows content THEN attachments.
+                        if m["content"]:
+                            self.window.after(0, lambda a=m["author"], c=m["content"], t=m["ts"]: self._append_log(a, c, timestamp=t))
+                        
+                        if m["attachments"]:
+                            for att in m["attachments"]:
+                                self.window.after(0, lambda a=m["author"], u=att, t=m["ts"]: self._fetch_and_display_image(a, u, t))
+                        
+                        self._last_msg_ts = m["ts"]
             elif resp.status_code == 403:
                 if not getattr(self, '_auth_error_shown', False):
                     self.window.after(0, lambda: self._append_log("System", "Error 403: Discord link is invalid or expired. Please relink in Options."))
                     self._auth_error_shown = True
                 print(f"[DiscordViewer] Message fetch failed: 403 (Forbidden)")
+                # Force refresh state from config in case it was unlinked elsewhere
+                self.relay_token = self.app.config.get("DiscordRelay", "relay_token", fallback="")
+                self.is_verified = self.app.config.getboolean("DiscordRelay", "is_verified", fallback=False)
             else:
                 if resp.status_code != 404: # Ignore not found errors if no messages yet
                     print(f"[DiscordViewer] Message fetch failed: {resp.status_code}")
@@ -310,6 +340,20 @@ class DiscordViewerWindow(BasePopoutWindow):
         if not msg: return
         
         self.chat_message.set("")
+        
+        # Check for command triggers
+        if msg == "d911":
+            self.app.d911_active = not self.app.d911_active
+            status = "ENABLED" if self.app.d911_active else "DISABLED"
+            self._append_log("System", f"Discord PvP Pulse {status} via command.")
+            return
+        if msg == "d999":
+            self.app.generate_report_from_combatlog(is_test=False)
+            return
+        if msg == "dg001":
+            self.app.generate_report_from_combatlog(is_test=True)
+            return
+
         # Add to local log immediately
         self._append_log("You", msg)
         

@@ -50,7 +50,7 @@
                             <div class="w-10 h-1 rounded-full bg-primary shadow-[0_0_15px_#00ecff]"></div>
                             <h1 class="text-3xl font-black text-primary tracking-[0.2em] glow-text-blue uppercase">Livius Tactical Overlay</h1>
                         </div>
-                        <p class="text-[10px] font-bold tracking-[0.4em] text-primary/60 uppercase ml-14">Sector 7-B Combat Data Feed • Encrypted Link Active</p>
+                        <p class="text-[10px] font-bold tracking-[0.4em] text-primary/60 uppercase ml-14">Sector 7-B Combat Data Feed â€¢ Encrypted Link Active</p>
                     </div>
                     <div class="flex items-center gap-6 relative z-10">
                         <div class="flex flex-col items-end">
@@ -1653,7 +1653,7 @@
                         <div class="text-[8px] font-black tracking-[0.4em] uppercase text-primary/30">Livius Analysis Engine v3.0 // Tactical Overlay</div>
                         <div class="w-1.5 h-1.5 rounded-full bg-primary/20 animate-pulse"></div>
                     </div>
-                    <div class="text-[8px] font-mono font-bold tracking-widest uppercase opacity-20">Cycle Timestamp: 2026-07-18 14:58:48</div>
+                    <div class="text-[8px] font-mono font-bold tracking-widest uppercase opacity-20">Cycle Timestamp: 2026-07-19 01:27:47</div>
                 </div>
             </div>
             <div class="event-detail-overlay" id="eventDetailOverlay"></div>
@@ -1737,7 +1737,7 @@
                             }
                             const top = sources.slice(0, 3)
                                 .map(([who, amount]) => `<span class="font-bold">${who}</span> ${Number(amount || 0).toLocaleString()}`)
-                                .join(' • ');
+                                .join(' â€¢ ');
                             return `<div class="${cssClass}">${label} Sources: ${top}</div>`;
                         };
 
@@ -1766,7 +1766,7 @@
                             const healSources = renderSources(sample.h_sources, 'text-success', 'HEAL');
                             tooltip.innerHTML =
                                 `<div class="text-primary font-bold mb-1">${player} @ T+${timeAtCursor.toFixed(1)}s</div>` +
-                                `<div class="mb-1"><span class="text-error">DMG: ${Number(sample.d || 0).toLocaleString()}</span> • <span class="text-success">HEAL: ${Number(sample.h || 0).toLocaleString()}</span></div>` +
+                                `<div class="mb-1"><span class="text-error">DMG: ${Number(sample.d || 0).toLocaleString()}</span> â€¢ <span class="text-success">HEAL: ${Number(sample.h || 0).toLocaleString()}</span></div>` +
                                 `<div class="text-[8px] space-y-0.5">${dmgSources}${healSources}</div>`;
                         });
 

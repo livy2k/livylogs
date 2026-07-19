@@ -539,102 +539,118 @@ class CombatTracker:
         """Generate, upload, and share the combat report."""
         print(f"[Report] finalize_combat called (test={is_test})")
         
-        # 1. Start-up checks
         try:
-            # Use wait_for instead of asyncio.timeout for Python < 3.11 compatibility
-            result = await asyncio.wait_for(
-                self._acquire_lock_and_process(channel, author_name_override, is_test, interaction),
-                timeout=5.0
-            )
-            author_name = result["author_name"]
-            total_dmg = result["total_dmg"]
-            total_heal = result["total_heal"]
-            total_kd = result["total_kd"]
-            html_content = result["html_content"]
-        except asyncio.TimeoutError:
-            print("[Report] ERROR: Could not acquire lock.")
-            if interaction:
-                await interaction.followup.send("❌ Error: Combat data is currently busy.", ephemeral=True)
-            return "Lock timeout"
+            # 1. Start-up checks
+            try:
+                # Use wait_for instead of asyncio.timeout for Python < 3.11 compatibility
+                result = await asyncio.wait_for(
+                    self._acquire_lock_and_process(channel, author_name_override, is_test, interaction),
+                    timeout=5.0
+                )
+                author_name = result["author_name"]
+                total_dmg = result["total_dmg"]
+                total_heal = result["total_heal"]
+                total_kd = result["total_kd"]
+                html_content = result["html_content"]
+            except asyncio.TimeoutError:
+                print("[Report] ERROR: Could not acquire lock.")
+                if interaction:
+                    await interaction.followup.send("❌ Error: Combat data is currently busy.", ephemeral=True)
+                return "Lock timeout"
+            except Exception as e:
+                print(f"[Report] ERROR in lock acquisition: {e}")
+                traceback.print_exc()
+                if interaction:
+                    await interaction.followup.send(f"❌ Error acquiring combat data: {e}", ephemeral=True)
+                return f"Lock error: {e}"
 
-        # 3. GitHub Upload with timeout
-        report_url = None
-        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
-        github_path = f"reports/{'test_' if is_test else ''}{safe_name}_{ts}.html"
-        
-        print(f"[Report] Uploading to GitHub: {github_path}")
-        try:
-            await asyncio.wait_for(
-                self.publisher._upload_to_github(
-                    github_path, 
-                    html_content, 
-                    f"{'Test ' if is_test else ''}Combat Report for {author_name}"
-                ),
-                timeout=10.0
+            # 3. GitHub Upload with timeout
+            report_url = None
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
+            github_path = f"reports/{'test_' if is_test else ''}{safe_name}_{ts}.html"
+            
+            print(f"[Report] Uploading to GitHub: {github_path}")
+            try:
+                await asyncio.wait_for(
+                    self.publisher._upload_to_github(
+                        github_path, 
+                        html_content, 
+                        f"{'Test ' if is_test else ''}Combat Report for {author_name}"
+                    ),
+                    timeout=10.0
+                )
+                
+                # Form URL
+                if self.publisher.domain:
+                    clean_domain = self.publisher.domain.replace("https://", "").replace("http://", "").strip().strip("/")
+                    report_url = f"https://{clean_domain}/{github_path}"
+                elif self.publisher.repo and "/" in self.publisher.repo:
+                    parts = self.publisher.repo.strip().strip("/").split('/')
+                    if len(parts) >= 2:
+                        report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
+                
+                if report_url:
+                    report_url = report_url.replace(" ", "%20")
+                    if not report_url.startswith("http"): report_url = f"https://{report_url}"
+                    print(f"[Report] Final URL: {report_url}")
+            except asyncio.TimeoutError:
+                print("[Report] GitHub upload timed out. Proceeding with attachment.")
+            except Exception as e:
+                print(f"[Report] GitHub upload error: {e}")
+
+            # 4. Final Delivery
+            print("[Report] Delivering to Discord...")
+            embed = discord.Embed(
+                title=f"{'🧪 Test' if is_test else '🏆'} Combat Report: {author_name}",
+                description="A tactical breakdown has been generated for the encounter.",
+                color=discord.Color.blue() if is_test else discord.Color.green(),
+                timestamp=datetime.datetime.now()
             )
+            embed.add_field(name="⚔️ Damage", value=f"{total_dmg:,}", inline=True)
+            embed.add_field(name="💉 Healing", value=f"{total_heal:,}", inline=True)
+            embed.add_field(name="💀 KDs", value=str(total_kd), inline=True)
+
+            try:
+                if report_url:
+                    embed.url = report_url
+                    embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**", inline=False)
+                    if interaction:
+                        try:
+                            await interaction.followup.send(embed=embed)
+                        except discord.NotFound:
+                            await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed)
+                    else:
+                        await channel.send(embed=embed)
+                else:
+                    file = discord.File(io.BytesIO(html_content.encode()), filename=f"report_{ts}.html")
+                    embed.add_field(name="📎 Attached Report", value="Interactive report is attached (upload skipped/failed).", inline=False)
+                    if interaction:
+                        try:
+                            await interaction.followup.send(embed=embed, file=file)
+                        except discord.NotFound:
+                            await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, file=file)
+                    else:
+                        await channel.send(embed=embed, file=file)
+                print("[Report] Delivery complete.")
+            except Exception as send_e:
+                print(f"[Report] Final delivery failed: {send_e}")
+                if interaction:
+                    try:
+                        await interaction.followup.send(f"❌ Delivery error: {send_e}")
+                    except:
+                        pass
             
-            # Form URL
-            if self.publisher.domain:
-                clean_domain = self.publisher.domain.replace("https://", "").replace("http://", "").strip().strip("/")
-                report_url = f"https://{clean_domain}/{github_path}"
-            elif self.publisher.repo and "/" in self.publisher.repo:
-                parts = self.publisher.repo.strip().strip("/").split('/')
-                if len(parts) >= 2:
-                    report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
-            
-            if report_url:
-                report_url = report_url.replace(" ", "%20")
-                if not report_url.startswith("http"): report_url = f"https://{report_url}"
-                print(f"[Report] Final URL: {report_url}")
-        except asyncio.TimeoutError:
-            print("[Report] GitHub upload timed out. Proceeding with attachment.")
+            return True
         except Exception as e:
-            print(f"[Report] GitHub upload error: {e}")
-
-        # 4. Final Delivery
-        print("[Report] Delivering to Discord...")
-        embed = discord.Embed(
-            title=f"{'🧪 Test' if is_test else '🏆'} Combat Report: {author_name}",
-            description="A tactical breakdown has been generated for the encounter.",
-            color=discord.Color.blue() if is_test else discord.Color.green(),
-            timestamp=datetime.datetime.now()
-        )
-        embed.add_field(name="⚔️ Damage", value=f"{total_dmg:,}", inline=True)
-        embed.add_field(name="💉 Healing", value=f"{total_heal:,}", inline=True)
-        embed.add_field(name="💀 KDs", value=str(total_kd), inline=True)
-
-        try:
-            if report_url:
-                embed.url = report_url
-                embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**", inline=False)
-                if interaction:
-                    try:
-                        await interaction.followup.send(embed=embed)
-                    except discord.NotFound:
-                        await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed)
-                else:
-                    await channel.send(embed=embed)
-            else:
-                file = discord.File(io.BytesIO(html_content.encode()), filename=f"report_{ts}.html")
-                embed.add_field(name="📎 Attached Report", value="Interactive report is attached (upload skipped/failed).", inline=False)
-                if interaction:
-                    try:
-                        await interaction.followup.send(embed=embed, file=file)
-                    except discord.NotFound:
-                        await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, file=file)
-                else:
-                    await channel.send(embed=embed, file=file)
-            print("[Report] Delivery complete.")
-        except Exception as send_e:
-            print(f"[Report] Final delivery failed: {send_e}")
+            print(f"[Report] CRITICAL ERROR in finalize_combat: {e}")
+            traceback.print_exc()
             if interaction:
                 try:
-                    await interaction.followup.send(f"❌ Delivery error: {send_e}")
+                    await interaction.followup.send(f"❌ Critical error generating report: {e}", ephemeral=True)
                 except:
                     pass
-        
-        return True
+            return f"Critical error: {e}"
 
     async def _acquire_lock_and_process(self, channel, author_name_override, is_test, interaction):
         """Helper method to acquire lock and process combat data.

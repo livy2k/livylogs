@@ -878,26 +878,58 @@ class CombatTracker:
                     await interaction.followup.send(f"❌ Error acquiring combat data: {e}", ephemeral=True)
                 return f"Lock error: {e}"
 
-            # 3. Upload to temporary hosting
+            # 3. Upload to GitHub Pages
             report_url = None
             ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
             filename = f"{'test_' if is_test else ''}{safe_name}_{ts}.html"
+            github_path = f"reports/{filename}"
             
-            print("[Report] Uploading to temporary hosting...")
+            print("[Report] Uploading to GitHub Pages...")
             try:
-                report_url = await asyncio.wait_for(
-                    self._upload_to_temp_host(html_content, filename),
+                await asyncio.wait_for(
+                    self.publisher._upload_to_github(
+                        github_path,
+                        html_content,
+                        f"{'Test ' if is_test else ''}Combat Report for {author_name}"
+                    ),
                     timeout=15.0
                 )
+                
+                # Construct GitHub Pages URL
+                if self.publisher.domain:
+                    clean_domain = self.publisher.domain.replace("https://", "").replace("http://", "").strip().strip("/")
+                    if clean_domain:
+                        report_url = f"https://{clean_domain}/{github_path}"
+                elif self.publisher.repo and "/" in self.publisher.repo:
+                    parts = self.publisher.repo.strip().strip("/").split('/')
+                    if len(parts) >= 2:
+                        report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
+                
                 if report_url:
+                    report_url = report_url.replace(" ", "%20")
+                    if not report_url.startswith("http"):
+                        report_url = f"https://{report_url}"
                     print(f"[Report] Uploaded successfully: {report_url}")
+                    
+                    # Update reports index
+                    report_data = {
+                        "filename": filename,
+                        "title": f"{'Test ' if is_test else ''}Combat Report: {author_name}",
+                        "author": author_name,
+                        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "total_dmg": total_dmg,
+                        "total_heal": total_heal,
+                        "total_kd": total_kd,
+                        "url": report_url
+                    }
+                    await self.publisher._update_reports_index(report_data)
                 else:
-                    print("[Report] All hosting services failed.")
+                    print("[Report] Could not construct GitHub Pages URL.")
             except asyncio.TimeoutError:
-                print("[Report] Temp host upload timed out.")
+                print("[Report] GitHub upload timed out.")
             except Exception as e:
-                print(f"[Report] Temp host upload error: {e}")
+                print(f"[Report] GitHub upload error: {e}")
                 traceback.print_exc()
 
             # 4. Final Delivery

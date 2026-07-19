@@ -657,7 +657,18 @@ class CombatTracker:
             embed.add_field(name="💀 KDs", value=str(total_kd), inline=True)
 
             try:
-                if report_url:
+                # Validate URL before using it in embed
+                is_valid_url = False
+                if report_url and isinstance(report_url, str):
+                    report_url = report_url.strip()
+                    # Must start with http:// or https://, contain a dot, and be longer than 12 chars
+                    if report_url.startswith(("http://", "https://")) and "." in report_url and len(report_url) > 12:
+                        # Further validation: check domain part has a dot and is not empty
+                        domain_part = report_url.split("//")[-1].split("/")[0]
+                        if "." in domain_part and len(domain_part) > 3:
+                            is_valid_url = True
+                
+                if is_valid_url:
                     embed.url = report_url
                     embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**", inline=False)
                     if interaction:

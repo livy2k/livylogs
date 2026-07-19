@@ -1026,15 +1026,15 @@ class CombatTracker:
                     else:
                         await channel.send(embed=embed, files=files)
             print("[Report] Delivery complete.")
-            except Exception as send_e:
-                print(f"[Report] Final delivery failed: {send_e}")
-                if interaction:
-                    try:
-                        await interaction.followup.send(f"❌ Delivery error: {send_e}")
-                    except:
-                        pass
-            
-            return True
+        except Exception as send_e:
+            print(f"[Report] Final delivery failed: {send_e}")
+            if interaction:
+                try:
+                    await interaction.followup.send(f"❌ Delivery error: {send_e}")
+                except:
+                    pass
+        
+        return True
         except Exception as e:
             print(f"[Report] CRITICAL ERROR in finalize_combat: {e}")
             traceback.print_exc()

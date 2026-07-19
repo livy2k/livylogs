@@ -1467,6 +1467,17 @@ async def test_report(interaction: discord.Interaction):
         print(f"[Command] /gd001 error: {e}")
         await interaction.followup.send(f"❌ Error generating test report: {e}", ephemeral=True)
 
+@bot.tree.command(name="setupwebsite", description="Upload the liviusweb website files to GitHub")
+async def setup_website(interaction: discord.Interaction):
+    print(f"[Command] /setupwebsite used by {interaction.user}")
+    await interaction.response.defer(ephemeral=True)
+    try:
+        await bot.tracker.publisher._ensure_website_files()
+        await interaction.followup.send("✅ Website files uploaded to GitHub successfully.", ephemeral=True)
+    except Exception as e:
+        print(f"[Command] /setupwebsite error: {e}")
+        await interaction.followup.send(f"❌ Error uploading website files: {e}", ephemeral=True)
+
 @bot.tree.command(name="reset", description="Clear combat data for this channel")
 async def reset_combat(interaction: discord.Interaction):
     async with bot.tracker.lock:

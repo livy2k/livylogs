@@ -413,8 +413,12 @@ class GitHubPublisher:
         if self._repo_exists is not None:
             return self._repo_exists
         
-        if not self.token or not self.repo:
-            print("[GitHub] Cannot check repository: missing token or repo")
+        if not self.token:
+            print("[GitHub] Cannot check repository: GITHUB_TOKEN is not set.")
+            self._repo_exists = False
+            return False
+        if not self.repo:
+            print("[GitHub] Cannot check repository: GITHUB_REPO is not set.")
             self._repo_exists = False
             return False
         
@@ -424,9 +428,12 @@ class GitHubPublisher:
             "Accept": "application/vnd.github.v3+json"
         }
         
+        print(f"[GitHub] Checking repository existence at {url}...")
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, headers=headers) as resp:
+                    response_text = await resp.text()
+                    print(f"[GitHub] Repository check response status: {resp.status}")
                     if resp.status == 200:
                         print(f"[GitHub] Repository {self.repo} exists and is accessible.")
                         self._repo_exists = True
@@ -434,15 +441,26 @@ class GitHubPublisher:
                     elif resp.status == 404:
                         print(f"[GitHub] ERROR: Repository {self.repo} does not exist or is not accessible.")
                         print(f"[GitHub] Please create the repository at https://github.com/{self.repo}")
+                        print(f"[GitHub] Response: {response_text[:200]}")
+                        self._repo_exists = False
+                        return False
+                    elif resp.status == 401:
+                        print(f"[GitHub] ERROR: Unauthorized. Check your GITHUB_TOKEN.")
+                        print(f"[GitHub] Response: {response_text[:200]}")
+                        self._repo_exists = False
+                        return False
+                    elif resp.status == 403:
+                        print(f"[GitHub] ERROR: Forbidden. Token may lack repo scope.")
+                        print(f"[GitHub] Response: {response_text[:200]}")
                         self._repo_exists = False
                         return False
                     else:
-                        error_text = await resp.text()
-                        print(f"[GitHub] Error checking repository ({resp.status}): {error_text}")
+                        print(f"[GitHub] Error checking repository ({resp.status}): {response_text[:200]}")
                         self._repo_exists = False
                         return False
         except Exception as e:
             print(f"[GitHub] Exception checking repository: {e}")
+            traceback.print_exc()
             self._repo_exists = False
             return False
 
@@ -467,20 +485,25 @@ class GitHubPublisher:
             "Accept": "application/vnd.github.v3+json"
         }
         
+        print(f"[GitHub] Upload URL: {url}")
+        print(f"[GitHub] Branch: {self.branch}")
+        print(f"[GitHub] Token length: {len(self.token)} chars")
+        
         try:
             async with aiohttp.ClientSession() as session:
                 # 1. Get current SHA if file exists
                 sha = None
                 print(f"[GitHub] Checking if file exists at {url}...")
                 async with session.get(url, headers=headers) as resp:
+                    response_text = await resp.text()
+                    print(f"[GitHub] File check response status: {resp.status}")
                     if resp.status == 200:
                         sha = (await resp.json()).get("sha")
                         print(f"[GitHub] File exists. SHA: {sha}")
                     elif resp.status == 404:
                         print("[GitHub] File does not exist (this is normal for new reports).")
                     else:
-                        error_text = await resp.text()
-                        print(f"[GitHub] Error checking file existence ({resp.status}): {error_text}")
+                        print(f"[GitHub] Error checking file existence ({resp.status}): {response_text[:200]}")
                 
                 # 2. Upload/Update
                 payload = {
@@ -493,11 +516,12 @@ class GitHubPublisher:
                 
                 print(f"[GitHub] Uploading to branch: {self.branch}...")
                 async with session.put(url, headers=headers, json=payload) as resp:
+                    response_text = await resp.text()
+                    print(f"[GitHub] Upload response status: {resp.status}")
                     if resp.status in (200, 201):
                         print(f"[GitHub] SUCCESS: Uploaded {path} to branch {self.branch}")
                     else:
-                        error_text = await resp.text()
-                        print(f"[GitHub] ERROR: Upload failed ({resp.status}): {error_text}")
+                        print(f"[GitHub] ERROR: Upload failed ({resp.status}): {response_text[:500]}")
         except Exception as e:
             print(f"[GitHub] CRITICAL EXCEPTION during upload: {e}")
             traceback.print_exc()
@@ -643,6 +667,7 @@ class CombatTracker:
                 print("[Report] GitHub upload timed out. Proceeding with attachment.")
             except Exception as e:
                 print(f"[Report] GitHub upload error: {e}")
+                traceback.print_exc()
 
             # 4. Final Delivery
             print("[Report] Delivering to Discord...")

@@ -945,17 +945,27 @@ class CombatTracker:
                 print(f"[Report] Temp host upload error: {e}")
                 traceback.print_exc()
 
-            # 4. Generate chart image for preview
-            print("[Report] Generating chart image...")
-            chart_img = None
+            # 4. Try to upload to temporary hosting for interactive link
+            report_url = None
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_name = re.sub(r'[^a-zA-Z0-9]', '_', author_name)
+            filename = f"{'test_' if is_test else ''}{safe_name}_{ts}.html"
+            
+            print("[Report] Uploading to temporary hosting...")
             try:
-                chart_img = await asyncio.wait_for(
-                    asyncio.to_thread(self.generate_chart),
-                    timeout=10.0
+                report_url = await asyncio.wait_for(
+                    self._upload_to_temp_host(html_content, filename),
+                    timeout=15.0
                 )
+                if report_url:
+                    print(f"[Report] Uploaded successfully: {report_url}")
+                else:
+                    print("[Report] All hosting services failed.")
+            except asyncio.TimeoutError:
+                print("[Report] Temp host upload timed out.")
             except Exception as e:
-                print(f"[Report] Chart generation error: {e}")
-                chart_img = None
+                print(f"[Report] Temp host upload error: {e}")
+                traceback.print_exc()
 
             # 5. Final Delivery
             print("[Report] Delivering to Discord...")
@@ -971,36 +981,51 @@ class CombatTracker:
 
             files = []
             
-            # Add chart image if available
-            if chart_img:
-                image_binary = io.BytesIO()
-                # Resize to fit Discord embed (max 400x300)
-                chart_img.thumbnail((400, 300), Image.Resampling.LANCZOS)
-                chart_img.save(image_binary, 'PNG')
-                image_binary.seek(0)
-                files.append(discord.File(fp=image_binary, filename='combat_chart.png'))
-                embed.set_image(url="attachment://combat_chart.png")
-
-            # Add HTML report as attachment
-            html_bytes = html_content.encode()
-            file_size_mb = len(html_bytes) / (1024 * 1024)
+            # Validate URL before using it in embed
+            is_valid_url = False
+            if report_url and isinstance(report_url, str):
+                report_url = report_url.strip()
+                if report_url.startswith(("http://", "https://")) and "." in report_url and len(report_url) > 12:
+                    domain_part = report_url.split("//")[-1].split("/")[0]
+                    if "." in domain_part and len(domain_part) > 3:
+                        is_valid_url = True
             
-            if file_size_mb > 24:
-                print(f"[Report] HTML file too large ({file_size_mb:.1f}MB). Sending as text message instead.")
-                embed.add_field(name="📎 Report Too Large", value=f"The report is {file_size_mb:.1f}MB which exceeds Discord's attachment limit.", inline=False)
-            else:
-                files.append(discord.File(io.BytesIO(html_bytes), filename=f"report_{ts}.html"))
-                embed.add_field(name="📎 Interactive Report", value=f"Download `report_{ts}.html` and open in any browser for the full interactive experience.", inline=False)
-
-            try:
+            if is_valid_url:
+                embed.url = report_url
+                embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**", inline=False)
                 if interaction:
                     try:
-                        await interaction.followup.send(embed=embed, files=files)
+                        await interaction.followup.send(embed=embed)
                     except discord.NotFound:
-                        await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, files=files)
+                        await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed)
                 else:
-                    await channel.send(embed=embed, files=files)
-                print("[Report] Delivery complete.")
+                    await channel.send(embed=embed)
+            else:
+                # Add HTML report as attachment
+                html_bytes = html_content.encode()
+                file_size_mb = len(html_bytes) / (1024 * 1024)
+                
+                if file_size_mb > 24:
+                    print(f"[Report] HTML file too large ({file_size_mb:.1f}MB). Sending as text message instead.")
+                    embed.add_field(name="📎 Report Too Large", value=f"The report is {file_size_mb:.1f}MB which exceeds Discord's attachment limit.", inline=False)
+                    if interaction:
+                        try:
+                            await interaction.followup.send(embed=embed)
+                        except discord.NotFound:
+                            await channel.send(embed=embed)
+                    else:
+                        await channel.send(embed=embed)
+                else:
+                    files.append(discord.File(io.BytesIO(html_bytes), filename=f"report_{ts}.html"))
+                    embed.add_field(name="📎 Interactive Report", value=f"Download `report_{ts}.html` and open in any browser for the full interactive experience.", inline=False)
+                    if interaction:
+                        try:
+                            await interaction.followup.send(embed=embed, files=files)
+                        except discord.NotFound:
+                            await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, files=files)
+                    else:
+                        await channel.send(embed=embed, files=files)
+            print("[Report] Delivery complete.")
             except Exception as send_e:
                 print(f"[Report] Final delivery failed: {send_e}")
                 if interaction:

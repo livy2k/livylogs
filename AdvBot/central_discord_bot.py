@@ -390,7 +390,7 @@ class CentralRelayBot(discord.Client):
                         if is_valid_url:
                             print(f"[Report] Assigning valid URL to embed: {report_url}")
                             embed.url = report_url
-                            embed.add_field(name="🌐 Interactive Web View", value=f"**[Click Here to Open Report]({report_url})**", inline=False)
+                            embed.add_field(name="🌐 Interactive Web View", value=f"**[Click Here to Open Report]({report_url})**\n{report_url}", inline=False)
                             
                             hosting_provider = "GitHub"
                             if self.tracker.publisher.domain:
@@ -411,6 +411,10 @@ class CentralRelayBot(discord.Client):
                             embed.add_field(name="📎 Attached Report", value=f"Open the attached file `{safe_filename}` in any web browser to view the full interactive report.", inline=False)
                             embed.set_footer(text="LivyLogs • Direct File Delivery")
                             await channel.send(embed=embed, file=file)
+                            
+                            # If we have a URL but it failed validation, still mention it
+                            if report_url and not is_valid_url:
+                                await channel.send(f"📎 **Report URL** (may not be accessible yet): {report_url}")
 
                         if self.tracker and self.tracker.publisher:
                             if not self.tracker.publisher.token or not self.tracker.publisher.repo:
@@ -1036,7 +1040,7 @@ class CombatTracker:
             
             if is_valid_url:
                 embed.url = report_url
-                embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**", inline=False)
+                embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**\n{report_url}", inline=False)
                 if interaction:
                     try:
                         await interaction.followup.send(embed=embed)
@@ -1069,6 +1073,10 @@ class CombatTracker:
                             await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, files=files)
                     else:
                         await channel.send(embed=embed, files=files)
+                    
+                    # If we have a URL but it failed validation, still mention it
+                    if report_url and not is_valid_url:
+                        await channel.send(f"📎 **Report URL** (may not be accessible yet): {report_url}")
             print("[Report] Delivery complete.")
             return True
         except Exception as e:

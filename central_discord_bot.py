@@ -805,9 +805,11 @@ class GitHubPublisher:
                         print(f"[GitHub] SUCCESS: Uploaded {path} to branch {self.branch}")
                     else:
                         print(f"[GitHub] ERROR: Upload failed ({resp.status}): {response_text[:500]}")
+                        # Don't raise exception, just log it - the caller will still try to construct URL
         except Exception as e:
             print(f"[GitHub] CRITICAL EXCEPTION during upload: {e}")
             traceback.print_exc()
+            # Don't raise exception, just log it - the caller will still try to construct URL
 
 # --- COMBAT TRACKER ---
 class CombatTracker:
@@ -972,7 +974,7 @@ class CombatTracker:
                 )
                 
                 # Construct GitHub Pages URL
-                if self.publisher.domain:
+                if self.publisher.domain and self.publisher.domain.strip():
                     clean_domain = self.publisher.domain.replace("https://", "").replace("http://", "").strip().strip("/")
                     if clean_domain:
                         report_url = f"https://{clean_domain}/{github_path}"
@@ -1001,11 +1003,29 @@ class CombatTracker:
                     await self.publisher._update_reports_index(report_data)
                 else:
                     print("[Report] Could not construct GitHub Pages URL.")
+                    # Try to construct URL even if upload failed (for debugging)
+                    if self.publisher.repo and "/" in self.publisher.repo:
+                        parts = self.publisher.repo.strip().strip("/").split('/')
+                        if len(parts) >= 2:
+                            report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
+                            print(f"[Report] Constructed fallback URL: {report_url}")
             except asyncio.TimeoutError:
                 print("[Report] GitHub upload timed out.")
+                # Try to construct URL anyway for debugging
+                if self.publisher.repo and "/" in self.publisher.repo:
+                    parts = self.publisher.repo.strip().strip("/").split('/')
+                    if len(parts) >= 2:
+                        report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
+                        print(f"[Report] Constructed fallback URL after timeout: {report_url}")
             except Exception as e:
                 print(f"[Report] GitHub upload error: {e}")
                 traceback.print_exc()
+                # Try to construct URL anyway for debugging
+                if self.publisher.repo and "/" in self.publisher.repo:
+                    parts = self.publisher.repo.strip().strip("/").split('/')
+                    if len(parts) >= 2:
+                        report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
+                        print(f"[Report] Constructed fallback URL after error: {report_url}")
 
             # 4. Final Delivery
             print("[Report] Delivering to Discord...")
@@ -1032,7 +1052,7 @@ class CombatTracker:
             
             if is_valid_url:
                 embed.url = report_url
-                embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**", inline=False)
+                embed.add_field(name="🌐 Interactive Web View", value=f"**[Open Full Report]({report_url})**\n{report_url}", inline=False)
                 if interaction:
                     try:
                         await interaction.followup.send(embed=embed)
@@ -1065,6 +1085,10 @@ class CombatTracker:
                             await channel.send(content=f"{interaction.user.mention} here is your report:", embed=embed, files=files)
                     else:
                         await channel.send(embed=embed, files=files)
+                    
+                    # If we have a URL but it failed validation, still mention it
+                    if report_url and not is_valid_url:
+                        await channel.send(f"📎 **Report URL** (may not be accessible yet): {report_url}")
             print("[Report] Delivery complete.")
             return True
         except Exception as e:

@@ -496,16 +496,28 @@ class GitHubPublisher:
         self._repo_exists = None  # Cache for repository existence check
 
     async def _ensure_website_files(self):
-        """Upload the liviusweb website files to GitHub (overwrite if exists)."""
+        """Upload the website files to GitHub (overwrite if exists)."""
         if not self.token or not self.repo:
             print("[GitHub] Cannot upload website files: missing credentials")
             return
         
+        # Try to find the files in various locations
+        possible_dirs = ["liviusweb", "AdvBot/liviusweb", "."]
+        base_dir = None
+        for d in possible_dirs:
+            if os.path.exists(os.path.join(d, "index.html")):
+                base_dir = d
+                break
+        
+        if not base_dir:
+            print("[GitHub] Cannot find liviusweb directory with index.html")
+            return
+        
         files = {
-            "liviusweb/index.html": open("liviusweb/index.html", "rb").read().decode() if os.path.exists("liviusweb/index.html") else None,
-            "liviusweb/report.html": open("liviusweb/report.html", "rb").read().decode() if os.path.exists("liviusweb/report.html") else None,
-            "liviusweb/style.css": open("liviusweb/style.css", "rb").read().decode() if os.path.exists("liviusweb/style.css") else None,
-            "liviusweb/script.js": open("liviusweb/script.js", "rb").read().decode() if os.path.exists("liviusweb/script.js") else None
+            "index.html": open(os.path.join(base_dir, "index.html"), "rb").read().decode() if os.path.exists(os.path.join(base_dir, "index.html")) else None,
+            "style.css": open(os.path.join(base_dir, "style.css"), "rb").read().decode() if os.path.exists(os.path.join(base_dir, "style.css")) else None,
+            "script.js": open(os.path.join(base_dir, "script.js"), "rb").read().decode() if os.path.exists(os.path.join(base_dir, "script.js")) else None,
+            "reports.json": open(os.path.join(base_dir, "reports.json"), "rb").read().decode() if os.path.exists(os.path.join(base_dir, "reports.json")) else None
         }
         
         for path, content in files.items():

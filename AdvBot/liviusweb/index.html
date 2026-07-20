@@ -1,24 +1,197 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LivyLogs Combat Reports</title>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --starwars-blue: #00ecff; --starwars-red: #ff003c; --starwars-yellow: #ffe81f; }
+        body { font-family: 'JetBrains Mono', monospace; background-color: #05070a; background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #05070a 100%); }
+        h1, .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .hud-border { border: 1px solid rgba(0, 236, 255, 0.2); box-shadow: 0 0 15px rgba(0, 236, 255, 0.1); }
+        .glow-text-blue { text-shadow: 0 0 10px rgba(0, 236, 255, 0.5); }
+        .report-card { transition: all 0.3s; }
+        .report-card:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 236, 255, 0.2); }
+        .scanline { width: 100%; height: 100px; z-index: 5; background: linear-gradient(0deg, rgba(0, 236, 255, 0) 0%, rgba(0, 236, 255, 0.02) 50%, rgba(0, 236, 255, 0) 100%); position: absolute; animation: scan 8s linear infinite; pointer-events: none; }
+        @keyframes scan { from { top: -100px; } to { top: 100%; } }
+        .loading-spinner { border: 3px solid rgba(0, 236, 255, 0.1); border-top: 3px solid #00ecff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>LivyLogs Combat Reports</h1>
-        <p>Interactive tactical breakdowns from your Discord bot</p>
-    </header>
-    <main>
-        <div id="report-list">
-            <p class="loading">Loading reports...</p>
+<body class="min-h-screen p-4 md:p-8 text-slate-300">
+    <div class="max-w-[1800px] mx-auto relative">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-stretch mb-8 hud-border bg-black/60 backdrop-blur-md p-6 rounded-lg border-l-4 border-l-primary gap-6 relative overflow-hidden">
+            <div class="scanline"></div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="w-10 h-1 rounded-full bg-primary shadow-[0_0_15px_#00ecff]"></div>
+                    <h1 class="text-3xl font-black text-primary tracking-[0.2em] glow-text-blue uppercase">LivyLogs Combat Reports</h1>
+                </div>
+                <p class="text-[10px] font-bold tracking-[0.4em] text-primary/60 uppercase ml-14">Sector 7-B Combat Data Feed • Encrypted Link Active</p>
+            </div>
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="join hud-border bg-black/40">
+                    <input id="searchInput" type="text" placeholder="SEARCH REPORTS..." class="input input-bordered input-xs join-item bg-transparent border-none text-[9px] w-48 focus:outline-none" onkeyup="searchReports(event)">
+                    <button class="btn btn-primary btn-xs join-item" onclick="searchReports()">SEARCH</button>
+                </div>
+                <div class="w-px h-12 bg-white/10 mx-2"></div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[9px] font-black opacity-40 uppercase tracking-widest">Total Reports</span>
+                    <span id="totalReports" class="text-2xl font-orbitron font-black text-secondary glow-text-blue tracking-tighter">0</span>
+                </div>
+            </div>
         </div>
-    </main>
-    <footer>
-        <p>Powered by LivyLogs • Reports are automatically published from Discord</p>
-    </footer>
-    <script src="script.js"></script>
+
+        <!-- Report List View -->
+        <div id="reportList">
+            <div id="reportsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="loading-spinner"></div>
+            </div>
+            <div id="pagination" class="flex justify-center gap-2 mt-8"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let currentSearch = "";
+        let totalPages = 1;
+        let allReports = [];
+
+        async function loadReports() {
+            try {
+                const response = await fetch('reports.json');
+                if (!response.ok) throw new Error('Failed to load reports');
+                allReports = await response.json();
+                document.getElementById("totalReports").textContent = allReports.length;
+                renderPage();
+            } catch (error) {
+                console.error("Error loading reports:", error);
+                document.getElementById("reportsContainer").innerHTML = 
+                    '<div class="col-span-full text-center py-20"><p class="text-error">Error loading reports. Make sure the bot has uploaded at least one report.</p></div>';
+            }
+        }
+
+        function renderPage() {
+            const search = currentSearch.toLowerCase();
+            let filtered = allReports;
+            
+            if (search) {
+                filtered = allReports.filter(r => 
+                    (r.title || r.name || "").toLowerCase().includes(search) ||
+                    (r.author || "").toLowerCase().includes(search) ||
+                    (r.filename || "").toLowerCase().includes(search) ||
+                    (r.mvp || "").toLowerCase().includes(search)
+                );
+            }
+            
+            // Sort by timestamp (newest first)
+            filtered.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+            
+            const total = filtered.length;
+            const limit = 12;
+            totalPages = Math.ceil(total / limit) || 1;
+            
+            const start = (currentPage - 1) * limit;
+            const end = start + limit;
+            const pageReports = filtered.slice(start, end);
+            
+            renderReports(pageReports);
+            renderPagination(currentPage, totalPages);
+        }
+
+        function renderReports(reports) {
+            const container = document.getElementById("reportsContainer");
+            if (reports.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-20"><p class="opacity-40">No reports found.</p></div>';
+                return;
+            }
+
+            container.innerHTML = reports.map(report => {
+                const statusClass = report.is_duplicate ? "badge-warning" : "badge-primary";
+                const statusText = report.is_duplicate ? "DUPLICATE" : "TEMPORARY";
+                const mvp = report.mvp || "N/A";
+                const kills = report.kills || 0;
+                const larp = report.potential_larp || 0;
+                const timestamp = report.timestamp || "Unknown";
+                const filename = report.filename || "";
+                const title = report.title || report.name || "Unnamed Encounter";
+                const url = report.url || `reports/${filename}`;
+
+                return `
+                    <div class="report-card hud-border bg-black/40 rounded-lg p-4 cursor-pointer" onclick="window.open('${url}', '_blank')">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="badge ${statusClass} badge-xs font-black">${statusText}</div>
+                            <div class="text-[8px] font-black opacity-40 uppercase tracking-widest">${timestamp}</div>
+                        </div>
+                        <h3 class="text-lg font-orbitron font-black text-primary glow-text-blue truncate mb-2">${title}</h3>
+                        <div class="flex gap-4 text-[10px]">
+                            <div>
+                                <span class="opacity-40">MVP</span>
+                                <span class="font-bold text-secondary">${mvp}</span>
+                            </div>
+                            <div>
+                                <span class="opacity-40">KILLS</span>
+                                <span class="font-bold">${kills}</span>
+                            </div>
+                            <div>
+                                <span class="opacity-40">LARP</span>
+                                <span class="font-bold text-accent">+${larp}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-[8px] opacity-30 truncate">${filename}</div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function renderPagination(current, total) {
+            const container = document.getElementById("pagination");
+            if (total <= 1) {
+                container.innerHTML = "";
+                return;
+            }
+
+            let html = "";
+            if (current > 1) {
+                html += `<button class="btn btn-ghost btn-xs" onclick="goToPage(${current - 1})">← PREV</button>`;
+            }
+            
+            for (let i = 1; i <= total; i++) {
+                if (i === current) {
+                    html += `<button class="btn btn-primary btn-xs">${i}</button>`;
+                } else if (i === 1 || i === total || Math.abs(i - current) <= 2) {
+                    html += `<button class="btn btn-ghost btn-xs" onclick="goToPage(${i})">${i}</button>`;
+                } else if (Math.abs(i - current) === 3) {
+                    html += `<span class="opacity-40">...</span>`;
+                }
+            }
+
+            if (current < total) {
+                html += `<button class="btn btn-ghost btn-xs" onclick="goToPage(${current + 1})">NEXT →</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderPage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function searchReports(event) {
+            if (event && event.key !== "Enter" && event.type !== "click") return;
+            currentSearch = document.getElementById("searchInput").value;
+            currentPage = 1;
+            renderPage();
+        }
+
+        // Initial load
+        loadReports();
+    </script>
 </body>
 </html>

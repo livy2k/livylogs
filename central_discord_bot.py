@@ -323,16 +323,9 @@ class CentralRelayBot(discord.Client):
                                 f"Combat Report for {author_name}"
                             )
                             
-                            if self.tracker.publisher.domain:
-                                # Clean domain: remove http/https, leading/trailing slashes, and spaces
-                                clean_domain = self.tracker.publisher.domain.replace("https://", "").replace("http://", "").strip().strip("/")
-                                if clean_domain:
-                                    report_url = f"https://{clean_domain}/{github_path}"
-                            elif self.tracker.publisher.repo and "/" in self.tracker.publisher.repo:
-                                user_repo = self.tracker.publisher.repo.strip().strip("/")
-                                parts = user_repo.split('/')
-                                if len(parts) >= 2:
-                                    report_url = f"https://{parts[0]}.github.io/{parts[1]}/{github_path}"
+                            # Use Wasmer Edge URL instead of GitHub Pages
+                            wasmer_url = os.environ.get("WASMER_URL", "https://livylogs-reports.wasmer.app")
+                            report_url = f"{wasmer_url}/api/report/{safe_name}_{ts}.html"
                             
                             if report_url:
                                 # Final safety check: ensure protocol and no spaces

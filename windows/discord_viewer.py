@@ -234,7 +234,8 @@ class DiscordViewerWindow(BasePopoutWindow):
                     "author_name": author_name
                 }, timeout=10)
             except Exception as e:
-                self.window.after(0, lambda: self._append_log("System", f"Image send error: {e}"))
+                err_msg = str(e)
+                self.window.after(0, lambda msg=err_msg: self._append_log("System", f"Image send error: {msg}"))
 
         threading.Thread(target=_bg_send, daemon=True).start()
 

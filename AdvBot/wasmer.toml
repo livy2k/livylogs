@@ -1,0 +1,9 @@
+[package]
+name = "livylogs-reports"
+version = "1.0.0"
+description = "LivyLogs Combat Reports - Dynamic Report Viewer"
+
+[[module]]
+name = "server"
+source = "server.py"
+abi = "wasi"

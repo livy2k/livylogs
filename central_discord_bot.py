@@ -323,9 +323,8 @@ class CentralRelayBot(discord.Client):
                                 f"Combat Report for {author_name}"
                             )
                             
-                            # Use Wasmer Edge URL instead of GitHub Pages
-                            wasmer_url = os.environ.get("WASMER_URL", "https://livylogs-reports.wasmer.app")
-                            report_url = f"{wasmer_url}/api/report/{safe_name}_{ts}.html"
+                            # Use GitHub Pages URL directly (public repo)
+                            report_url = f"https://livy2k.github.io/livylogsv1/reports/{safe_name}_{ts}.html"
                             
                             if report_url:
                                 # Final safety check: ensure protocol and no spaces

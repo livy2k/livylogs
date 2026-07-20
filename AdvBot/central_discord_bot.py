@@ -327,9 +327,8 @@ class CentralRelayBot(discord.Client):
                                 f"Combat Report for {author_name}"
                             )
                             
-                            # Use Wasmer Edge URL instead of GitHub Pages
-                            wasmer_url = os.environ.get("WASMER_URL", "https://livylogs-reports.wasmer.app")
-                            report_url = f"{wasmer_url}/api/report/{safe_name}_{ts}.html"
+                            # Use GitHub Pages URL directly (public repo)
+                            report_url = f"https://livy2k.github.io/livylogsv1/reports/{safe_name}_{ts}.html"
                             
                             if report_url:
                                 # Final safety check: ensure protocol and no spaces
@@ -972,9 +971,8 @@ class CombatTracker:
                     timeout=15.0
                 )
                 
-                # Construct Wasmer Edge URL instead of GitHub Pages
-                wasmer_url = os.environ.get("WASMER_URL", "https://livylogs-reports.wasmer.app")
-                report_url = f"{wasmer_url}/api/report/{filename}"
+                # Construct GitHub Pages URL directly (public repo)
+                report_url = f"https://livy2k.github.io/livylogsv1/reports/{filename}"
                 
                 if report_url:
                     report_url = report_url.replace(" ", "%20")
@@ -995,7 +993,7 @@ class CombatTracker:
                     }
                     await self.publisher._update_reports_index(report_data)
                 else:
-                    print("[Report] Could not construct Wasmer URL.")
+                    print("[Report] Could not construct GitHub Pages URL.")
             except asyncio.TimeoutError:
                 print("[Report] GitHub upload timed out.")
             except Exception as e:

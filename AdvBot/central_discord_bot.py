@@ -509,8 +509,7 @@ class GitHubPublisher:
             "liviusweb/index.html": open("liviusweb/index.html", "rb").read().decode() if os.path.exists("liviusweb/index.html") else None,
             "liviusweb/report.html": open("liviusweb/report.html", "rb").read().decode() if os.path.exists("liviusweb/report.html") else None,
             "liviusweb/style.css": open("liviusweb/style.css", "rb").read().decode() if os.path.exists("liviusweb/style.css") else None,
-            "liviusweb/script.js": open("liviusweb/script.js", "rb").read().decode() if os.path.exists("liviusweb/script.js") else None,
-            "liviusweb/reports.json": "[]"
+            "liviusweb/script.js": open("liviusweb/script.js", "rb").read().decode() if os.path.exists("liviusweb/script.js") else None
         }
         
         for path, content in files.items():

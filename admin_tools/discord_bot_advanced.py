@@ -80,13 +80,13 @@ def save_ur_intel_locally(mob, loot, planet, x, y):
 # --- GITHUB PAGES PUBLISHER ---
 class GitHubPublisher:
     def __init__(self):
-        self.token = os.getenv("GITHUB_TOKEN")
-        self.repo = os.getenv("GITHUB_REPO") # Format: username/repo
-        self.domain = os.getenv("GITHUB_DOMAIN") # e.g. livius.gg
+        self.token = os.getenv("GITHUB_TOKEN", "")
+        self.repo = os.getenv("GITHUB_REPO", "") # Format: username/repo
+        self.domain = os.getenv("GITHUB_DOMAIN", "") # e.g. livius.gg
         self.branch = "gh-pages"
 
     async def publish_report(self, filename, content, summary_data):
-        if not self.token or not self.repo:
+        if not self.token.strip() or not self.repo.strip():
             print("[GitHub] Missing credentials, skipping upload.")
             return None
 
@@ -206,6 +206,11 @@ class GitHubPublisher:
                 if resp.status == 200:
                     data = await resp.json()
                     sha = data["sha"]
+                elif resp.status == 404:
+                    # File doesn't exist yet, that's fine
+                    pass
+                else:
+                    print(f"[GitHub] Error checking {path}: {resp.status} {await resp.text()}")
 
             payload = {
                 "message": message,
@@ -218,7 +223,9 @@ class GitHubPublisher:
                 if resp.status in [200, 201]:
                     print(f"[GitHub] Successfully uploaded {path}")
                 else:
-                    print(f"[GitHub] Error uploading {path}: {await resp.text()}")
+                    error_text = await resp.text()
+                    print(f"[GitHub] Error uploading {path}: {resp.status} {error_text}")
+                    # Don't raise exception, just log it
 
     async def _update_index(self, new_summary):
         # Implementation of dashboard update logic
@@ -230,11 +237,19 @@ class GitHubPublisher:
         reports_list = []
         sha = None
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    sha = data["sha"]
-                    reports_list = json.loads(base64.b64decode(data["content"]).decode())
+            try:
+                async with session.get(url, headers=headers) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        sha = data["sha"]
+                        reports_list = json.loads(base64.b64decode(data["content"]).decode())
+                    elif resp.status == 404:
+                        # File doesn't exist yet, start fresh
+                        pass
+                    else:
+                        print(f"[GitHub] Error reading reports.json: {resp.status}")
+            except Exception as e:
+                print(f"[GitHub] Error reading reports.json: {e}")
             
             # CHECK FOR DUPLICATE BATTLE FINGERPRINT
             fingerprint = new_summary.get("fingerprint")
@@ -255,37 +270,49 @@ class GitHubPublisher:
                 "branch": self.branch
             }
             if sha: payload["sha"] = sha
-            await session.put(url, headers=headers, json=payload)
+            try:
+                await session.put(url, headers=headers, json=payload)
+            except Exception as e:
+                print(f"[GitHub] Error updating reports.json: {e}")
 
             # --- EXPORT UNCLE RECON INTEL TO GITHUB ---
             if rico_db:
-                c = rico_db.cursor()
-                # Get the most recent learned intel (last 100 entries)
-                c.execute("SELECT mobile_template, item_template, planet, x, y, confidence FROM learned_drops ORDER BY last_seen DESC LIMIT 100")
-                intel_data = []
-                for row in c.fetchall():
-                    intel_data.append({
-                        "mob": row[0],
-                        "item": row[1],
-                        "planet": row[2],
-                        "coords": f"{int(row[3])}, {int(row[4])}",
-                        "conf": row[5]
-                    })
-                
-                # Get SHA for rico_intel.json
-                sha_rico = None
-                async with session.get(url_rico, headers=headers) as resp:
-                    if resp.status == 200:
-                        data_r = await resp.json()
-                        sha_rico = data_r["sha"]
-                
-                payload_rico = {
-                    "message": "Update Uncle ReCoN Web Intel",
-                    "content": base64.b64encode(json.dumps(intel_data, indent=2).encode()).decode(),
-                    "branch": self.branch
-                }
-                if sha_rico: payload_rico["sha"] = sha_rico
-                await session.put(url_rico, headers=headers, json=payload_rico)
+                try:
+                    c = rico_db.cursor()
+                    # Get the most recent learned intel (last 100 entries)
+                    c.execute("SELECT mobile_template, item_template, planet, x, y, confidence FROM learned_drops ORDER BY last_seen DESC LIMIT 100")
+                    intel_data = []
+                    for row in c.fetchall():
+                        intel_data.append({
+                            "mob": row[0],
+                            "item": row[1],
+                            "planet": row[2],
+                            "coords": f"{int(row[3])}, {int(row[4])}",
+                            "conf": row[5]
+                        })
+                    
+                    # Get SHA for rico_intel.json
+                    sha_rico = None
+                    try:
+                        async with session.get(url_rico, headers=headers) as resp:
+                            if resp.status == 200:
+                                data_r = await resp.json()
+                                sha_rico = data_r["sha"]
+                    except Exception as e:
+                        print(f"[GitHub] Error reading rico_intel.json: {e}")
+                    
+                    payload_rico = {
+                        "message": "Update Uncle ReCoN Web Intel",
+                        "content": base64.b64encode(json.dumps(intel_data, indent=2).encode()).decode(),
+                        "branch": self.branch
+                    }
+                    if sha_rico: payload_rico["sha"] = sha_rico
+                    try:
+                        await session.put(url_rico, headers=headers, json=payload_rico)
+                    except Exception as e:
+                        print(f"[GitHub] Error updating rico_intel.json: {e}")
+                except Exception as e:
+                    print(f"[GitHub] Error exporting rico intel: {e}")
 
 # --- COMBAT TRACKER AND CHART GENERATOR ---
 class CombatTracker:
@@ -1101,8 +1128,21 @@ class CombatTracker:
                 description=f"Field analysis generated. Log is pending Imperial verification." if not is_dup else "Another log for this battle was already detected. Curation required to merge.",
                 color=0xffe81f if not is_dup else 0xffa500
             )
+            
+            # Always show the URL if available, with a clear clickable link
             if github_url:
-                embed.add_field(name="🌐 VIEW TEMP HUD", value=f"[**ACCESS ARCHIVE**]({github_url})", inline=False)
+                embed.add_field(
+                    name="🌐 VIEW TEMP HUD",
+                    value=f"[**ACCESS ARCHIVE**]({github_url})\n{github_url}",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="🌐 VIEW TEMP HUD",
+                    value="Report generated locally. GitHub Pages upload not configured.\nSet `GITHUB_TOKEN` and `GITHUB_REPO` environment variables.",
+                    inline=False
+                )
+            
             embed.add_field(name="📎 DISCORD REPORT MIRROR", value=f"Attached `{report_name}` is the same HTML report uploaded to the website.\n`sha256: {report_sha256[:16]}...`", inline=False)
             
             embed.add_field(name="🏆 MVP", value=f"`{mvp}`", inline=True)

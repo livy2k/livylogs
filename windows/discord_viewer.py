@@ -397,15 +397,38 @@ class DiscordViewerWindow(BasePopoutWindow):
             
         self.log_text.insert(tk.END, ts_str, "timestamp")
         
+        # Check if message contains a URL and make it clickable
+        import re
+        url_pattern = r'https?://[^\s]+'
+        
+        def insert_with_urls(text, tag):
+            """Insert text with clickable URLs."""
+            parts = re.split(url_pattern, text)
+            urls = re.findall(url_pattern, text)
+            for i, part in enumerate(parts):
+                self.log_text.insert(tk.END, part, tag)
+                if i < len(urls):
+                    url_start = self.log_text.index(tk.END)
+                    self.log_text.insert(tk.END, urls[i], "url")
+                    url_end = self.log_text.index(tk.END)
+                    url_tag = f"url_{urls[i]}"
+                    self.log_text.tag_add(url_tag, url_start, url_end)
+                    self.log_text.tag_config(url_tag, foreground="#00b0f4", underline=True)
+                    self.log_text.tag_bind(url_tag, "<Button-1>", lambda e, u=urls[i]: self._open_url(u))
+                    self.log_text.tag_bind(url_tag, "<Enter>", lambda e: self.log_text.config(cursor="hand2"))
+                    self.log_text.tag_bind(url_tag, "<Leave>", lambda e: self.log_text.config(cursor=""))
+        
         if sender == "System":
-            self.log_text.insert(tk.END, f"{message}\n", "system")
+            insert_with_urls(message, "system")
+            self.log_text.insert(tk.END, "\n")
         elif sender == "App" or sender == "You":
             self.log_text.insert(tk.END, f"{sender}: ", "pulse")
             if image:
                 self.log_text.image_create(tk.END, image=image)
                 self.log_text.insert(tk.END, "\n")
             else:
-                self.log_text.insert(tk.END, f"{message}\n", "pulse")
+                insert_with_urls(message, "pulse")
+                self.log_text.insert(tk.END, "\n")
         else:
             # Discord message
             self.log_text.insert(tk.END, f"{sender}: ", "system")
@@ -416,7 +439,8 @@ class DiscordViewerWindow(BasePopoutWindow):
                  # Fallback if text message is just "[Image]" and we have no image object
                  self.log_text.insert(tk.END, "[Image loading...]\n", "pulse")
             else:
-                self.log_text.insert(tk.END, f"{message}\n", "pulse")
+                insert_with_urls(message, "pulse")
+                self.log_text.insert(tk.END, "\n")
             
         self.log_text.see(tk.END)
         self.log_text.config(state=tk.DISABLED)
@@ -424,6 +448,11 @@ class DiscordViewerWindow(BasePopoutWindow):
         # Force message polling to start if it hasn't already (and we are verified)
         if self.is_verified and not getattr(self, '_polling_started', False):
             self._start_polling()
+
+    def _open_url(self, url):
+        """Open a URL in the default browser."""
+        import webbrowser
+        webbrowser.open(url)
 
     def _setup_entry_bindings(self, entry):
         def show_menu(event):

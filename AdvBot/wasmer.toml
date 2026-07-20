@@ -5,5 +5,5 @@ description = "LivyLogs Combat Reports - Dynamic Report Viewer"
 
 [[module]]
 name = "server"
-source = "server.py"
+source = "AdvBot/server.py"
 abi = "wasi"

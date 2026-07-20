@@ -81,6 +81,10 @@ class CentralRelayBot(discord.Client):
         # Upload website files to GitHub on startup
         print("[Bot] Uploading website files to GitHub...")
         try:
+            # Check if liviusweb exists, otherwise use the one in AdvBot
+            if not os.path.exists("liviusweb") and os.path.exists("AdvBot/liviusweb"):
+                os.chdir("AdvBot")
+            
             await self.tracker.publisher._ensure_website_files()
             print("[Bot] Website files uploaded successfully.")
         except Exception as e:
